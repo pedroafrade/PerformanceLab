@@ -8,7 +8,7 @@ Representação de um atleta.
 
 from dataclasses import dataclass, field
 
-from PerformanceLab.history.history import History
+from .history.history import History
 
 
 @dataclass

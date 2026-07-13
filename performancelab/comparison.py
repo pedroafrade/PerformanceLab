@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from PerformanceLab.sync import Synchronizer
+from .sync import Synchronizer
 
 
 @dataclass
@@ -190,4 +190,4 @@ class Comparison:
 
         return ComparisonPlotter(self)
         
-from PerformanceLab.plots import ComparisonPlotter
+from .plots import ComparisonPlotter

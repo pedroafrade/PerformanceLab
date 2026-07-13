@@ -13,7 +13,7 @@ import pandas as pd
 
 
 @dataclass
-class SensorData:
+class Sensor:
 
     manufacturer: str
     model: str
@@ -129,7 +129,7 @@ class SensorData:
     def __repr__(self):
 
         return (
-            f"SensorData("
+            f"Sensor("
             f"{self.manufacturer} {self.model}, "
             f"samples={self.samples})"
         )

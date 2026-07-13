@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from PerformanceLab.sensor import SensorData
+from .sensor import Sensor
 
 
 # ==========================================================
@@ -21,8 +21,8 @@ from PerformanceLab.sensor import SensorData
 @dataclass
 class Synchronizer:
 
-    reference: SensorData
-    target: SensorData
+    reference: Sensor
+    target: Sensor
 
     max_shift: int = 30
 
@@ -234,7 +234,7 @@ class Synchronizer:
         utilizando este sincronizador.
         """
 
-        from PerformanceLab.comparison import Comparison
+        from .comparison import Comparison
 
         return Comparison(self)
 

@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 import gpxpy
 
-from PerformanceLab.sensor import SensorData
+from .sensor import Sensor
 
 
 # ==========================================================
@@ -74,7 +74,7 @@ def read_apple_gpx(filename):
 
     sensor_df.reset_index(drop=True, inplace=True)
 
-    return SensorData(
+    return Sensor(
 
         manufacturer="Apple",
 
@@ -223,7 +223,7 @@ def read_polar_csv(filename):
 
     )
 
-    return SensorData(
+    return Sensor(
 
         manufacturer="Polar",
 

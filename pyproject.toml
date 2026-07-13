@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "PerformanceLab"
+name = "performancelab"
 version = "0.1.0"
 description = "Performance analysis toolkit for endurance athletes."
 readme = "README.md"
@@ -25,4 +25,4 @@ dependencies = [
 include-package-data = true
 
 [tool.setuptools.packages.find]
-include = ["PerformanceLab*"]
+include = ["performancelab*"]

@@ -8,14 +8,14 @@ Cria um ambiente completo de trabalho para testes.
 
 from dataclasses import dataclass
 
-from PerformanceLab.readers import (
+from .readers import (
     read_apple_gpx,
     read_polar_csv
 )
 
-from PerformanceLab.athlete import Athlete
-from PerformanceLab.session import TrainingSession
-from PerformanceLab.sync import Synchronizer
+from .athlete import Athlete
+from .session import Session
+from .sync import Synchronizer
 
 
 # ==========================================================
@@ -27,7 +27,7 @@ class Workspace:
 
     athlete: Athlete
 
-    session: TrainingSession
+    session: Session
 
     apple: object
 
@@ -82,7 +82,7 @@ def load_demo(
 
     # ------------------------------------------------------
 
-    session = TrainingSession(
+    session = Session(
 
         athlete=athlete,
 
