@@ -3,45 +3,94 @@ PerformanceLab
 
 History
 
-Histórico de treinos de um atleta.
+Collection of workouts belonging to an athlete.
 """
 
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime
 
 import pandas as pd
+
+from ..workout import Workout
 
 
 @dataclass
 class History:
 
-    athlete: object
+    athlete: object | None = None
 
-    workouts: list = field(default_factory=list)
+    workouts: list[Workout] = field(default_factory=list)
 
     # ======================================================
 
-    def add(self, workout):
+    def add(self, workout: Workout):
 
         self.workouts.append(workout)
 
         self.workouts.sort(
-            key=lambda w: w.date if w.date is not None else pd.Timestamp.min
+            key=lambda w: w.date or datetime.min
         )
 
-        return self
+        return workout
 
     # ======================================================
 
-    def remove(self, index):
+    def remove(self, workout: Workout):
 
-        self.workouts.pop(index)
+        self.workouts.remove(workout)
 
     # ======================================================
 
     def clear(self):
 
         self.workouts.clear()
+
+    # ======================================================
+
+    def first(self, n: int = 1):
+
+        if n == 1:
+            return self.workouts[0] if self.workouts else None
+
+        return self.workouts[:n]
+
+    # ======================================================
+
+    def last(self, n: int = 1):
+
+        if n == 1:
+            return self.workouts[-1] if self.workouts else None
+
+        return self.workouts[-n:]
+
+    # ======================================================
+
+    def sport(self, name: str):
+
+        return [
+
+            workout
+
+            for workout in self.workouts
+
+            if workout.sport == name
+
+        ]
+
+    # ======================================================
+
+    def between(self, start, end):
+
+        return [
+
+            workout
+
+            for workout in self.workouts
+
+            if workout.date is not None
+            and start <= workout.date <= end
+
+        ]
 
     # ======================================================
 
@@ -52,84 +101,58 @@ class History:
 
         for workout in self.workouts:
 
-            rows.append(
-                {
-                    "date": workout.date,
-                    "sport": workout.sport,
-                    "duration": workout.duration,
-                    "terrain": workout.terrain,
-                    "rpe": workout.rpe,
-                }
-            )
+            rows.append({
+
+                "date": workout.info.date,
+
+                "sport": workout.info.sport,
+
+                "terrain": workout.environment.terrain,
+
+                "temperature": workout.environment.temperature,
+
+                "rpe": workout.feedback.rpe,
+
+            })
 
         return pd.DataFrame(rows)
 
     # ======================================================
 
     @property
-    def first_workout(self):
-
-        if not self.workouts:
-            return None
-
-        return self.workouts[0]
-
-    # ======================================================
-
-    @property
-    def last_workout(self):
-
-        if not self.workouts:
-            return None
-
-        return self.workouts[-1]
-
-    # ======================================================
-
-    @property
-    def total_duration(self):
-
-        total = timedelta()
-
-        for workout in self.workouts:
-            total += workout.duration
-
-        return total
-
-    # ======================================================
-
-    @property
     def sports(self):
 
-        return sorted(
-            {
-                workout.sport
-                for workout in self.workouts
-                if workout.sport is not None
-            }
-        )
+        return sorted({
+
+            workout.sport
+
+            for workout in self.workouts
+
+            if workout.sport is not None
+
+        })
 
     # ======================================================
 
     def summary(self):
 
         print()
-        print("=" * 45)
-        print("ATHLETE HISTORY")
-        print("=" * 45)
 
-        print(f"Athlete : {self.athlete.name}")
-        print(f"Workouts: {len(self.workouts)}")
+        print("=" * 50)
+
+        print("History")
+
+        print("=" * 50)
+
+        if self.athlete is not None:
+
+            print(f"Athlete : {self.athlete.name}")
+
+        print(f"Workouts: {len(self)}")
+
         print(f"Sports  : {', '.join(self.sports)}")
-        print(f"Duration: {self.total_duration}")
 
-        if self.first_workout:
-
-            print()
-            print(f"First   : {self.first_workout.date}")
-            print(f"Last    : {self.last_workout.date}")
-
-        print("=" * 45)
+        print("=" * 50)
 
     # ======================================================
 
@@ -153,4 +176,4 @@ class History:
 
     def __repr__(self):
 
-        return f"History({len(self.workouts)} workouts)"
+        return f"History({len(self)} workouts)"
