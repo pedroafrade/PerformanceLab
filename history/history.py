@@ -18,29 +18,31 @@ class History:
 
     athlete: object
 
-    sessions: list = field(default_factory=list)
+    workouts: list = field(default_factory=list)
 
     # ======================================================
 
-    def add(self, session):
+    def add(self, workout):
 
-        self.sessions.append(session)
+    self.workouts.append(workout)
 
-        self.sessions.sort(key=lambda s: s.start)
+    self.workouts.sort(
+        key=lambda w: w.date if w.date is not None else pd.Timestamp.min
+    )
 
-        return self
+    return self
 
     # ======================================================
 
     def remove(self, index):
 
-        self.sessions.pop(index)
+        self.workouts.pop(index)
 
     # ======================================================
 
     def clear(self):
 
-        self.sessions.clear()
+        self.workouts.clear()
 
     # ======================================================
 
@@ -49,47 +51,49 @@ class History:
 
         rows = []
 
-        for session in self.sessions:
+        for workout in self.workouts:
 
             rows.append(
 
-                {
+            {
 
-                    "date": session.start,
+            "date": workout.date,
 
-                    "sport": session.sport,
+            "sport": workout.sport,
 
-                    "duration": session.duration,
+            "duration": workout.duration,
 
-                    "sensors": len(session),
+            "terrain": workout.terrain,
 
-                }
+            "rpe": workout.rpe,
 
-            )
+        }
 
-        return pd.DataFrame(rows)
+    )
 
-    # ======================================================
-
-    @property
-    def first_session(self):
-
-        if not self.sessions:
-
-            return None
-
-        return self.sessions[0]
+    return pd.DataFrame(rows)
 
     # ======================================================
 
     @property
-    def last_session(self):
+    def first_workout(self):
 
-        if not self.sessions:
+        if not self.workouts:
 
             return None
 
-        return self.sessions[-1]
+        return self.workouts[0]
+
+    # ======================================================
+
+    @property
+    def last_workout(self):
+
+        if not self.workouts:
+
+            return None
+
+        return self.workouts[-1]
 
     # ======================================================
 
@@ -98,9 +102,9 @@ class History:
 
         total = timedelta()
 
-        for session in self.sessions:
+        for workout in self.workouts:
 
-            total += session.duration
+            total += workout.duration
 
         return total
 
@@ -111,15 +115,17 @@ class History:
 
         return sorted(
 
-            {
+    {
 
-                s.sport
+        w.sport
 
-                for s in self.sessions
+        for w in self.workouts
 
-            }
+        if w.sport is not None
 
-        )
+    }
+
+)
 
     # ======================================================
 
@@ -135,19 +141,19 @@ class History:
 
         print(f"Athlete : {self.athlete.name}")
 
-        print(f"Sessions: {len(self.sessions)}")
+        print(f"Workouts: {len(self.workouts)}")
 
         print(f"Sports  : {', '.join(self.sports)}")
 
         print(f"Duration: {self.total_duration}")
 
-        if self.first_session:
+        if self.first_workout:
 
             print()
 
-            print(f"First   : {self.first_session.start}")
+            print(f"First   : {self.first_workout.date}")
 
-            print(f"Last    : {self.last_session.start}")
+            print(f"Last    : {self.last_workout.date}")
 
         print("=" * 45)
 
@@ -155,19 +161,19 @@ class History:
 
     def __len__(self):
 
-        return len(self.sessions)
+        return len(self.workouts)
 
     # ======================================================
 
     def __getitem__(self, item):
 
-        return self.sessions[item]
+        return self.workouts[item]
 
     # ======================================================
 
     def __iter__(self):
 
-        return iter(self.sessions)
+        return iter(self.workouts)
 
     # ======================================================
 
@@ -177,6 +183,6 @@ class History:
 
             f"History("
 
-            f"{len(self.sessions)} sessions)"
+            f"{len(self.workouts)} workouts)"
 
         )

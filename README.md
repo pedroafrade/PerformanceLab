@@ -5,6 +5,7 @@ PerformanceLab is an open-source performance analysis toolkit for endurance athl
 ## Vision
 
 Help athletes make better training decisions through physiological interpretation rather than simply displaying data.
+Understand your training. Improve with confidence.
 
 ## Project Philosophy
 
