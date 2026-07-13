@@ -1,132 +1,50 @@
 """
 PerformanceLab
 
-Workout object.
+Workout
 
-Represents a complete training workout, combining
-sensor data with contextual information.
+Complete workout object.
 """
 
+from dataclasses import dataclass, field
 
+from .info import WorkoutInfo
+from .environment import Environment
+from .feedback import AthleteFeedback
+from .sensors import SensorCollection
+
+
+@dataclass
 class Workout:
 
-    # =====================================================
+    info: WorkoutInfo = field(default_factory=WorkoutInfo)
 
-    def __init__(
-        self,
-        athlete,
-        session,
-        objective=None,
-        terrain=None,
-        weather=None,
-        temperature=None,
-        rpe=None,
-        notes=None,
-        equipment=None,
-        tags=None,
-        metadata=None
-    ):
+    environment: Environment = field(default_factory=Environment)
 
-        self.athlete = athlete
+    feedback: AthleteFeedback = field(default_factory=AthleteFeedback)
 
-        self.session = session
+    sensors: SensorCollection = field(default_factory=SensorCollection)
 
-        self.objective = objective
-
-        self.terrain = terrain
-
-        self.weather = weather
-
-        self.temperature = temperature
-
-        self.rpe = rpe
-
-        self.notes = notes
-
-        self.equipment = equipment
-
-        self.tags = tags or []
-
-        self.metadata = metadata or {}
-
-    # =====================================================
+    # ======================================================
 
     @property
     def sport(self):
 
-        return self.session.sport
+        return self.info.sport
 
-    # =====================================================
+    # ======================================================
 
     @property
     def date(self):
 
-        return getattr(self.session, "date", None)
+        return self.info.date
 
-    # =====================================================
-
-    @property
-    def distance(self):
-
-        return getattr(self.session, "distance", None)
-
-    # =====================================================
-
-    @property
-    def duration(self):
-
-        return getattr(self.session, "duration", None)
-
-    # =====================================================
-
-    @property
-    def avg_hr(self):
-
-        return getattr(self.session, "avg_hr", None)
-
-    # =====================================================
-
-    @property
-    def max_hr(self):
-
-        return getattr(self.session, "max_hr", None)
-
-    # =====================================================
-
-    def summary(self):
-
-        print()
-
-        print("=" * 50)
-
-        print("Workout Summary")
-
-        print("=" * 50)
-
-        print(f"Athlete     : {self.athlete.name}")
-        print(f"Sport       : {self.sport}")
-        print(f"Date        : {self.date}")
-        print(f"Distance    : {self.distance}")
-        print(f"Duration    : {self.duration}")
-        print(f"Average HR  : {self.avg_hr}")
-        print(f"Maximum HR  : {self.max_hr}")
-        print(f"Objective   : {self.objective}")
-        print(f"Terrain     : {self.terrain}")
-        print(f"Weather     : {self.weather}")
-        print(f"Temperature : {self.temperature}")
-        print(f"RPE         : {self.rpe}")
-
-        if self.notes:
-            print(f"Notes       : {self.notes}")
-
-        print()
-
-    # =====================================================
+    # ======================================================
 
     def __repr__(self):
 
-        athlete = getattr(self.athlete, "name", "Unknown")
-
-        sport = self.sport or "Unknown"
-
-        return f"Workout({athlete}, {sport})"
+        return (
+            f"Workout("
+            f"sport={self.info.sport}, "
+            f"date={self.info.date})"
+        )
