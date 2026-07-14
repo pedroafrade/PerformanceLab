@@ -10,6 +10,11 @@ from datetime import timedelta
 from performancelab import Athlete
 from performancelab.workout import Workout
 
+import performancelab.analysis.time as t
+
+print(t.__file__)
+print(hasattr(t, "training_days"))
+print(dir(t))
 
 # ======================================================
 
@@ -29,7 +34,7 @@ def create_workout(
     workout.info.distance = distance
     workout.info.duration = duration
 
-    workout.environment.elevation_gain = elevation
+    workout.info.elevation_gain = elevation
 
     workout.feedback.rpe = rpe
 
@@ -452,8 +457,8 @@ def test_summary():
 
     assert summary["workouts"] == 1
 
-    assert summary["distance"] == 10
+    assert summary["total_distance"] == 10
 
-    assert summary["elevation"] == 200
+    assert summary["total_elevation"] == 200
 
     assert summary["average_rpe"] == 7

@@ -7,7 +7,7 @@ Identity of a workout.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 @dataclass
@@ -24,6 +24,12 @@ class WorkoutInfo:
     source: str = ""
 
     timezone: str = ""
+
+    distance: float | None = None
+
+    duration: timedelta | None = None
+
+    elevation_gain: float | None = None
 
     def __repr__(self):
 

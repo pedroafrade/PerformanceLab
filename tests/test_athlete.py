@@ -15,6 +15,6 @@ def test_athlete_creation():
 
     assert len(athlete.goals) == 0
 
-    assert len(athlete.calendar) == 0
+    assert len(athlete.events) == 0
 
     assert athlete.analytics is not None

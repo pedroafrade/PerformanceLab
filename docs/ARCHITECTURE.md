@@ -12,6 +12,21 @@ The project is designed around the athlete rather than around activity files.
 
 # Core Principles
 
+## Athlete-centric design
+
+The athlete is the central object of the framework.
+
+Everything else exists to describe:
+
+- who the athlete is
+- what the athlete has done
+- what the athlete wants to achieve
+- how the athlete is adapting
+
+Training sessions are observations of the athlete, not the centre of the architecture.
+
+---
+
 ## Domain-driven design
 
 Every object should represent a real-world concept.
@@ -22,8 +37,8 @@ Examples:
 - Workout
 - History
 - Goal
+- Event
 - Season
-- Race
 - TrainingPlan
 
 The software architecture should reflect how coaches and athletes think about training.
@@ -34,30 +49,31 @@ The software architecture should reflect how coaches and athletes think about tr
 
 Each class should have a single responsibility.
 
-For example:
-
-Workout
-    represents one training session.
+Example:
 
 History
-    represents the athlete's training history.
 
-Goal
-    represents a future objective.
+stores workouts.
 
-Season
-    groups multiple goals into a competitive season.
+GoalBook
 
-TrainingPlan
-    represents the strategy to reach a goal.
+stores goals.
 
-No class should try to perform the role of another.
+EventBook
+
+stores events.
+
+AthleteAnalytics
+
+provides analysis.
+
+Each object owns its own domain.
 
 ---
 
 ## Composition over inheritance
 
-Objects should be composed from smaller reusable components whenever possible.
+Objects should be composed from reusable components.
 
 Example:
 
@@ -68,24 +84,44 @@ Workout
 ├── AthleteFeedback
 └── SensorCollection
 
-instead of storing dozens of unrelated attributes directly inside Workout.
+instead of containing dozens of unrelated attributes.
 
 ---
 
 # Athlete Model
 
-The Athlete is the central object of the library.
+The Athlete is the root of the domain model.
 
-Everything else revolves around it.
-
+```
 Athlete
 
 ├── History
-├── Goals
-├── Seasons
+├── GoalBook
+├── EventBook
+├── AthleteAnalytics
 ├── Physiology
 ├── Preferences
 └── Workspace
+```
+
+Everything is accessed through the athlete.
+
+---
+
+# Workout
+
+Workout represents one training session.
+
+```
+Workout
+
+├── WorkoutInfo
+├── Environment
+├── AthleteFeedback
+└── SensorCollection
+```
+
+Each component has a single responsibility.
 
 ---
 
@@ -93,32 +129,9 @@ Athlete
 
 History represents everything the athlete has already done.
 
-It is more than a list of workouts.
-
-It provides:
-
-- filtering
-- statistics
-- summaries
-- analysis
-- data export
-
 History is the source of truth for past performance.
 
----
-
-# Workout
-
-Workout represents a single training session.
-
-Workout
-
-├── WorkoutInfo
-├── Environment
-├── AthleteFeedback
-└── SensorCollection
-
-Each component has a single responsibility.
+It owns workouts but performs no analysis.
 
 ---
 
@@ -128,56 +141,45 @@ Goals represent future objectives.
 
 Examples:
 
-- Race
-- Personal record
+- race
 - FTP target
-- Weight target
-- Weekly consistency
-- Marathon preparation
+- weight target
+- weekly consistency
+- marathon preparation
 
-A Goal is independent from the workouts already performed.
+Goals describe intent.
 
 ---
 
-# Seasons
+# Events
 
-A Season groups multiple Goals.
+Events represent real sporting events.
 
-Example:
+An Event describes the competition.
 
-2026 Season
-
-├── Trail Race
-├── Ultra Marathon
-└── Autumn Marathon
-
-This reflects how athletes usually organize their year.
+An EventEntry describes the athlete's participation.
 
 ---
 
 # Training Plans
 
-A TrainingPlan is not the goal.
-
-A TrainingPlan is the strategy used to reach a Goal.
+Training plans are strategies.
 
 Goals remain stable.
 
-Plans may change continuously according to:
+Plans adapt continuously according to:
 
 - fatigue
-- injuries
+- illness
 - missed sessions
 - fitness evolution
 - available time
-
-The plan should be adaptive rather than static.
 
 ---
 
 # Sensors
 
-SensorCollection stores every recorded sensor.
+SensorCollection stores recorded sensor data.
 
 Examples:
 
@@ -188,40 +190,134 @@ Examples:
 - Temperature
 - Altitude
 - Running Dynamics
-- Future sensors
 
-The architecture must remain open for new sensor types without modifying the Workout model.
+The architecture must remain open to future sensor types.
 
 ---
 
-# Future Analysis Modules
+# Analysis Layer
 
-The long-term objective is to provide intelligent analysis rather than simple data visualization.
+Analysis is completely separated from the domain model.
+
+```
+analysis/
+
+├── analytics.py
+├── time.py
+├── volume.py
+├── consistency.py
+├── goal_analysis.py
+├── event_analysis.py
+├── physiology.py
+├── training_load.py
+├── fatigue.py
+└── performance.py
+```
+
+The domain model stores information.
+
+The analysis layer interprets it.
+
+---
+
+# AthleteAnalytics
+
+AthleteAnalytics is the public API for analysis.
+
+It acts as a facade.
+
+It delegates computations to specialised analysis modules.
+
+```
+Athlete
+
+↓
+
+AthleteAnalytics
+
+↓
+
+time.py
+
+volume.py
+
+consistency.py
+
+goal_analysis.py
+
+event_analysis.py
+
+...
+```
+
+The facade itself should contain little or no analytical logic.
+
+---
+
+# Domain Metrics
+
+PerformanceLab distinguishes between domain metrics and physiological metrics.
+
+Domain metrics belong to a specific sport.
+
+Examples:
+
+Running
+
+- distance
+- elevation
+- pace
+
+Cycling
+
+- distance
+- elevation
+- power
+
+Swimming
+
+- distance
+- pace
+- SWOLF
+
+These metrics are **never aggregated across sports**.
+
+A total distance combining running and cycling has no physiological meaning.
+
+---
+
+# Physiological Metrics
+
+Different sports become comparable only through physiological metrics.
 
 Examples:
 
 - Training Load
-- Acute / Chronic Load
-- Fitness
+- TRIMP
+- sRPE Load
+- CTL
+- ATL
+- TSB
+- Recovery
 - Fatigue
-- Readiness
-- Performance Prediction
-- Race Readiness
-- Training Recommendations
+
+These metrics represent the athlete rather than the activity.
+
+They may legitimately aggregate different sports because they quantify physiological stress instead of physical distance.
 
 ---
 
 # Development Philosophy
 
-PerformanceLab should prioritize:
+PerformanceLab prioritises:
 
 - clarity
-- extensibility
 - scientific correctness
+- extensibility
 - maintainability
 - clean APIs
 
-Internal architecture is more important than quickly adding features.
+Architecture is more important than rapidly adding features.
 
 The project should grow as a coherent framework rather than as a collection of utilities.
 
@@ -229,18 +325,21 @@ The project should grow as a coherent framework rather than as a collection of u
 
 # Long-term Vision
 
-PerformanceLab aims to become a complete digital model of an endurance athlete.
+PerformanceLab aims to become a complete digital representation of an endurance athlete.
 
 Instead of simply analysing workouts, it should understand:
 
 - who the athlete is
 - what the athlete has done
-- where the athlete wants to go
+- what the athlete wants to achieve
+- how the athlete is adapting
 - what should be done next
 
-The software should progressively evolve from a data analysis toolkit into an intelligent coaching platform.
+The project should progressively evolve from a data analysis toolkit into an intelligent coaching platform.
 
-## Current Domain Model
+---
+
+# Current Domain Model
 
 ```
 Athlete
@@ -251,15 +350,23 @@ Athlete
 ├── GoalBook
 │     └── Goal
 │
-├── Calendar
+├── EventBook
 │     └── EventEntry
 │             └── Event
 │
 └── AthleteAnalytics
+      │
+      ├── Time Analysis
+      ├── Volume Analysis
+      ├── Consistency Analysis
+      ├── Goal Analysis
+      └── Event Analysis
 ```
 
-The Athlete object is the root of the domain model.
+The Athlete remains the root of the entire model.
 
-All analysis is performed through AthleteAnalytics.
+The domain layer stores data.
 
-Collections (History, GoalBook and EventBook) own domain entities but do not perform analysis.
+The analysis layer interprets data.
+
+The public API exposes analysis through AthleteAnalytics.

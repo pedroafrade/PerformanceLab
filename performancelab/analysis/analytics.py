@@ -3,10 +3,14 @@ PerformanceLab
 
 AthleteAnalytics
 
-Descriptive analysis of an athlete's training data.
+Public analytics interface for an athlete.
 """
 
-from datetime import timedelta
+from . import volume
+from . import time
+from . import consistency
+
+from .planning import planning
 
 
 class AthleteAnalytics:
@@ -18,12 +22,26 @@ class AthleteAnalytics:
         self.athlete = athlete
 
     # ======================================================
+    # Shortcuts
+    # ======================================================
 
     @property
     def history(self):
 
         return self.athlete.history
 
+    @property
+    def goals(self):
+
+        return self.athlete.goals
+
+    @property
+    def events(self):
+
+        return self.athlete.events
+
+    # ======================================================
+    # Basic information
     # ======================================================
 
     @property
@@ -31,14 +49,10 @@ class AthleteAnalytics:
 
         return len(self.history)
 
-    # ======================================================
-
     @property
     def sports(self):
 
         return self.history.sports
-
-    # ======================================================
 
     @property
     def first_workout(self):
@@ -47,9 +61,13 @@ class AthleteAnalytics:
 
             return None
 
-        return self.history[0]
+        return min(
 
-    # ======================================================
+            self.history,
+
+            key=lambda workout: workout.info.date,
+
+        )
 
     @property
     def last_workout(self):
@@ -58,64 +76,13 @@ class AthleteAnalytics:
 
             return None
 
-        return self.history[-1]
+        return max(
 
-    # ======================================================
+            self.history,
 
-    @property
-    def total_distance(self):
+            key=lambda workout: workout.info.date,
 
-        total = 0.0
-
-        for workout in self.history:
-
-            distance = getattr(workout.info, "distance", None)
-
-            if distance is not None:
-
-                total += distance
-
-        return total
-
-    # ======================================================
-
-    @property
-    def total_duration(self):
-
-        total = timedelta()
-
-        for workout in self.history:
-
-            duration = getattr(workout.info, "duration", None)
-
-            if duration is not None:
-
-                total += duration
-
-        return total
-
-    # ======================================================
-
-    @property
-    def total_elevation(self):
-
-        total = 0.0
-
-        for workout in self.history:
-
-            elevation = getattr(
-                workout.environment,
-                "elevation_gain",
-                None
-            )
-
-            if elevation is not None:
-
-                total += elevation
-
-        return total
-
-    # ======================================================
+        )
 
     @property
     def average_rpe(self):
@@ -137,22 +104,108 @@ class AthleteAnalytics:
         return sum(values) / len(values)
 
     # ======================================================
+    # Volume
+    # ======================================================
+
+    @property
+    def total_distance(self):
+
+        return volume.total_distance(self.history)
+
+    @property
+    def total_duration(self):
+
+        return volume.total_duration(self.history)
+
+    @property
+    def total_elevation(self):
+
+        return volume.total_elevation(self.history)
+
+    @property
+    def average_distance(self):
+
+        return volume.average_distance(self.history)
+
+    @property
+    def average_duration(self):
+
+        return volume.average_duration(self.history)
+
+    @property
+    def average_elevation(self):
+
+        return volume.average_elevation(self.history)
+
+    # ======================================================
+    # Time
+    # ======================================================
 
     @property
     def training_days(self):
 
-        dates = {
+        return time.training_days(self.history)
 
-            workout.info.date
+    @property
+    def first_training_date(self):
 
-            for workout in self.history
+        return time.first_training_date(self.history)
 
-            if workout.info.date is not None
+    @property
+    def last_training_date(self):
 
-        }
+        return time.last_training_date(self.history)
 
-        return len(dates)
+    # ======================================================
+    # Consistency
+    # ======================================================
 
+    @property
+    def current_streak(self):
+
+        return consistency.current_streak(self.history)
+
+    @property
+    def longest_streak(self):
+
+        return consistency.longest_streak(self.history)
+
+    # ======================================================
+    # Planning
+    # ======================================================
+
+    @property
+    def next_goal(self):
+
+        return planning.next_goal(self.goals)
+
+    @property
+    def days_until_next_goal(self):
+
+        return planning.days_until_next_goal(self.goals)
+
+    @property
+    def active_goals(self):
+
+        return planning.active_goals(self.goals)
+
+    @property
+    def next_event(self):
+
+        return planning.next_event(self.events)
+
+    @property
+    def days_until_next_event(self):
+
+        return planning.days_until_next_event(self.events)
+
+    @property
+    def upcoming_events(self):
+
+        return planning.upcoming_events(self.events)
+
+    # ======================================================
+    # Summary
     # ======================================================
 
     def summary(self):
@@ -163,19 +216,37 @@ class AthleteAnalytics:
 
             "sports": self.sports,
 
-            "distance": self.total_distance,
-
-            "duration": self.total_duration,
-
-            "elevation": self.total_elevation,
-
             "training_days": self.training_days,
+
+            "total_distance": self.total_distance,
+
+            "total_duration": self.total_duration,
+
+            "total_elevation": self.total_elevation,
+
+            "average_distance": self.average_distance,
+
+            "average_duration": self.average_duration,
+
+            "average_elevation": self.average_elevation,
 
             "average_rpe": self.average_rpe,
 
-            "first_workout": self.first_workout,
+            "current_streak": self.current_streak,
 
-            "last_workout": self.last_workout,
+            "longest_streak": self.longest_streak,
+
+            "next_goal": self.next_goal,
+
+            "days_until_next_goal": self.days_until_next_goal,
+
+            "next_event": self.next_event,
+
+            "days_until_next_event": self.days_until_next_event,
+
+            "active_goals": self.active_goals,
+
+            "upcoming_events": self.upcoming_events,
 
         }
 
@@ -187,6 +258,6 @@ class AthleteAnalytics:
 
             f"AthleteAnalytics("
 
-            f"{self.number_of_workouts} workouts)"
+            f"athlete='{self.athlete.name}')"
 
         )

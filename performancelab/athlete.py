@@ -37,7 +37,7 @@ class Athlete:
 
     goals: GoalBook = field(default_factory=GoalBook)
 
-    calendar: EventBook = field(default_factory=EventBook)
+    events: EventBook = field(default_factory=EventBook)
 
     analytics: AthleteAnalytics = field(init=False)
 

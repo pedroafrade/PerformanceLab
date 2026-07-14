@@ -1,14 +1,33 @@
 """
 PerformanceLab
 
-Performance analysis toolkit for endurance athletes.
+Public package interface.
 """
 
-__version__ = "0.1.0"
-
 from .athlete import Athlete
-from .history.history import History
+
 from .workout import Workout
-from .session import Session
-from .sensor import Sensor
-from .workspace import Workspace
+
+from .history import History
+
+from .goals import Goal
+from .goals import GoalBook
+
+from .race import Event
+from .race import EventEntry
+from .race import EventBook
+
+__all__ = [
+    "Athlete",
+
+    "Workout",
+
+    "History",
+
+    "Goal",
+    "GoalBook",
+
+    "Event",
+    "EventEntry",
+    "EventBook",
+]
