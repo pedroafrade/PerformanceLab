@@ -21,8 +21,10 @@ def next_goal(goals):
 
         for goal in goals
 
-        if getattr(goal, "date", None) is not None
-        and goal.date >= date.today()
+        if (
+            getattr(goal, "date", None) is not None
+            and goal.date >= date.today()
+        )
 
     ]
 
@@ -60,7 +62,11 @@ def active_goals(goals):
 
         for goal in goals
 
-        if getattr(goal, "completed", False) is False
+        if (
+            getattr(goal, "completed", False) is False
+            and getattr(goal, "date", None) is not None
+            and goal.date >= date.today()
+        )
 
     ]
 
@@ -73,13 +79,13 @@ def next_event(events):
 
     upcoming = [
 
-        entry
+        event
 
-        for entry in events
+        for event in events
 
         if (
-            getattr(entry.event, "date", None) is not None
-            and entry.event.date >= date.today()
+            getattr(event, "date", None) is not None
+            and event.date >= date.today()
         )
 
     ]
@@ -88,13 +94,7 @@ def next_event(events):
 
         return None
 
-    return min(
-
-        upcoming,
-
-        key=lambda entry: entry.event.date,
-
-    )
+    return min(upcoming, key=lambda event: event.date)
 
 
 # ======================================================
@@ -103,13 +103,13 @@ def next_event(events):
 
 def days_until_next_event(events):
 
-    entry = next_event(events)
+    event = next_event(events)
 
-    if entry is None:
+    if event is None:
 
         return None
 
-    return (entry.event.date - date.today()).days
+    return (event.date - date.today()).days
 
 
 # ======================================================
@@ -120,13 +120,13 @@ def upcoming_events(events):
 
     return [
 
-        entry
+        event
 
-        for entry in events
+        for event in events
 
         if (
-            getattr(entry.event, "date", None) is not None
-            and entry.event.date >= date.today()
+            getattr(event, "date", None) is not None
+            and event.date >= date.today()
         )
 
     ]
