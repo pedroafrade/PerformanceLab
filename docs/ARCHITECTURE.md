@@ -239,3 +239,27 @@ Instead of simply analysing workouts, it should understand:
 - what should be done next
 
 The software should progressively evolve from a data analysis toolkit into an intelligent coaching platform.
+
+## Current Domain Model
+
+```
+Athlete
+│
+├── History
+│     └── Workout
+│
+├── GoalBook
+│     └── Goal
+│
+├── Calendar
+│     └── EventEntry
+│             └── Event
+│
+└── AthleteAnalytics
+```
+
+The Athlete object is the root of the domain model.
+
+All analysis is performed through AthleteAnalytics.
+
+Collections (History, GoalBook and EventBook) own domain entities but do not perform analysis.

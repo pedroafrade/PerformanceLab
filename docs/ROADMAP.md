@@ -4,87 +4,180 @@
 
 # Version 0.1
 
-Foundation
+## Foundation
 
-- Athlete
-- Sensor
-- Session
+### Goals
+
+- Athlete model
+- Sensor model
+- Session model
 - Synchronization
-- Comparison
+- Sensor comparison
 - Metrics
 - History
-- GitHub
+- GitHub repository
 
-Status
+### Status
 
-Completed
+✅ Completed
 
 ---
 
 # Version 0.2
 
-Core Architecture
+## Domain Architecture
 
-Goals
+### Goals
 
-- Workout class
-- New package structure
-- Physiology module
-- Interpretation module
-- Recommendation engine foundation
+- Complete domain redesign
+- Workout package
+- History package
+- Goals package
+- Race package
+- Analysis package
+- Athlete as root object
+- Workout model
+- Goal model
+- Event model
+- GoalBook
+- EventBook
+- AthleteAnalytics
+- Unit tests
+- Stable internal architecture
+
+### Status
+
+✅ Completed
 
 ---
 
 # Version 0.3
 
-Training Intelligence
+## Athlete Analytics
 
-Goals
+### Goals
 
-- Training Load
-- Recovery
-- HR Drift
-- Cardiac Efficiency
-- Fatigue Detection
-- Long-term trends
+- Weekly statistics
+- Monthly statistics
+- Yearly statistics
+- Distance analysis
+- Duration analysis
+- Elevation analysis
+- Training consistency
+- Sport distribution
+- Goal progress
+- Event analysis
+- Summary reports
+
+### Status
+
+🚧 In Progress
 
 ---
 
 # Version 0.4
 
-Personalisation
+## Training Physiology
 
-Goals
+### Goals
 
-- Statistical Engine
-- Athlete adaptation
-- Heat adaptation
-- Terrain adaptation
-- Recovery prediction
+- Training Load
+- Acute Training Load (ATL)
+- Chronic Training Load (CTL)
+- Training Stress Balance (TSB)
+- Recovery analysis
+- HR Drift
+- Cardiac Efficiency
+- Fatigue detection
+- Performance trends
+
+### Status
+
+⬜ Planned
 
 ---
 
 # Version 0.5
 
-Natural Language
+## Athlete Intelligence
 
-Goals
+### Goals
+
+- Recommendation engine
+- Recovery prediction
+- Performance prediction
+- Heat adaptation
+- Terrain adaptation
+- Training adaptation
+- Personalised insights
+
+### Status
+
+⬜ Planned
+
+---
+
+# Version 0.6
+
+## Natural Language
+
+### Goals
 
 - Conversational interface
-- Session explanations
 - Athlete reports
 - Coach reports
+- Session explanations
+- Automatic summaries
+- Training recommendations in natural language
+
+### Status
+
+⬜ Planned
 
 ---
 
 # Version 1.0
 
-Public Release
+## Public Release
 
-Goals
+### Goals
 
 - Stable API
-- Documentation
-- Unit tests
+- Complete documentation
+- Tutorials
 - Examples
+- Full unit test coverage
+- Continuous Integration
 - First public release
+
+### Status
+
+⬜ Planned
+
+---
+
+# Long-Term Vision
+
+PerformanceLab aims to become a complete endurance training analysis framework.
+
+The project is organised around a single domain object:
+
+```
+Athlete
+│
+├── History
+│     └── Workout
+│
+├── GoalBook
+│     └── Goal
+│
+├── Calendar (EventBook)
+│     └── EventEntry
+│             └── Event
+│
+└── AthleteAnalytics
+```
+
+Every future feature should extend this architecture rather than replace it.
+
+The long-term objective is to provide a flexible framework capable of analysing, interpreting and predicting endurance performance while remaining independent of any specific sport, device or data source.
