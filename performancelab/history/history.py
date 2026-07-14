@@ -3,21 +3,16 @@ PerformanceLab
 
 History
 
-Collection of workouts belonging to an athlete.
+Container for an athlete's workouts.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 
-import pandas as pd
-
-from ..workout import Workout
+from performancelab.workout import Workout
 
 
 @dataclass
 class History:
-
-    athlete: object | None = None
 
     workouts: list[Workout] = field(default_factory=list)
 
@@ -27,17 +22,15 @@ class History:
 
         self.workouts.append(workout)
 
-        self.workouts.sort(
-            key=lambda w: w.date or datetime.min
-        )
-
-        return workout
+        self._sort()
 
     # ======================================================
 
     def remove(self, workout: Workout):
 
-        self.workouts.remove(workout)
+        if workout in self.workouts:
+
+            self.workouts.remove(workout)
 
     # ======================================================
 
@@ -47,112 +40,58 @@ class History:
 
     # ======================================================
 
-    def first(self, n: int = 1):
+    def _sort(self):
 
-        if n == 1:
-            return self.workouts[0] if self.workouts else None
+        self.workouts.sort(
 
-        return self.workouts[:n]
+            key=lambda workout: (
 
-    # ======================================================
+                workout.info.date is None,
 
-    def last(self, n: int = 1):
+                workout.info.date,
 
-        if n == 1:
-            return self.workouts[-1] if self.workouts else None
+            )
 
-        return self.workouts[-n:]
-
-    # ======================================================
-
-    def sport(self, name: str):
-
-        return [
-
-            workout
-
-            for workout in self.workouts
-
-            if workout.sport == name
-
-        ]
-
-    # ======================================================
-
-    def between(self, start, end):
-
-        return [
-
-            workout
-
-            for workout in self.workouts
-
-            if workout.date is not None
-            and start <= workout.date <= end
-
-        ]
-
-    # ======================================================
-
-    @property
-    def dataframe(self):
-
-        rows = []
-
-        for workout in self.workouts:
-
-            rows.append({
-
-                "date": workout.info.date,
-
-                "sport": workout.info.sport,
-
-                "terrain": workout.environment.terrain,
-
-                "temperature": workout.environment.temperature,
-
-                "rpe": workout.feedback.rpe,
-
-            })
-
-        return pd.DataFrame(rows)
+        )
 
     # ======================================================
 
     @property
     def sports(self):
 
-        return sorted({
+        sports = {
 
-            workout.sport
+            workout.info.sport
 
             for workout in self.workouts
 
-            if workout.sport is not None
+            if workout.info.sport
 
-        })
+        }
+
+        return sorted(sports)
 
     # ======================================================
 
-    def summary(self):
+    @property
+    def first(self):
 
-        print()
+        if not self.workouts:
 
-        print("=" * 50)
+            return None
 
-        print("History")
+        return self.workouts[0]
 
-        print("=" * 50)
+    # ======================================================
 
-        if self.athlete is not None:
+    @property
+    def last(self):
 
-            print(f"Athlete : {self.athlete.name}")
+        if not self.workouts:
 
-        print(f"Workouts: {len(self)}")
+            return None
 
-        print(f"Sports  : {', '.join(self.sports)}")
-
-        print("=" * 50)
+        return self.workouts[-1]
 
     # ======================================================
 
@@ -162,18 +101,30 @@ class History:
 
     # ======================================================
 
-    def __getitem__(self, item):
-
-        return self.workouts[item]
-
-    # ======================================================
-
     def __iter__(self):
 
         return iter(self.workouts)
 
     # ======================================================
 
+    def __getitem__(self, index):
+
+        return self.workouts[index]
+
+    # ======================================================
+
+    def __contains__(self, workout):
+
+        return workout in self.workouts
+
+    # ======================================================
+
     def __repr__(self):
 
-        return f"History({len(self)} workouts)"
+        return (
+
+            f"History("
+
+            f"{len(self.workouts)} workouts)"
+
+        )

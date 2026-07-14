@@ -3,7 +3,7 @@ PerformanceLab
 
 AthleteAnalytics
 
-Descriptive analysis of an athlete's training history.
+Descriptive analysis of an athlete's training data.
 """
 
 from datetime import timedelta
@@ -13,9 +13,16 @@ class AthleteAnalytics:
 
     # ======================================================
 
-    def __init__(self, history):
+    def __init__(self, athlete):
 
-        self.history = history
+        self.athlete = athlete
+
+    # ======================================================
+
+    @property
+    def history(self):
+
+        return self.athlete.history
 
     # ======================================================
 
@@ -34,17 +41,77 @@ class AthleteAnalytics:
     # ======================================================
 
     @property
+    def first_workout(self):
+
+        if len(self.history) == 0:
+
+            return None
+
+        return self.history[0]
+
+    # ======================================================
+
+    @property
+    def last_workout(self):
+
+        if len(self.history) == 0:
+
+            return None
+
+        return self.history[-1]
+
+    # ======================================================
+
+    @property
+    def total_distance(self):
+
+        total = 0.0
+
+        for workout in self.history:
+
+            distance = getattr(workout.info, "distance", None)
+
+            if distance is not None:
+
+                total += distance
+
+        return total
+
+    # ======================================================
+
+    @property
     def total_duration(self):
 
         total = timedelta()
 
         for workout in self.history:
 
-            duration = getattr(workout, "duration", None)
+            duration = getattr(workout.info, "duration", None)
 
             if duration is not None:
 
                 total += duration
+
+        return total
+
+    # ======================================================
+
+    @property
+    def total_elevation(self):
+
+        total = 0.0
+
+        for workout in self.history:
+
+            elevation = getattr(
+                workout.environment,
+                "elevation_gain",
+                None
+            )
+
+            if elevation is not None:
+
+                total += elevation
 
         return total
 
@@ -71,22 +138,46 @@ class AthleteAnalytics:
 
     # ======================================================
 
+    @property
+    def training_days(self):
+
+        dates = {
+
+            workout.info.date
+
+            for workout in self.history
+
+            if workout.info.date is not None
+
+        }
+
+        return len(dates)
+
+    # ======================================================
+
     def summary(self):
 
-        print()
+        return {
 
-        print("=" * 50)
+            "workouts": self.number_of_workouts,
 
-        print("ATHLETE ANALYTICS")
+            "sports": self.sports,
 
-        print("=" * 50)
+            "distance": self.total_distance,
 
-        print(f"Workouts   : {self.number_of_workouts}")
-        print(f"Sports     : {', '.join(self.sports)}")
-        print(f"Duration   : {self.total_duration}")
-        print(f"Average RPE: {self.average_rpe}")
+            "duration": self.total_duration,
 
-        print("=" * 50)
+            "elevation": self.total_elevation,
+
+            "training_days": self.training_days,
+
+            "average_rpe": self.average_rpe,
+
+            "first_workout": self.first_workout,
+
+            "last_workout": self.last_workout,
+
+        }
 
     # ======================================================
 
