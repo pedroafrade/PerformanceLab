@@ -7,7 +7,7 @@ Represents a sporting event.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 
 
 @dataclass
@@ -19,7 +19,7 @@ class Event:
 
     country: str = ""
 
-    date: datetime | None = None
+    date: date | None = None
 
     sport: str = ""
 
@@ -48,7 +48,7 @@ class Event:
 
             return False
 
-        return self.date > datetime.now()
+        return self.date > date.today()
 
     # ======================================================
 
@@ -59,7 +59,7 @@ class Event:
 
             return None
 
-        return (self.date - datetime.now()).days
+        return (self.date - date.today()).days
 
     # ======================================================
 

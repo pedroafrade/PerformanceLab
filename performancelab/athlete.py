@@ -61,6 +61,6 @@ class Athlete:
 
             f"goals={len(self.goals)}, "
 
-            f"calendar={len(self.calendar)})"
+            f"events={len(self.events)})"
 
         )

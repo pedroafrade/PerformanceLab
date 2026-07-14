@@ -77,24 +77,25 @@ def active_goals(goals):
 
 def next_event(events):
 
-    upcoming = [
+    upcoming = []
 
-        event
+    for item in events:
 
-        for event in events
+        event = getattr(item, "event", item)
 
         if (
             getattr(event, "date", None) is not None
             and event.date >= date.today()
-        )
-
-    ]
+        ):
+            upcoming.append(item)
 
     if not upcoming:
-
         return None
 
-    return min(upcoming, key=lambda event: event.date)
+    return min(
+        upcoming,
+        key=lambda item: getattr(item, "event", item).date,
+    )
 
 
 # ======================================================
@@ -103,11 +104,12 @@ def next_event(events):
 
 def days_until_next_event(events):
 
-    event = next_event(events)
+    item = next_event(events)
 
-    if event is None:
-
+    if item is None:
         return None
+
+    event = getattr(item, "event", item)
 
     return (event.date - date.today()).days
 
@@ -118,15 +120,16 @@ def days_until_next_event(events):
 
 def upcoming_events(events):
 
-    return [
+    result = []
 
-        event
+    for item in events:
 
-        for event in events
+        event = getattr(item, "event", item)
 
         if (
             getattr(event, "date", None) is not None
             and event.date >= date.today()
-        )
+        ):
+            result.append(item)
 
-    ]
+    return result
