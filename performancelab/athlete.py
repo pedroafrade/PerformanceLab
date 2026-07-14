@@ -1,140 +1,53 @@
 """
 PerformanceLab
 
-athlete.py
+Athlete
 
-Representação de um atleta.
+Represents an athlete and all associated training data.
 """
 
 from dataclasses import dataclass, field
 
-from .history.history import History
+from .history import History
+from .goals.goalbook import GoalBook
+from .race.eventbook import EventBook
+from .analysis import AthleteAnalytics
 
 
 @dataclass
 class Athlete:
 
-    # =====================================================
-    # Dados pessoais
-    # =====================================================
+    name: str = ""
 
-    name: str
+    birth_date: object | None = None
 
-    birth_year: int
+    sex: str = ""
 
-    sex: str
+    height: float | None = None
 
-    weight: float
+    weight: float | None = None
 
-    height: float
+    ftp: float | None = None
 
-    resting_hr: int
+    max_hr: int | None = None
 
-    max_hr: int
+    resting_hr: int | None = None
 
-    threshold_hr: int
+    history: History = field(default_factory=History)
 
-    sports: list = field(default_factory=list)
+    goals: GoalBook = field(default_factory=GoalBook)
 
-    metadata: dict = field(default_factory=dict)
+    calendar: EventBook = field(default_factory=EventBook)
 
-    # =====================================================
+    analytics: AthleteAnalytics = field(init=False)
+
+    # ======================================================
 
     def __post_init__(self):
 
-        # Cada atleta possui automaticamente um histórico
+        self.analytics = AthleteAnalytics(self)
 
-        self.history = History(self)
-
-    # =====================================================
-
-    @property
-    def age(self):
-
-        from datetime import datetime
-
-        return datetime.now().year - self.birth_year
-
-    # =====================================================
-
-    @property
-    def bmi(self):
-
-        return self.weight / (self.height ** 2)
-
-    # =====================================================
-
-    @property
-    def hr_reserve(self):
-
-        return self.max_hr - self.resting_hr
-
-    # =====================================================
-
-    @property
-    def primary_sport(self):
-
-        if len(self.sports):
-
-            return self.sports[0]
-
-        return None
-
-    # =====================================================
-
-    @property
-    def n_sessions(self):
-
-        return len(self.history)
-
-    # =====================================================
-
-    def summary(self):
-
-        print()
-
-        print("=" * 45)
-
-        print("ATHLETE")
-
-        print("=" * 45)
-
-        print(f"Nome            : {self.name}")
-
-        print(f"Idade           : {self.age}")
-
-        print(f"Sexo            : {self.sex}")
-
-        print(f"Peso            : {self.weight:.1f} kg")
-
-        print(f"Altura          : {self.height:.2f} m")
-
-        print(f"BMI             : {self.bmi:.1f}")
-
-        print()
-
-        print(f"FC repouso      : {self.resting_hr} bpm")
-
-        print(f"FC máxima       : {self.max_hr} bpm")
-
-        print(f"FC limiar       : {self.threshold_hr} bpm")
-
-        print(f"Reserva FC      : {self.hr_reserve} bpm")
-
-        print()
-
-        print(
-            "Modalidades     : "
-            + ", ".join(self.sports)
-        )
-
-        print(
-            f"Sessões         : {self.n_sessions}"
-        )
-
-        print("=" * 45)
-
-    # =====================================================
+    # ======================================================
 
     def __repr__(self):
 
@@ -142,8 +55,12 @@ class Athlete:
 
             f"Athlete("
 
-            f"{self.name}, "
+            f"name='{self.name}', "
 
-            f"{self.n_sessions} sessions)"
+            f"workouts={len(self.history)}, "
+
+            f"goals={len(self.goals)}, "
+
+            f"calendar={len(self.calendar)})"
 
         )
