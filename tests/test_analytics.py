@@ -463,3 +463,86 @@ def test_summary():
 
     assert summary["average_rpe"] == 7
 
+# ======================================================
+
+def test_performance_management():
+
+    athlete = Athlete(name="Pedro")
+
+    athlete.history.add(
+
+        create_workout(
+
+            "Running",
+
+            date(2026, 7, 1),
+
+            10,
+
+            timedelta(hours=1),
+
+            100,
+
+            5,
+
+        )
+
+    )
+
+    athlete.history.add(
+
+        create_workout(
+
+            "Running",
+
+            date(2026, 7, 3),
+
+            12,
+
+            timedelta(hours=1),
+
+            120,
+
+            6,
+
+        )
+
+    )
+
+    analytics = athlete.analytics
+
+    assert analytics.daily_loads.loads == [
+
+        300,
+
+        0.0,
+
+        360,
+
+    ]
+
+    assert analytics.pmc is not None
+
+    assert isinstance(
+
+        analytics.ctl,
+
+        float,
+
+    )
+
+    assert isinstance(
+
+        analytics.atl,
+
+        float,
+
+    )
+
+    assert isinstance(
+
+        analytics.tsb,
+
+        float,
+
+    )

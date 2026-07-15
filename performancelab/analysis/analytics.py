@@ -6,6 +6,11 @@ AthleteAnalytics
 Public analytics interface for an athlete.
 """
 
+from performancelab.analysis.performance import (
+    PerformanceManagementChart,
+)
+from performancelab.training import DailyLoadBuilder
+
 from . import consistency
 from . import time
 from . import volume
@@ -37,6 +42,53 @@ class AthleteAnalytics:
     def events(self):
 
         return self.athlete.events
+
+    # ======================================================
+    # Daily Training Load
+    # ======================================================
+
+    @property
+    def daily_loads(self):
+
+        return DailyLoadBuilder(
+
+            self.history
+
+        ).build()
+
+    # ======================================================
+    # Performance Management
+    # ======================================================
+
+    @property
+    def pmc(self):
+
+        return PerformanceManagementChart(
+
+            daily_loads=self.daily_loads.loads,
+
+        )
+
+    # ======================================================
+
+    @property
+    def ctl(self):
+
+        return self.pmc.current_ctl
+
+    # ======================================================
+
+    @property
+    def atl(self):
+
+        return self.pmc.current_atl
+
+    # ======================================================
+
+    @property
+    def tsb(self):
+
+        return self.pmc.current_tsb
 
     # ======================================================
     # Basic information
