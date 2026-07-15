@@ -6,6 +6,7 @@ Pace Physiology
 Utilities for running pace and speed.
 """
 
+from collections.abc import Iterable
 from datetime import timedelta
 
 
@@ -13,21 +14,24 @@ from datetime import timedelta
 # Speed
 # ======================================================
 
-def speed(distance, duration):
+def speed(
+    distance: float | None,
+    elapsed: timedelta | None,
+) -> float | None:
 
     """
-    Returns speed in km/h.
+    Returns speed in kilometres per hour.
     """
 
-    if (
-        distance is None
-        or duration is None
-        or duration.total_seconds() == 0
-    ):
+    if distance is None or elapsed is None:
 
         return None
 
-    hours = duration.total_seconds() / 3600
+    if distance <= 0 or elapsed.total_seconds() <= 0:
+
+        return None
+
+    hours = elapsed.total_seconds() / 3600
 
     return distance / hours
 
@@ -36,25 +40,27 @@ def speed(distance, duration):
 # Pace
 # ======================================================
 
-def pace(distance, duration):
+def pace(
+    distance: float | None,
+    elapsed: timedelta | None,
+) -> float | None:
 
     """
-    Returns pace (minutes per kilometre).
+    Returns pace in minutes per kilometre.
 
-    Example
-
-    5.0 = 5:00 min/km
+    Example:
+        5.0 represents 5:00 min/km.
     """
 
-    if (
-        distance is None
-        or duration is None
-        or distance == 0
-    ):
+    if distance is None or elapsed is None:
 
         return None
 
-    minutes = duration.total_seconds() / 60
+    if distance <= 0 or elapsed.total_seconds() <= 0:
+
+        return None
+
+    minutes = elapsed.total_seconds() / 60
 
     return minutes / distance
 
@@ -63,20 +69,24 @@ def pace(distance, duration):
 # Duration from Pace
 # ======================================================
 
-def duration(distance, pace):
+def duration(
+    distance: float | None,
+    pace_value: float | None,
+) -> timedelta | None:
 
     """
-    Returns timedelta.
+    Returns duration for a distance and pace.
     """
 
-    if (
-        distance is None
-        or pace is None
-    ):
+    if distance is None or pace_value is None:
 
         return None
 
-    minutes = distance * pace
+    if distance <= 0 or pace_value <= 0:
+
+        return None
+
+    minutes = distance * pace_value
 
     return timedelta(minutes=minutes)
 
@@ -85,100 +95,110 @@ def duration(distance, pace):
 # Pace from Speed
 # ======================================================
 
-def pace_from_speed(speed):
+def pace_from_speed(
+    speed_value: float | None,
+) -> float | None:
 
     """
-    Speed (km/h) -> pace (min/km)
+    Converts speed in km/h to pace in min/km.
     """
 
-    if speed in (None, 0):
+    if speed_value is None or speed_value <= 0:
 
         return None
 
-    return 60 / speed
+    return 60 / speed_value
 
 
 # ======================================================
 # Speed from Pace
 # ======================================================
 
-def speed_from_pace(pace):
+def speed_from_pace(
+    pace_value: float | None,
+) -> float | None:
 
     """
-    Pace (min/km) -> speed (km/h)
+    Converts pace in min/km to speed in km/h.
     """
 
-    if pace in (None, 0):
+    if pace_value is None or pace_value <= 0:
 
         return None
 
-    return 60 / pace
+    return 60 / pace_value
 
 
 # ======================================================
 # Fastest Pace
 # ======================================================
 
-def fastest(values):
+def fastest(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
         for value in values
 
-        if value is not None
+        if value is not None and value > 0
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return min(values)
+    return min(valid_values)
 
 
 # ======================================================
 # Slowest Pace
 # ======================================================
 
-def slowest(values):
+def slowest(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
         for value in values
 
-        if value is not None
+        if value is not None and value > 0
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return max(values)
+    return max(valid_values)
 
 
 # ======================================================
 # Average Pace
 # ======================================================
 
-def average(values):
+def average(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
         for value in values
 
-        if value is not None
+        if value is not None and value > 0
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return sum(values) / len(values)
+    return sum(valid_values) / len(valid_values)

@@ -1,14 +1,7 @@
-from datetime import date
-
 from performancelab.analysis.performance.atl import (
     atl,
     atl_curve,
-    atl_from_weeks,
-    decay_constant,
 )
-
-from performancelab.training.weekly import WeeklySummary
-
 
 
 # ======================================================
@@ -24,7 +17,11 @@ def test_atl_constant_load():
 
     loads = [100] * 20
 
-    assert round(atl(loads), 1) == 100.0
+    value = atl(loads)
+
+    assert 0 < value < 100
+
+    assert round(value, 1) == 94.3
 
 
 # ======================================================
@@ -33,7 +30,11 @@ def test_atl_increasing():
 
     loads = [50, 60, 70, 80, 90]
 
-    assert atl(loads) > 50
+    value = atl(loads)
+
+    assert value > 0
+
+    assert value < 90
 
 
 # ======================================================
@@ -44,6 +45,8 @@ def test_atl_curve():
 
     assert len(curve) == 3
 
-    assert curve[0] == 50
+    assert 0 < curve[0] < 50
 
-    assert curve[-1] > 50
+    assert curve[1] > curve[0]
+
+    assert curve[2] > curve[1]

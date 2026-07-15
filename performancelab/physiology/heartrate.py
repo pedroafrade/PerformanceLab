@@ -6,38 +6,72 @@ Heart Rate Physiology
 Utilities for heart rate calculations.
 """
 
+from collections.abc import Iterable
+
 
 # ======================================================
 # Heart Rate Reserve
 # ======================================================
 
-def heart_rate_reserve(max_hr, resting_hr):
+def heart_rate_reserve(
+    max_hr: float | None,
+    resting_hr: float | None,
+) -> float | None:
 
     if max_hr is None or resting_hr is None:
 
         return None
 
-    return max_hr - resting_hr
+    reserve = max_hr - resting_hr
+
+    if reserve <= 0:
+
+        return None
+
+    return reserve
 
 
 # ======================================================
 # Percentage of Maximum Heart Rate
 # ======================================================
 
-def percent_max_hr(hr, max_hr):
+def percent_max_hr(
+    hr: float | None,
+    max_hr: float | None,
+) -> float | None:
 
-    if hr is None or max_hr in (None, 0):
+    if hr is None or max_hr is None:
 
         return None
 
-    return (hr / max_hr) * 100
+    if max_hr <= 0:
+
+        return None
+
+    return (
+
+        hr
+
+        / max_hr
+
+        * 100
+
+    )
 
 
 # ======================================================
 # Percentage of Heart Rate Reserve (Karvonen)
 # ======================================================
 
-def percent_hrr(hr, max_hr, resting_hr):
+def percent_hrr(
+    hr: float | None,
+    max_hr: float | None,
+    resting_hr: float | None,
+) -> float | None:
+
+    if hr is None or resting_hr is None:
+
+        return None
 
     reserve = heart_rate_reserve(
 
@@ -47,7 +81,7 @@ def percent_hrr(hr, max_hr, resting_hr):
 
     )
 
-    if hr is None or reserve in (None, 0):
+    if reserve is None:
 
         return None
 
@@ -57,14 +91,24 @@ def percent_hrr(hr, max_hr, resting_hr):
 
         / reserve
 
-    ) * 100
+        * 100
+
+    )
 
 
 # ======================================================
 # Karvonen Target Heart Rate
 # ======================================================
 
-def karvonen(percent, max_hr, resting_hr):
+def karvonen(
+    percent: float | None,
+    max_hr: float | None,
+    resting_hr: float | None,
+) -> float | None:
+
+    if percent is None or resting_hr is None:
+
+        return None
 
     reserve = heart_rate_reserve(
 
@@ -80,7 +124,11 @@ def karvonen(percent, max_hr, resting_hr):
 
     return resting_hr + (
 
-        reserve * percent / 100
+        reserve
+
+        * percent
+
+        / 100
 
     )
 
@@ -89,9 +137,11 @@ def karvonen(percent, max_hr, resting_hr):
 # Average Heart Rate
 # ======================================================
 
-def average(values):
+def average(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
@@ -101,8 +151,8 @@ def average(values):
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return sum(values) / len(values)
+    return sum(valid_values) / len(valid_values)

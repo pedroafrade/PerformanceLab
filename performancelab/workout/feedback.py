@@ -33,6 +33,8 @@ class AthleteFeedback:
     # Free text
     notes: str = ""
 
+    # ======================================================
+
     def __repr__(self):
 
         return (

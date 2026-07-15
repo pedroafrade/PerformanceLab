@@ -11,9 +11,16 @@ Utilities for physiological thresholds.
 # Lactate Threshold Heart Rate
 # ======================================================
 
-def lthr(max_hr, percent=90):
+def lthr(
+    max_hr: float | None,
+    percent: float = 90,
+) -> float | None:
 
-    if max_hr is None:
+    if max_hr is None or max_hr <= 0:
+
+        return None
+
+    if percent <= 0:
 
         return None
 
@@ -24,9 +31,16 @@ def lthr(max_hr, percent=90):
 # Aerobic Threshold Heart Rate
 # ======================================================
 
-def aerobic_threshold(max_hr, percent=80):
+def aerobic_threshold(
+    max_hr: float | None,
+    percent: float = 80,
+) -> float | None:
 
-    if max_hr is None:
+    if max_hr is None or max_hr <= 0:
+
+        return None
+
+    if percent <= 0:
 
         return None
 
@@ -37,9 +51,16 @@ def aerobic_threshold(max_hr, percent=80):
 # Anaerobic Threshold Heart Rate
 # ======================================================
 
-def anaerobic_threshold(max_hr, percent=90):
+def anaerobic_threshold(
+    max_hr: float | None,
+    percent: float = 90,
+) -> float | None:
 
-    if max_hr is None:
+    if max_hr is None or max_hr <= 0:
+
+        return None
+
+    if percent <= 0:
 
         return None
 
@@ -50,12 +71,16 @@ def anaerobic_threshold(max_hr, percent=90):
 # Threshold Pace
 # ======================================================
 
-def threshold_pace(distance, duration_hours):
+def threshold_pace(
+    distance: float | None,
+    duration_hours: float | None,
+) -> float | None:
 
-    if (
-        distance in (None, 0)
-        or duration_hours in (None, 0)
-    ):
+    if distance is None or duration_hours is None:
+
+        return None
+
+    if distance <= 0 or duration_hours <= 0:
 
         return None
 
@@ -66,12 +91,16 @@ def threshold_pace(distance, duration_hours):
 # Threshold Speed
 # ======================================================
 
-def threshold_speed(distance, duration_hours):
+def threshold_speed(
+    distance: float | None,
+    duration_hours: float | None,
+) -> float | None:
 
-    if (
-        distance is None
-        or duration_hours in (None, 0)
-    ):
+    if distance is None or duration_hours is None:
+
+        return None
+
+    if distance <= 0 or duration_hours <= 0:
 
         return None
 
@@ -82,6 +111,12 @@ def threshold_speed(distance, duration_hours):
 # Threshold Power
 # ======================================================
 
-def threshold_power(ftp):
+def threshold_power(
+    ftp: float | None,
+) -> float | None:
+
+    if ftp is None or ftp <= 0:
+
+        return None
 
     return ftp

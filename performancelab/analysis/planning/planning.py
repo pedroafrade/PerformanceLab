@@ -6,8 +6,6 @@ Planning Analytics
 Utilities for analysing future goals and events.
 """
 
-from datetime import date
-
 
 # ======================================================
 # Next goal
@@ -15,24 +13,7 @@ from datetime import date
 
 def next_goal(goals):
 
-    upcoming = [
-
-        goal
-
-        for goal in goals
-
-        if (
-            getattr(goal, "date", None) is not None
-            and goal.date >= date.today()
-        )
-
-    ]
-
-    if not upcoming:
-
-        return None
-
-    return min(upcoming, key=lambda goal: goal.date)
+    return goals.next
 
 
 # ======================================================
@@ -47,7 +28,7 @@ def days_until_next_goal(goals):
 
         return None
 
-    return (goal.date - date.today()).days
+    return goal.days_remaining
 
 
 # ======================================================
@@ -56,19 +37,7 @@ def days_until_next_goal(goals):
 
 def active_goals(goals):
 
-    return [
-
-        goal
-
-        for goal in goals
-
-        if (
-            getattr(goal, "completed", False) is False
-            and getattr(goal, "date", None) is not None
-            and goal.date >= date.today()
-        )
-
-    ]
+    return goals.active
 
 
 # ======================================================
@@ -77,25 +46,7 @@ def active_goals(goals):
 
 def next_event(events):
 
-    upcoming = []
-
-    for item in events:
-
-        event = getattr(item, "event", item)
-
-        if (
-            getattr(event, "date", None) is not None
-            and event.date >= date.today()
-        ):
-            upcoming.append(item)
-
-    if not upcoming:
-        return None
-
-    return min(
-        upcoming,
-        key=lambda item: getattr(item, "event", item).date,
-    )
+    return events.next
 
 
 # ======================================================
@@ -104,14 +55,13 @@ def next_event(events):
 
 def days_until_next_event(events):
 
-    item = next_event(events)
+    entry = next_event(events)
 
-    if item is None:
+    if entry is None:
+
         return None
 
-    event = getattr(item, "event", item)
-
-    return (event.date - date.today()).days
+    return entry.event.days_remaining
 
 
 # ======================================================
@@ -120,16 +70,4 @@ def days_until_next_event(events):
 
 def upcoming_events(events):
 
-    result = []
-
-    for item in events:
-
-        event = getattr(item, "event", item)
-
-        if (
-            getattr(event, "date", None) is not None
-            and event.date >= date.today()
-        ):
-            result.append(item)
-
-    return result
+    return events.upcoming

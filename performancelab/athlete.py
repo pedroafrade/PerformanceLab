@@ -12,6 +12,7 @@ from .history import History
 from .goals.goalbook import GoalBook
 from .race.eventbook import EventBook
 from .analysis import AthleteAnalytics
+from datetime import date
 
 
 @dataclass
@@ -19,9 +20,9 @@ class Athlete:
 
     name: str = ""
 
-    birth_date: object | None = None
+    birth_date: date | None = None
 
-    sex: str = ""
+    gender: str = ""
 
     height: float | None = None
 

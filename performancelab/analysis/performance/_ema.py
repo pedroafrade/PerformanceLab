@@ -4,69 +4,150 @@ PerformanceLab
 Internal Exponential Moving Average utilities.
 """
 
+from collections.abc import Iterable
 from math import exp
 
 
 # ======================================================
+# Decay constant
+# ======================================================
 
-def decay_constant(days):
+def decay_constant(
+    days: int | float,
+) -> float:
 
     """
-    Exponential decay constant.
+    Returns the exponential smoothing constant.
+
+    Parameters
+    ----------
+    days:
+        Positive time constant.
     """
+
+    if days <= 0:
+
+        raise ValueError(
+            "days must be greater than zero"
+        )
 
     return 1 - exp(-1 / days)
 
 
 # ======================================================
+# Load normalization
+# ======================================================
 
-def exponential_load(loads, days):
+def _normalize_loads(
+    loads: Iterable[float | None],
+) -> list[float]:
 
-    """
-    Exponential moving average.
-    """
+    values = []
 
-    loads = list(loads)
+    for load in loads:
 
-    if not loads:
+        if load is None:
 
-        return 0.0
+            values.append(0.0)
 
-    alpha = decay_constant(days)
+            continue
 
-    value = loads[0]
+        if load < 0:
 
-    for load in loads[1:]:
+            raise ValueError(
+                "training loads cannot be negative"
+            )
 
-        value += alpha * (load - value)
+        values.append(float(load))
 
-    return value
+    return values
 
 
 # ======================================================
+# Exponential load
+# ======================================================
 
-def exponential_curve(loads, days):
+def exponential_load(
+    loads: Iterable[float | None],
+    days: int | float,
+    initial: float = 0.0,
+) -> float:
 
     """
-    Returns EMA after every sample.
+    Returns the final exponential moving-average value.
+
+    Missing loads are treated as zero-load days.
     """
 
-    loads = list(loads)
+    if initial < 0:
 
-    if not loads:
+        raise ValueError(
+            "initial value cannot be negative"
+        )
+
+    values = _normalize_loads(loads)
+
+    if not values:
+
+        return float(initial)
+
+    alpha = decay_constant(days)
+
+    current = float(initial)
+
+    for load in values:
+
+        current += alpha * (
+
+            load - current
+
+        )
+
+    return current
+
+
+# ======================================================
+# Exponential curve
+# ======================================================
+
+def exponential_curve(
+    loads: Iterable[float | None],
+    days: int | float,
+    initial: float = 0.0,
+) -> list[float]:
+
+    """
+    Returns one EMA value after each sample.
+
+    Missing loads are treated as zero-load days.
+    """
+
+    if initial < 0:
+
+        raise ValueError(
+            "initial value cannot be negative"
+        )
+
+    values = _normalize_loads(loads)
+
+    if not values:
 
         return []
 
     alpha = decay_constant(days)
 
-    current = loads[0]
+    current = float(initial)
 
-    values = [current]
+    curve = []
 
-    for load in loads[1:]:
+    for load in values:
 
-        current += alpha * (load - current)
+        current += alpha * (
 
-        values.append(current)
+            load - current
 
-    return values
+        )
+
+        curve.append(current)
+
+    return curve

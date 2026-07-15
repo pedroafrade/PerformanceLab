@@ -7,10 +7,11 @@ Represents one training week.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 
-from performancelab.history import History
+from performancelab.analysis import time
 from performancelab.analysis import volume
+from performancelab.history import History
 
 from . import load
 
@@ -42,36 +43,21 @@ class WeeklySummary:
     @property
     def training_days(self):
 
-        return len({
-
-            workout.info.date
-
-            for workout in self.history
-
-            if workout.info.date is not None
-
-        })
-
-    # ======================================================
-
-    @property
-    def total_distance(self):
-
-        return volume.total_distance(self.history)
+        return time.training_days(self.history)
 
     # ======================================================
 
     @property
     def total_duration(self):
 
+        """
+        Total training time across all sports.
+
+        This represents total time spent training, not
+        sport-specific volume.
+        """
+
         return volume.total_duration(self.history)
-
-    # ======================================================
-
-    @property
-    def total_elevation(self):
-
-        return volume.total_elevation(self.history)
 
     # ======================================================
 
@@ -85,31 +71,61 @@ class WeeklySummary:
     @property
     def by_sport(self):
 
-        """
-        Returns one History object for each sport.
-
-        Example
-
-        {
-            "Running": History(...),
-            "Cycling": History(...),
-            "Swimming": History(...)
-        }
-        """
-
-        sports = {}
+        histories = {}
 
         for workout in self.history:
 
-            sport = workout.info.sport or "Unknown"
+            sport = workout.sport or "Unknown"
 
-            if sport not in sports:
+            if sport not in histories:
 
-                sports[sport] = History()
+                histories[sport] = History()
 
-            sports[sport].add(workout)
+            histories[sport].add(workout)
 
-        return sports
+        return histories
+
+    # ======================================================
+
+    def history_for(self, sport):
+
+        return self.by_sport.get(
+
+            sport,
+
+            History(),
+
+        )
+
+    # ======================================================
+
+    def distance_for(self, sport):
+
+        return volume.total_distance(
+
+            self.history_for(sport),
+
+        )
+
+    # ======================================================
+
+    def duration_for(self, sport):
+
+        return volume.total_duration(
+
+            self.history_for(sport),
+
+        )
+
+    # ======================================================
+
+    def elevation_for(self, sport):
+
+        return volume.total_elevation(
+
+            self.history_for(sport),
+
+        )
 
     # ======================================================
 
@@ -117,12 +133,6 @@ class WeeklySummary:
     def load(self):
 
         return load.weekly_load(self)
-
-    # ======================================================
-
-    def history_for(self, sport):
-
-        return self.by_sport.get(sport, History())
 
     # ======================================================
 

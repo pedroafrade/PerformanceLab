@@ -8,9 +8,9 @@ Complete workout object.
 
 from dataclasses import dataclass, field
 
-from .info import WorkoutInfo
 from .environment import Environment
 from .feedback import AthleteFeedback
+from .info import WorkoutInfo
 from .sensors import SensorCollection
 
 
@@ -38,6 +38,27 @@ class Workout:
     def date(self):
 
         return self.info.date
+
+    # ======================================================
+
+    @property
+    def distance(self):
+
+        return self.info.distance
+
+    # ======================================================
+
+    @property
+    def duration(self):
+
+        return self.info.duration
+
+    # ======================================================
+
+    @property
+    def elevation_gain(self):
+
+        return self.info.elevation_gain
 
     # ======================================================
 

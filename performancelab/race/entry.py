@@ -52,7 +52,7 @@ class EventEntry:
     @property
     def is_goal(self):
 
-        return self.priority.upper() in ["A", "B", "C"]
+        return self.priority.upper() in {"A", "B", "C"}
 
     # ======================================================
 

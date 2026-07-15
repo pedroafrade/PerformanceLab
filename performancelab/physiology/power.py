@@ -6,14 +6,23 @@ Power Physiology
 Utilities for power calculations.
 """
 
+from collections.abc import Iterable
+
 
 # ======================================================
 # Relative Power
 # ======================================================
 
-def relative_power(power, weight):
+def relative_power(
+    power: float | None,
+    weight: float | None,
+) -> float | None:
 
-    if power is None or weight in (None, 0):
+    if power is None or weight is None:
+
+        return None
+
+    if weight <= 0:
 
         return None
 
@@ -24,22 +33,44 @@ def relative_power(power, weight):
 # Percentage of FTP
 # ======================================================
 
-def percent_ftp(power, ftp):
+def percent_ftp(
+    power: float | None,
+    ftp: float | None,
+) -> float | None:
 
-    if power is None or ftp in (None, 0):
+    if power is None or ftp is None:
 
         return None
 
-    return (power / ftp) * 100
+    if ftp <= 0:
+
+        return None
+
+    return (
+
+        power
+
+        / ftp
+
+        * 100
+
+    )
 
 
 # ======================================================
 # Functional Threshold Power from W/kg
 # ======================================================
 
-def ftp_from_relative(relative, weight):
+def ftp_from_relative(
+    relative: float | None,
+    weight: float | None,
+) -> float | None:
 
     if relative is None or weight is None:
+
+        return None
+
+    if weight <= 0:
 
         return None
 
@@ -50,9 +81,11 @@ def ftp_from_relative(relative, weight):
 # Average Power
 # ======================================================
 
-def average(values):
+def average(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
@@ -62,20 +95,22 @@ def average(values):
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return sum(values) / len(values)
+    return sum(valid_values) / len(valid_values)
 
 
 # ======================================================
 # Peak Power
 # ======================================================
 
-def peak(values):
+def peak(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
@@ -85,20 +120,22 @@ def peak(values):
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return max(values)
+    return max(valid_values)
 
 
 # ======================================================
 # Minimum Power
 # ======================================================
 
-def minimum(values):
+def minimum(
+    values: Iterable[float | None],
+) -> float | None:
 
-    values = [
+    valid_values = [
 
         value
 
@@ -108,8 +145,8 @@ def minimum(values):
 
     ]
 
-    if not values:
+    if not valid_values:
 
         return None
 
-    return min(values)
+    return min(valid_values)

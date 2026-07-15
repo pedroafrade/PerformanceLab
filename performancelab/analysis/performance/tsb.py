@@ -1,39 +1,44 @@
 """
 PerformanceLab
 
-Training Stress Balance (TSB)
+Training Stress Balance
 
 TSB = CTL - ATL
-
-Positive values:
-    Fresh athlete
-
-Negative values:
-    Fatigued athlete
 """
 
-from .ctl import ctl_curve
+from collections.abc import Iterable
+
 from .atl import atl_curve
+from .ctl import ctl_curve
 
 
 # ======================================================
+# Training Stress Balance
+# ======================================================
 
-def training_stress_balance(ctl_value, atl_value):
+def training_stress_balance(
+    ctl_value: float,
+    atl_value: float,
+) -> float:
 
     """
     Calculates Training Stress Balance.
+
+    Positive values indicate that CTL exceeds ATL.
+    Negative values indicate that ATL exceeds CTL.
     """
 
     return ctl_value - atl_value
 
 
 # ======================================================
+# TSB Alias
+# ======================================================
 
-def tsb(ctl_value, atl_value):
-
-    """
-    Alias for Training Stress Balance.
-    """
+def tsb(
+    ctl_value: float,
+    atl_value: float,
+) -> float:
 
     return training_stress_balance(
 
@@ -45,20 +50,15 @@ def tsb(ctl_value, atl_value):
 
 
 # ======================================================
+# Form Alias
+# ======================================================
 
-def form(ctl_value, atl_value):
+def form(
+    ctl_value: float,
+    atl_value: float,
+) -> float:
 
-    """
-    Training form.
-
-    Positive:
-        Fresh
-
-    Negative:
-        Fatigued
-    """
-
-    return tsb(
+    return training_stress_balance(
 
         ctl_value,
 
@@ -68,35 +68,66 @@ def form(ctl_value, atl_value):
 
 
 # ======================================================
+# Fatigue Difference
+# ======================================================
 
-def fatigue(ctl_value, atl_value):
+def fatigue(
+    ctl_value: float,
+    atl_value: float,
+) -> float:
 
     """
-    Acute fatigue.
+    Returns ATL minus CTL.
 
-    Positive values indicate ATL exceeds CTL.
+    This is the inverse sign of TSB.
     """
 
     return atl_value - ctl_value
 
 
 # ======================================================
+# TSB Curve
+# ======================================================
 
-def tsb_curve(loads):
+def tsb_curve(
+    daily_loads: Iterable[float],
+    ctl_days: int = 42,
+    atl_days: int = 7,
+) -> list[float]:
 
     """
-    Returns daily TSB values.
+    Returns one TSB value for each daily load.
     """
 
-    ctl_values = ctl_curve(loads)
+    loads = list(daily_loads)
 
-    atl_values = atl_curve(loads)
+    ctl_values = ctl_curve(
+
+        loads,
+
+        days=ctl_days,
+
+    )
+
+    atl_values = atl_curve(
+
+        loads,
+
+        days=atl_days,
+
+    )
 
     return [
 
-        tsb(c, a)
+        training_stress_balance(
 
-        for c, a in zip(
+            ctl_value,
+
+            atl_value,
+
+        )
+
+        for ctl_value, atl_value in zip(
 
             ctl_values,
 

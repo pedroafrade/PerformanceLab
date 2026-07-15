@@ -18,11 +18,11 @@ class Environment:
 
     wind_speed: float | None = None
 
-    elevation_gain: float | None = None
-
     terrain: str = ""
 
     weather: str = ""
+
+    # ======================================================
 
     def __repr__(self):
 

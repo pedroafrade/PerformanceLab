@@ -22,6 +22,8 @@ class EventBook:
 
         self.entries.append(entry)
 
+        self._sort()
+
     # ======================================================
 
     def remove(self, entry: EventEntry):
@@ -38,6 +40,22 @@ class EventBook:
 
     # ======================================================
 
+    def _sort(self):
+
+        self.entries.sort(
+
+            key=lambda entry: (
+
+                entry.event.date is None,
+
+                entry.event.date,
+
+            )
+
+        )
+
+    # ======================================================
+
     @property
     def upcoming(self):
 
@@ -47,9 +65,35 @@ class EventBook:
 
             for entry in self.entries
 
-            if entry.pending
+            if entry.pending and entry.event.is_future
 
         ]
+
+    # ======================================================
+
+    @property
+    def completed(self):
+
+        return [
+
+            entry
+
+            for entry in self.entries
+
+            if entry.completed
+
+        ]
+
+    # ======================================================
+
+    @property
+    def next(self):
+
+        if not self.upcoming:
+
+            return None
+
+        return self.upcoming[0]
 
     # ======================================================
 
@@ -68,6 +112,12 @@ class EventBook:
     def __getitem__(self, index):
 
         return self.entries[index]
+
+    # ======================================================
+
+    def __contains__(self, entry):
+
+        return entry in self.entries
 
     # ======================================================
 

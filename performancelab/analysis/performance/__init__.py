@@ -1,27 +1,43 @@
 """
 PerformanceLab
 
-Performance Analytics
+Public performance analytics interface.
 """
 
-from .ctl import *
-from .atl import *
-from .tsb import *
-from .pmc import *
+from .atl import (
+    DEFAULT_ATL_DAYS,
+    atl,
+    atl_curve,
+)
+
+from .ctl import (
+    DEFAULT_CTL_DAYS,
+    ctl,
+    ctl_curve,
+)
+
+from .pmc import PerformanceManagementChart
+
+from .tsb import (
+    fatigue,
+    form,
+    training_stress_balance,
+    tsb,
+    tsb_curve,
+)
+
 
 __all__ = [
 
-    # CTL
-    "decay_constant",
-    "ctl",
-    "ctl_from_weeks",
-    "ctl_curve",
-
     # ATL
-    "decay_constant",
+    "DEFAULT_ATL_DAYS",
     "atl",
-    "atl_from_weeks",
     "atl_curve",
+
+    # CTL
+    "DEFAULT_CTL_DAYS",
+    "ctl",
+    "ctl_curve",
 
     # TSB
     "training_stress_balance",

@@ -21,56 +21,76 @@ def progression(previous, current):
 
         return None
 
-    return (current - previous) / previous * 100
+    return (
 
+        (current - previous)
 
-# ======================================================
-# Distance
-# ======================================================
+        / previous
 
-def distance_progression(previous, current):
-
-    return progression(
-
-        previous.total_distance,
-
-        current.total_distance,
+        * 100
 
     )
 
 
 # ======================================================
-# Duration
+# Distance by sport
 # ======================================================
 
-def duration_progression(previous, current):
+def distance_progression(previous, current, sport):
 
     return progression(
 
-        previous.total_duration.total_seconds(),
+        previous.distance_for(sport),
 
-        current.total_duration.total_seconds(),
+        current.distance_for(sport),
 
     )
 
 
 # ======================================================
-# Elevation
+# Duration by sport
 # ======================================================
 
-def elevation_progression(previous, current):
+def duration_progression(previous, current, sport):
+
+    previous_duration = previous.duration_for(
+
+        sport,
+
+    )
+
+    current_duration = current.duration_for(
+
+        sport,
+
+    )
 
     return progression(
 
-        previous.total_elevation,
+        previous_duration.total_seconds(),
 
-        current.total_elevation,
+        current_duration.total_seconds(),
 
     )
 
 
 # ======================================================
-# Load
+# Elevation by sport
+# ======================================================
+
+def elevation_progression(previous, current, sport):
+
+    return progression(
+
+        previous.elevation_for(sport),
+
+        current.elevation_for(sport),
+
+    )
+
+
+# ======================================================
+# Combined physiological load
 # ======================================================
 
 def load_progression(previous, current):

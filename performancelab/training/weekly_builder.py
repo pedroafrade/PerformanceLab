@@ -6,7 +6,9 @@ Weekly Builder
 Builds WeeklySummary objects from a History.
 """
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
+
+from performancelab.history import History
 
 from .weekly import WeeklySummary
 
@@ -15,9 +17,20 @@ class WeeklyBuilder:
 
     # ======================================================
 
-    def __init__(self, history):
+    def __init__(self, history: History):
 
         self.history = history
+
+    # ======================================================
+
+    @staticmethod
+    def _calendar_date(value):
+
+        if isinstance(value, datetime):
+
+            return value.date()
+
+        return value
 
     # ======================================================
 
@@ -28,7 +41,13 @@ class WeeklyBuilder:
         Returns Monday of the week.
         """
 
-        return day - timedelta(days=day.weekday())
+        day = WeeklyBuilder._calendar_date(day)
+
+        return day - timedelta(
+
+            days=day.weekday(),
+
+        )
 
     # ======================================================
 
@@ -39,15 +58,18 @@ class WeeklyBuilder:
         Returns Sunday of the week.
         """
 
-        return WeeklyBuilder.week_start(day) + timedelta(days=6)
+        return WeeklyBuilder.week_start(
+
+            day,
+
+        ) + timedelta(days=6)
 
     # ======================================================
 
     def week(self, day):
 
         """
-        Returns one WeeklySummary containing the workouts
-        of the week where 'day' belongs.
+        Returns the WeeklySummary containing the given day.
         """
 
         start = self.week_start(day)
@@ -56,17 +78,22 @@ class WeeklyBuilder:
         summary = WeeklySummary(
 
             start_date=start,
+
             end_date=end,
 
         )
 
         for workout in self.history:
 
-            workout_date = workout.info.date
-
-            if workout_date is None:
+            if workout.date is None:
 
                 continue
+
+            workout_date = self._calendar_date(
+
+                workout.date,
+
+            )
 
             if start <= workout_date <= end:
 
@@ -79,32 +106,26 @@ class WeeklyBuilder:
     def build(self):
 
         """
-        Returns all weeks present in the history.
+        Returns all weeks represented in the history.
         """
-
-        if len(self.history) == 0:
-
-            return []
 
         starts = {
 
-            self.week_start(workout.info.date)
+            self.week_start(workout.date)
 
             for workout in self.history
 
-            if workout.info.date is not None
+            if workout.date is not None
 
         }
 
-        weeks = [
+        return [
 
             self.week(start)
 
             for start in sorted(starts)
 
         ]
-
-        return weeks
 
     # ======================================================
 

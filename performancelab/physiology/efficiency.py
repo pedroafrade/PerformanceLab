@@ -11,19 +11,20 @@ Utilities for measuring training efficiency.
 # Speed per Heart Rate
 # ======================================================
 
-def speed_per_heart_rate(speed, heart_rate):
+def speed_per_heart_rate(
+    speed: float | None,
+    heart_rate: float | None,
+) -> float | None:
 
     """
-    km/h per bpm.
+    Returns kilometres per hour per beat per minute.
     """
 
-    if (
+    if speed is None or heart_rate is None:
 
-        speed is None
+        return None
 
-        or heart_rate in (None, 0)
-
-    ):
+    if speed < 0 or heart_rate <= 0:
 
         return None
 
@@ -34,19 +35,20 @@ def speed_per_heart_rate(speed, heart_rate):
 # Power per Heart Rate
 # ======================================================
 
-def power_per_heart_rate(power, heart_rate):
+def power_per_heart_rate(
+    power: float | None,
+    heart_rate: float | None,
+) -> float | None:
 
     """
-    Watts per bpm.
+    Returns watts per beat per minute.
     """
 
-    if (
+    if power is None or heart_rate is None:
 
-        power is None
+        return None
 
-        or heart_rate in (None, 0)
-
-    ):
+    if power < 0 or heart_rate <= 0:
 
         return None
 
@@ -57,19 +59,20 @@ def power_per_heart_rate(power, heart_rate):
 # Speed per Watt
 # ======================================================
 
-def speed_per_watt(speed, power):
+def speed_per_watt(
+    speed: float | None,
+    power: float | None,
+) -> float | None:
 
     """
-    km/h per watt.
+    Returns kilometres per hour per watt.
     """
 
-    if (
+    if speed is None or power is None:
 
-        speed is None
+        return None
 
-        or power in (None, 0)
-
-    ):
+    if speed < 0 or power <= 0:
 
         return None
 
@@ -80,21 +83,20 @@ def speed_per_watt(speed, power):
 # Vertical Speed
 # ======================================================
 
-def vertical_speed(elevation_gain, duration_hours):
+def vertical_speed(
+    elevation_gain: float | None,
+    duration_hours: float | None,
+) -> float | None:
 
     """
-    Vertical ascent speed.
-
-    metres/hour.
+    Returns vertical ascent speed in metres per hour.
     """
 
-    if (
+    if elevation_gain is None or duration_hours is None:
 
-        elevation_gain is None
+        return None
 
-        or duration_hours in (None, 0)
-
-    ):
+    if elevation_gain < 0 or duration_hours <= 0:
 
         return None
 
@@ -105,43 +107,55 @@ def vertical_speed(elevation_gain, duration_hours):
 # Efficiency Factor
 # ======================================================
 
-def efficiency_factor(power, heart_rate):
+def efficiency_factor(
+    normalized_power: float | None,
+    average_heart_rate: float | None,
+) -> float | None:
 
     """
-    Coggan Efficiency Factor.
+    Returns cycling efficiency factor.
 
-    EF = Power / HR
+    Conventionally:
+
+        normalized power / average heart rate
     """
 
     return power_per_heart_rate(
 
-        power,
+        normalized_power,
 
-        heart_rate,
+        average_heart_rate,
 
     )
 
 
 # ======================================================
-# Normalised Efficiency
+# Normalized Efficiency
 # ======================================================
 
-def normalized_efficiency(value, reference):
+def normalized_efficiency(
+    value: float | None,
+    reference: float | None,
+) -> float | None:
 
     """
-    Relative efficiency.
-
-    Returns percentage.
+    Returns efficiency relative to a reference percentage.
     """
 
-    if (
-
-        value is None
-
-        or reference in (None, 0)
-
-    ):
+    if value is None or reference is None:
 
         return None
 
-    return (value / reference) * 100
+    if value < 0 or reference <= 0:
+
+        return None
+
+    return (
+
+        value
+
+        / reference
+
+        * 100
+
+    )

@@ -7,7 +7,7 @@ Represents a future objective of an athlete.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 
 
 @dataclass
@@ -17,7 +17,7 @@ class Goal:
 
     description: str = ""
 
-    date: datetime | None = None
+    date: date | None = None
 
     priority: str = "B"
 
@@ -32,7 +32,14 @@ class Goal:
 
             return False
 
-        return self.date > datetime.now()
+        return self.date >= date.today()
+
+    # ======================================================
+
+    @property
+    def is_active(self):
+
+        return self.is_future and not self.completed
 
     # ======================================================
 
@@ -43,7 +50,7 @@ class Goal:
 
             return None
 
-        return (self.date - datetime.now()).days
+        return (self.date - date.today()).days
 
     # ======================================================
 

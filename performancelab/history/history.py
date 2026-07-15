@@ -46,9 +46,9 @@ class History:
 
             key=lambda workout: (
 
-                workout.info.date is None,
+                workout.date is None,
 
-                workout.info.date,
+                workout.date,
 
             )
 
@@ -61,11 +61,11 @@ class History:
 
         sports = {
 
-            workout.info.sport
+            workout.sport
 
             for workout in self.workouts
 
-            if workout.info.sport
+            if workout.sport
 
         }
 

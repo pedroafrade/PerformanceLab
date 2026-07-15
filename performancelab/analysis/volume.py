@@ -17,7 +17,7 @@ def total_distance(history):
 
     return sum(
 
-        workout.info.distance or 0
+        workout.distance or 0
 
         for workout in history
 
@@ -34,11 +34,9 @@ def total_duration(history):
 
     for workout in history:
 
-        duration = workout.info.duration
+        if workout.duration is not None:
 
-        if duration is not None:
-
-            total += duration
+            total += workout.duration
 
     return total
 
@@ -51,7 +49,7 @@ def total_elevation(history):
 
     return sum(
 
-        workout.info.elevation_gain or 0
+        workout.elevation_gain or 0
 
         for workout in history
 
@@ -64,11 +62,21 @@ def total_elevation(history):
 
 def average_distance(history):
 
-    if len(history) == 0:
+    values = [
+
+        workout.distance
+
+        for workout in history
+
+        if workout.distance is not None
+
+    ]
+
+    if not values:
 
         return None
 
-    return total_distance(history) / len(history)
+    return sum(values) / len(values)
 
 
 # ======================================================
@@ -77,11 +85,21 @@ def average_distance(history):
 
 def average_duration(history):
 
-    if len(history) == 0:
+    values = [
+
+        workout.duration
+
+        for workout in history
+
+        if workout.duration is not None
+
+    ]
+
+    if not values:
 
         return None
 
-    return total_duration(history) / len(history)
+    return sum(values, timedelta()) / len(values)
 
 
 # ======================================================
@@ -90,8 +108,18 @@ def average_duration(history):
 
 def average_elevation(history):
 
-    if len(history) == 0:
+    values = [
+
+        workout.elevation_gain
+
+        for workout in history
+
+        if workout.elevation_gain is not None
+
+    ]
+
+    if not values:
 
         return None
 
-    return total_elevation(history) / len(history)
+    return sum(values) / len(values)

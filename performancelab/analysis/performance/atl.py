@@ -1,26 +1,68 @@
-from ._ema import decay_constant, exponential_curve, exponential_load
+"""
+PerformanceLab
+
+Acute Training Load
+
+Utilities for calculating acute training load from
+daily training-load values.
+"""
+
+from collections.abc import Iterable
+
+from ._ema import exponential_curve, exponential_load
 
 
-def atl(loads, days=7):
-
-    return exponential_load(loads, days)
+DEFAULT_ATL_DAYS = 7
 
 
-def atl_curve(loads, days=7):
+# ======================================================
+# Acute Training Load
+# ======================================================
 
-    return exponential_curve(loads, days)
+def atl(
+    daily_loads: Iterable[float],
+    days: int = DEFAULT_ATL_DAYS,
+) -> float:
+
+    """
+    Calculates Acute Training Load from daily loads.
+
+    Parameters
+    ----------
+    daily_loads:
+        Chronological daily training-load values. Rest days
+        should be represented by zero.
+
+    days:
+        Exponential time constant in days.
+    """
+
+    return exponential_load(
+
+        daily_loads,
+
+        days,
+
+    )
 
 
-def atl_from_weeks(weeks):
+# ======================================================
+# Acute Training Load Curve
+# ======================================================
 
-    return atl(
+def atl_curve(
+    daily_loads: Iterable[float],
+    days: int = DEFAULT_ATL_DAYS,
+) -> list[float]:
 
-        [
+    """
+    Returns the ATL value after every daily sample.
+    """
 
-            week.load
+    return exponential_curve(
 
-            for week in weeks
+        daily_loads,
 
-        ]
+        days,
 
     )

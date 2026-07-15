@@ -48,7 +48,18 @@ class Event:
 
             return False
 
-        return self.date > date.today()
+        return self.date >= date.today()
+
+    # ======================================================
+
+    @property
+    def is_past(self):
+
+        if self.date is None:
+
+            return False
+
+        return self.date < date.today()
 
     # ======================================================
 

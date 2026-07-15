@@ -2,40 +2,81 @@
 PerformanceLab
 
 Performance Management Chart
+
+Combines CTL, ATL and TSB curves calculated from
+chronological daily training loads.
 """
 
 from dataclasses import dataclass, field
 
-from .ctl import ctl_curve
 from .atl import atl_curve
-from .tsb import tsb_curve
+from .ctl import ctl_curve
+from .tsb import training_stress_balance
 
 
 @dataclass
 class PerformanceManagementChart:
 
-    loads: list[float] = field(default_factory=list)
+    daily_loads: list[float] = field(
+
+        default_factory=list,
+
+    )
+
+    ctl_days: int = 42
+
+    atl_days: int = 7
 
     # ======================================================
 
     @property
     def ctl(self):
 
-        return ctl_curve(self.loads)
+        return ctl_curve(
+
+            self.daily_loads,
+
+            days=self.ctl_days,
+
+        )
 
     # ======================================================
 
     @property
     def atl(self):
 
-        return atl_curve(self.loads)
+        return atl_curve(
+
+            self.daily_loads,
+
+            days=self.atl_days,
+
+        )
 
     # ======================================================
 
     @property
     def tsb(self):
 
-        return tsb_curve(self.loads)
+        return [
+
+            training_stress_balance(
+
+                ctl_value,
+
+                atl_value,
+
+            )
+
+            for ctl_value, atl_value in zip(
+
+                self.ctl,
+
+                self.atl,
+
+            )
+
+        ]
 
     # ======================================================
 
@@ -44,7 +85,11 @@ class PerformanceManagementChart:
 
         values = self.ctl
 
-        return values[-1] if values else 0.0
+        if not values:
+
+            return 0.0
+
+        return values[-1]
 
     # ======================================================
 
@@ -53,7 +98,11 @@ class PerformanceManagementChart:
 
         values = self.atl
 
-        return values[-1] if values else 0.0
+        if not values:
+
+            return 0.0
+
+        return values[-1]
 
     # ======================================================
 
@@ -62,7 +111,11 @@ class PerformanceManagementChart:
 
         values = self.tsb
 
-        return values[-1] if values else 0.0
+        if not values:
+
+            return 0.0
+
+        return values[-1]
 
     # ======================================================
 
@@ -89,7 +142,7 @@ class PerformanceManagementChart:
 
     def __len__(self):
 
-        return len(self.loads)
+        return len(self.daily_loads)
 
     # ======================================================
 
@@ -99,6 +152,6 @@ class PerformanceManagementChart:
 
             f"PerformanceManagementChart("
 
-            f"{len(self.loads)} loads)"
+            f"{len(self.daily_loads)} days)"
 
         )

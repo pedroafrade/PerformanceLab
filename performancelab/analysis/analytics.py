@@ -6,11 +6,9 @@ AthleteAnalytics
 Public analytics interface for an athlete.
 """
 
-from . import volume
-from . import time
 from . import consistency
-
-from .planning import planning
+from . import time
+from . import volume
 
 
 class AthleteAnalytics:
@@ -57,32 +55,12 @@ class AthleteAnalytics:
     @property
     def first_workout(self):
 
-        if len(self.history) == 0:
-
-            return None
-
-        return min(
-
-            self.history,
-
-            key=lambda workout: workout.info.date,
-
-        )
+        return self.history.first
 
     @property
     def last_workout(self):
 
-        if len(self.history) == 0:
-
-            return None
-
-        return max(
-
-            self.history,
-
-            key=lambda workout: workout.info.date,
-
-        )
+        return self.history.last
 
     @property
     def average_rpe(self):
@@ -177,32 +155,40 @@ class AthleteAnalytics:
     @property
     def next_goal(self):
 
-        return planning.next_goal(self.goals)
+        return self.goals.next
 
     @property
     def days_until_next_goal(self):
 
-        return planning.days_until_next_goal(self.goals)
+        if self.next_goal is None:
+
+            return None
+
+        return self.next_goal.days_remaining
 
     @property
     def active_goals(self):
 
-        return planning.active_goals(self.goals)
+        return self.goals.active
 
     @property
     def next_event(self):
 
-        return planning.next_event(self.events)
+        return self.events.next
 
     @property
     def days_until_next_event(self):
 
-        return planning.days_until_next_event(self.events)
+        if self.next_event is None:
+
+            return None
+
+        return self.next_event.event.days_remaining
 
     @property
     def upcoming_events(self):
 
-        return planning.upcoming_events(self.events)
+        return self.events.upcoming
 
     # ======================================================
     # Summary

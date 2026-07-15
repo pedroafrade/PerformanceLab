@@ -3,20 +3,20 @@ PerformanceLab
 
 Monthly Summary
 
-Represents one training month.
+Represents a collection of training weeks assigned to one month.
 """
-from datetime import timedelta
-from dataclasses import dataclass, field
 
-from .weekly import WeeklySummary
+from dataclasses import dataclass, field
+from datetime import timedelta
+
 from . import load
+from .weekly import WeeklySummary
 
 
 @dataclass
 class MonthlySummary:
 
     year: int
-
     month: int
 
     weeks: list[WeeklySummary] = field(default_factory=list)
@@ -39,11 +39,36 @@ class MonthlySummary:
     @property
     def training_days(self):
 
-        return sum(
+        dates = {
 
-            week.training_days
+            workout.date
 
             for week in self.weeks
+
+            for workout in week.history
+
+            if workout.date is not None
+
+        }
+
+        return len(dates)
+
+    # ======================================================
+
+    @property
+    def total_duration(self):
+
+        return sum(
+
+            (
+
+                week.total_duration
+
+                for week in self.weeks
+
+            ),
+
+            timedelta(),
 
         )
 
@@ -52,19 +77,7 @@ class MonthlySummary:
     @property
     def duration(self):
 
-        return sum(
-
-            (
-
-                week.duration
-
-                for week in self.weeks
-
-            ),
-
-            start=type(self.weeks[0].duration)() if self.weeks else __import__("datetime").timedelta(),
-
-        )
+        return self.total_duration
 
     # ======================================================
 
@@ -78,30 +91,67 @@ class MonthlySummary:
             sports.update(week.sports)
 
         return sorted(sports)
+
+    # ======================================================
+
+    def distance_for(self, sport):
+
+        return sum(
+
+            week.distance_for(sport)
+
+            for week in self.weeks
+
+        )
+
+    # ======================================================
+
+    def duration_for(self, sport):
+
+        return sum(
+
+            (
+
+                week.duration_for(sport)
+
+                for week in self.weeks
+
+            ),
+
+            timedelta(),
+
+        )
+
+    # ======================================================
+
+    def elevation_for(self, sport):
+
+        return sum(
+
+            week.elevation_for(sport)
+
+            for week in self.weeks
+
+        )
+
     # ======================================================
 
     @property
     def load(self):
 
         return load.monthly_load(self)
-    
-    # ======================================================
-    
-    @property
-    def duration(self):
 
-     total = timedelta()
-
-     for week in self.weeks:
-
-        total += week.duration
-
-     return total
     # ======================================================
 
-    def add_week(self, week):
+    def add_week(self, week: WeeklySummary):
 
         self.weeks.append(week)
+
+        self.weeks.sort(
+
+            key=lambda item: item.start_date,
+
+        )
 
     # ======================================================
 

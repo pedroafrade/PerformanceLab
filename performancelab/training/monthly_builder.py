@@ -15,15 +15,11 @@ class MonthlyBuilder:
 
     def __init__(self, weeks):
 
-        self.weeks = weeks
+        self.weeks = list(weeks)
 
     # ======================================================
 
     def build(self):
-
-        if len(self.weeks) == 0:
-
-            return []
 
         months = {}
 
@@ -49,7 +45,13 @@ class MonthlyBuilder:
 
             months[key].add_week(week)
 
-        return list(months.values())
+        return [
+
+            months[key]
+
+            for key in sorted(months)
+
+        ]
 
     # ======================================================
 
@@ -61,9 +63,7 @@ class MonthlyBuilder:
 
                 summary.year == year
 
-                and
-
-                summary.month == month
+                and summary.month == month
 
             ):
 

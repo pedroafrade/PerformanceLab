@@ -12,11 +12,11 @@ from dataclasses import dataclass, field
 @dataclass
 class SensorCollection:
 
-    sensors: dict = field(default_factory=dict)
+    sensors: dict[str, object] = field(default_factory=dict)
 
     # ======================================================
 
-    def add(self, name: str, sensor):
+    def add(self, name: str, sensor: object):
 
         self.sensors[name] = sensor
 

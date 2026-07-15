@@ -3,17 +3,18 @@ PerformanceLab
 
 WorkoutInfo
 
-Identity of a workout.
+Identity and general information of a workout.
 """
 
 from dataclasses import dataclass
+from datetime import date as Date
 from datetime import datetime, timedelta
 
 
 @dataclass
 class WorkoutInfo:
 
-    date: datetime | None = None
+    date: Date | datetime | None = None
 
     sport: str | None = None
 
@@ -30,6 +31,8 @@ class WorkoutInfo:
     duration: timedelta | None = None
 
     elevation_gain: float | None = None
+
+    # ======================================================
 
     def __repr__(self):
 

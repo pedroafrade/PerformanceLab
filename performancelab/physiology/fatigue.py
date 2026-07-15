@@ -3,7 +3,7 @@ PerformanceLab
 
 Fatigue Physiology
 
-Utilities for estimating fatigue.
+Utilities for simple workload and fatigue indicators.
 """
 
 
@@ -11,19 +11,24 @@ Utilities for estimating fatigue.
 # Acute : Chronic Ratio
 # ======================================================
 
-def acute_chronic_ratio(acute_load, chronic_load):
+def acute_chronic_ratio(
+    acute_load: float | None,
+    chronic_load: float | None,
+) -> float | None:
 
     """
-    Acute : Chronic Workload Ratio (ACWR).
+    Calculates the acute-to-chronic workload ratio.
+
+    This ratio describes the relationship between acute
+    and chronic load. It should not be interpreted alone
+    as an injury-risk prediction.
     """
 
-    if (
+    if acute_load is None or chronic_load is None:
 
-        acute_load is None
+        return None
 
-        or chronic_load in (None, 0)
-
-    ):
+    if acute_load < 0 or chronic_load <= 0:
 
         return None
 
@@ -34,19 +39,23 @@ def acute_chronic_ratio(acute_load, chronic_load):
 # Training Monotony
 # ======================================================
 
-def monotony(mean_load, std_load):
+def monotony(
+    mean_load: float | None,
+    std_load: float | None,
+) -> float | None:
 
     """
-    Foster Training Monotony.
+    Calculates Foster training monotony.
+
+    Monotony = mean daily load / standard deviation
+    of daily load.
     """
 
-    if (
+    if mean_load is None or std_load is None:
 
-        mean_load is None
+        return None
 
-        or std_load in (None, 0)
-
-    ):
+    if mean_load < 0 or std_load <= 0:
 
         return None
 
@@ -57,19 +66,22 @@ def monotony(mean_load, std_load):
 # Training Strain
 # ======================================================
 
-def strain(total_load, monotony_value):
+def strain(
+    total_load: float | None,
+    monotony_value: float | None,
+) -> float | None:
 
     """
-    Foster Training Strain.
+    Calculates Foster training strain.
+
+    Strain = total weekly load × training monotony.
     """
 
-    if (
+    if total_load is None or monotony_value is None:
 
-        total_load is None
+        return None
 
-        or monotony_value is None
-
-    ):
+    if total_load < 0 or monotony_value < 0:
 
         return None
 
@@ -80,12 +92,16 @@ def strain(total_load, monotony_value):
 # Fatigue Index
 # ======================================================
 
-def fatigue_index(acute_load, chronic_load):
+def fatigue_index(
+    acute_load: float | None,
+    chronic_load: float | None,
+) -> float | None:
 
     """
-    Simple fatigue indicator.
+    Returns a simple acute-to-chronic fatigue indicator.
 
-    >1 means acute load exceeds chronic load.
+    Values above 1 mean that acute load exceeds
+    chronic load.
     """
 
     return acute_chronic_ratio(
@@ -101,31 +117,48 @@ def fatigue_index(acute_load, chronic_load):
 # Freshness Score
 # ======================================================
 
-def freshness_score(fatigue):
+def freshness_score(
+    fatigue: float | None,
+) -> float | None:
 
     """
-    Returns a freshness score (0–100).
+    Converts a fatigue indicator into a heuristic score.
 
-    Higher is better.
+    Returns a value between 0 and 100.
+
+    This is a simple presentation score, not a validated
+    physiological measure of readiness or recovery.
     """
 
-    if fatigue is None:
+    if fatigue is None or fatigue < 0:
 
         return None
 
     score = 100 - fatigue * 20
 
-    return max(0, min(100, score))
+    return max(
+
+        0,
+
+        min(100, score),
+
+    )
 
 
 # ======================================================
-# Risk Score
+# Workload Ratio Band
 # ======================================================
 
-def risk_score(acwr):
+def risk_score(
+    acwr: float | None,
+) -> str | None:
 
     """
-    Injury risk estimate from ACWR.
+    Returns a simple workload-ratio classification.
+
+    The returned label is only a heuristic description
+    of the ratio and must not be interpreted as an
+    individualized injury-risk prediction.
 
     Returns:
         Low
@@ -133,7 +166,7 @@ def risk_score(acwr):
         High
     """
 
-    if acwr is None:
+    if acwr is None or acwr < 0:
 
         return None
 

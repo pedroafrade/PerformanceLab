@@ -462,3 +462,4 @@ def test_summary():
     assert summary["total_elevation"] == 200
 
     assert summary["average_rpe"] == 7
+

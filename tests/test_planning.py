@@ -9,7 +9,7 @@ from datetime import date, timedelta
 from performancelab.goals import Goal
 from performancelab.goals import GoalBook
 
-from performancelab.race import Event
+from performancelab.race import Event, EventEntry
 from performancelab.race import EventBook
 
 from performancelab.analysis.planning.planning import (
@@ -37,11 +37,17 @@ def create_goal(goal_date):
 
 def create_event(event_date):
 
-    event = Event()
+    event = Event(
 
-    event.date = event_date
+        date=event_date,
 
-    return event
+    )
+
+    return EventEntry(
+
+        event=event,
+
+    )
 
 
 # ======================================================
@@ -97,7 +103,7 @@ def test_next_event():
     events.add(create_event(date.today() + timedelta(days=30)))
     events.add(create_event(date.today() + timedelta(days=5)))
 
-    assert next_event(events).date == date.today() + timedelta(days=5)
+    assert next_event(events).event.date == date.today() + timedelta(days=5)
 
 
 def test_days_until_next_event():

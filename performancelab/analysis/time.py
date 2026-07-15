@@ -6,7 +6,20 @@ Time Analytics
 Utilities for analysing workouts over time.
 """
 
-from datetime import timedelta
+from datetime import date, datetime, timedelta
+
+
+# ======================================================
+# Date normalization
+# ======================================================
+
+def _calendar_date(value):
+
+    if isinstance(value, datetime):
+
+        return value.date()
+
+    return value
 
 
 # ======================================================
@@ -15,6 +28,9 @@ from datetime import timedelta
 
 def workouts_between(history, start_date, end_date):
 
+    start = _calendar_date(start_date)
+    end = _calendar_date(end_date)
+
     return [
 
         workout
@@ -22,8 +38,10 @@ def workouts_between(history, start_date, end_date):
         for workout in history
 
         if (
-        workout.info.date is not None
-        and start_date <= workout.info.date <= end_date
+            workout.date is not None
+            and start
+            <= _calendar_date(workout.date)
+            <= end
         )
 
     ]
@@ -35,33 +53,21 @@ def workouts_between(history, start_date, end_date):
 
 def distance_between(history, start_date, end_date):
 
-    total = 0.0
+    return sum(
 
-    for workout in workouts_between(
+        workout.distance or 0
 
-        history,
+        for workout in workouts_between(
 
-        start_date,
+            history,
 
-        end_date,
+            start_date,
 
-    ):
-
-        distance = getattr(
-
-            workout.info,
-
-            "distance",
-
-            None,
+            end_date,
 
         )
 
-        if distance is not None:
-
-            total += distance
-
-    return total
+    )
 
 
 # ======================================================
@@ -82,19 +88,9 @@ def duration_between(history, start_date, end_date):
 
     ):
 
-        duration = getattr(
+        if workout.duration is not None:
 
-            workout.info,
-
-            "duration",
-
-            None,
-
-        )
-
-        if duration is not None:
-
-            total += duration
+            total += workout.duration
 
     return total
 
@@ -105,33 +101,21 @@ def duration_between(history, start_date, end_date):
 
 def elevation_between(history, start_date, end_date):
 
-    total = 0.0
+    return sum(
 
-    for workout in workouts_between(
+        workout.elevation_gain or 0
 
-        history,
+        for workout in workouts_between(
 
-        start_date,
+            history,
 
-        end_date,
+            start_date,
 
-    ):
-
-        elevation = getattr(
-
-            workout.info,
-
-            "elevation_gain",
-
-            None,
+            end_date,
 
         )
 
-        if elevation is not None:
-
-            total += elevation
-
-    return total
+    )
 
 
 # ======================================================
@@ -140,31 +124,23 @@ def elevation_between(history, start_date, end_date):
 
 def average_rpe_between(history, start_date, end_date):
 
-    values = []
+    values = [
 
-    for workout in workouts_between(
+        workout.feedback.rpe
 
-        history,
+        for workout in workouts_between(
 
-        start_date,
+            history,
 
-        end_date,
+            start_date,
 
-    ):
-
-        rpe = getattr(
-
-            workout.feedback,
-
-            "rpe",
-
-            None,
+            end_date,
 
         )
 
-        if rpe is not None:
+        if workout.feedback.rpe is not None
 
-            values.append(rpe)
+    ]
 
     if not values:
 
@@ -174,28 +150,29 @@ def average_rpe_between(history, start_date, end_date):
 
 
 # ======================================================
-# Number of training days
+# Number of training days between two dates
 # ======================================================
 
 def training_days_between(history, start_date, end_date):
 
     return len({
 
-        workout.info.date
+        _calendar_date(workout.date)
 
         for workout in workouts_between(
 
-          history,
+            history,
 
-          start_date,
+            start_date,
 
-         end_date,
+            end_date,
 
         )
 
-         if workout.info.date is not None
+        if workout.date is not None
 
     })
+
 
 # ======================================================
 # Number of training days
@@ -205,11 +182,11 @@ def training_days(history):
 
     return len({
 
-        workout.info.date
+        _calendar_date(workout.date)
 
         for workout in history
 
-        if workout.info.date is not None
+        if workout.date is not None
 
     })
 
@@ -222,11 +199,11 @@ def first_training_date(history):
 
     dates = [
 
-        workout.info.date
+        _calendar_date(workout.date)
 
         for workout in history
 
-        if workout.info.date is not None
+        if workout.date is not None
 
     ]
 
@@ -245,11 +222,11 @@ def last_training_date(history):
 
     dates = [
 
-        workout.info.date
+        _calendar_date(workout.date)
 
         for workout in history
 
-        if workout.info.date is not None
+        if workout.date is not None
 
     ]
 

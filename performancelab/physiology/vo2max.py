@@ -6,150 +6,216 @@ VO2max Physiology
 Utilities for estimating VO₂max and oxygen demand.
 """
 
-import math
-
 
 # ======================================================
 # Cooper Test
 # ======================================================
 
-def vo2max_from_cooper(distance):
+def vo2max_from_cooper(
+    distance: float | None,
+) -> float | None:
 
     """
-    Cooper 12-minute test.
+    Estimates VO₂max from the Cooper 12-minute test.
 
-    distance in metres.
+    Parameters
+    ----------
+    distance:
+        Distance covered in metres during 12 minutes.
+
+    Returns
+    -------
+    Estimated VO₂max in ml/kg/min.
     """
 
-    if distance is None:
+    if distance is None or distance <= 0:
 
         return None
 
-    return (distance - 504.9) / 44.73
+    estimate = (
+
+        distance - 504.9
+
+    ) / 44.73
+
+    if estimate <= 0:
+
+        return None
+
+    return estimate
 
 
 # ======================================================
-# Running Speed
+# Running Oxygen Cost
 # ======================================================
 
-def vo2max_from_speed(speed):
+def oxygen_cost(
+    speed: float | None,
+) -> float | None:
 
     """
-    Estimates oxygen consumption from running speed.
+    Estimates oxygen demand for level running.
 
-    ACSM running equation (level ground).
+    Parameters
+    ----------
+    speed:
+        Running speed in kilometres per hour.
 
-    speed in km/h.
+    Returns
+    -------
+    Oxygen demand in ml/kg/min.
+
+    This estimates the oxygen cost of running at the given
+    speed. It does not, by itself, estimate the athlete's
+    VO₂max.
     """
 
-    if speed is None:
+    if speed is None or speed <= 0:
 
         return None
 
     speed_m_min = speed * 1000 / 60
 
-    return (0.2 * speed_m_min + 3.5)
+    return (
+
+        0.2 * speed_m_min
+
+        + 3.5
+
+    )
 
 
 # ======================================================
-# Oxygen Cost
+# Legacy Speed Estimate
 # ======================================================
 
-def oxygen_cost(speed):
+def vo2max_from_speed(
+    speed: float | None,
+) -> float | None:
 
     """
-    Alias for ACSM oxygen demand.
+    Backwards-compatible alias for oxygen_cost().
 
-    speed in km/h.
+    Despite its historical name in PerformanceLab, this
+    function estimates running oxygen demand rather than
+    an athlete's VO₂max.
     """
 
-    return vo2max_from_speed(speed)
+    return oxygen_cost(speed)
 
 
 # ======================================================
 # Running Economy
 # ======================================================
 
-def running_economy(speed, vo2):
+def running_economy(
+    speed: float | None,
+    vo2: float | None,
+) -> float | None:
 
     """
-    Running economy.
+    Calculates oxygen cost per kilometre.
 
-    Lower is generally better.
+    Parameters
+    ----------
+    speed:
+        Running speed in kilometres per hour.
 
-    Returns ml/kg/km.
+    vo2:
+        Oxygen consumption in ml/kg/min.
+
+    Returns
+    -------
+    Running economy in ml/kg/km.
+
+    Lower values indicate less oxygen consumed per
+    kilometre at the specified speed.
     """
 
-    if (
-
-        speed is None
-
-        or vo2 is None
-
-        or speed == 0
-
-    ):
+    if speed is None or vo2 is None:
 
         return None
 
-    km_per_min = speed / 60
-
-    return vo2 / km_per_min
-
-
-# ======================================================
-# Daniels VDOT
-# ======================================================
-
-def vdot(speed):
-
-    """
-    Simplified Daniels VDOT approximation.
-
-    speed in km/h.
-    """
-
-    if speed is None:
+    if speed <= 0 or vo2 <= 0:
 
         return None
 
-    return vo2max_from_speed(speed)
+    kilometres_per_minute = speed / 60
+
+    return vo2 / kilometres_per_minute
+
+
+# ======================================================
+# Legacy VDOT Approximation
+# ======================================================
+
+def vdot(
+    speed: float | None,
+) -> float | None:
+
+    """
+    Legacy simplified estimate based only on running speed.
+
+    A complete Daniels VDOT calculation also requires the
+    duration of a race or time trial. This function is kept
+    temporarily for backwards compatibility.
+    """
+
+    return oxygen_cost(speed)
 
 
 # ======================================================
 # Relative Intensity
 # ======================================================
 
-def relative_intensity(vo2, vo2max):
+def relative_intensity(
+    vo2: float | None,
+    vo2max: float | None,
+) -> float | None:
 
     """
-    Returns %VO2max.
+    Returns oxygen consumption as a percentage of VO₂max.
     """
 
-    if (
-
-        vo2 is None
-
-        or vo2max in (None, 0)
-
-    ):
+    if vo2 is None or vo2max is None:
 
         return None
 
-    return (vo2 / vo2max) * 100
+    if vo2 < 0 or vo2max <= 0:
+
+        return None
+
+    return (
+
+        vo2
+
+        / vo2max
+
+        * 100
+
+    )
 
 
 # ======================================================
 # VO2 Reserve
 # ======================================================
 
-def vo2_reserve(vo2max, resting=3.5):
+def vo2_reserve(
+    vo2max: float | None,
+    resting: float = 3.5,
+) -> float | None:
 
     """
-    VO2 Reserve.
+    Calculates VO₂ reserve.
+
+    VO₂ reserve = VO₂max - resting VO₂.
     """
 
     if vo2max is None:
+
+        return None
+
+    if resting < 0 or vo2max <= resting:
 
         return None
 

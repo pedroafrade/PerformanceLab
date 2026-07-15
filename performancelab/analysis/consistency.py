@@ -7,6 +7,39 @@ Utilities for training consistency.
 """
 
 from collections import Counter
+from datetime import datetime
+
+from . import time
+
+
+# ======================================================
+# Date normalization
+# ======================================================
+
+def _calendar_date(value):
+
+    if isinstance(value, datetime):
+
+        return value.date()
+
+    return value
+
+
+# ======================================================
+# Unique training dates
+# ======================================================
+
+def _training_dates(history):
+
+    return sorted({
+
+        _calendar_date(workout.date)
+
+        for workout in history
+
+        if workout.date is not None
+
+    })
 
 
 # ======================================================
@@ -15,15 +48,7 @@ from collections import Counter
 
 def training_days(history):
 
-    return len({
-
-        workout.date
-
-        for workout in history
-
-        if workout.date is not None
-
-    })
+    return time.training_days(history)
 
 
 # ======================================================
@@ -32,25 +57,33 @@ def training_days(history):
 
 def current_streak(history):
 
-    if len(history) == 0:
+    dates = _training_dates(history)
+
+    if not dates:
 
         return 0
 
-    dates = sorted({
-
-        workout.date
-
-        for workout in history
-
-        if workout.date is not None
-
-    })
-
     streak = 1
 
-    for i in range(len(dates) - 1, 0, -1):
+    for index in range(
 
-        if (dates[i] - dates[i - 1]).days == 1:
+        len(dates) - 1,
+
+        0,
+
+        -1,
+
+    ):
+
+        difference = (
+
+            dates[index]
+
+            - dates[index - 1]
+
+        ).days
+
+        if difference == 1:
 
             streak += 1
 
@@ -67,31 +100,36 @@ def current_streak(history):
 
 def longest_streak(history):
 
-    if len(history) == 0:
+    dates = _training_dates(history)
+
+    if not dates:
 
         return 0
 
-    dates = sorted({
-
-        workout.date
-
-        for workout in history
-
-        if workout.date is not None
-
-    })
-
     longest = 1
-
     current = 1
 
-    for i in range(1, len(dates)):
+    for index in range(1, len(dates)):
 
-        if (dates[i] - dates[i - 1]).days == 1:
+        difference = (
+
+            dates[index]
+
+            - dates[index - 1]
+
+        ).days
+
+        if difference == 1:
 
             current += 1
 
-            longest = max(longest, current)
+            longest = max(
+
+                longest,
+
+                current,
+
+            )
 
         else:
 
@@ -110,8 +148,16 @@ def weekday_distribution(history):
 
     for workout in history:
 
-        if workout.date is not None:
+        if workout.date is None:
 
-            counter[workout.date.weekday()] += 1
+            continue
+
+        workout_date = _calendar_date(
+
+            workout.date
+
+        )
+
+        counter[workout_date.weekday()] += 1
 
     return dict(counter)

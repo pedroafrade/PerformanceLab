@@ -6,8 +6,6 @@ Training Load
 Utilities for calculating training load.
 """
 
-from datetime import timedelta
-
 
 # ======================================================
 # Workout load (Session RPE)
@@ -15,7 +13,7 @@ from datetime import timedelta
 
 def workout_load(workout):
 
-    duration = workout.info.duration
+    duration = workout.duration
     rpe = workout.feedback.rpe
 
     if duration is None:
@@ -41,11 +39,11 @@ def weekly_load(week):
 
     for workout in week.history:
 
-        load = workout_load(workout)
+        value = workout_load(workout)
 
-        if load is not None:
+        if value is not None:
 
-            total += load
+            total += value
 
     return total
 

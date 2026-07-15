@@ -22,6 +22,8 @@ class GoalBook:
 
         self.goals.append(goal)
 
+        self._sort()
+
     # ======================================================
 
     def remove(self, goal: Goal):
@@ -38,6 +40,22 @@ class GoalBook:
 
     # ======================================================
 
+    def _sort(self):
+
+        self.goals.sort(
+
+            key=lambda goal: (
+
+                goal.date is None,
+
+                goal.date,
+
+            )
+
+        )
+
+    # ======================================================
+
     @property
     def active(self):
 
@@ -47,9 +65,35 @@ class GoalBook:
 
             for goal in self.goals
 
-            if goal.is_future
+            if goal.is_active
 
         ]
+
+    # ======================================================
+
+    @property
+    def completed(self):
+
+        return [
+
+            goal
+
+            for goal in self.goals
+
+            if goal.completed
+
+        ]
+
+    # ======================================================
+
+    @property
+    def next(self):
+
+        if not self.active:
+
+            return None
+
+        return self.active[0]
 
     # ======================================================
 
@@ -68,6 +112,12 @@ class GoalBook:
     def __getitem__(self, index):
 
         return self.goals[index]
+
+    # ======================================================
+
+    def __contains__(self, goal):
+
+        return goal in self.goals
 
     # ======================================================
 
