@@ -58,7 +58,7 @@ def load_demo(
 
         birth_year=1989,
 
-        sex="M",
+        gender="M",
 
         weight=72,
 
