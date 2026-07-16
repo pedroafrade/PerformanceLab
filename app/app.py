@@ -11,20 +11,23 @@ import pandas as pd
 import streamlit as st
 
 from components import (
-    show_import_panel,
+
     show_route_map,
+    show_sidebar,
     show_workout_details,
     show_workout_table,
 )
 
-from performancelab import Athlete, Workout
+from performancelab import Athlete
 
 from performancelab.presentation import (
     DashboardData,
     has_route,
 
 )
-
+from services import (
+    create_workout,
+)
 
 # ======================================================
 # Page configuration
@@ -95,38 +98,6 @@ def format_elevation(value: float | None) -> str:
         return "—"
 
     return f"{value:.0f} m"
-
-
-# ======================================================
-# Workout creation
-# ======================================================
-
-def create_workout(
-    sport: str,
-    workout_date: date,
-    distance: float | None,
-    duration: timedelta,
-    elevation_gain: float | None,
-    rpe: float | None,
-    title: str = "",
-    description: str = "",
-) -> Workout:
-
-    workout = Workout()
-
-    workout.info.sport = sport
-    workout.info.date = workout_date
-    workout.info.distance = distance
-    workout.info.duration = duration
-    workout.info.elevation_gain = elevation_gain
-    workout.info.title = title
-    workout.info.description = description
-    workout.info.source = "manual"
-
-    workout.feedback.rpe = rpe
-
-    return workout
-
 
 # ======================================================
 # Demonstration athlete
@@ -301,237 +272,16 @@ initialize_session_state()
 athlete: Athlete = st.session_state.athlete
 
 
-# ======================================================
-# Sidebar — athlete
-# ======================================================
-
-with st.sidebar:
-
-    st.header("Athlete")
-
-    athlete.name = st.text_input(
-        "Name",
-        value=athlete.name,
-    )
-
-    athlete.weight = st.number_input(
-        "Weight (kg)",
-        min_value=0.0,
-        value=float(
-            athlete.weight or 0.0
-        ),
-        step=0.1,
-    ) or None
-
-    athlete.ftp = st.number_input(
-        "FTP (W)",
-        min_value=0.0,
-        value=float(
-            athlete.ftp or 0.0
-        ),
-        step=1.0,
-    ) or None
-
-    athlete.max_hr = int(
-        st.number_input(
-            "Maximum heart rate",
-            min_value=0,
-            value=int(
-                athlete.max_hr or 0
-            ),
-            step=1,
-        )
-    ) or None
-
-    athlete.resting_hr = int(
-        st.number_input(
-            "Resting heart rate",
-            min_value=0,
-            value=int(
-                athlete.resting_hr or 0
-            ),
-            step=1,
-        )
-    ) or None
-
-    st.divider()
-
-
-# ======================================================
-# Sidebar — add workout
-# ======================================================
-
-with st.sidebar:
-
-    st.header("Add workout")
-
-    with st.form(
-        "manual_workout_form",
-        clear_on_submit=True,
-    ):
-
-        title = st.text_input(
-            "Title",
-            placeholder="Morning run",
-        )
-
-        sport = st.selectbox(
-            "Sport",
-            options=[
-                "Running",
-                "Cycling",
-                "Swimming",
-                "Walking",
-                "Hiking",
-                "Strength",
-                "Other",
-            ],
-        )
-
-        workout_date = st.date_input(
-            "Date",
-            value=date.today(),
-        )
-
-        distance_value = st.number_input(
-            "Distance (km)",
-            min_value=0.0,
-            value=0.0,
-            step=0.1,
-        )
-
-        duration_column_1, duration_column_2 = (
-            st.columns(2)
-        )
-
-        with duration_column_1:
-
-            duration_hours = st.number_input(
-                "Hours",
-                min_value=0,
-                value=0,
-                step=1,
-            )
-
-        with duration_column_2:
-
-            duration_minutes = st.number_input(
-                "Minutes",
-                min_value=0,
-                max_value=59,
-                value=30,
-                step=1,
-            )
-
-        elevation_value = st.number_input(
-            "Elevation gain (m)",
-            min_value=0.0,
-            value=0.0,
-            step=10.0,
-        )
-
-        rpe_value = st.slider(
-            "RPE",
-            min_value=0,
-            max_value=10,
-            value=5,
-            step=1,
-        )
-
-        description = st.text_area(
-            "Description",
-            placeholder="Workout notes...",
-        )
-
-        submitted = st.form_submit_button(
-            "Add workout",
-            type="primary",
-            use_container_width=True,
-        )
-
-        if submitted:
-
-            elapsed = timedelta(
-                hours=int(duration_hours),
-                minutes=int(duration_minutes),
-            )
-
-            if elapsed.total_seconds() <= 0:
-
-                st.error(
-                    "Duration must be greater "
-                    "than zero."
-                )
-
-            else:
-
-                workout = create_workout(
-                    sport=sport,
-                    workout_date=workout_date,
-                    distance=(
-                        float(distance_value)
-                        if distance_value > 0
-                        else None
-                    ),
-                    duration=elapsed,
-                    elevation_gain=(
-                        float(elevation_value)
-                        if elevation_value > 0
-                        else 0.0
-                    ),
-                    rpe=float(rpe_value),
-                    title=title.strip(),
-                    description=description.strip(),
-                )
-
-                athlete.history.add(workout)
-
-                st.session_state.notice = (
-                    "Workout added successfully."
-                )
 
 # ======================================================
 # Sidebar
 # ======================================================
 
-with st.sidebar:
-
-    show_import_panel(
-
-        athlete,
-
-    )
-# ======================================================
-# Sidebar — data controls
-# ======================================================
-
-with st.sidebar:
-
-    st.divider()
-
-    st.subheader("Session data")
-
-    control_column_1, control_column_2 = (
-        st.columns(2)
+athlete = show_sidebar(
+        athlete
     )
 
-    control_column_1.button(
-        "Reset demo",
-        on_click=reset_demo_data,
-        use_container_width=True,
-    )
-
-    control_column_2.button(
-        "Clear",
-        on_click=clear_training_data,
-        use_container_width=True,
-    )
-
-    st.caption(
-        "The current version stores data only "
-        "during this browser session."
-    )
-
+st.session_state.athlete = athlete
 
 # ======================================================
 # Dashboard data

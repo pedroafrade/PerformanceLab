@@ -16,6 +16,10 @@ from performancelab.presentation import (
 
 from .sensor_card import show_sensor_card
 
+from .elevation_profile import (
+    show_elevation_profile,
+)
+
 
 # ======================================================
 # Formatting
@@ -146,6 +150,10 @@ def show_workout_details(
     )
 
     show_workout_sensors(
+        workout
+    )
+
+    show_elevation_profile(
         workout
     )
     
