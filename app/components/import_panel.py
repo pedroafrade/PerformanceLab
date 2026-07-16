@@ -16,15 +16,13 @@ from performancelab.importers import (
 # Import panel
 # ======================================================
 
-def show_import_panel(athlete):
+def show_import_panel(
+    athlete,
+):
 
     """
     Displays the activity import panel.
     """
-
-    st.divider()
-
-    st.header("Import activity")
 
     uploaded_file = st.file_uploader(
 
@@ -38,6 +36,8 @@ def show_import_panel(athlete):
 
         ],
 
+        key="activity_file_uploader",
+
     )
 
     if st.button(
@@ -45,6 +45,8 @@ def show_import_panel(athlete):
         "Import",
 
         use_container_width=True,
+
+        key="import_activity_button",
 
     ):
 
@@ -60,27 +62,35 @@ def show_import_panel(athlete):
 
         try:
 
-            filename = (
+            extension = (
 
-                uploaded_file.name.lower()
+                uploaded_file.name
+
+                .split(".")
+
+                [-1]
+
+                .lower()
 
             )
 
-            if filename.endswith(".gpx"):
+            if extension == "gpx":
 
                 importer = GPXImporter()
 
-            elif filename.endswith(".fit"):
+            elif extension == "fit":
 
                 importer = FITImporter()
 
             else:
 
-                raise ValueError(
+                st.error(
 
                     "Unsupported file format."
 
                 )
+
+                return
 
             workout = importer.read(
 

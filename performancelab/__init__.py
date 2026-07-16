@@ -17,6 +17,8 @@ from .race import Event
 from .race import EventEntry
 from .race import EventBook
 
+from performancelab.builders import create_workout
+
 __all__ = [
     "Athlete",
 

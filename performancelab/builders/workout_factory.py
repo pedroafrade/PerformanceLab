@@ -6,7 +6,7 @@ Workout Factory.
 
 from datetime import date, timedelta
 
-from performancelab import Workout
+from performancelab.workout import Workout
 
 
 # ======================================================

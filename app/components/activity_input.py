@@ -6,6 +6,9 @@ Activity Input Component.
 
 import streamlit as st
 
+from ._manual_workout_form import (
+    show_manual_workout_form,
+)
 from .import_panel import (
     show_import_panel,
 )
@@ -20,53 +23,40 @@ def show_activity_input(
 ):
 
     """
-    Displays activity input controls.
+    Displays the controls for adding an activity.
+
+    The activity may be created manually or imported
+    from a supported file.
 
     Returns
     -------
     Athlete
-        Athlete instance.
+        The current athlete instance.
     """
 
-    st.header(
-
-        "Activity"
-
-    )
+    st.header("Add activity")
 
     mode = st.segmented_control(
-
-        "Source",
-
+        "Activity source",
         options=[
-
             "Manual",
-
             "File",
-
         ],
-
         default="File",
-
         label_visibility="collapsed",
-
+        key="activity_input_mode",
     )
 
-    if mode == "File":
+    if mode == "Manual":
 
-        show_import_panel(
-
-            athlete,
-
+        show_manual_workout_form(
+            athlete
         )
 
-    else:
+    elif mode == "File":
 
-        st.info(
-
-            "Manual workout form "
-            "coming soon."
-
+        show_import_panel(
+            athlete
         )
 
     return athlete

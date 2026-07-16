@@ -11,7 +11,6 @@ import pandas as pd
 import streamlit as st
 
 from components import (
-
     show_route_map,
     show_sidebar,
     show_workout_details,
@@ -25,7 +24,7 @@ from performancelab.presentation import (
     has_route,
 
 )
-from services import (
+from performancelab.builders import (
     create_workout,
 )
 

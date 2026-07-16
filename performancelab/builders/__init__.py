@@ -1,7 +1,7 @@
 """
 PerformanceLab
 
-Application services.
+Builders package.
 """
 
 from .workout_factory import create_workout
