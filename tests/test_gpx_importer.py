@@ -4,7 +4,7 @@ PerformanceLab
 Tests for GPX Importer.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from io import BytesIO, StringIO
 
 import pytest
@@ -71,10 +71,10 @@ def test_import_from_text():
 
     assert workout.sport == "Running"
 
-    assert workout.date == datetime.fromisoformat(
-
-        "2026-07-01T08:00:00+00:00"
-
+    assert workout.date == date(
+        2026,
+        7,
+        1,
     )
 
     assert workout.duration == timedelta(

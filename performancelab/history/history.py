@@ -7,6 +7,7 @@ Container for an athlete's workouts.
 """
 
 from dataclasses import dataclass, field
+from datetime import date, datetime, time
 
 from performancelab.workout import Workout
 
@@ -40,18 +41,36 @@ class History:
 
     # ======================================================
 
+    @staticmethod
+    def _sortable_date(value):
+
+        if value is None:
+
+            return datetime.max
+
+        if isinstance(value, datetime):
+
+            return value.replace(tzinfo=None)
+
+        if isinstance(value, date):
+
+            return datetime.combine(
+                value,
+                time.min,
+            )
+
+        raise TypeError(
+            "Workout date must be a date, datetime or None."
+        )
+
+    # ======================================================
+
     def _sort(self):
 
         self.workouts.sort(
-
-            key=lambda workout: (
-
-                workout.date is None,
-
-                workout.date,
-
+            key=lambda workout: self._sortable_date(
+                workout.date
             )
-
         )
 
     # ======================================================
@@ -122,9 +141,6 @@ class History:
     def __repr__(self):
 
         return (
-
             f"History("
-
             f"{len(self.workouts)} workouts)"
-
         )

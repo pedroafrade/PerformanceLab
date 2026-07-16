@@ -5,21 +5,26 @@ Streamlit application with manual workout entry
 and session-based athlete state.
 """
 
-from datetime import date, timedelta
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 import pandas as pd
 import streamlit as st
-import pydeck as pdk
+
+from components import (
+    show_import_panel,
+    show_route_map,
+    show_workout_details,
+)
 
 from performancelab import Athlete, Workout
+
 from performancelab.presentation import (
     DashboardData,
     has_route,
-    route_center,
-    route_coordinates,
+    has_sensor_series,
+    heart_rate_series,
+    heart_rate_summary,
 )
-from performancelab.importers import GPXImporter
 
 
 # ======================================================
@@ -227,116 +232,7 @@ def create_demo_athlete() -> Athlete:
 
     return athlete
 
-# ======================================================
-# Route map
-# ======================================================
 
-def show_route_map(
-    workout: Workout,
-) -> None:
-
-    if not has_route(workout):
-
-        st.info(
-            "This workout does not contain "
-            "GPS route data."
-        )
-
-        return
-
-    coordinates = route_coordinates(
-        workout
-    )
-
-    center = route_center(workout)
-
-    if center is None:
-
-        return
-
-    latitude, longitude = center
-
-    route_data = [
-
-        {
-            "path": coordinates,
-        }
-
-    ]
-
-    route_layer = pdk.Layer(
-
-        "PathLayer",
-
-        data=route_data,
-
-        get_path="path",
-
-        get_width=5,
-
-        width_min_pixels=3,
-
-        pickable=True,
-
-    )
-
-    start_finish_layer = pdk.Layer(
-
-        "ScatterplotLayer",
-
-        data=[
-            {
-                "position": coordinates[0],
-                "label": "Start",
-            },
-            {
-                "position": coordinates[-1],
-                "label": "Finish",
-            },
-        ],
-
-        get_position="position",
-
-        get_radius=20,
-
-        radius_min_pixels=6,
-
-        pickable=True,
-
-    )
-
-    view_state = pdk.ViewState(
-
-        latitude=latitude,
-
-        longitude=longitude,
-
-        zoom=13,
-
-        pitch=0,
-
-    )
-
-    deck = pdk.Deck(
-
-        layers=[
-            route_layer,
-            start_finish_layer,
-        ],
-
-        initial_view_state=view_state,
-
-        tooltip={
-            "text": "{label}",
-        },
-
-    )
-
-    st.pydeck_chart(
-        deck,
-        width="stretch",
-        height=500,
-    )
 # ======================================================
 # Session state initialization
 # ======================================================
@@ -353,6 +249,21 @@ def initialize_session_state() -> None:
 
         st.session_state.notice = None
 
+# ======================================================
+# Delete confirmation
+# ======================================================
+
+if "confirm_delete" not in st.session_state:
+
+    st.session_state.confirm_delete = False
+
+# ======================================================
+# Edit mode
+# ======================================================
+
+if "edit_workout" not in st.session_state:
+
+    st.session_state.edit_workout = False
 
 # ======================================================
 # Session actions
@@ -581,77 +492,16 @@ with st.sidebar:
                 )
 
 # ======================================================
-# Sidebar — GPX Import
+# Sidebar
 # ======================================================
 
 with st.sidebar:
 
-    st.divider()
+    show_import_panel(
 
-    st.header("Import GPX")
-
-    uploaded_gpx = st.file_uploader(
-
-        "GPX file",
-
-        type=["gpx"],
-
-        accept_multiple_files=False,
+        athlete,
 
     )
-
-    if st.button(
-
-        "Import GPX",
-
-        use_container_width=True,
-
-    ):
-
-        if uploaded_gpx is None:
-
-            st.warning(
-
-                "Please choose a GPX file."
-
-            )
-
-        else:
-
-            try:
-
-                importer = GPXImporter()
-
-                workout = importer.read(
-
-                    uploaded_gpx
-
-                )
-
-                st.write("Imported sensors:")
-                st.write(workout.sensors.__dict__)
-
-                athlete.history.add(
-
-                    workout
-
-                )
-
-                st.success(
-
-                    "Workout imported successfully."
-
-                )
-
-                st.rerun()
-
-            except Exception as error:
-
-                st.error(
-
-                    str(error)
-
-                )
 # ======================================================
 # Sidebar — data controls
 # ======================================================
@@ -1004,65 +854,336 @@ if workouts:
         selected_index
     ]
 
-    st.write("Sensors:")
-    st.write(selected_workout.sensors)
+    show_workout_details(
+        selected_workout
+    )
 
-    st.write("Sensors dict:")
-    st.write(vars(selected_workout.sensors))
+# ======================================================
+# Heart rate
+# ======================================================
 
-    detail_column_1, detail_column_2, \
-        detail_column_3, detail_column_4 = (
-            st.columns(4)
+if has_sensor_series(
+    selected_workout,
+    "heart_rate",
+):
+
+    st.divider()
+
+    st.subheader("Heart rate")
+
+    heart_rate_data = heart_rate_series(
+        selected_workout
+    )
+
+    heart_rate_stats = heart_rate_summary(
+        selected_workout
+    )
+
+    column_1, column_2, column_3 = st.columns(3)
+
+    column_1.metric(
+        "Average",
+        f"{heart_rate_stats['average']:.0f} bpm",
+    )
+
+    column_2.metric(
+        "Minimum",
+        f"{heart_rate_stats['minimum']:.0f} bpm",
+    )
+
+    column_3.metric(
+        "Maximum",
+        f"{heart_rate_stats['maximum']:.0f} bpm",
+    )
+
+    heart_rate_chart = pd.DataFrame(
+        {
+            "Elapsed minutes": [
+                sample["elapsed_seconds"] / 60
+                for sample in heart_rate_data
+            ],
+            "Heart rate": [
+                sample["value"]
+                for sample in heart_rate_data
+            ],
+        }
+    )
+
+    heart_rate_chart = heart_rate_chart.set_index(
+        "Elapsed minutes"
+    )
+
+    st.line_chart(
+        heart_rate_chart,
+    )
+
+# ======================================================
+# Workout actions
+# ======================================================
+
+st.divider()
+
+if not st.session_state.confirm_delete:
+
+    action_column_1, action_column_2 = st.columns(2)
+
+    with action_column_1:
+
+        if st.button(
+
+            "🗑 Delete workout",
+
+            use_container_width=True,
+
+        ):
+
+            st.session_state.confirm_delete = True
+
+            st.rerun()
+
+    with action_column_2:
+
+        if st.button(
+
+            "✏️ Edit workout",
+
+            use_container_width=True,
+
+        ):
+
+            st.session_state.edit_workout = True
+
+            st.rerun()
+
+else:
+
+    st.warning(
+
+        "Are you sure you want to delete this workout?"
+
+    )
+
+    confirm_column, cancel_column = st.columns(2)
+
+    with confirm_column:
+
+        if st.button(
+
+            "✅ Delete",
+
+            type="primary",
+
+            use_container_width=True,
+
+        ):
+
+            athlete.history.remove(
+
+                selected_workout
+
+            )
+
+            st.session_state.confirm_delete = False
+
+            st.success(
+
+                "Workout deleted."
+
+            )
+
+            st.rerun()
+
+    with cancel_column:
+
+        if st.button(
+
+            "Cancel",
+
+            use_container_width=True,
+
+        ):
+
+            st.session_state.confirm_delete = False
+
+            st.rerun()
+# ======================================================
+# Edit workout
+# ======================================================
+
+if st.session_state.edit_workout:
+
+    st.divider()
+
+    st.subheader("Edit workout")
+
+    title = st.text_input(
+        "Title",
+        value=selected_workout.info.title or "",
+    )
+
+    sports = [
+        "Running",
+        "Cycling",
+        "Swimming",
+        "Walking",
+        "Hiking",
+        "Strength",
+        "Other",
+    ]
+
+    current_sport = (
+        selected_workout.sport
+        if selected_workout.sport in sports
+        else "Other"
+    )
+
+    sport = st.selectbox(
+        "Sport",
+        sports,
+        index=sports.index(current_sport),
+    )
+
+    workout_date = st.date_input(
+        "Date",
+        value=selected_workout.date,
+    )
+
+    distance = st.number_input(
+        "Distance (km)",
+        min_value=0.0,
+        value=float(
+            selected_workout.distance or 0
+        ),
+        step=0.1,
+    )
+
+    duration = (
+        selected_workout.duration
+        if selected_workout.duration is not None
+        else timedelta()
+    )
+
+    total_seconds = int(
+        duration.total_seconds()
+    )
+
+    initial_hours = total_seconds // 3600
+    initial_minutes = (
+        total_seconds % 3600
+    ) // 60
+    initial_seconds = total_seconds % 60
+
+    duration_column_1, \
+        duration_column_2, \
+        duration_column_3 = st.columns(3)
+
+    with duration_column_1:
+
+        hours = st.number_input(
+            "Hours",
+            min_value=0,
+            value=initial_hours,
+            step=1,
         )
-    
 
-    detail_column_1.metric(
+    with duration_column_2:
 
-        "Distance",
+        minutes = st.number_input(
+            "Minutes",
+            min_value=0,
+            max_value=59,
+            value=initial_minutes,
+            step=1,
+        )
 
-        format_distance(
-            selected_workout.distance
+    with duration_column_3:
+
+        seconds = st.number_input(
+            "Seconds",
+            min_value=0,
+            max_value=59,
+            value=initial_seconds,
+            step=1,
+        )
+
+    elevation = st.number_input(
+        "Elevation gain (m)",
+        min_value=0.0,
+        value=float(
+            selected_workout.elevation_gain or 0
         ),
-
+        step=1.0,
     )
 
-    detail_column_2.metric(
-
-        "Duration",
-
-        format_duration(
-            selected_workout.duration
-        ),
-
-    )
-
-    detail_column_3.metric(
-
-        "Elevation",
-
-        format_elevation(
-            selected_workout.elevation_gain
-        ),
-
-    )
-
-    detail_column_4.metric(
-
+    rpe = st.slider(
         "RPE",
-
-        (
-            f"{selected_workout.feedback.rpe:.1f}"
-            if selected_workout.feedback.rpe
-            is not None
-            else "—"
+        min_value=1,
+        max_value=10,
+        value=int(
+            selected_workout.feedback.rpe or 5
         ),
-
     )
+
+    save_column, cancel_column = st.columns(2)
+
+    with save_column:
+
+        if st.button(
+            "💾 Save",
+            type="primary",
+            use_container_width=True,
+        ):
+
+            selected_workout.info.title = title
+            selected_workout.info.sport = sport
+            selected_workout.info.date = workout_date
+            selected_workout.info.distance = (
+                distance if distance > 0 else None
+            )
+
+            selected_workout.info.duration = timedelta(
+                hours=int(hours),
+                minutes=int(minutes),
+                seconds=int(seconds),
+            )
+
+            selected_workout.info.elevation_gain = (
+                elevation
+            )
+
+            selected_workout.feedback.rpe = rpe
+
+            athlete.history._sort()
+
+            st.session_state.edit_workout = False
+            st.session_state.notice = (
+                "Workout updated."
+            )
+
+            st.rerun()
+
+    with cancel_column:
+
+        if st.button(
+            "Cancel",
+            use_container_width=True,
+        ):
+
+            st.session_state.edit_workout = False
+
+            st.rerun()
+# ======================================================
+# Route
+# ======================================================
+
+if has_route(selected_workout):
 
     st.markdown("#### Route")
 
     show_route_map(
+
         selected_workout
+
     )
 
 else:

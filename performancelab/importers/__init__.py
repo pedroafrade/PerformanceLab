@@ -11,6 +11,7 @@ from .base import (
     WorkoutImporter,
 )
 
+from .fit import FITImporter
 from .gpx import GPXImporter
 
 
@@ -23,5 +24,6 @@ __all__ = [
     "InvalidActivityError",
 
     "GPXImporter",
+    "FITImporter",
 
 ]

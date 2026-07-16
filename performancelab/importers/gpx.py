@@ -6,7 +6,7 @@ GPX Importer
 Imports a GPX activity as a Workout.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import gpxpy
@@ -268,13 +268,13 @@ class GPXImporter(WorkoutImporter):
         )
 
     # ======================================================
-    # Start time
+    # Start date
     # ======================================================
 
     @staticmethod
     def _start_time(
         points,
-    ) -> datetime | None:
+    ) -> date | None:
 
         times = [
 
@@ -290,7 +290,7 @@ class GPXImporter(WorkoutImporter):
 
             return None
 
-        return min(times)
+        return min(times).date()
 
     # ======================================================
     # Distance
