@@ -22,9 +22,7 @@ from performancelab import Athlete, Workout
 from performancelab.presentation import (
     DashboardData,
     has_route,
-    has_sensor_series,
-    heart_rate_series,
-    heart_rate_summary,
+
 )
 
 
@@ -767,64 +765,7 @@ if selected_workout is not None:
         selected_workout
     )
 
-# ======================================================
-# Heart rate
-# ======================================================
 
-if has_sensor_series(
-    selected_workout,
-    "heart_rate",
-):
-
-    st.divider()
-
-    st.subheader("Heart rate")
-
-    heart_rate_data = heart_rate_series(
-        selected_workout
-    )
-
-    heart_rate_stats = heart_rate_summary(
-        selected_workout
-    )
-
-    column_1, column_2, column_3 = st.columns(3)
-
-    column_1.metric(
-        "Average",
-        f"{heart_rate_stats['average']:.0f} bpm",
-    )
-
-    column_2.metric(
-        "Minimum",
-        f"{heart_rate_stats['minimum']:.0f} bpm",
-    )
-
-    column_3.metric(
-        "Maximum",
-        f"{heart_rate_stats['maximum']:.0f} bpm",
-    )
-
-    heart_rate_chart = pd.DataFrame(
-        {
-            "Elapsed minutes": [
-                sample["elapsed_seconds"] / 60
-                for sample in heart_rate_data
-            ],
-            "Heart rate": [
-                sample["value"]
-                for sample in heart_rate_data
-            ],
-        }
-    )
-
-    heart_rate_chart = heart_rate_chart.set_index(
-        "Elapsed minutes"
-    )
-
-    st.line_chart(
-        heart_rate_chart,
-    )
 
 # ======================================================
 # Workout actions

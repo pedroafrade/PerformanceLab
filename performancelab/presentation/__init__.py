@@ -30,6 +30,16 @@ from .chart import (
 
 from .dashboard import DashboardData
 
+from .elevation import (
+    elevation_maximum,
+    elevation_minimum,
+    elevation_profile,
+    elevation_profile_distance,
+    elevation_range,
+    elevation_values,
+    has_elevation_profile,
+)
+
 from .route import (
     has_route,
     route_center,
@@ -48,6 +58,15 @@ __all__ = [
     "route_center",
     "route_coordinates",
     "route_points",
+
+    # Elevation
+    "elevation_profile",
+    "elevation_values",
+    "elevation_minimum",
+    "elevation_maximum",
+    "elevation_range",
+    "elevation_profile_distance",
+    "has_elevation_profile",
 
     # Generic chart data
     "sensor_series",
