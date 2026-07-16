@@ -10,6 +10,7 @@ from .workout_details import (
     show_workout_details,
     show_workout_summary,
 )
+from .workout_table import show_workout_table
 
 
 __all__ = [
@@ -20,5 +21,7 @@ __all__ = [
 
     "show_workout_details",
     "show_workout_summary",
+
+    "show_workout_table",
 
 ]

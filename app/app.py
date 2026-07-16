@@ -14,6 +14,7 @@ from components import (
     show_import_panel,
     show_route_map,
     show_workout_details,
+    show_workout_table,
 )
 
 from performancelab import Athlete, Workout
@@ -756,103 +757,11 @@ with column_2:
 # Workout history
 # ======================================================
 
-st.divider()
-
-st.subheader("Workout history")
-
-workout_rows = []
-
-for workout in reversed(
-    athlete.history.workouts
-):
-
-    workout_rows.append(
-
-        {
-            "Date": format_workout_date(
-                workout.date
-            ),
-            "Title": (
-                workout.info.title
-                or "—"
-            ),
-            "Sport": (
-                workout.sport
-                or "Unknown"
-            ),
-            "Distance": format_distance(
-                workout.distance
-            ),
-            "Duration": format_duration(
-                workout.duration
-            ),
-            "Elevation": format_elevation(
-                workout.elevation_gain
-            ),
-            "RPE": workout.feedback.rpe,
-            "Source": (
-                workout.info.source
-                or "—"
-            ),
-        }
-
-    )
-
-if workout_rows:
-
-    workout_table = pd.DataFrame(
-        workout_rows
-    )
-
-    st.dataframe(
-        workout_table,
-        width="stretch",
-        hide_index=True,
-    )
-
-else:
-
-    st.info(
-        "No workouts available."
-    )
-
-# ======================================================
-# Workout details
-# ======================================================
-
-st.divider()
-
-st.subheader("Workout details")
-
-workouts = list(
-
-    reversed(
-        athlete.history.workouts
-    )
-
+selected_workout = show_workout_table(
+    athlete
 )
 
-if workouts:
-
-    selected_index = st.selectbox(
-
-        "Select workout",
-
-        options=range(len(workouts)),
-
-        format_func=lambda index: (
-
-            f"{workouts[index].date} — "
-            f"{workouts[index].sport or 'Unknown'} — "
-            f"{workouts[index].info.title or 'Untitled'} — "
-            f"{workouts[index].info.source or 'unknown'}"
-        ),
-
-    )
-
-    selected_workout = workouts[
-        selected_index
-    ]
+if selected_workout is not None:
 
     show_workout_details(
         selected_workout
