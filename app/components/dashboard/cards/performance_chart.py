@@ -7,6 +7,10 @@ Performance chart dashboard card.
 import pandas as pd
 import streamlit as st
 
+from performancelab.presentation.performance import (
+    performance_chart,
+)
+
 
 def show_performance_chart_card(
     performance,
@@ -15,25 +19,32 @@ def show_performance_chart_card(
     Displays the performance chart card.
     """
 
-    if performance["dates"]:
+    st.markdown("##### Performance")
+
+    if performance.dates:
+
+        figure = performance_chart(
+            performance,
+        )
+
+        st.plotly_chart(
+            figure,
+            width="stretch",
+        )
 
         chart_data = pd.DataFrame(
             {
-                "Load": performance["load"],
-                "CTL": performance["ctl"],
-                "ATL": performance["atl"],
-                "TSB": performance["tsb"],
+                "Load": performance.load,
+                "CTL": performance.ctl,
+                "ATL": performance.atl,
+                "TSB": performance.tsb,
             },
             index=pd.to_datetime(
-                performance["dates"]
+                performance.dates
             ),
         )
 
         chart_data.index.name = "Date"
-
-        st.line_chart(
-            chart_data,
-        )
 
         with st.expander(
             "Show performance data"

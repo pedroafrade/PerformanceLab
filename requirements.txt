@@ -5,3 +5,4 @@ scipy
 gpxpy
 streamlit
 fitdecode
+plotly

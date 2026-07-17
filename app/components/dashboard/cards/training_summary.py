@@ -6,55 +6,42 @@ Training summary dashboard card.
 
 import streamlit as st
 
-from .common import (
-    format_duration,
-)
+from .common import format_duration
 
 
 def show_training_summary_card(
     summary,
 ) -> None:
     """
-    Displays the training summary card.
+    Displays the weekly training summary.
     """
 
-    st.divider()
+    st.markdown("##### This Week")
 
-    st.subheader(
-        "Training summary"
-    )
+    col1, col2 = st.columns(2)
 
-    (
-        column_1,
-        column_2,
-        column_3,
-        column_4,
-    ) = st.columns(4)
+    with col1:
 
-    column_1.metric(
-        "Workouts",
-        summary["workouts"],
-    )
+        st.metric(
+            "🏃 Workouts",
+            summary.workouts,
+        )
 
-    column_2.metric(
-        "Training days",
-        summary["training_days"],
-    )
+        st.metric(
+            "⏱ Duration",
+            format_duration(
+                summary.total_duration
+            ),
+        )
 
-    column_3.metric(
-        "Total duration",
-        format_duration(
-            summary["total_duration"]
-        ),
-    )
+    with col2:
 
-    average_rpe = summary["average_rpe"]
+        st.metric(
+            "🗓 Training days",
+            summary.training_days,
+        )
 
-    column_4.metric(
-        "Average RPE",
-        (
-            f"{average_rpe:.1f}"
-            if average_rpe is not None
-            else "—"
-        ),
-    )
+        st.metric(
+            "🚴 Sports",
+            summary.sports,
+        )

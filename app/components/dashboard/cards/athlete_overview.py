@@ -11,35 +11,19 @@ def show_athlete_overview_card(
     dashboard_data,
 ) -> None:
     """
-    Displays the athlete overview card.
+    Displays dashboard notifications.
     """
 
-    if st.session_state.notice:
+    del dashboard_data
+
+    notice = st.session_state.get(
+        "notice"
+    )
+
+    if notice:
 
         st.success(
-            st.session_state.notice
+            notice
         )
 
         st.session_state.notice = None
-
-    athlete = dashboard_data["athlete"]
-
-    st.subheader(
-        athlete["name"]
-        or "Unnamed athlete"
-    )
-
-    sports = athlete["sports"]
-
-    if sports:
-
-        st.write(
-            "**Sports:**",
-            ", ".join(sports),
-        )
-
-    else:
-
-        st.write(
-            "**Sports:** —"
-        )

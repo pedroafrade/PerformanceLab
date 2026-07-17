@@ -11,65 +11,53 @@ def show_planning_card(
     planning,
 ) -> None:
     """
-    Displays the planning card.
+    Displays the athlete planning information.
     """
 
-    st.divider()
+    st.markdown("##### Planning")
 
-    st.subheader(
-        "Planning"
-    )
+    goal_column, event_column = st.columns(2)
 
-    column_1, column_2 = st.columns(2)
+    with goal_column:
 
-    next_goal = planning["next_goal"]
+        st.markdown("**Next goal**")
 
-    with column_1:
+        if planning.next_goal is None:
 
-        st.markdown(
-            "#### Next goal"
-        )
-
-        if next_goal is None:
-
-            st.write(
-                "No active goals."
+            st.caption(
+                "No goal defined."
             )
 
         else:
 
             st.write(
-                next_goal.name
-                or "Unnamed goal"
+                planning.next_goal
             )
 
-            st.write(
-                f"{planning['days_until_next_goal']} "
-                "days remaining"
-            )
+            if planning.days_to_goal is not None:
 
-    next_event = planning["next_event"]
+                st.caption(
+                    f"{planning.days_to_goal} days remaining"
+                )
 
-    with column_2:
+    with event_column:
 
-        st.markdown(
-            "#### Next event"
-        )
+        st.markdown("**Next event**")
 
-        if next_event is None:
+        if planning.next_event is None:
 
-            st.write(
-                "No upcoming events."
+            st.caption(
+                "No event scheduled."
             )
 
         else:
 
             st.write(
-                next_event.event.name
-                or "Unnamed event"
+                planning.next_event
             )
 
-            st.write(
-                f"{planning['days_until_next_event']} "
-                "days remaining"
-            )
+            if planning.days_to_event is not None:
+
+                st.caption(
+                    f"{planning.days_to_event} days remaining"
+                )

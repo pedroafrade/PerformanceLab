@@ -11,32 +11,42 @@ def show_performance_management_card(
     summary,
 ) -> None:
     """
-    Displays the performance management card.
+    Displays the current performance status.
     """
 
-    st.divider()
+    st.markdown("##### Current status")
 
-    st.subheader(
-        "Performance management"
-    )
-
-    (
-        column_1,
-        column_2,
-        column_3,
-    ) = st.columns(3)
+    column_1, column_2, column_3 = st.columns(3)
 
     column_1.metric(
-        "CTL — Fitness",
-        f"{summary['ctl']:.1f}",
+        "Fitness",
+        f"{summary.ctl:.1f}",
     )
 
     column_2.metric(
-        "ATL — Fatigue",
-        f"{summary['atl']:.1f}",
+        "Fatigue",
+        f"{summary.atl:.1f}",
     )
 
     column_3.metric(
-        "TSB — Form",
-        f"{summary['tsb']:.1f}",
+        "Form",
+        f"{summary.tsb:.1f}",
     )
+
+    if summary.tsb >= 10:
+
+        st.success(
+            "Fresh and ready."
+        )
+
+    elif summary.tsb >= -10:
+
+        st.info(
+            "Balanced training state."
+        )
+
+    else:
+
+        st.warning(
+            "High fatigue. Recovery may be needed."
+        )

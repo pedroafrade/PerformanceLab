@@ -6,6 +6,12 @@ Dashboard Data
 Presentation-ready data for user interfaces.
 """
 
+from .dashboard_models import (
+    AthleteOverviewData,
+    DashboardPlanningData,
+    DashboardSummaryData,
+    PerformanceChartData,
+)
 
 class DashboardData:
 
@@ -31,13 +37,15 @@ class DashboardData:
     @property
     def athlete_data(self):
 
-        return {
+        return AthleteOverviewData(
 
-            "name": self.athlete.name,
+            name=self.athlete.name,
 
-            "sports": self.analytics.sports,
+            sports=sorted(
+                self.analytics.sports
+            ),
 
-        }
+        )
 
     # ======================================================
     # Summary
@@ -46,23 +54,25 @@ class DashboardData:
     @property
     def summary(self):
 
-        return {
+        return DashboardSummaryData(
 
-            "workouts": self.analytics.number_of_workouts,
+            workouts=self.analytics.number_of_workouts,
 
-            "training_days": self.analytics.training_days,
+            sports=len(self.analytics.sports),
 
-            "total_duration": self.analytics.total_duration,
+            training_days=self.analytics.training_days,
 
-            "average_rpe": self.analytics.average_rpe,
+            total_duration=self.analytics.total_duration,
 
-            "ctl": self.analytics.ctl,
+            average_rpe=self.analytics.average_rpe,
 
-            "atl": self.analytics.atl,
+            ctl=self.analytics.ctl,
 
-            "tsb": self.analytics.tsb,
+            atl=self.analytics.atl,
 
-        }
+            tsb=self.analytics.tsb,
+
+        )
 
     # ======================================================
     # Performance
@@ -75,19 +85,19 @@ class DashboardData:
 
         pmc = self.analytics.pmc
 
-        return {
+        return PerformanceChartData(
 
-            "dates": daily_loads.dates,
+            dates=daily_loads.dates,
 
-            "load": daily_loads.loads,
+            load=daily_loads.loads,
 
-            "ctl": pmc.ctl,
+            ctl=pmc.ctl,
 
-            "atl": pmc.atl,
+            atl=pmc.atl,
 
-            "tsb": pmc.tsb,
+            tsb=pmc.tsb,
 
-        }
+        )
 
     # ======================================================
     # Planning
@@ -96,21 +106,21 @@ class DashboardData:
     @property
     def planning(self):
 
-        return {
+        return DashboardPlanningData(
 
-            "next_goal": self.analytics.next_goal,
+            next_goal=self.analytics.next_goal,
 
-            "days_until_next_goal": (
+            days_to_goal=(
                 self.analytics.days_until_next_goal
             ),
 
-            "next_event": self.analytics.next_event,
+            next_event=self.analytics.next_event,
 
-            "days_until_next_event": (
+            days_to_event=(
                 self.analytics.days_until_next_event
             ),
 
-        }
+        )
 
     # ======================================================
     # Complete Dashboard

@@ -41,29 +41,35 @@ def test_empty_dashboard():
 
     data = dashboard.build()
 
-    assert data["athlete"]["name"] == "Pedro"
+    assert data["athlete"].name == "Pedro"
 
-    assert data["athlete"]["sports"] == []
+    assert data["athlete"].sports == []
 
-    assert data["summary"]["workouts"] == 0
+    assert data["summary"].workouts == 0
 
-    assert data["summary"]["training_days"] == 0
+    assert data["summary"].sports == 0
 
-    assert data["summary"]["ctl"] == 0.0
+    assert data["summary"].training_days == 0
 
-    assert data["summary"]["atl"] == 0.0
+    assert data["summary"].total_duration == timedelta(0)
 
-    assert data["summary"]["tsb"] == 0.0
+    assert data["summary"].average_rpe is None
 
-    assert data["performance"]["dates"] == []
+    assert data["summary"].ctl == 0.0
 
-    assert data["performance"]["load"] == []
+    assert data["summary"].atl == 0.0
 
-    assert data["performance"]["ctl"] == []
+    assert data["summary"].tsb == 0.0
 
-    assert data["performance"]["atl"] == []
+    assert data["performance"].dates == []
 
-    assert data["performance"]["tsb"] == []
+    assert data["performance"].load == []
+
+    assert data["performance"].ctl == []
+
+    assert data["performance"].atl == []
+
+    assert data["performance"].tsb == []
 
 
 # ======================================================
@@ -104,19 +110,27 @@ def test_dashboard_with_training():
 
     data = dashboard.build()
 
-    assert data["athlete"]["name"] == "Pedro"
+    assert data["athlete"].name == "Pedro"
 
-    assert data["athlete"]["sports"] == [
+    assert data["athlete"].sports == [
 
         "Running",
 
     ]
 
-    assert data["summary"]["workouts"] == 2
+    assert data["summary"].workouts == 2
 
-    assert data["summary"]["training_days"] == 2
+    assert data["summary"].sports == 1
 
-    assert data["performance"]["dates"] == [
+    assert data["summary"].training_days == 2
+
+    assert data["summary"].total_duration == timedelta(
+        hours=2
+    )
+
+    assert data["summary"].average_rpe == 5.5
+
+    assert data["performance"].dates == [
 
         date(2026, 7, 1),
 
@@ -126,7 +140,7 @@ def test_dashboard_with_training():
 
     ]
 
-    assert data["performance"]["load"] == [
+    assert data["performance"].load == [
 
         300,
 
@@ -138,19 +152,19 @@ def test_dashboard_with_training():
 
     assert len(
 
-        data["performance"]["ctl"]
+        data["performance"].ctl
 
     ) == 3
 
     assert len(
 
-        data["performance"]["atl"]
+        data["performance"].atl
 
     ) == 3
 
     assert len(
 
-        data["performance"]["tsb"]
+        data["performance"].tsb
 
     ) == 3
 
@@ -197,15 +211,15 @@ def test_performance_series_have_same_length():
 
     lengths = {
 
-        len(performance["dates"]),
+        len(performance.dates),
 
-        len(performance["load"]),
+        len(performance.load),
 
-        len(performance["ctl"]),
+        len(performance.ctl),
 
-        len(performance["atl"]),
+        len(performance.atl),
 
-        len(performance["tsb"]),
+        len(performance.tsb),
 
     }
 

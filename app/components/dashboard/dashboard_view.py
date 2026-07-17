@@ -68,28 +68,36 @@ def show_dashboard(
         dashboard_data,
     )
 
-    show_training_summary_card(
-        summary,
-    )
+    left_column, right_column = st.columns(2)
 
-    show_performance_management_card(
-        summary,
-    )
+    with left_column:
+        with st.container(border=True):
+            show_training_summary_card(
+                summary,
+            )
 
-    show_performance_chart_card(
-        performance,
-    )
+    with right_column:
+        with st.container(border=True):
+            show_performance_management_card(
+                summary,
+            )
 
-    show_planning_card(
-        planning,
-    )
+    with st.container(border=True):
+        show_performance_chart_card(
+            performance,
+        )
 
-    selected_workout = show_workout_history_card(
-        athlete,
-    )
+    with st.container(border=True):
+        show_planning_card(
+            planning,
+        )
+
+    with st.container(border=True):
+        selected_workout = show_workout_history_card(
+            athlete,
+        )
 
     return selected_workout
-
 
 # ======================================================
 # Selected workout route
