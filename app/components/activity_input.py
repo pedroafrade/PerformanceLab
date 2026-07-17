@@ -23,15 +23,13 @@ def show_activity_input(
 ):
 
     """
-    Displays the controls for adding an activity.
-
-    The activity may be created manually or imported
-    from a supported file.
+    Displays controls for adding an activity manually
+    or importing it from a supported file.
 
     Returns
     -------
     Athlete
-        The current athlete instance.
+        Current athlete instance.
     """
 
     st.header("Add activity")

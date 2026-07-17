@@ -18,104 +18,77 @@ from performancelab.importers import (
 
 def show_import_panel(
     athlete,
-):
+) -> None:
 
     """
-    Displays the activity import panel.
+    Displays the activity file import panel.
     """
 
     uploaded_file = st.file_uploader(
-
         "Choose activity file",
-
         type=[
-
             "gpx",
-
             "fit",
-
         ],
-
         key="activity_file_uploader",
-
     )
 
-    if st.button(
-
+    if not st.button(
         "Import",
-
         use_container_width=True,
-
         key="import_activity_button",
-
     ):
 
-        if uploaded_file is None:
+        return
 
-            st.warning(
+    if uploaded_file is None:
 
-                "Please choose a GPX or FIT file."
+        st.warning(
+            "Please choose a GPX or FIT file."
+        )
 
+        return
+
+    try:
+
+        extension = (
+            uploaded_file.name
+            .rsplit(".", 1)[-1]
+            .lower()
+        )
+
+        if extension == "gpx":
+
+            importer = GPXImporter()
+
+        elif extension == "fit":
+
+            importer = FITImporter()
+
+        else:
+
+            st.error(
+                "Unsupported file format."
             )
 
             return
 
-        try:
+        workout = importer.read(
+            uploaded_file
+        )
 
-            extension = (
+        athlete.history.add(
+            workout
+        )
 
-                uploaded_file.name
+        st.session_state.notice = (
+            "Workout imported successfully."
+        )
 
-                .split(".")
+        st.rerun()
 
-                [-1]
+    except Exception as error:
 
-                .lower()
-
-            )
-
-            if extension == "gpx":
-
-                importer = GPXImporter()
-
-            elif extension == "fit":
-
-                importer = FITImporter()
-
-            else:
-
-                st.error(
-
-                    "Unsupported file format."
-
-                )
-
-                return
-
-            workout = importer.read(
-
-                uploaded_file
-
-            )
-
-            athlete.history.add(
-
-                workout
-
-            )
-
-            st.success(
-
-                "Workout imported successfully."
-
-            )
-
-            st.rerun()
-
-        except Exception as error:
-
-            st.error(
-
-                str(error)
-
-            )
+        st.error(
+            str(error)
+        )

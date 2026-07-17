@@ -62,9 +62,8 @@ def show_manual_workout_form(
             step=0.1,
         )
 
-        duration_column_1, duration_column_2 = (
-            st.columns(2)
-        )
+        duration_column_1, \
+            duration_column_2 = st.columns(2)
 
         with duration_column_1:
 
