@@ -19,9 +19,10 @@ from performancelab.importers import (
 def show_import_panel(
     athlete,
 ) -> None:
-
     """
     Displays the activity file import panel.
+
+    The selected file is imported automatically.
     """
 
     uploaded_file = st.file_uploader(
@@ -33,19 +34,21 @@ def show_import_panel(
         key="activity_file_uploader",
     )
 
-    if not st.button(
-        "Import",
-        use_container_width=True,
-        key="import_activity_button",
-    ):
+    if uploaded_file is None:
 
         return
 
-    if uploaded_file is None:
+    file_token = (
+        uploaded_file.name,
+        uploaded_file.size,
+    )
 
-        st.warning(
-            "Please choose a GPX or FIT file."
+    if (
+        st.session_state.get(
+            "imported_activity_file_token"
         )
+        == file_token
+    ):
 
         return
 
@@ -80,6 +83,10 @@ def show_import_panel(
         athlete.history.add(
             workout
         )
+
+        st.session_state[
+            "imported_activity_file_token"
+        ] = file_token
 
         st.session_state.notice = (
             "Workout imported successfully."

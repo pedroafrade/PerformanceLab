@@ -14,8 +14,6 @@ def show_planning_card(
     Displays the athlete planning information.
     """
 
-    st.markdown("##### Planning")
-
     goal_column, event_column = st.columns(2)
 
     with goal_column:

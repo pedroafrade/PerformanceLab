@@ -16,8 +16,6 @@ def show_training_summary_card(
     Displays the weekly training summary.
     """
 
-    st.markdown("##### This Week")
-
     col1, col2 = st.columns(2)
 
     with col1:

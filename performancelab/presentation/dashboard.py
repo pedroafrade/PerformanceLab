@@ -11,6 +11,7 @@ from .dashboard_models import (
     DashboardPlanningData,
     DashboardSummaryData,
     PerformanceChartData,
+    RecoveryCardData,
 )
 
 class DashboardData:
@@ -123,6 +124,27 @@ class DashboardData:
         )
 
     # ======================================================
+    # Recovery
+    # ======================================================
+
+    @property
+    def recovery(self):
+
+        return RecoveryCardData(
+
+            score=82,
+
+            status="Good",
+
+            recommendation=(
+                "Ready for a normal training session."
+            ),
+
+            trend="↑ 4%",
+
+        )
+
+    # ======================================================
     # Complete Dashboard
     # ======================================================
 
@@ -137,6 +159,8 @@ class DashboardData:
             "performance": self.performance,
 
             "planning": self.planning,
+
+            "recovery": self.recovery,
 
         }
 

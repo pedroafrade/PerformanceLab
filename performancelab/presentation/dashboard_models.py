@@ -86,3 +86,19 @@ class PerformanceChartData:
     atl: Sequence[float]
 
     tsb: Sequence[float]
+
+# ======================================================
+# Recovery
+# ======================================================
+
+
+@dataclass(frozen=True)
+class RecoveryCardData:
+    """
+    Presentation-ready recovery data.
+    """
+
+    score: int
+    status: str
+    recommendation: str
+    trend: str | None = None

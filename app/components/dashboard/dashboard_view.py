@@ -10,6 +10,9 @@ from performancelab.presentation import (
     DashboardData,
     has_route,
 )
+from performancelab.presentation.dashboard_models import (
+    RecoveryCardData,
+)
 
 from .cards import (
     show_athlete_overview_card,
@@ -19,7 +22,13 @@ from .cards import (
     show_training_summary_card,
     show_workout_history_card,
 )
-
+from .cards.recovery_card import recovery_card
+from .grid import (
+    dashboard_bottom_row,
+    dashboard_row,
+    dashboard_top_row,
+)
+from .widget import dashboard_widget
 from ..route_map import (
     show_route_map,
 )
@@ -34,70 +43,140 @@ def show_dashboard(
 ):
     """
     Displays the main athlete dashboard.
-
-    Parameters
-    ----------
-    athlete
-        Athlete displayed by the application.
-
-    Returns
-    -------
-    Workout | None
-        Workout selected in the history table.
     """
 
     dashboard_data = DashboardData(
         athlete,
     ).build()
 
+    athlete_data = dashboard_data["athlete"]
     summary = dashboard_data["summary"]
     performance = dashboard_data["performance"]
     planning = dashboard_data["planning"]
+
+    recovery = RecoveryCardData(
+        score=82,
+        status="Good",
+        recommendation=(
+            "Ready for a normal training session."
+        ),
+        trend="↑ 4%",
+    )
 
     # ==================================================
     # Header
     # ==================================================
 
-    st.title("PerformanceLab")
-
-    st.caption(
-        "Training, physiology and performance analytics."
+    st.set_page_config(
+        layout="wide",
     )
 
-    show_athlete_overview_card(
-        dashboard_data,
-    )
+    # ==================================================
+    # First row
+    # ==================================================
 
-    left_column, right_column = st.columns(2)
+    left, right = dashboard_top_row()
 
-    with left_column:
-        with st.container(border=True):
-            show_training_summary_card(
-                summary,
+    with left:
+
+        with dashboard_widget(
+            title="Athlete",
+            icon="🏃",
+        ):
+
+            show_athlete_overview_card(
+                athlete_data,
             )
 
-    with right_column:
-        with st.container(border=True):
-            show_performance_management_card(
-                summary,
-            )
+    with right:
 
-    with st.container(border=True):
+        (
+            summary_col,
+            status_col,
+            recovery_col,
+        ) = dashboard_row(
+            (1, 1, 1),
+        )
+
+        with summary_col:
+
+            with dashboard_widget(
+                title="This Week",
+                icon="📅",
+            ):
+
+                show_training_summary_card(
+                    summary,
+                )
+
+        with status_col:
+
+            with dashboard_widget(
+                title="Current Status",
+                icon="📊",
+            ):
+
+                show_performance_management_card(
+                    summary,
+                )
+
+        with recovery_col:
+
+            with dashboard_widget(
+                title="Recovery",
+                icon="💚",
+                subtitle="Readiness today",
+            ):
+
+                recovery_card(
+                    recovery,
+                )
+
+    # ==================================================
+    # Performance
+    # ==================================================
+
+    with dashboard_widget(
+        title="Performance",
+        icon="📈",
+    ):
+
         show_performance_chart_card(
             performance,
         )
 
-    with st.container(border=True):
-        show_planning_card(
-            planning,
-        )
+    # ==================================================
+    # Bottom row
+    # ==================================================
 
-    with st.container(border=True):
-        selected_workout = show_workout_history_card(
-            athlete,
-        )
+    left, right = dashboard_bottom_row()
+
+    with left:
+
+        with dashboard_widget(
+            title="Planning",
+            icon="🎯",
+        ):
+
+            show_planning_card(
+                planning,
+            )
+
+    with right:
+
+        with dashboard_widget(
+            title="Workout History",
+            icon="🕘",
+        ):
+
+            selected_workout = (
+                show_workout_history_card(
+                    athlete,
+                )
+            )
 
     return selected_workout
+
 
 # ======================================================
 # Selected workout route

@@ -19,8 +19,6 @@ def show_performance_chart_card(
     Displays the performance chart card.
     """
 
-    st.markdown("##### Performance")
-
     if performance.dates:
 
         figure = performance_chart(

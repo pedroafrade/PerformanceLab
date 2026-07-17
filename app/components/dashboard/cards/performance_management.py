@@ -14,8 +14,6 @@ def show_performance_management_card(
     Displays the current performance status.
     """
 
-    st.markdown("##### Current status")
-
     column_1, column_2, column_3 = st.columns(3)
 
     column_1.metric(
