@@ -8,18 +8,21 @@ Presentation-ready data for user interfaces.
 
 from datetime import date, datetime, timedelta
 
+from performancelab.training.planning import WeeklyPlanBuilder
+
 from .dashboard_models import (
     AthleteOverviewData,
     DashboardPlanningData,
     DashboardSummaryData,
     LatestActivityCardData,
+    MonthlySportSummaryData,
+    MonthlySummaryCardData,
     PerformanceChartData,
     PhysiologyCardData,
     RecoveryCardData,
     TrainingLoadCardData,
-    MonthlySportSummaryData,
-    MonthlySummaryCardData,
 )
+from .planning_presenter import PlanningPresenter
 
 
 class DashboardData:
@@ -807,6 +810,24 @@ class DashboardData:
 
         )
 
+
+    # ======================================================
+    # Planning card
+    # ======================================================
+
+    @property
+    def planning_card(self):
+        """
+        Builds the combined weekly plan, next workout and
+        virtual coach presentation model.
+        """
+
+        plan = WeeklyPlanBuilder().week()
+
+        return PlanningPresenter(
+            plan=plan,
+        ).build()
+
     # ======================================================
     # Recovery
     # ======================================================
@@ -914,6 +935,8 @@ class DashboardData:
             "performance": self.performance,
 
             "planning": self.planning,
+
+            "planning_card": self.planning_card,
 
             "recovery": self.recovery,
 
