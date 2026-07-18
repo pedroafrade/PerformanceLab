@@ -11,7 +11,7 @@ import streamlit as st
 
 TOP_ROW_WIDTHS = (1, 2)
 SUMMARY_ROW_WIDTHS = (1, 1)
-BOTTOM_ROW_WIDTHS = (1, 2)
+BOTTOM_ROW_WIDTHS = (2, 1)
 
 DEFAULT_GAP = "medium"
 SECTION_GAP = "large"
@@ -57,7 +57,7 @@ def dashboard_summary_row():
 
 def dashboard_bottom_row():
     """
-    Creates the planning and workout history row.
+    Creates the planning and monthly summary row.
     """
 
     return dashboard_row(

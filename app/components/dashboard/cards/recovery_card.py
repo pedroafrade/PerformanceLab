@@ -4,39 +4,50 @@ Recovery dashboard card.
 
 from __future__ import annotations
 
-import streamlit as st
+from performancelab.presentation.dashboard_models import (
+    RecoveryCardData,
+)
 
-from performancelab.presentation.dashboard_models import RecoveryCardData
+from .metric_card_body import (
+    MetricCardDetail,
+    MetricCardMetric,
+    metric_card_body,
+)
 
 
-def recovery_card(data: RecoveryCardData) -> None:
+def recovery_card(
+    data: RecoveryCardData,
+) -> None:
     """
-    Render the recovery dashboard card.
+    Render the compact recovery dashboard card.
     """
 
-    score_col, trend_col = st.columns([3, 1], vertical_alignment="center")
+    details = []
 
-    with score_col:
-        st.markdown(
-            (
-                "<div style='"
-                "font-size:2.75rem;"
-                "font-weight:700;"
-                "line-height:1;"
-                "margin-bottom:0.25rem;'>"
-                f"{data.score}"
-                "</div>"
-            ),
-            unsafe_allow_html=True,
-        )
+    if data.trend:
 
-    with trend_col:
-        if data.trend:
-            st.metric(
+        details.append(
+            MetricCardDetail(
                 label="Trend",
                 value=data.trend,
             )
+        )
 
-    st.caption(data.status)
+    details.append(
+        MetricCardDetail(
+            label="Status",
+            value=data.status,
+        )
+    )
 
-    st.info(data.recommendation)
+    metric_card_body(
+        metrics=(
+            MetricCardMetric(
+                value=str(data.score),
+                label="Recovery",
+            ),
+        ),
+        details=tuple(details),
+        progress=data.score,
+        status=data.recommendation,
+    )

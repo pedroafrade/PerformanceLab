@@ -1,45 +1,48 @@
 """
 PerformanceLab
 
-Training summary dashboard card.
+Weekly training summary dashboard card.
 """
 
-import streamlit as st
+from __future__ import annotations
+
+from performancelab.presentation.dashboard_models import (
+    DashboardSummaryData,
+)
 
 from .common import format_duration
+from .metric_card_body import (
+    MetricCardMetric,
+    metric_card_body,
+)
 
 
 def show_training_summary_card(
-    summary,
+    summary: DashboardSummaryData,
 ) -> None:
     """
-    Displays the weekly training summary.
+    Render the compact weekly training summary card.
     """
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        st.metric(
-            "🏃 Workouts",
-            summary.workouts,
-        )
-
-        st.metric(
-            "⏱ Duration",
-            format_duration(
-                summary.total_duration
+    metric_card_body(
+        metrics=(
+            MetricCardMetric(
+                value=str(summary.workouts),
+                label="Workouts",
             ),
-        )
-
-    with col2:
-
-        st.metric(
-            "🗓 Training days",
-            summary.training_days,
-        )
-
-        st.metric(
-            "🚴 Sports",
-            summary.sports,
-        )
+            MetricCardMetric(
+                value=str(summary.training_days),
+                label="Training days",
+            ),
+            MetricCardMetric(
+                value=format_duration(
+                    summary.total_duration
+                ),
+                label="Duration",
+            ),
+            MetricCardMetric(
+                value=str(summary.sports),
+                label="Sports",
+            ),
+        ),
+    )

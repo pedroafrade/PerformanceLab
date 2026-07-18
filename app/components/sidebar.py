@@ -17,196 +17,300 @@ from .storage_panel import (
 
 
 # ======================================================
+# Navigation configuration
+# ======================================================
+
+_NAVIGATION_ITEMS = (
+    (
+        "dashboard",
+        "Dashboard",
+        ":material/dashboard:",
+    ),
+    (
+        "training",
+        "Treinos",
+        ":material/fitness_center:",
+    ),
+    (
+        "goals",
+        "Objetivos",
+        ":material/flag:",
+    ),
+    (
+        "events",
+        "Eventos",
+        ":material/event:",
+    ),
+    (
+        "analytics",
+        "Análises",
+        ":material/analytics:",
+    ),
+    (
+        "statistics",
+        "Estatísticas",
+        ":material/bar_chart:",
+    ),
+    (
+        "equipment",
+        "Equipamento",
+        ":material/directions_bike:",
+    ),
+    (
+        "settings",
+        "Configurações",
+        ":material/settings:",
+    ),
+)
+
+
+# ======================================================
 # Styling
 # ======================================================
 
-def _sidebar_styles() -> None:
+def _sidebar_styles(
+    active_page: str,
+) -> None:
     """
     Applies the sidebar visual styling.
     """
 
-    st.markdown(
-        """
-        <style>
-        @import url(
-            'https://fonts.googleapis.com/css2'
-            '?family=Material+Symbols+Rounded:'
-            'opsz,wght,FILL,GRAD@20..48,400,0,0'
-        );
+    active_selector = (
+        f".st-key-sidebar_nav_{active_page} button"
+    )
 
-        [data-testid="stSidebar"] {
+    st.markdown(
+        f"""
+        <style>
+        [data-testid="stAppViewContainer"],
+        [data-testid="stSidebar"],
+        [data-testid="stSidebarContent"] {{
+            background: var(--background-color);
+        }}
+
+        [data-testid="stSidebar"] {{
             min-width: 240px;
             max-width: 240px;
-            background: transparent;
             border-right: 1px solid rgba(128, 128, 128, 0.22);
-        }
+        }}
 
-        [data-testid="stSidebarContent"] {
-            overflow-y: hidden;
-            background: transparent;
-        }
+        [data-testid="stSidebarContent"] {{
+            height: 100vh;
+            overflow: hidden;
+        }}
 
-        [data-testid="stSidebarHeader"] {
-            min-height: 1.5rem;
-            height: 1.5rem;
-            padding: 0.1rem 0.5rem 0;
-        }
+        [data-testid="stSidebarHeader"] {{
+            min-height: 1rem;
+            height: 1rem;
+            padding: 0;
+        }}
 
-        [data-testid="stSidebar"] > div:first-child {
-            padding: 0 0.8rem 0.35rem;
-            background: transparent;
-        }
+        [data-testid="stSidebar"] > div:first-child {{
+            padding: 0 0.7rem 0.25rem;
+        }}
 
-        .performancelab-brand {
-            margin: -0.45rem 0 0;
-            padding: 0 0.5rem;
-            font-size: 1.35rem;
+        .performancelab-brand {{
+            margin: -0.55rem 0 0;
+            padding: 0 0.45rem;
+            font-size: 1.3rem;
             font-weight: 700;
             letter-spacing: -0.04em;
-        }
+            line-height: 1.2;
+        }}
 
-        .sidebar-account {
+        .sidebar-account {{
             display: flex;
             align-items: center;
-            gap: 0.7rem;
-            margin: 0.35rem 0 0.45rem;
-            padding: 0.4rem 0.5rem;
-            border-radius: 0.55rem;
-        }
+            gap: 0.55rem;
+            margin: 0.2rem 0 0.25rem;
+            padding: 0.3rem 0.45rem;
+            border-radius: 0.5rem;
+        }}
 
-        .sidebar-account-avatar {
+        .sidebar-account-avatar {{
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            flex: 0 0 2rem;
+            width: 1.7rem;
+            height: 1.7rem;
+            flex: 0 0 1.7rem;
             border: 1px solid rgba(128, 128, 128, 0.35);
             border-radius: 50%;
-            font-size: 1rem;
-        }
+            font-size: 0.8rem;
+        }}
 
-        .sidebar-account-name {
+        .sidebar-account-name {{
             min-width: 0;
             flex: 1;
             overflow: hidden;
-            font-size: 0.86rem;
+            font-size: 0.82rem;
             font-weight: 600;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
+        }}
 
-        .sidebar-account-arrow {
-            color: rgba(128, 128, 128, 0.9);
-            font-size: 1rem;
-        }
+        [data-testid="stSidebar"] hr {{
+            margin: 0.25rem 0;
+            border-color: rgba(128, 128, 128, 0.22);
+        }}
 
-        .sidebar-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            width: 100%;
+        .st-key-sidebar_navigation {{
+            margin: 0;
+        }}
+
+        .st-key-sidebar_navigation .stButton {{
+            margin: 0;
+        }}
+
+        .st-key-sidebar_navigation .stButton button {{
             min-height: 1.95rem;
-            margin: 0.02rem 0;
-            padding: 0.34rem 0.7rem;
-            overflow: hidden;
-            border-radius: 0.55rem;
+            height: 1.95rem;
+            margin: 0.015rem 0;
+            padding: 0.25rem 0.55rem;
+            justify-content: flex-start;
+            border: 0;
+            border-radius: 0.5rem;
+            background: transparent;
+            box-shadow: none;
             color: inherit;
-            font-size: 0.9rem;
+            font-size: 0.86rem;
             font-weight: 500;
-            line-height: 1.2;
-            white-space: nowrap;
-        }
+        }}
 
-        .sidebar-menu-item-active {
-            background: rgba(100,149,237,0.14);
-            border-left: 3px solid rgb(100,149,237);
+        .st-key-sidebar_navigation .stButton button:hover {{
+            background: rgba(128, 128, 128, 0.10);
+            border: 0;
+            color: inherit;
+        }}
+
+        .st-key-sidebar_navigation .stButton button:focus {{
+            box-shadow: none;
+        }}
+
+        {active_selector} {{
+            padding-left: calc(0.55rem - 3px);
+            background: rgba(100, 149, 237, 0.14);
+            border-left: 3px solid rgb(100, 149, 237);
             font-weight: 700;
-            padding-left: calc(0.7rem - 3px);
-        }
+        }}
 
-        .sidebar-menu-icon {
-            width: 1.3rem;
-            flex: 0 0 1.3rem;
-            text-align: center;
-            font-family: "Material Symbols Rounded";
-            font-size: 1.15rem;
-            font-style: normal;
-            font-weight: normal;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: "liga";
-            -webkit-font-smoothing: antialiased;
-            font-feature-settings: "liga";
-        }
+        {active_selector}:hover {{
+            background: rgba(100, 149, 237, 0.18);
+            border-left: 3px solid rgb(100, 149, 237);
+        }}
 
-        .sidebar-menu-label {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .st-key-sidebar_lower {{
+            margin-top: 0.15rem;
+        }}
 
-        .sidebar-bottom {
-            margin-top: 1rem;
-        }
-
-        .sidebar-section-label {
-            margin: 0.35rem 0 0.2rem;
-            padding: 0 0.5rem;
+        .sidebar-section-label {{
+            margin: 0.15rem 0 0.05rem;
+            padding: 0 0.4rem;
             color: rgba(128, 128, 128, 0.9);
-            font-size: 0.68rem;
+            font-size: 0.63rem;
             font-weight: 600;
             letter-spacing: 0.05em;
+            line-height: 1.1;
             text-transform: uppercase;
-        }
+        }}
 
-        [data-testid="stSidebar"] hr {
-            margin: 0.4rem 0;
-            border-color: rgba(128, 128, 128, 0.22);
-        }
+        [data-testid="stSidebar"] details {{
+            margin: 0;
+        }}
 
+        [data-testid="stSidebar"] details summary {{
+            min-height: 1.85rem;
+            padding-top: 0.2rem;
+            padding-bottom: 0.2rem;
+            font-size: 0.8rem;
+        }}
 
         [data-testid="stSidebar"] h1,
         [data-testid="stSidebar"] h2,
-        [data-testid="stSidebar"] h3 {
-            margin-top: 0.35rem;
-            margin-bottom: 0.3rem;
-            font-size: 1rem;
-            line-height: 1.2;
-        }
+        [data-testid="stSidebar"] h3 {{
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.1;
+        }}
 
-        [data-testid="stSidebar"] p {
-            margin-bottom: 0.3rem;
-        }
+        .st-key-sidebar_activity
+        [data-testid="stHeadingWithActionElements"] {{
+            display: none;
+        }}
 
-        [data-testid="stSidebar"] [data-testid="stFileUploader"] {
-            margin-bottom: 0.25rem;
-        }
+        .st-key-sidebar_activity
+        [data-testid="stSegmentedControl"] {{
+            margin-bottom: 0.1rem;
+        }}
 
-        [data-testid="stSidebar"]
-        [data-testid="stFileUploaderDropzone"] {
-            min-height: 3.4rem;
-            padding: 0.45rem;
-        }
+        .st-key-sidebar_activity
+        [data-testid="stSegmentedControl"] button {{
+            min-height: 1.75rem;
+            padding-top: 0.15rem;
+            padding-bottom: 0.15rem;
+            font-size: 0.76rem;
+        }}
 
-        [data-testid="stSidebar"] button {
-            min-height: 2.25rem;
-            padding-top: 0.3rem;
-            padding-bottom: 0.3rem;
-        }
+        .st-key-sidebar_activity
+        [data-testid="stFileUploader"] {{
+            margin: 0;
+        }}
 
-        [data-testid="stSidebar"] .stButton,
-        [data-testid="stSidebar"] .stFileUploader,
+        .st-key-sidebar_activity
+        [data-testid="stFileUploaderDropzone"] {{
+            min-height: 2.85rem;
+            padding: 0.3rem;
+        }}
+
+        .st-key-sidebar_activity
+        [data-testid="stFileUploaderDropzoneInstructions"] {{
+            font-size: 0.72rem;
+            line-height: 1.05;
+        }}
+
+        .st-key-sidebar_activity
+        [data-testid="stFileUploaderDropzone"] button {{
+            min-height: 1.7rem;
+            padding: 0.15rem 0.45rem;
+            font-size: 0.72rem;
+        }}
+
+        .st-key-sidebar_activity p {{
+            margin-bottom: 0.1rem;
+            font-size: 0.72rem;
+        }}
+
         [data-testid="stSidebar"] .stSelectbox,
         [data-testid="stSidebar"] .stTextInput,
-        [data-testid="stSidebar"] .stNumberInput {
-            margin-bottom: 0.25rem;
-        }
+        [data-testid="stSidebar"] .stNumberInput {{
+            margin-bottom: 0.15rem;
+        }}
+
+        [data-testid="stSidebar"] h1,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label {{
+            text-align: left !important;
+        }}
+
+        [data-testid="stSidebar"] button {{
+            text-align: left !important;
+        }}
+
+        [data-testid="stSidebar"] button > div,
+        [data-testid="stSidebar"] button p {{
+            width: 100%;
+            justify-content: flex-start !important;
+            text-align: left !important;
+        }}
+
+        [data-testid="stSidebar"] details summary,
+        [data-testid="stSidebar"] details summary > div {{
+            justify-content: flex-start !important;
+            text-align: left !important;
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -217,41 +321,46 @@ def _sidebar_styles() -> None:
 # Navigation
 # ======================================================
 
-def _show_navigation() -> None:
+def _set_page(
+    page: str,
+) -> None:
     """
-    Displays the sidebar navigation structure.
-
-    Navigation actions will be connected in a later step.
+    Stores the selected application page.
     """
 
-    items = (
-        ("dashboard", "Dashboard", True),
-        ("fitness_center", "Treinos", False),
-        ("flag", "Objetivos", False),
-        ("event", "Eventos", False),
-        ("analytics", "Análises", False),
-        ("bar_chart", "Estatísticas", False),
-        ("directions_bike", "Equipamento", False),
-        ("settings", "Configurações", False),
-    )
+    st.session_state.page = page
 
-    for icon, label, active in items:
 
-        active_class = (
-            " sidebar-menu-item-active"
-            if active
-            else ""
-        )
+def _show_navigation() -> str:
+    """
+    Displays the application navigation.
 
-        st.markdown(
-            f"""
-            <div class="sidebar-menu-item{active_class}">
-                <span class="sidebar-menu-icon">{icon}</span>
-                <span class="sidebar-menu-label">{label}</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    Returns
+    -------
+    str
+        Selected page identifier.
+    """
+
+    if "page" not in st.session_state:
+
+        st.session_state.page = "dashboard"
+
+    with st.container(
+        key="sidebar_navigation",
+    ):
+
+        for page, label, icon in _NAVIGATION_ITEMS:
+
+            st.button(
+                label,
+                icon=icon,
+                use_container_width=True,
+                key=f"sidebar_nav_{page}",
+                on_click=_set_page,
+                args=(page,),
+            )
+
+    return st.session_state.page
 
 
 # ======================================================
@@ -262,7 +371,7 @@ def _show_user_account(
     athlete,
 ) -> None:
     """
-    Displays the athlete name as the linked user account.
+    Displays the athlete name below the branding.
     """
 
     athlete_name = escape(
@@ -276,7 +385,6 @@ def _show_user_account(
             <span class="sidebar-account-name">
                 {athlete_name}
             </span>
-            <span class="sidebar-account-arrow">›</span>
         </div>
         """,
         unsafe_allow_html=True,
@@ -299,9 +407,16 @@ def show_sidebar(
         Current athlete instance.
     """
 
+    active_page = st.session_state.get(
+        "page",
+        "dashboard",
+    )
+
     with st.sidebar:
 
-        _sidebar_styles()
+        _sidebar_styles(
+            active_page
+        )
 
         st.markdown(
             '<div class="performancelab-brand">'
@@ -320,24 +435,32 @@ def show_sidebar(
 
         st.divider()
 
-        with st.expander(
-            "Athlete data",
-            expanded=False,
+        with st.container(
+            key="sidebar_lower",
         ):
 
-            athlete = show_storage_panel(
-                athlete
+            with st.expander(
+                "Dados do atleta",
+                expanded=False,
+            ):
+
+                athlete = show_storage_panel(
+                    athlete
+                )
+
+            st.markdown(
+                '<div class="sidebar-section-label">'
+                'Importar treino'
+                '</div>',
+                unsafe_allow_html=True,
             )
 
-        st.markdown(
-            '<div class="sidebar-section-label">'
-            'Importar treino'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+            with st.container(
+                key="sidebar_activity",
+            ):
 
-        athlete = show_activity_input(
-            athlete
-        )
+                athlete = show_activity_input(
+                    athlete
+                )
 
     return athlete
