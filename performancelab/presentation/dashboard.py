@@ -810,6 +810,7 @@ class DashboardData:
 
         return PlanningPresenter(
             plan=plan,
+            history=self.analytics.history,
         ).build()
 
     # ======================================================

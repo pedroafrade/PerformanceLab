@@ -103,13 +103,25 @@ class WeeklyPlanDayData:
     Presentation-ready plan for one day.
     """
 
+    # calendar
     day: date
+
+    # planned workout
     status: str
     sport: str | None
     title: str | None
     duration: timedelta | None
     distance: float | None
     intensity: str | None = None
+
+    # presentation state
+    is_today: bool = False
+    is_next_workout: bool = False
+
+    # execution state
+    completed: bool = False
+    completed_sport: str | None = None
+    completed_title: str | None = None
 
 
 @dataclass(frozen=True)

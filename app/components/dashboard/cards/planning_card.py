@@ -4,7 +4,7 @@ PerformanceLab
 Planning dashboard card.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 from html import escape
 
 import streamlit as st
@@ -81,13 +81,7 @@ def _completed(day) -> bool:
     Return whether an activity was completed on the day.
     """
 
-    return bool(
-        getattr(
-            day,
-            "completed",
-            False,
-        )
-    )
+    return bool(day.completed)
 
 
 def _day_title(day) -> str:
@@ -95,17 +89,8 @@ def _day_title(day) -> str:
     Return the primary description for one day.
     """
 
-    completed_title = getattr(
-        day,
-        "completed_title",
-        None,
-    )
-
-    completed_sport = getattr(
-        day,
-        "completed_sport",
-        None,
-    )
+    completed_title = day.completed_title
+    completed_sport = day.completed_sport
 
     if _completed(day) and not _planned(day):
 
@@ -127,17 +112,8 @@ def _day_details(day) -> str:
     Return compact secondary details for one day.
     """
 
-    completed_title = getattr(
-        day,
-        "completed_title",
-        None,
-    )
-
-    completed_sport = getattr(
-        day,
-        "completed_sport",
-        None,
-    )
+    completed_title = day.completed_title
+    completed_sport = day.completed_sport
 
     actual_title = (
         completed_title
@@ -404,8 +380,6 @@ def show_planning_card(
         unsafe_allow_html=True,
     )
 
-    today = date.today()
-
     columns = st.columns(
         7,
         gap="small",
@@ -420,7 +394,7 @@ def show_planning_card(
             "weekly-plan-day",
         ]
 
-        if day.day == today:
+        if day.is_today:
 
             classes.append(
                 "weekly-plan-day-today"
