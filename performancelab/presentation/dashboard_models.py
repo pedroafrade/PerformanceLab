@@ -165,19 +165,6 @@ class PlanningCardData:
     coach: CoachRecommendationData
 
 
-@dataclass(frozen=True)
-class DashboardPlanningData:
-    """
-    Presentation-ready planning data.
-    """
-
-    next_goal: str | None
-    days_to_goal: int | None
-
-    next_event: str | None
-    days_to_event: int | None
-
-
 # ======================================================
 # Summary
 # ======================================================

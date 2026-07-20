@@ -12,7 +12,6 @@ from performancelab.training.planning import WeeklyPlanBuilder
 
 from .dashboard_models import (
     AthleteOverviewData,
-    DashboardPlanningData,
     DashboardSummaryData,
     LatestActivityCardData,
     MonthlySportSummaryData,
@@ -787,42 +786,27 @@ class DashboardData:
 
         )
 
-    # ======================================================
-    # Planning
-    # ======================================================
-
-    @property
-    def planning(self):
-
-        return DashboardPlanningData(
-
-            next_goal=self.analytics.next_goal,
-
-            days_to_goal=(
-                self.analytics.days_until_next_goal
-            ),
-
-            next_event=self.analytics.next_event,
-
-            days_to_event=(
-                self.analytics.days_until_next_event
-            ),
-
-        )
-
 
     # ======================================================
     # Planning card
     # ======================================================
 
     @property
-    def planning_card(self):
+    def planning(self):
         """
         Builds the combined weekly plan, next workout and
         virtual coach presentation model.
         """
 
-        plan = WeeklyPlanBuilder().week()
+        from performancelab.training.planning import (
+            DemoPlanProvider,
+        )
+
+        provider = DemoPlanProvider()
+
+        plan = WeeklyPlanBuilder(
+            provider.workouts(),
+        ).week()
 
         return PlanningPresenter(
             plan=plan,
@@ -935,8 +919,6 @@ class DashboardData:
             "performance": self.performance,
 
             "planning": self.planning,
-
-            "planning_card": self.planning_card,
 
             "recovery": self.recovery,
 

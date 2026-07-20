@@ -10,6 +10,7 @@ from performancelab.presentation import (
     DashboardData,
     has_route,
 )
+from performancelab.training import planning
 from .cards import (
     show_athlete_overview_card,
     show_performance_chart_card,
@@ -93,8 +94,8 @@ def show_dashboard(
             divider=False,
         ):
 
-            st.caption(
-                "Weekly plan will be added next."
+            show_planning_card(
+                planning,
             )
 
     with goal_col:
@@ -204,17 +205,6 @@ def show_dashboard(
     # ==================================================
 
     left, right = dashboard_bottom_row()
-
-    with left:
-
-        with dashboard_widget(
-            title="Planning",
-            icon="🎯",
-        ):
-
-            show_planning_card(
-                planning,
-            )
 
     with right:
 
