@@ -241,6 +241,11 @@ class AthleteAnalytics:
     def upcoming_events(self):
 
         return self.events.upcoming
+    
+    @property
+    def training_plan(self):
+
+        return self.athlete.training_plan
 
     # ======================================================
     # Summary

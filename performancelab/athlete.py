@@ -13,6 +13,7 @@ from .goals.goalbook import GoalBook
 from .race.eventbook import EventBook
 from .analysis import AthleteAnalytics
 from datetime import date
+from .training.planning import TrainingPlan
 
 
 @dataclass
@@ -35,6 +36,10 @@ class Athlete:
     resting_hr: int | None = None
 
     history: History = field(default_factory=History)
+
+    training_plan: TrainingPlan = field(
+        default_factory=TrainingPlan,
+    )
 
     goals: GoalBook = field(default_factory=GoalBook)
 
@@ -62,6 +67,8 @@ class Athlete:
 
             f"goals={len(self.goals)}, "
 
+            f"plan={len(self.training_plan)}, "
+            
             f"events={len(self.events)})"
 
-        )
+            )

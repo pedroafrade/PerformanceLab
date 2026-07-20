@@ -799,13 +799,11 @@ class DashboardData:
         """
 
         from performancelab.training.planning import (
-            DemoPlanProvider,
+            WeeklyPlanBuilder,
         )
 
-        provider = DemoPlanProvider()
-
         plan = WeeklyPlanBuilder(
-            provider.workouts(),
+            self.analytics.training_plan,
         ).week()
 
         return PlanningPresenter(

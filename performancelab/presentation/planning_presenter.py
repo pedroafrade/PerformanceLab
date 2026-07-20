@@ -181,17 +181,6 @@ class PlanningPresenter:
             self._completed_workouts()
         )
 
-        print(
-            "Plan:",
-            self.plan.start_date,
-            self.plan.end_date,
-        )
-
-        print(
-            "Completed workout days:",
-            sorted(completed_workouts),
-        )
-
         next_workout = self.plan.next_workout(
             reference=self.reference,
         )

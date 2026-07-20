@@ -4,7 +4,7 @@ PerformanceLab
 Streamlit application.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 
 import streamlit as st
 
@@ -114,6 +114,42 @@ def create_demo_athlete() -> Athlete:
 
     for workout in demo_workouts:
         athlete.history.add(workout)
+
+    today = date.today()
+    monday = today - timedelta(days=today.weekday())
+
+    athlete.training_plan.schedule(
+    scheduled_at=datetime.combine(
+            monday,
+            time(hour=18),
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(minutes=45),
+        description="Easy aerobic run",
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            monday + timedelta(days=2),
+            time(hour=18),
+        ),
+        sport="Running",
+        title="Intervals",
+        duration=timedelta(minutes=60),
+        description="6 × 800 m",
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            monday + timedelta(days=5),
+            time(hour=8),
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(minutes=90),
+        description="Long endurance run",
+    )
 
     return athlete
 
