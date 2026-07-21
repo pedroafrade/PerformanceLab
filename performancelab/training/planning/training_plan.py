@@ -9,11 +9,15 @@ Container for an athlete's planned workouts.
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 
-from .weekly_plan import PlannedWorkout
+from .planned_workout import PlannedWorkout
+from .workout_collection import WorkoutCollection
 
 
 @dataclass
-class TrainingPlan:
+class TrainingPlan(WorkoutCollection):
+    """
+    Container for an athlete's planned workouts.
+    """
 
     workouts: list[PlannedWorkout] = field(
         default_factory=list,
@@ -68,9 +72,7 @@ class TrainingPlan:
                 "workout must be a PlannedWorkout."
             )
 
-        self.workouts.append(
-            workout
-        )
+        self.workouts.append(workout)
 
         self._sort()
 
@@ -83,9 +85,7 @@ class TrainingPlan:
 
         if workout in self.workouts:
 
-            self.workouts.remove(
-                workout
-            )
+            self.workouts.remove(workout)
 
     # ======================================================
 
@@ -93,17 +93,6 @@ class TrainingPlan:
 
         self.workouts.clear()
 
-    def for_day(self, day):
-
-        if isinstance(day, datetime):
-
-            day = day.date()
-
-        return tuple(
-            workout
-            for workout in self.workouts
-            if workout.day == day
-        )
     # ======================================================
 
     @staticmethod
@@ -144,28 +133,12 @@ class TrainingPlan:
     def _sort(self) -> None:
 
         self.workouts.sort(
-            key=lambda workout: (
-                self._sortable_date(
-                    workout.scheduled_at
-                )
+            key=lambda workout: self._sortable_date(
+                workout.scheduled_at
             )
         )
 
     # ======================================================
-    @property
-    def next_workout(
-        self,
-    ) -> PlannedWorkout | None:
-
-        now = datetime.now()
-
-        for workout in self.workouts:
-
-            if workout.scheduled_at >= now:
-
-                return workout
-
-        return None
 
     @property
     def first(
@@ -191,21 +164,6 @@ class TrainingPlan:
 
         return self.workouts[-1]
 
-    # ======================================================
-
-    def __len__(self) -> int:
-
-        return len(
-            self.workouts
-        )
-
-    # ======================================================
-
-    def __iter__(self):
-
-        return iter(
-            self.workouts
-        )
 
     # ======================================================
 
@@ -214,9 +172,7 @@ class TrainingPlan:
         index,
     ):
 
-        return self.workouts[
-            index
-        ]
+        return self.workouts[index]
 
     # ======================================================
 
