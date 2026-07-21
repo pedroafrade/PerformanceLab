@@ -28,6 +28,9 @@ from .cards.training_load_card import (
 from .cards.monthly_summary_card import (
     monthly_summary_card,
 )
+from .cards.next_event_card import (
+    next_event_card,
+)
 from .grid import (
     dashboard_bottom_row,
     dashboard_row,
@@ -60,6 +63,7 @@ def show_dashboard(
     summary = dashboard_data["summary"]
     performance = dashboard_data["performance"]
     planning = dashboard_data["planning"]
+    next_event = dashboard_data["next_event"]
 
     recovery = dashboard_data["recovery"]
     training_load = dashboard_data["training_load"]
@@ -68,7 +72,7 @@ def show_dashboard(
     # Activity and planning strip
     # ==================================================
 
-    activity_col, planning_col, goal_col = (
+    activity_col, planning_col, event_col = (
         dashboard_row(
             (1.1, 2.5, 1.2),
         )
@@ -98,18 +102,17 @@ def show_dashboard(
                 planning,
             )
 
-    with goal_col:
+    with event_col:
 
         with dashboard_widget(
-            title="Next Goal",
-            icon=":material/flag:",
+            title="Next Event",
+            icon=":material/event:",
             divider=False,
         ):
 
-            st.caption(
-                "Goal progress will be added next."
+            next_event_card(
+                next_event,
             )
-
     # ==================================================
     # Top row
     # ==================================================

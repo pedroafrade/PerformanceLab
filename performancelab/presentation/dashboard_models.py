@@ -251,3 +251,30 @@ class TrainingLoadCardData:
     score: int
     status: str
     recommendation: str
+
+# ======================================================
+# Next event
+# ======================================================
+
+@dataclass(frozen=True)
+class NextEventCardData:
+    """
+    Presentation-ready next sporting event.
+    """
+
+    name: str | None
+    event_date: date | None
+    days_remaining: int | None
+
+    sport: str | None
+    distance: float | None
+
+    location: str | None
+    country: str | None
+
+    priority: str | None
+    target_time: timedelta | None
+
+    elevation_gain: float | None = None
+    website: str | None = None
+    description: str | None = None

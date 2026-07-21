@@ -8,6 +8,7 @@ Presentation-ready data for user interfaces.
 
 from datetime import date, datetime, timedelta
 
+from performancelab.race import entry
 from performancelab.training.planning import WeeklyPlanBuilder
 
 from .dashboard_models import (
@@ -20,6 +21,7 @@ from .dashboard_models import (
     PhysiologyCardData,
     RecoveryCardData,
     TrainingLoadCardData,
+    NextEventCardData,
 )
 from .planning_presenter import PlanningPresenter
 
@@ -786,6 +788,39 @@ class DashboardData:
 
         )
 
+    # ======================================================
+    # Next Event
+    # ======================================================
+
+    @property
+    def next_event(self):
+
+        entry = self.analytics.next_event
+
+        if entry is None:
+            return None
+
+        event = entry.event
+
+        return NextEventCardData(
+
+            name=event.name,
+            event_date=event.date,
+            days_remaining=event.days_remaining,
+
+            sport=event.sport,
+            distance=event.distance,
+
+            location=event.location,
+            country=event.country,
+
+            priority=entry.priority,
+            target_time=entry.target_time,
+
+            elevation_gain=event.elevation_gain,
+            website=event.website,
+            description=event.description,
+        )
 
     # ======================================================
     # Planning card
@@ -912,6 +947,8 @@ class DashboardData:
             "physiology": self.physiology,
 
             "monthly_summary": self.monthly_summary,
+
+            "next_event": self.next_event,
 
             "summary": self.summary,
 
