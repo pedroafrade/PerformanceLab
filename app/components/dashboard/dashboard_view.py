@@ -36,10 +36,14 @@ from .grid import (
     dashboard_row,
     dashboard_top_row,
 )
-from .widget import dashboard_widget
+from .widget import (
+    DashboardAction,
+    dashboard_widget,
+)
 from ..route_map import (
     show_route_map,
 )
+from .event_manager import open_event_manager
 
 
 # ======================================================
@@ -108,6 +112,12 @@ def show_dashboard(
             title="Next Event",
             icon=":material/event:",
             divider=False,
+            action=DashboardAction(
+                label="Manage Events",
+                callback=lambda: open_event_manager(
+                    athlete,
+                )
+            ),
         ):
 
             next_event_card(

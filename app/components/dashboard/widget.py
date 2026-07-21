@@ -4,10 +4,22 @@ PerformanceLab
 Reusable dashboard widget.
 """
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 
 import streamlit as st
+
+
+@dataclass(frozen=True)
+class DashboardAction:
+    """
+    Action displayed in the dashboard widget header.
+    """
+
+    label: str
+    icon: str = ":material/more_vert:"
+    callback: Callable[[], None] | None = None
 
 
 @contextmanager
@@ -16,7 +28,7 @@ def dashboard_widget(
     title: str | None = None,
     icon: str | None = None,
     subtitle: str | None = None,
-    actions: str = "⋮",
+    action: DashboardAction | None = None,
     divider: bool = True,
 ) -> Iterator[None]:
     """
@@ -54,19 +66,38 @@ def dashboard_widget(
 
             with action_col:
 
-                st.markdown(
-                    (
-                        "<div style='"
-                        "text-align:right;"
-                        "font-size:1.15rem;"
-                        "line-height:1;"
-                        "color:#8b949e;"
-                        "'>"
-                        f"{actions}"
-                        "</div>"
-                    ),
-                    unsafe_allow_html=True,
-                )
+                if action is None:
+
+                    st.markdown(
+                        (
+                            "<div style='"
+                            "text-align:right;"
+                            "font-size:1.15rem;"
+                            "line-height:1;"
+                            "color:#8b949e;"
+                            "'>"
+                            "⋮"
+                            "</div>"
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                else:
+
+                    with st.popover(
+                        "",
+                        icon=action.icon,
+                        use_container_width=True,
+                    ):
+
+                        if st.button(
+                            action.label,
+                            use_container_width=True,
+                        ):
+
+                            if action.callback is not None:
+
+                                action.callback()
 
             if divider:
 
