@@ -1,4 +1,13 @@
+"""
+PerformanceLab
+
+Athlete event manager.
+"""
+
 import streamlit as st
+
+from performancelab.race.entry import EventEntry
+from performancelab.race.event import Event
 
 
 def open_event_manager(
@@ -39,35 +48,61 @@ def show_event_manager(
         "Upcoming Events"
     )
 
-    events = sorted(
-        athlete.events.entries,
-        key=lambda event: event.date,
+    events = list(
+        athlete.events.upcoming
     )
 
     if not events:
 
-        st.info(
+        st.caption(
             "No events have been added yet."
         )
 
     else:
 
-        for event in events:
+        for entry in events:
+
+            event = entry.event
 
             st.markdown(
                 f"**{event.name}**"
             )
 
-            st.caption(
-                event.date.strftime(
-                    "%d %b %Y"
+            details = []
+
+            if event.date is not None:
+
+                details.append(
+                    event.date.strftime(
+                        "%d %b %Y"
+                    )
                 )
-            )
+
+            if event.sport:
+
+                details.append(
+                    event.sport
+                )
+
+            if event.distance is not None:
+
+                details.append(
+                    f"{event.distance:g} km"
+                )
+
+            if details:
+
+                st.caption(
+                    " · ".join(
+                        details
+                    )
+                )
 
             st.divider()
 
     st.button(
         "Add Event",
+        key="event-manager-add-event",
         use_container_width=True,
         on_click=_open_add_event_form,
     )
@@ -96,19 +131,18 @@ def _show_add_event_form(
     Displays the Add Event form.
     """
 
-    from performancelab.race.event import Event
-    from performancelab.race.entry import EventEntry
-
     st.subheader(
         "Add Event"
     )
 
     event_name = st.text_input(
         "Event name",
+        key="event-name",
     )
 
     event_date = st.date_input(
         "Date",
+        key="event-date",
     )
 
     sport = st.selectbox(
@@ -126,18 +160,21 @@ def _show_add_event_form(
             "Duathlon",
             "Other",
         ],
+        key="event-sport",
     )
 
     distance = st.number_input(
         "Distance (km)",
         min_value=0.0,
         step=0.1,
+        key="event-distance",
     )
 
     elevation_gain = st.number_input(
         "Elevation gain (m)",
         min_value=0.0,
         step=10.0,
+        key="event-elevation-gain",
     )
 
     priority = st.selectbox(
@@ -147,14 +184,22 @@ def _show_add_event_form(
             "B",
             "C",
         ],
+        key="event-priority",
     )
 
     location = st.text_input(
         "Location",
+        key="event-location",
+    )
+
+    country = st.text_input(
+        "Country",
+        key="event-country",
     )
 
     notes = st.text_area(
         "Notes",
+        key="event-notes",
     )
 
     save_col, cancel_col = st.columns(
@@ -165,22 +210,32 @@ def _show_add_event_form(
 
         if st.button(
             "Save",
+            key="event-save",
             use_container_width=True,
         ):
 
+            if not event_name.strip():
+
+                st.error(
+                    "Event name is required."
+                )
+
+                return
+
             event = Event(
-                name=event_name,
+                name=event_name.strip(),
                 date=event_date,
                 sport=sport,
                 distance=distance,
                 elevation_gain=elevation_gain,
-                location=location,
+                location=location.strip(),
+                country=country.strip(),
             )
 
             entry = EventEntry(
                 event=event,
                 priority=priority,
-                notes=notes,
+                notes=notes.strip(),
             )
 
             athlete.events.add(
@@ -193,11 +248,9 @@ def _show_add_event_form(
 
     with cancel_col:
 
-        if st.button(
+        st.button(
             "Cancel",
+            key="event-cancel",
             use_container_width=True,
-        ):
-
-            _close_add_event_form()
-
-            st.rerun()
+            on_click=_close_add_event_form,
+        )

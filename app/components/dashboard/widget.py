@@ -18,8 +18,60 @@ class DashboardAction:
     """
 
     label: str
-    icon: str = ":material/more_vert:"
+    key: str
     callback: Callable[[], None] | None = None
+
+
+def _action_button_style(
+    key: str,
+) -> None:
+    """
+    Styles only the dashboard action button identified by its Streamlit key.
+    """
+
+    st.markdown(
+        f"""
+        <style>
+        .st-key-{key} {{
+            display: flex;
+            justify-content: flex-end;
+        }}
+
+        .st-key-{key} button {{
+            width: 1.65rem !important;
+            min-width: 1.65rem !important;
+            height: 1.65rem !important;
+            min-height: 1.65rem !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #8b949e !important;
+        }}
+
+        .st-key-{key} button:hover,
+        .st-key-{key} button:focus,
+        .st-key-{key} button:active {{
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #31333f !important;
+        }}
+
+        .st-key-{key} button p {{
+            margin: 0 !important;
+            font-size: 1.20rem !important;
+            line-height: 1 !important;
+        }}
+
+        .st-key-{key} button svg {{
+            display: none !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 @contextmanager
@@ -30,13 +82,21 @@ def dashboard_widget(
     subtitle: str | None = None,
     action: DashboardAction | None = None,
     divider: bool = True,
+    height: int | str | None = None,
 ) -> Iterator[None]:
     """
     Dashboard widget container.
     """
 
+    container_options = {
+        "border": True,
+    }
+
+    if height is not None:
+        container_options["height"] = height
+
     with st.container(
-        border=True,
+        **container_options,
     ):
 
         if title:
@@ -84,20 +144,19 @@ def dashboard_widget(
 
                 else:
 
-                    with st.popover(
-                        "",
-                        icon=action.icon,
-                        use_container_width=True,
+                    _action_button_style(
+                        action.key
+                    )
+
+                    if st.button(
+                        "⋮",
+                        key=action.key,
+                        help=action.label,
                     ):
 
-                        if st.button(
-                            action.label,
-                            use_container_width=True,
-                        ):
+                        if action.callback is not None:
 
-                            if action.callback is not None:
-
-                                action.callback()
+                            action.callback()
 
             if divider:
 

@@ -6,95 +6,189 @@ Next Event Card
 
 import streamlit as st
 
+from .metric_card_body import (
+    MetricCardDetail,
+    MetricCardMetric,
+    metric_card_body,
+)
 
-def next_event_card(event):
+
+def next_event_card(
+    event,
+) -> None:
     """
     Displays the next sporting event.
     """
 
-    if event is None or event.name is None:
+    if event is None or not event.name:
 
-        st.info(
+        st.caption(
             "No upcoming events."
         )
 
         return
 
-    st.markdown(
-        f"### {event.name}"
+    details = []
+
+    event_date = _format_event_date(
+        event.event_date,
+        event.days_remaining,
     )
 
-    subtitle = []
+    if event_date:
 
-    if event.sport:
-        subtitle.append(event.sport)
-
-    if event.distance is not None:
-        subtitle.append(f"{event.distance:g} km")
-
-    if subtitle:
-        st.caption(" · ".join(subtitle))
-
-    left, right = st.columns(2)
-
-    with left:
-
-        if event.event_date is not None:
-            value = event.event_date.strftime("%d %b %Y")
-        else:
-            value = "-"
-
-        st.metric(
-            "Date",
-            value,
+        details.append(
+            MetricCardDetail(
+                label="Date",
+                value=event_date,
+            )
         )
 
-    with right:
+    location = _format_location(
+        event.location,
+        event.country,
+    )
 
-        if event.days_remaining is None:
+    if location:
 
-            value = "-"
-
-        elif event.days_remaining == 0:
-
-            value = "Today"
-
-        elif event.days_remaining == 1:
-
-            value = "Tomorrow"
-
-        elif event.days_remaining <= 7:
-
-            value = f"{event.days_remaining} days (Race Week)"
-
-        else:
-
-            value = f"{event.days_remaining} days"
-
-        st.metric(
-            "Countdown",
-            value,
-        )
-
-    if event.location:
-
-        location = event.location
-
-        if event.country:
-            location += f", {event.country}"
-
-        st.caption(
-            f"📍 {location}"
-        )
-
-    if event.priority:
-
-        st.caption(
-            f"🎯 Priority {event.priority}"
+        details.append(
+            MetricCardDetail(
+                label="Location",
+                value=location,
+            )
         )
 
     if event.target_time:
 
-        st.caption(
-            f"⏱️ Target {event.target_time}"
+        details.append(
+            MetricCardDetail(
+                label="Target",
+                value=str(
+                    event.target_time
+                ),
+            )
         )
+
+    metric_card_body(
+        metrics=[
+            MetricCardMetric(
+                value=event.name,
+                label=_format_event_details(
+                    event,
+                )
+                or "Upcoming event",
+            )
+        ],
+        details=details,
+    )
+
+
+def _format_event_details(
+    event,
+) -> str:
+    """
+    Formats sport, distance and elevation.
+    """
+
+    parts = []
+
+    if event.sport:
+
+        parts.append(
+            event.sport
+        )
+
+    if event.distance is not None:
+
+        parts.append(
+            f"{event.distance:g} km"
+        )
+
+    if event.elevation_gain is not None:
+
+        parts.append(
+            f"+{event.elevation_gain:g} m"
+        )
+
+    return " · ".join(
+        parts
+    )
+
+
+def _format_event_date(
+    event_date,
+    days_remaining: int | None,
+) -> str | None:
+    """
+    Formats the event date and countdown.
+    """
+
+    if event_date is None:
+
+        return None
+
+    formatted_date = event_date.strftime(
+        "%d.%m.%Y"
+    )
+
+    countdown = _format_countdown(
+        days_remaining
+    )
+
+    if countdown is None:
+
+        return formatted_date
+
+    return (
+        f"{formatted_date} ({countdown})"
+    )
+
+
+def _format_countdown(
+    days_remaining: int | None,
+) -> str | None:
+    """
+    Formats the number of days remaining.
+    """
+
+    if days_remaining is None:
+
+        return None
+
+    if days_remaining == 0:
+
+        return "today"
+
+    if days_remaining == 1:
+
+        return "tomorrow"
+
+    return (
+        f"{days_remaining}d left"
+    )
+
+
+def _format_location(
+    location: str | None,
+    country: str | None,
+) -> str | None:
+    """
+    Formats the event location.
+    """
+
+    parts = [
+        value
+        for value in (
+            location,
+            country,
+        )
+        if value
+    ]
+
+    if not parts:
+
+        return None
+
+    return ", ".join(
+        parts
+    )

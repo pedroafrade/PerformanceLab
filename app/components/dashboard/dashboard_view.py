@@ -11,6 +11,7 @@ from performancelab.presentation import (
     has_route,
 )
 from performancelab.training import planning
+
 from .cards import (
     show_athlete_overview_card,
     show_performance_chart_card,
@@ -21,15 +22,20 @@ from .cards import (
 from .cards.latest_activity_card import (
     latest_activity_card,
 )
-from .cards.recovery_card import recovery_card
-from .cards.training_load_card import (
-    training_load_card,
-)
 from .cards.monthly_summary_card import (
     monthly_summary_card,
 )
 from .cards.next_event_card import (
     next_event_card,
+)
+from .cards.recovery_card import (
+    recovery_card,
+)
+from .cards.training_load_card import (
+    training_load_card,
+)
+from .event_manager import (
+    open_event_manager,
 )
 from .grid import (
     dashboard_bottom_row,
@@ -43,12 +49,10 @@ from .widget import (
 from ..route_map import (
     show_route_map,
 )
-from .event_manager import open_event_manager
 
 
-# ======================================================
-# Dashboard
-# ======================================================
+FIRST_ROW_HEIGHT = 240
+
 
 def show_dashboard(
     athlete,
@@ -68,13 +72,8 @@ def show_dashboard(
     performance = dashboard_data["performance"]
     planning = dashboard_data["planning"]
     next_event = dashboard_data["next_event"]
-
     recovery = dashboard_data["recovery"]
     training_load = dashboard_data["training_load"]
-
-    # ==================================================
-    # Activity and planning strip
-    # ==================================================
 
     activity_col, planning_col, event_col = (
         dashboard_row(
@@ -88,6 +87,7 @@ def show_dashboard(
             title="Latest Activity",
             icon=":material/history:",
             divider=False,
+            height=FIRST_ROW_HEIGHT,
         ):
 
             latest_activity_card(
@@ -100,6 +100,7 @@ def show_dashboard(
             title="Weekly Plan",
             icon=":material/calendar_view_week:",
             divider=False,
+            height=FIRST_ROW_HEIGHT,
         ):
 
             show_planning_card(
@@ -112,20 +113,19 @@ def show_dashboard(
             title="Next Event",
             icon=":material/event:",
             divider=False,
+            height=FIRST_ROW_HEIGHT,
             action=DashboardAction(
                 label="Manage Events",
+                key="next-event-action",
                 callback=lambda: open_event_manager(
                     athlete,
-                )
+                ),
             ),
         ):
 
             next_event_card(
                 next_event,
             )
-    # ==================================================
-    # Top row
-    # ==================================================
 
     left, right = dashboard_top_row()
 
@@ -155,7 +155,7 @@ def show_dashboard(
         with summary_col:
 
             with dashboard_widget(
-                title="This Week",
+                title="Training Summary",
                 icon=":material/calendar_month:",
                 divider=False,
             ):
@@ -200,10 +200,6 @@ def show_dashboard(
                     training_load,
                 )
 
-    # ==================================================
-    # Performance
-    # ==================================================
-
     with dashboard_widget(
         title="Performance",
         icon="📈",
@@ -212,10 +208,6 @@ def show_dashboard(
         show_performance_chart_card(
             performance,
         )
-
-    # ==================================================
-    # Bottom row
-    # ==================================================
 
     left, right = dashboard_bottom_row()
 
@@ -233,10 +225,6 @@ def show_dashboard(
 
     return None
 
-
-# ======================================================
-# Selected workout route
-# ======================================================
 
 def show_selected_workout_route(
     selected_workout,

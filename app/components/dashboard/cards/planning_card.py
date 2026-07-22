@@ -24,10 +24,6 @@ WEEKDAY_LABELS = (
 def _format_duration(
     duration: timedelta | None,
 ) -> str | None:
-    """
-    Format a duration for compact display.
-    """
-
     if duration is None:
         return None
 
@@ -52,10 +48,6 @@ def _format_duration(
 def _format_distance(
     distance: float | None,
 ) -> str | None:
-    """
-    Format a workout distance.
-    """
-
     if distance is None:
         return None
 
@@ -66,34 +58,18 @@ def _format_distance(
 
 
 def _planned(day) -> bool:
-    """
-    Return whether the day contains a planned workout.
-    """
-
-    return bool(
-        day.title
-        or day.sport
-    )
+    return bool(day.title or day.sport)
 
 
 def _completed(day) -> bool:
-    """
-    Return whether an activity was completed on the day.
-    """
-
     return bool(day.completed)
 
 
 def _day_title(day) -> str:
-    """
-    Return the primary description for one day.
-    """
-
     completed_title = day.completed_title
     completed_sport = day.completed_sport
 
     if _completed(day) and not _planned(day):
-
         return (
             completed_title
             or completed_sport
@@ -108,22 +84,11 @@ def _day_title(day) -> str:
 
 
 def _day_details(day) -> str:
-    """
-    Return compact secondary details for one day.
-    """
-
     completed_title = day.completed_title
     completed_sport = day.completed_sport
 
-    actual_title = (
-        completed_title
-        or completed_sport
-    )
-
-    planned_title = (
-        day.title
-        or day.sport
-    )
+    actual_title = completed_title or completed_sport
+    planned_title = day.title or day.sport
 
     if (
         _completed(day)
@@ -132,18 +97,12 @@ def _day_details(day) -> str:
         and actual_title.lower()
         != planned_title.lower()
     ):
-
         return f"Feito: {actual_title}"
 
     details = []
 
-    distance = _format_distance(
-        day.distance
-    )
-
-    duration = _format_duration(
-        day.duration
-    )
+    distance = _format_distance(day.distance)
+    duration = _format_duration(day.duration)
 
     if distance:
         details.append(distance)
@@ -162,32 +121,14 @@ def _marker_html(
     planned: bool,
     completed: bool,
 ) -> str:
-    """
-    Build the circular day status marker.
-    """
-
     if completed:
-
-        marker_class = (
-            "weekly-plan-marker-completed"
-        )
-
+        marker_class = "weekly-plan-marker-completed"
         symbol = "✓"
-
     elif planned:
-
-        marker_class = (
-            "weekly-plan-marker-planned"
-        )
-
+        marker_class = "weekly-plan-marker-planned"
         symbol = ""
-
     else:
-
-        marker_class = (
-            "weekly-plan-marker-rest"
-        )
-
+        marker_class = "weekly-plan-marker-rest"
         symbol = ""
 
     return (
@@ -201,10 +142,6 @@ def _marker_html(
 def _next_workout_description(
     workout,
 ) -> str | None:
-    """
-    Build the next-workout description.
-    """
-
     if workout is None:
         return None
 
@@ -217,7 +154,6 @@ def _next_workout_description(
     details = []
 
     if workout.scheduled_at is not None:
-
         weekday = WEEKDAY_LABELS[
             workout.scheduled_at.weekday()
         ]
@@ -228,13 +164,8 @@ def _next_workout_description(
             )
         )
 
-    distance = _format_distance(
-        workout.distance
-    )
-
-    duration = _format_duration(
-        workout.duration
-    )
+    distance = _format_distance(workout.distance)
+    duration = _format_duration(workout.duration)
 
     if distance:
         details.append(distance)
@@ -245,18 +176,14 @@ def _next_workout_description(
     summary = escape(title)
 
     if details:
-
         summary += (
             " · "
-            + escape(
-                " · ".join(details)
-            )
+            + escape(" · ".join(details))
         )
 
     description = ""
 
     if workout.description:
-
         description = (
             '<span class="weekly-plan-next-description">'
             f" — {escape(workout.description)}"
@@ -277,19 +204,17 @@ def show_planning_card(
     """
 
     if planning is None:
-
         st.info("No planning available.")
-
         return
 
     st.markdown(
         """
 <style>
 .weekly-plan-day {
-    min-height: 112px;
-    padding: 6px 3px;
+    min-height: 96px;
+    padding: 4px 2px;
     border: 1px solid transparent;
-    border-radius: 9px;
+    border-radius: 8px;
     text-align: center;
     box-sizing: border-box;
 }
@@ -299,14 +224,14 @@ def show_planning_card(
 }
 
 .weekly-plan-weekday {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 700;
     text-transform: lowercase;
 }
 
 .weekly-plan-date {
     margin-left: 3px;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     font-weight: 400;
     opacity: 0.55;
 }
@@ -315,12 +240,12 @@ def show_planning_card(
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    margin: 7px auto;
+    width: 29px;
+    height: 29px;
+    margin: 5px auto;
     border-radius: 50%;
     box-sizing: border-box;
-    font-size: 1rem;
+    font-size: 0.90rem;
     font-weight: 800;
     line-height: 1;
 }
@@ -329,51 +254,49 @@ def show_planning_card(
     border: 1.5px solid rgba(128, 128, 128, 0.55);
 }
 
-.weekly-plan-marker-planned {
-    border: 3px solid currentColor;
-}
-
+.weekly-plan-marker-planned,
 .weekly-plan-marker-completed {
-    border: 3px solid currentColor;
+    border: 2.5px solid currentColor;
 }
 
 .weekly-plan-title {
-    min-height: 18px;
+    min-height: 17px;
     overflow-wrap: anywhere;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    line-height: 1.15;
+    line-height: 1.12;
 }
 
 .weekly-plan-details {
-    min-height: 16px;
-    margin-top: 3px;
+    min-height: 14px;
+    margin-top: 2px;
     overflow-wrap: anywhere;
-    font-size: 0.66rem;
-    line-height: 1.15;
-    opacity: 0.65;
+    font-size: 0.62rem;
+    line-height: 1.12;
+    opacity: 0.62;
 }
 
 .weekly-plan-next {
-    margin-top: 8px;
-    padding: 8px 11px;
-    border: 1px solid rgba(128, 128, 128, 0.55);
+    margin-top: 6px;
+    padding: 7px 10px;
+    border: 1px solid rgba(128, 128, 128, 0.48);
     border-radius: 8px;
-    line-height: 1.3;
+    font-size: 0.78rem;
+    line-height: 1.25;
 }
 
 .weekly-plan-next-label {
     margin-right: 6px;
-    font-size: 0.68rem;
+    font-size: 0.64rem;
     font-weight: 700;
     letter-spacing: 0.03em;
-    opacity: 0.60;
+    opacity: 0.58;
     text-transform: uppercase;
 }
 
 .weekly-plan-next-description {
-    font-size: 0.78rem;
-    opacity: 0.65;
+    font-size: 0.74rem;
+    opacity: 0.62;
 }
 </style>
         """,
@@ -389,13 +312,11 @@ def show_planning_card(
         columns,
         planning.weekly_plan.days,
     ):
-
         classes = [
             "weekly-plan-day",
         ]
 
         if day.is_today:
-
             classes.append(
                 "weekly-plan-day-today"
             )
@@ -413,7 +334,6 @@ def show_planning_card(
         )
 
         with column:
-
             st.markdown(
                 (
                     f'<div class="{" ".join(classes)}">'
@@ -442,7 +362,6 @@ def show_planning_card(
     )
 
     if next_description:
-
         st.markdown(
             (
                 '<div class="weekly-plan-next">'
