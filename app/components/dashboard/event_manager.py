@@ -18,6 +18,7 @@ def open_event_manager(
     """
 
     st.session_state.show_add_event_form = False
+    st.session_state.selected_event = None
 
     show_event_manager(
         athlete,
@@ -35,6 +36,10 @@ def show_event_manager(
     if "show_add_event_form" not in st.session_state:
 
         st.session_state.show_add_event_form = False
+
+    if "selected_event" not in st.session_state:
+
+        st.session_state.selected_event = None
 
     if st.session_state.show_add_event_form:
 
@@ -98,6 +103,30 @@ def show_event_manager(
                     )
                 )
 
+            edit_col, delete_col = st.columns(
+                2,
+            )
+
+            with edit_col:
+
+                st.button(
+                    "Edit",
+                    key=f"edit-{id(entry)}",
+                    use_container_width=True,
+                    on_click=_open_edit_event_form,
+                    args=(entry,),
+                )
+
+            with delete_col:
+
+                st.button(
+                    "Delete",
+                    key=f"delete-{id(entry)}",
+                    use_container_width=True,
+                    on_click=_delete_event,
+                    args=(athlete, entry),
+                )
+
             st.divider()
 
     st.button(
@@ -113,6 +142,18 @@ def _open_add_event_form() -> None:
     Switches the event manager to the Add Event form.
     """
 
+    st.session_state.selected_event = None
+    st.session_state.show_add_event_form = True
+
+
+def _open_edit_event_form(
+    entry,
+) -> None:
+    """
+    Opens the form in edit mode.
+    """
+
+    st.session_state.selected_event = entry
     st.session_state.show_add_event_form = True
 
 
@@ -121,51 +162,85 @@ def _close_add_event_form() -> None:
     Returns to the event list.
     """
 
+    st.session_state.selected_event = None
     st.session_state.show_add_event_form = False
+    
+def _delete_event(
+    athlete,
+    entry,
+) -> None:
+    """
+    Deletes an event.
+    """
+
+    athlete.events.remove(
+        entry
+    )
+
+    st.session_state.selected_event = None
+    st.session_state.show_add_event_form = False
+
+    st.rerun()
 
 
 def _show_add_event_form(
     athlete,
 ) -> None:
     """
-    Displays the Add Event form.
+    Displays the Add Event or Edit Event form.
     """
 
+    entry = st.session_state.selected_event
+
+    is_edit = entry is not None
+
+    event = entry.event if is_edit else None
+
     st.subheader(
-        "Add Event"
+        "Edit Event" if is_edit else "Add Event"
     )
 
     event_name = st.text_input(
         "Event name",
+        value=event.name if is_edit else "",
         key="event-name",
     )
 
     event_date = st.date_input(
         "Date",
+        value=event.date if is_edit else None,
         key="event-date",
     )
 
+    sports = [
+        "Road Running",
+        "Trail Running",
+        "Track Running",
+        "Cross Country",
+        "Mountain Running",
+        "Cycling",
+        "Mountain Biking",
+        "Swimming",
+        "Triathlon",
+        "Duathlon",
+        "Other",
+    ]
+
     sport = st.selectbox(
         "Sport",
-        [
-            "Road Running",
-            "Trail Running",
-            "Track Running",
-            "Cross Country",
-            "Mountain Running",
-            "Cycling",
-            "Mountain Biking",
-            "Swimming",
-            "Triathlon",
-            "Duathlon",
-            "Other",
-        ],
+        sports,
+        index=(
+            sports.index(event.sport)
+            if is_edit and event.sport in sports
+            else 0
+        ),
         key="event-sport",
     )
 
     distance = st.number_input(
         "Distance (km)",
         min_value=0.0,
+        value=event.distance if is_edit else 0.0,
         step=0.1,
         key="event-distance",
     )
@@ -173,32 +248,43 @@ def _show_add_event_form(
     elevation_gain = st.number_input(
         "Elevation gain (m)",
         min_value=0.0,
+        value=event.elevation_gain if is_edit else 0.0,
         step=10.0,
         key="event-elevation-gain",
     )
 
+    priorities = [
+        "A",
+        "B",
+        "C",
+    ]
+
     priority = st.selectbox(
         "Priority",
-        [
-            "A",
-            "B",
-            "C",
-        ],
+        priorities,
+        index=(
+            priorities.index(entry.priority)
+            if is_edit and entry.priority in priorities
+            else 0
+        ),
         key="event-priority",
     )
 
     location = st.text_input(
         "Location",
+        value=event.location if is_edit else "",
         key="event-location",
     )
 
     country = st.text_input(
         "Country",
+        value=event.country if is_edit else "",
         key="event-country",
     )
 
     notes = st.text_area(
         "Notes",
+        value=entry.notes if is_edit else "",
         key="event-notes",
     )
 
@@ -209,7 +295,7 @@ def _show_add_event_form(
     with save_col:
 
         if st.button(
-            "Save",
+            "Update" if is_edit else "Save",
             key="event-save",
             use_container_width=True,
         ):
@@ -222,26 +308,44 @@ def _show_add_event_form(
 
                 return
 
-            event = Event(
-                name=event_name.strip(),
-                date=event_date,
-                sport=sport,
-                distance=distance,
-                elevation_gain=elevation_gain,
-                location=location.strip(),
-                country=country.strip(),
-            )
+            if is_edit:
 
-            entry = EventEntry(
-                event=event,
-                priority=priority,
-                notes=notes.strip(),
-            )
+                entry.event.name = event_name.strip()
+                entry.event.date = event_date
+                entry.event.sport = sport
+                entry.event.distance = distance
+                entry.event.elevation_gain = elevation_gain
+                entry.event.location = location.strip()
+                entry.event.country = country.strip()
 
-            athlete.events.add(
-                entry
-            )
+                entry.priority = priority
+                entry.notes = notes.strip()
 
+                athlete.events._sort()
+
+            else:
+
+                event = Event(
+                    name=event_name.strip(),
+                    date=event_date,
+                    sport=sport,
+                    distance=distance,
+                    elevation_gain=elevation_gain,
+                    location=location.strip(),
+                    country=country.strip(),
+                )
+
+                entry = EventEntry(
+                    event=event,
+                    priority=priority,
+                    notes=notes.strip(),
+                )
+
+                athlete.events.add(
+                    entry
+                )
+
+            st.session_state.selected_event = None
             st.session_state.show_add_event_form = False
 
             st.rerun()
