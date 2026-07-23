@@ -18,9 +18,21 @@ from .strategies import (
     RegenerationStrategy,
     TaperStrategy,
 )
-
+from .availability import (
+    AthleteAvailability,
+    Weekday,
+)
+from .constraints import TrainingConstraints
+from .preferences import AthletePreferences
+from .review import (
+    PlanReview,
+    ReviewCategory,
+    ReviewFinding,
+    ReviewSeverity,
+)
 
 __all__ = [
+    # Existing coaching API
     "Coach",
     "CoachContext",
     "CoachAnalysis",
@@ -28,8 +40,23 @@ __all__ = [
     "CoachRecommendation",
     "CoachStrategy",
     "StrategyPlan",
+    "StrategySelector",
+
+    # Strategies
     "BaseStrategy",
     "BuildStrategy",
     "RegenerationStrategy",
     "TaperStrategy",
+
+    # Athlete scheduling domain
+    "Weekday",
+    "AthleteAvailability",
+    "AthletePreferences",
+    "TrainingConstraints",
+
+    # Plan review domain
+    "PlanReview",
+    "ReviewFinding",
+    "ReviewSeverity",
+    "ReviewCategory",
 ]
