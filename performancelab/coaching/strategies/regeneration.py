@@ -118,4 +118,16 @@ class RegenerationStrategy(CoachStrategy):
             guidelines=tuple(guidelines),
 
             warnings=tuple(warnings),
+
+            focus="recovery",
+
+            target_weekly_minutes=(
+                180
+                if volume_factor <= 0.40
+                else 240
+            ),
+
+            target_weekly_load=250.0 * volume_factor,
+
+            long_session_minutes=None,
         )

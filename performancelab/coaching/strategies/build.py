@@ -17,7 +17,6 @@ from performancelab.coaching.strategy import (
 class BuildStrategy(CoachStrategy):
 
     name = "BuildStrategy"
-
     phase = "Build"
 
     # ======================================================
@@ -42,24 +41,21 @@ class BuildStrategy(CoachStrategy):
                 "Separate demanding sessions with easy "
                 "training or recovery."
             ),
-            (
-                "Maintain one longer endurance session."
-            ),
-            (
-                "Keep easy sessions genuinely easy."
-            ),
+            "Maintain one longer endurance session.",
+            "Keep easy sessions genuinely easy.",
         ]
 
-        warnings = []
+        warnings: list[str] = []
 
         volume_factor = 1.08
         target_sessions = 6
         intensity_sessions = 2
+        focus = "threshold"
 
         if context.tsb < -10:
-
             volume_factor = 1.00
             intensity_sessions = 1
+            focus = "aerobic endurance"
 
             warnings.append(
                 "Fatigue is elevated; avoid increasing "
@@ -74,8 +70,8 @@ class BuildStrategy(CoachStrategy):
                 volume_factor,
                 1.00,
             )
-
             intensity_sessions = 1
+            focus = "aerobic endurance"
 
             warnings.append(
                 "Recent perceived effort is high."
@@ -84,30 +80,28 @@ class BuildStrategy(CoachStrategy):
         event_name = self._event_name(context)
 
         if event_name is not None:
-
             objectives.append(
                 f"Prepare progressively for {event_name}."
             )
 
         return StrategyPlan(
-
             strategy=self.name,
-
             phase=self.phase,
 
             volume_factor=volume_factor,
 
             target_sessions=target_sessions,
-
             intensity_sessions=intensity_sessions,
-
             long_sessions=1,
-
             recovery_days=1,
 
+            focus=focus,
+
+            target_weekly_minutes=420,
+            target_weekly_load=500.0 * volume_factor,
+            long_session_minutes=120,
+
             objectives=tuple(objectives),
-
             guidelines=tuple(guidelines),
-
             warnings=tuple(warnings),
         )

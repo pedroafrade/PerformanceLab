@@ -2,17 +2,17 @@
 Tests for CoachReviewer.
 """
 
-from performancelab.coaching.availability import (
+from performancelab.training.config.availability import (
     AthleteAvailability,
     Weekday,
 )
-from performancelab.coaching.constraints import (
+from performancelab.training.config.constraints import (
     TrainingConstraints,
 )
 from performancelab.coaching.draft_slot import (
     DraftTrainingSlot,
 )
-from performancelab.coaching.preferences import (
+from performancelab.training.config.preferences import (
     AthletePreferences,
 )
 from performancelab.coaching.reviewer import CoachReviewer

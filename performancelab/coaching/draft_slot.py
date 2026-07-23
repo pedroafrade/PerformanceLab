@@ -12,7 +12,7 @@ represent a complete workout prescription.
 
 from dataclasses import dataclass, replace
 
-from .availability import Weekday
+from ..training.config.availability import Weekday
 from .session_purpose import SessionPurpose
 
 

@@ -4,7 +4,7 @@ Tests for DraftTrainingSlot.
 
 import pytest
 
-from performancelab.coaching.availability import Weekday
+from performancelab.training.config.availability import Weekday
 from performancelab.coaching.draft_slot import (
     DraftTrainingSlot,
 )

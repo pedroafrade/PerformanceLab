@@ -12,16 +12,18 @@ from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
 from performancelab.coaching.analyzer import CoachAnalyzer
-from performancelab.coaching.availability import AthleteAvailability
-from performancelab.coaching.constraints import TrainingConstraints
 from performancelab.coaching.context import CoachContext
-from performancelab.coaching.preferences import AthletePreferences
 from performancelab.coaching.selector import StrategySelector
 from performancelab.coaching.structure_generator import (
     WeekStructureGenerator,
 )
 from performancelab.coaching.training_week import TrainingWeek
 from performancelab.coaching.workout_generator import WorkoutGenerator
+from performancelab.training.config import (
+    AthleteAvailability,
+    AthletePreferences,
+    TrainingConstraints,
+)
 
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
@@ -34,21 +36,14 @@ class Planner:
     """
     Builds a concrete weekly training plan for an athlete.
 
-    Workflow:
+    By default, planning configuration is read directly from the athlete:
 
-    Athlete
-        -> CoachContext
-        -> CoachAnalyzer
-        -> StrategySelector
-        -> StrategyPlan
-        -> WeekStructureGenerator
-        -> TrainingWeek
-        -> WorkoutGenerator
-        -> WeeklyPlanBuilder
-        -> WeeklyPlan
+    - ``athlete.availability``
+    - ``athlete.preferences``
+    - ``athlete.training_constraints``
+
+    Explicit values may still be supplied as temporary overrides.
     """
-
-    # ======================================================
 
     def __init__(
         self,
@@ -57,64 +52,62 @@ class Planner:
         workout_generator: WorkoutGenerator | None = None,
     ) -> None:
         self.structure_generator = (
-            structure_generator
-            or WeekStructureGenerator()
+            structure_generator or WeekStructureGenerator()
         )
-
         self.workout_generator = (
-            workout_generator
-            or WorkoutGenerator()
+            workout_generator or WorkoutGenerator()
         )
-
-    # ======================================================
 
     def build(
         self,
         *,
         athlete: Athlete,
-        availability: AthleteAvailability,
-        preferences: AthletePreferences,
-        constraints: TrainingConstraints,
+        availability: AthleteAvailability | None = None,
+        preferences: AthletePreferences | None = None,
+        constraints: TrainingConstraints | None = None,
         week_start: date | None = None,
         today: date | None = None,
     ) -> WeeklyPlan:
         """
         Builds the athlete's weekly training plan.
 
-        Parameters
-        ----------
-        athlete
-            Athlete for whom the plan is generated.
-
-        availability
-            Time available for training on each weekday.
-
-        preferences
-            Athlete scheduling and training preferences.
-
-        constraints
-            Limits that the generated week must respect.
-
-        week_start
-            Any date in the week to generate. It is normalized
-            to Monday. Defaults to ``today``.
-
-        today
-            Reference date used to build the coaching context.
-            Defaults to the current date.
+        ``availability``, ``preferences`` and ``constraints`` are optional
+        overrides. When omitted, the values stored on ``athlete`` are used.
         """
 
-        self._validate_inputs(
-            athlete=athlete,
-            availability=availability,
-            preferences=preferences,
-            constraints=constraints,
-            week_start=week_start,
-            today=today,
+        self._validate_athlete(athlete)
+        self._validate_optional_date(
+            week_start,
+            field="week_start",
+        )
+        self._validate_optional_date(
+            today,
+            field="today",
+        )
+
+        resolved_availability = (
+            availability
+            if availability is not None
+            else athlete.availability
+        )
+        resolved_preferences = (
+            preferences
+            if preferences is not None
+            else athlete.preferences
+        )
+        resolved_constraints = (
+            constraints
+            if constraints is not None
+            else athlete.training_constraints
+        )
+
+        self._validate_training_config(
+            availability=resolved_availability,
+            preferences=resolved_preferences,
+            constraints=resolved_constraints,
         )
 
         reference_day = today or date.today()
-
         start_date = self._week_start(
             week_start or reference_day
         )
@@ -125,22 +118,22 @@ class Planner:
         )
 
         analysis = CoachAnalyzer(
-            context
+            context,
         ).analyze()
 
         strategy = StrategySelector().select(
-            analysis
+            analysis,
         )
 
         strategy_plan = strategy.build(
-            context
+            context,
         )
 
         slots = self.structure_generator.generate(
             strategy_plan=strategy_plan,
-            availability=availability,
-            preferences=preferences,
-            constraints=constraints,
+            availability=resolved_availability,
+            preferences=resolved_preferences,
+            constraints=resolved_constraints,
         )
 
         training_week = TrainingWeek(
@@ -155,39 +148,27 @@ class Planner:
         )
 
         return WeeklyPlanBuilder(
-            workouts
+            workouts,
         ).week(
-            start_date
+            start_date,
         )
-
-    # ======================================================
 
     @staticmethod
     def _week_start(
         day: date,
     ) -> date:
-        """
-        Returns the Monday containing ``day``.
-        """
+        """Returns the Monday containing ``day``."""
 
         return day - timedelta(
-            days=day.weekday()
+            days=day.weekday(),
         )
 
-    # ======================================================
-
     @staticmethod
-    def _validate_inputs(
-        *,
+    def _validate_athlete(
         athlete: Athlete,
-        availability: AthleteAvailability,
-        preferences: AthletePreferences,
-        constraints: TrainingConstraints,
-        week_start: date | None,
-        today: date | None,
     ) -> None:
-        # Local import prevents the Athlete -> planning -> Planner
-        # circular import during package initialization.
+        # Local import avoids Athlete -> planning -> Planner
+        # during package initialization.
         from performancelab.athlete import Athlete
 
         if not isinstance(
@@ -198,13 +179,19 @@ class Planner:
                 "athlete must be an Athlete"
             )
 
+    @staticmethod
+    def _validate_training_config(
+        *,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> None:
         if not isinstance(
             availability,
             AthleteAvailability,
         ):
             raise TypeError(
-                "availability must be an "
-                "AthleteAvailability"
+                "availability must be an AthleteAvailability"
             )
 
         if not isinstance(
@@ -212,8 +199,7 @@ class Planner:
             AthletePreferences,
         ):
             raise TypeError(
-                "preferences must be an "
-                "AthletePreferences"
+                "preferences must be an AthletePreferences"
             )
 
         if not isinstance(
@@ -221,33 +207,26 @@ class Planner:
             TrainingConstraints,
         ):
             raise TypeError(
-                "constraints must be "
-                "TrainingConstraints"
+                "constraints must be TrainingConstraints"
             )
 
+    @staticmethod
+    def _validate_optional_date(
+        value: date | None,
+        *,
+        field: str,
+    ) -> None:
         if (
-            week_start is not None
-            and not isinstance(week_start, date)
+            value is not None
+            and not isinstance(value, date)
         ):
             raise TypeError(
-                "week_start must be a date or None"
+                f"{field} must be a date or None"
             )
-
-        if (
-            today is not None
-            and not isinstance(today, date)
-        ):
-            raise TypeError(
-                "today must be a date or None"
-            )
-
-    # ======================================================
 
     def __repr__(self) -> str:
         return (
             "Planner("
-            f"structure_generator="
-            f"{self.structure_generator!r}, "
-            f"workout_generator="
-            f"{self.workout_generator!r})"
+            f"structure_generator={self.structure_generator!r}, "
+            f"workout_generator={self.workout_generator!r})"
         )

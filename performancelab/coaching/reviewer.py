@@ -12,13 +12,13 @@ prevent the athlete from changing the plan.
 
 from collections.abc import Sequence
 
-from .availability import (
+from ..training.config.availability import (
     AthleteAvailability,
     Weekday,
 )
-from .constraints import TrainingConstraints
+from ..training.config.constraints import TrainingConstraints
 from .draft_slot import DraftTrainingSlot
-from .preferences import AthletePreferences
+from ..training.config.preferences import AthletePreferences
 from .review import (
     PlanReview,
     ReviewCategory,

@@ -15,10 +15,10 @@ from performancelab.training.planning.planner import Planner
 from performancelab.training.planning.weekly_plan import WeeklyPlan
 
 from .analyzer import CoachAnalyzer
-from .availability import AthleteAvailability
-from .constraints import TrainingConstraints
+from ..training.config.availability import AthleteAvailability
+from ..training.config.constraints import TrainingConstraints
 from .context import CoachContext
-from .preferences import AthletePreferences
+from ..training.config.preferences import AthletePreferences
 from .recommendation import CoachRecommendation
 from .selector import StrategySelector
 
@@ -80,21 +80,15 @@ class Coach:
         self,
         *,
         athlete: Athlete,
-        availability: AthleteAvailability,
-        preferences: AthletePreferences,
-        constraints: TrainingConstraints,
         week_start: date | None = None,
         today: date | None = None,
     ) -> WeeklyPlan:
         return self.planner.build(
             athlete=athlete,
-            availability=availability,
-            preferences=preferences,
-            constraints=constraints,
             week_start=week_start,
             today=today,
         )
-
+    
     @staticmethod
     def _validate_optional_date(
         value: date | None,

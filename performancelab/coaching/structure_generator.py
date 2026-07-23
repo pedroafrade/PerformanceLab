@@ -12,13 +12,13 @@ This generator does not create detailed workouts.
 
 from collections.abc import Iterable
 
-from .availability import (
+from ..training.config.availability import (
     AthleteAvailability,
     Weekday,
 )
-from .constraints import TrainingConstraints
+from ..training.config.constraints import TrainingConstraints
 from .draft_slot import DraftTrainingSlot
-from .preferences import AthletePreferences
+from ..training.config.preferences import AthletePreferences
 from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 

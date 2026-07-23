@@ -8,9 +8,10 @@ from performancelab.coaching import (
     SessionPurpose,
     StrategyPlan,
     TrainingWeek,
-    Weekday,
     WorkoutGenerator,
 )
+
+from performancelab.training.config import Weekday
 
 
 @pytest.fixture

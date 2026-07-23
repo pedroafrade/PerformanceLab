@@ -10,7 +10,7 @@ training plan after generation or manual adjustment.
 from dataclasses import dataclass, field
 from enum import Enum
 
-from .availability import Weekday
+from ..training.config.availability import Weekday
 
 
 class ReviewSeverity(str, Enum):

@@ -4,13 +4,14 @@ Shared fixtures for coaching tests.
 
 import pytest
 
-from performancelab.coaching.availability import (
+from performancelab.training.config import (
     AthleteAvailability,
+    Weekday,
 )
-from performancelab.coaching.constraints import (
+from performancelab.training.config.constraints import (
     TrainingConstraints,
 )
-from performancelab.coaching.preferences import (
+from performancelab.training.config.preferences import (
     AthletePreferences,
 )
 from performancelab.coaching.strategy import StrategyPlan

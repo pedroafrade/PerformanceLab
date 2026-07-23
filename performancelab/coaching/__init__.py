@@ -7,7 +7,6 @@ Public interface for the athlete coaching engine.
 """
 
 from .analyzer import CoachAnalysis, CoachAnalyzer
-from .coach import Coach
 from .context import CoachContext
 from .recommendation import CoachRecommendation
 from .strategy import CoachStrategy, StrategyPlan
@@ -18,12 +17,6 @@ from .strategies import (
     RegenerationStrategy,
     TaperStrategy,
 )
-from .availability import (
-    AthleteAvailability,
-    Weekday,
-)
-from .constraints import TrainingConstraints
-from .preferences import AthletePreferences
 from .review import (
     PlanReview,
     ReviewCategory,
@@ -67,12 +60,6 @@ __all__ = [
     "RegenerationStrategy",
     "TaperStrategy",
 
-    # Athlete scheduling domain
-    "Weekday",
-    "AthleteAvailability",
-    "AthletePreferences",
-    "TrainingConstraints",
-
     # Plan review domain
     "PlanReview",
     "ReviewFinding",
@@ -100,3 +87,13 @@ __all__ = [
     "WorkoutGenerator",
     "TrainingWeek",
 ]
+def __getattr__(name: str):
+
+    if name == "Coach":
+        from .coach import Coach
+
+        return Coach
+
+    raise AttributeError(
+        f"module {__name__!r} has no attribute {name!r}"
+    )
