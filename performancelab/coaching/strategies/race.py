@@ -1,10 +1,10 @@
 """
 PerformanceLab
 
-Taper Strategy
+Race Strategy
 
-Reduces training load before competition while preserving
-enough intensity to maintain sharpness.
+Minimises training stress during race week while preserving
+readiness and supporting competition performance.
 """
 
 from performancelab.coaching.context import CoachContext
@@ -14,10 +14,10 @@ from performancelab.coaching.strategy import (
 )
 
 
-class TaperStrategy(CoachStrategy):
+class RaceStrategy(CoachStrategy):
 
-    name = "TaperStrategy"
-    phase = "Taper"
+    name = "RaceStrategy"
+    phase = "Race"
 
     # ======================================================
 
@@ -27,36 +27,36 @@ class TaperStrategy(CoachStrategy):
     ) -> StrategyPlan:
 
         objectives = [
-            "Reduce accumulated fatigue.",
-            "Preserve race-specific sharpness.",
-            "Improve readiness for competition.",
+            "Arrive at competition rested and prepared.",
+            "Preserve physical and mental readiness.",
+            "Execute the planned race strategy.",
         ]
 
         guidelines = [
-            "Reduce training volume substantially.",
-            "Keep intensity brief and controlled.",
+            "Keep all non-race training short and easy.",
             "Avoid introducing new training stress.",
-            "Prioritise recovery, sleep, and consistency.",
+            "Prioritise sleep, hydration, and nutrition.",
+            "Treat the race as the primary weekly load.",
         ]
 
         warnings: list[str] = []
 
-        volume_factor = 0.65
-        target_sessions = 4
-        intensity_sessions = 1
+        volume_factor = 0.40
+        target_sessions = 3
+        intensity_sessions = 0
         long_sessions = 0
-        recovery_days = 3
-        focus = "race readiness"
+        recovery_days = 4
+        focus = "competition"
 
         if context.tsb < -10:
-            volume_factor = 0.50
-            intensity_sessions = 0
-            recovery_days = 4
-            focus = "fatigue reduction"
+            volume_factor = 0.30
+            target_sessions = 2
+            recovery_days = 5
+            focus = "race recovery and readiness"
 
             warnings.append(
-                "Fatigue remains elevated; prioritise recovery "
-                "over additional race-specific work."
+                "Fatigue is elevated during race week; "
+                "remove all unnecessary training stress."
             )
 
         if (
@@ -65,14 +65,17 @@ class TaperStrategy(CoachStrategy):
         ):
             volume_factor = min(
                 volume_factor,
-                0.50,
+                0.30,
             )
-            intensity_sessions = 0
+            target_sessions = min(
+                target_sessions,
+                2,
+            )
             recovery_days = max(
                 recovery_days,
-                4,
+                5,
             )
-            focus = "fatigue reduction"
+            focus = "race recovery and readiness"
 
             warnings.append(
                 "Recent perceived effort is high."
@@ -82,7 +85,7 @@ class TaperStrategy(CoachStrategy):
 
         if event_name is not None:
             objectives.append(
-                f"Arrive rested and prepared for {event_name}."
+                f"Perform effectively at {event_name}."
             )
 
         return StrategyPlan(
@@ -98,8 +101,8 @@ class TaperStrategy(CoachStrategy):
 
             focus=focus,
 
-            target_weekly_minutes=240,
-            target_weekly_load=350.0 * volume_factor,
+            target_weekly_minutes=150,
+            target_weekly_load=250.0 * volume_factor,
             long_session_minutes=None,
 
             objectives=tuple(objectives),

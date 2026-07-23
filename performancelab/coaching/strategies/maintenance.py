@@ -1,10 +1,10 @@
 """
 PerformanceLab
 
-Base Strategy
+Maintenance Strategy
 
-Establishes a consistent aerobic training routine and prepares
-the athlete for future build phases.
+Preserves current fitness with stable training volume,
+controlled intensity, and sufficient recovery.
 """
 
 from performancelab.coaching.context import CoachContext
@@ -14,11 +14,10 @@ from performancelab.coaching.strategy import (
 )
 
 
-class BaseStrategy(CoachStrategy):
+class MaintenanceStrategy(CoachStrategy):
 
-    name = "BaseStrategy"
-
-    phase = "Base"
+    name = "MaintenanceStrategy"
+    phase = "Maintenance"
 
     # ======================================================
 
@@ -28,59 +27,52 @@ class BaseStrategy(CoachStrategy):
     ) -> StrategyPlan:
 
         objectives = [
-            "Develop aerobic endurance.",
-            "Build consistent training habits.",
-            "Prepare for future training load.",
+            "Maintain current aerobic fitness.",
+            "Preserve training consistency.",
+            "Balance quality training with recovery.",
         ]
 
         guidelines = [
-            (
-                "Prioritise easy aerobic sessions."
-            ),
-            (
-                "Increase training volume gradually."
-            ),
-            (
-                "Include one longer endurance session."
-            ),
-            (
-                "Avoid excessive high-intensity work."
-            ),
+            "Keep weekly training volume stable.",
+            "Include controlled intensity without progression.",
+            "Maintain one longer aerobic session.",
+            "Avoid unnecessary increases in training load.",
         ]
 
-        warnings = []
+        warnings: list[str] = []
 
-        volume_factor = 0.90
+        volume_factor = 1.00
         target_sessions = 5
         intensity_sessions = 1
         long_sessions = 1
         recovery_days = 2
-
-        focus = "aerobic endurance"
+        focus = "fitness maintenance"
 
         if context.tsb < -10:
-
-            volume_factor = 0.80
+            volume_factor = 0.90
+            intensity_sessions = 0
             recovery_days = 3
+            focus = "aerobic maintenance"
 
             warnings.append(
-                "Fatigue is elevated; prioritise recovery."
+                "Fatigue is elevated; reduce training stress "
+                "while maintaining consistency."
             )
 
         if (
             context.average_rpe is not None
             and context.average_rpe >= 8
         ):
-
             volume_factor = min(
                 volume_factor,
-                0.80,
+                0.90,
             )
-
+            intensity_sessions = 0
             recovery_days = max(
                 recovery_days,
                 3,
             )
+            focus = "aerobic maintenance"
 
             warnings.append(
                 "Recent perceived effort is high."
@@ -89,9 +81,8 @@ class BaseStrategy(CoachStrategy):
         event_name = self._event_name(context)
 
         if event_name is not None:
-
             objectives.append(
-                f"Build a strong aerobic foundation for {event_name}."
+                f"Maintain readiness for {event_name}."
             )
 
         return StrategyPlan(
