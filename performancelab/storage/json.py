@@ -19,6 +19,10 @@ from performancelab import (
     Workout,
 )
 
+from performancelab.training.planning.planned_workout import (
+    PlannedWorkout,
+)
+
 
 # ======================================================
 # Date serialization
@@ -276,6 +280,88 @@ def _workout_from_dict(data):
         )
 
     return workout
+
+
+# ======================================================
+# Planned Workout
+# ======================================================
+
+def _planned_workout_to_dict(workout):
+
+    return {
+
+        "scheduled_at": _serialize_date(
+            workout.scheduled_at
+        ),
+
+        "sport": workout.sport,
+
+        "title": workout.title,
+
+        "duration": _serialize_duration(
+            workout.duration
+        ),
+
+        "distance": workout.distance,
+
+        "description": workout.description,
+
+        "intensity": workout.intensity,
+
+        "objective": workout.objective,
+
+        "structure": list(
+            workout.structure
+        ),
+
+        "equipment": list(
+            workout.equipment
+        ),
+
+    }
+
+
+# ======================================================
+
+def _planned_workout_from_dict(data):
+
+    return PlannedWorkout(
+
+        scheduled_at=_deserialize_date(
+            data.get("scheduled_at")
+        ),
+
+        sport=data.get("sport"),
+
+        title=data.get("title"),
+
+        duration=_deserialize_duration(
+            data.get("duration")
+        ),
+
+        distance=data.get("distance"),
+
+        description=data.get("description"),
+
+        intensity=data.get("intensity"),
+
+        objective=data.get("objective"),
+
+        structure=tuple(
+            data.get(
+                "structure",
+                [],
+            )
+        ),
+
+        equipment=tuple(
+            data.get(
+                "equipment",
+                [],
+            )
+        ),
+
+    )
 
 
 # ======================================================
@@ -572,6 +658,14 @@ def athlete_to_dict(athlete):
 
         ],
 
+        "training_plan": [
+
+            _planned_workout_to_dict(workout)
+
+            for workout in athlete.training_plan
+
+        ],
+
     }
 
 
@@ -655,6 +749,19 @@ def athlete_from_dict(data):
 
             _event_entry_from_dict(
                 entry_data
+            )
+
+        )
+
+    for workout_data in data.get(
+        "training_plan",
+        [],
+    ):
+
+        athlete.training_plan.add(
+
+            _planned_workout_from_dict(
+                workout_data
             )
 
         )

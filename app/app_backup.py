@@ -5,12 +5,10 @@ Streamlit application.
 """
 
 from datetime import date, datetime, time, timedelta
-from pathlib import Path
 
 import streamlit as st
 
 from components import (
-    show_athlete_panel,
     show_dashboard,
     show_selected_workout_route,
     show_sidebar,
@@ -20,11 +18,6 @@ from components import (
 from performancelab import (
     Athlete,
     create_workout,
-)
-
-from performancelab.storage import (
-    load_athlete,
-    save_athlete,
 )
 
 
@@ -38,7 +31,6 @@ st.set_page_config(
     layout="wide",
 )
 
-DATA_FILE = Path("data/athlete.json")
 
 # ======================================================
 # Demonstration athlete
@@ -169,37 +161,7 @@ def create_demo_athlete() -> Athlete:
 def initialize_session_state() -> None:
 
     if "athlete" not in st.session_state:
-
-        if DATA_FILE.exists():
-
-            try:
-
-                st.session_state.athlete = load_athlete(
-                    DATA_FILE
-                )
-
-            except Exception as error:
-
-                st.error(
-                    "Could not load the saved athlete."
-                )
-
-                st.exception(error)
-
-                st.session_state.athlete = (
-                    create_demo_athlete()
-                )
-
-        else:
-
-            st.session_state.athlete = (
-                create_demo_athlete()
-            )
-
-            save_athlete(
-                st.session_state.athlete,
-                DATA_FILE,
-            )
+        st.session_state.athlete = create_demo_athlete()
 
     if "notice" not in st.session_state:
         st.session_state.notice = None
@@ -228,15 +190,6 @@ athlete = show_sidebar(
 
 page = st.session_state.page
 
-if (
-    page == "dashboard"
-    and st.session_state.notice
-):
-    st.success(
-        st.session_state.notice
-    )
-    st.session_state.notice = None
-
 if page == "dashboard":
 
     selected_workout = show_dashboard(
@@ -250,12 +203,6 @@ if page == "dashboard":
 
     show_selected_workout_route(
         selected_workout,
-    )
-
-elif page == "athlete":
-
-    athlete = show_athlete_panel(
-        athlete,
     )
 
 else:
@@ -279,14 +226,3 @@ else:
     )
 
 st.session_state.athlete = athlete
-
-save_athlete(
-    athlete,
-    DATA_FILE,
-)
-
-if (
-    page == "athlete"
-    and st.session_state.page == "dashboard"
-):
-    st.rerun()

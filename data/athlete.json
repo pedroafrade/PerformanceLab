@@ -1,0 +1,255 @@
+{
+  "format": "PerformanceLab",
+  "version": 1,
+  "athlete": {
+    "name": "Pedro",
+    "birth_date": "1992-12-02",
+    "gender": "Male",
+    "height": 1.78,
+    "weight": 74.0,
+    "ftp": 211.0,
+    "max_hr": 205,
+    "resting_hr": 65
+  },
+  "workouts": [
+    {
+      "info": {
+        "date": "2026-07-10",
+        "sport": "Running",
+        "title": "Easy Run",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 8,
+        "duration": 2700.0,
+        "elevation_gain": 120
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 5,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-12",
+        "sport": "Cycling",
+        "title": "Endurance Ride",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 42,
+        "duration": 5400.0,
+        "elevation_gain": 450
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 6,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-14",
+        "sport": "Running",
+        "title": "Tempo Run",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 12,
+        "duration": 3900.0,
+        "elevation_gain": 210
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 7,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-16",
+        "sport": "Swimming",
+        "title": "Pool Session",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 2.5,
+        "duration": 3000.0,
+        "elevation_gain": 0
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 5,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-18",
+        "sport": "Cycling",
+        "title": "Long Ride",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 55,
+        "duration": 7200.0,
+        "elevation_gain": 700
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 7,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-20",
+        "sport": "Running",
+        "title": "Steady Run",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 10,
+        "duration": 3120.0,
+        "elevation_gain": 160
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 6,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    },
+    {
+      "info": {
+        "date": "2026-07-23",
+        "sport": "Running",
+        "title": "Long Run",
+        "description": "",
+        "source": "manual",
+        "timezone": "",
+        "distance": 16,
+        "duration": 5100.0,
+        "elevation_gain": 320
+      },
+      "environment": {
+        "temperature": null,
+        "humidity": null,
+        "wind_speed": null,
+        "terrain": "",
+        "weather": ""
+      },
+      "feedback": {
+        "rpe": 8,
+        "feeling": null,
+        "sleep_quality": null,
+        "motivation": null,
+        "stress": null,
+        "muscle_soreness": null,
+        "notes": ""
+      },
+      "sensors": {}
+    }
+  ],
+  "goals": [],
+  "events": [
+    {
+      "event": {
+        "name": "Pé Firme",
+        "location": "Santa Cruz",
+        "country": "Portugal",
+        "date": "2026-09-27",
+        "sport": "Trail Running",
+        "distance": 21.0,
+        "elevation_gain": 1000.0,
+        "terrain": "",
+        "surface": "",
+        "organizer": "",
+        "website": "",
+        "gpx_file": "",
+        "description": ""
+      },
+      "priority": "A",
+      "target_time": null,
+      "result_time": null,
+      "position": null,
+      "finished": false,
+      "dnf": false,
+      "dns": false,
+      "notes": ""
+    }
+  ],
+  "training_plan": []
+}

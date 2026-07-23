@@ -11,9 +11,6 @@ import streamlit as st
 from .activity_input import (
     show_activity_input,
 )
-from .storage_panel import (
-    show_storage_panel,
-)
 
 
 # ======================================================
@@ -390,6 +387,15 @@ def _show_user_account(
         unsafe_allow_html=True,
     )
 
+    st.button(
+        "Edit athlete",
+        icon=":material/edit:",
+        use_container_width=True,
+        key="sidebar_edit_athlete",
+        on_click=_set_page,
+        args=("athlete",),
+    )
+
 
 # ======================================================
 # Sidebar
@@ -438,15 +444,6 @@ def show_sidebar(
         with st.container(
             key="sidebar_lower",
         ):
-
-            with st.expander(
-                "Dados do atleta",
-                expanded=False,
-            ):
-
-                athlete = show_storage_panel(
-                    athlete
-                )
 
             st.markdown(
                 '<div class="sidebar-section-label">'
