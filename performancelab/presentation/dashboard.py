@@ -9,7 +9,7 @@ Presentation-ready data for user interfaces.
 from datetime import date, datetime, timedelta
 
 from performancelab.race import entry
-from performancelab.training.planning import WeeklyPlanBuilder
+from performancelab.training.planning.planner import WeeklyPlanBuilder
 
 from .dashboard_models import (
     AthleteOverviewData,
@@ -833,7 +833,7 @@ class DashboardData:
         virtual coach presentation model.
         """
 
-        from performancelab.training.planning import (
+        from performancelab.training.planning.planner import (
             WeeklyPlanBuilder,
         )
 

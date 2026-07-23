@@ -17,7 +17,7 @@ from performancelab.presentation.dashboard_models import (
     WeeklyPlanData,
     WeeklyPlanDayData,
 )
-from performancelab.training.planning import WeeklyPlan
+from performancelab.training.planning.planner import WeeklyPlan
 
 
 class PlanningPresenter:

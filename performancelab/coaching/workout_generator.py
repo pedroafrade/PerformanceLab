@@ -8,7 +8,7 @@ Converts a concrete TrainingWeek into planned workouts.
 
 from datetime import date, datetime, time, timedelta
 
-from performancelab.training.planning import PlannedWorkout
+from performancelab.training.planning.planned_workout import PlannedWorkout
 
 from .context import CoachContext
 from .draft_slot import DraftTrainingSlot

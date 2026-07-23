@@ -10,7 +10,6 @@ from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
 from .workout_collection import WorkoutCollection
 
-
 __all__ = [
     "PlannedWorkout",
     "TrainingPlan",
