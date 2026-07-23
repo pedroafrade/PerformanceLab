@@ -31,6 +31,11 @@ from .review import (
     ReviewSeverity,
 )
 
+from .draft_slot import DraftTrainingSlot
+from .reviewer import CoachReviewer
+from .session_purpose import SessionPurpose
+from .structure_generator import WeekStructureGenerator
+
 __all__ = [
     # Existing coaching API
     "Coach",
@@ -59,4 +64,10 @@ __all__ = [
     "ReviewFinding",
     "ReviewSeverity",
     "ReviewCategory",
+
+    # Generator
+    "SessionPurpose",
+    "DraftTrainingSlot",
+    "WeekStructureGenerator",
+    "CoachReviewer",
 ]
