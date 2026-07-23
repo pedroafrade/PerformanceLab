@@ -35,6 +35,20 @@ from .draft_slot import DraftTrainingSlot
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
 from .structure_generator import WeekStructureGenerator
+from .workout_template import WorkoutTemplate
+from .workout_templates import (
+    CROSS_TRAINING_TEMPLATE,
+    DEFAULT_WORKOUT_TEMPLATES,
+    EASY_TEMPLATE,
+    INTENSITY_TEMPLATE,
+    LONG_TEMPLATE,
+    RACE_TEMPLATE,
+    RECOVERY_TEMPLATE,
+    REST_TEMPLATE,
+    template_for,
+)
+from .workout_generator import WorkoutGenerator
+from .training_week import TrainingWeek
 
 __all__ = [
     # Existing coaching API
@@ -70,4 +84,19 @@ __all__ = [
     "DraftTrainingSlot",
     "WeekStructureGenerator",
     "CoachReviewer",
+
+    # Workout templates
+    "WorkoutTemplate",
+    "DEFAULT_WORKOUT_TEMPLATES",
+    "REST_TEMPLATE",
+    "RECOVERY_TEMPLATE",
+    "EASY_TEMPLATE",
+    "INTENSITY_TEMPLATE",
+    "LONG_TEMPLATE",
+    "RACE_TEMPLATE",
+    "template_for",
+    "CROSS_TRAINING_TEMPLATE",
+
+    "WorkoutGenerator",
+    "TrainingWeek",
 ]

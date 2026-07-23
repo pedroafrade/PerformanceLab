@@ -112,14 +112,8 @@ class CoachReviewer:
             findings,
         )
 
-        score = round(
-            (
-                availability_score
-                + constraint_score
-                + recovery_score
-                + consistency_score
-            )
-            / 4
+        score = self._score_findings(
+            findings,
         )
 
         return PlanReview(
