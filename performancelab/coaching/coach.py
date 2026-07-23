@@ -1,13 +1,35 @@
+"""
+PerformanceLab
+
+Coach
+
+Main orchestration service for the coaching engine.
+"""
+
 from datetime import date
 
 from performancelab.athlete import Athlete
 
-from .context import CoachContext
 from .analyzer import CoachAnalyzer
+from .context import CoachContext
 from .recommendation import CoachRecommendation
+from .selector import StrategySelector
 
 
 class Coach:
+    """
+    Builds a coaching recommendation for an athlete.
+
+    Workflow:
+
+    Athlete
+        -> CoachContext
+        -> CoachAnalyzer
+        -> StrategySelector
+        -> CoachStrategy
+        -> StrategyPlan
+        -> CoachRecommendation
+    """
 
     # ======================================================
 
@@ -18,27 +40,26 @@ class Coach:
     ) -> CoachRecommendation:
 
         context = CoachContext.from_athlete(
-
             athlete,
-
             today=today,
         )
 
         analysis = CoachAnalyzer(
-
-            context
-
+            context,
         ).analyze()
 
+        strategy = StrategySelector().select(
+            analysis,
+        )
+
+        plan = strategy.build(
+            context,
+        )
+
         return CoachRecommendation(
-
             context=context,
-
             analysis=analysis,
-
-            strategy=analysis.strategy,
-
+            strategy=plan.strategy,
             summary=analysis.summary,
-
             warnings=analysis.warnings,
         )

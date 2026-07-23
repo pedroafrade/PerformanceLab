@@ -221,7 +221,7 @@ def test_phase_boundary_at_22_days_is_specific():
     assert analysis.phase == "Specific"
 
 
-def test_negative_tsb_selects_recovery_strategy():
+def test_negative_tsb_selects_regeneration_strategy():
 
     context = make_context(
         days_until_event=84,
@@ -236,11 +236,11 @@ def test_negative_tsb_selects_recovery_strategy():
 
     assert (
         analysis.strategy
-        == "RecoveryStrategy"
+        == "RegenerationStrategy"
     )
 
 
-def test_tsb_equal_to_minus_twenty_does_not_select_recovery():
+def test_tsb_equal_to_minus_twenty_does_not_select_regeneration():
 
     context = make_context(
         days_until_event=84,
@@ -306,7 +306,7 @@ def test_summary_contains_phase_and_event_name():
     )
 
 
-def test_recovery_strategy_preserves_original_phase():
+def test_regeneration_strategy_preserves_original_phase():
 
     context = make_context(
         days_until_event=30,
@@ -321,5 +321,5 @@ def test_recovery_strategy_preserves_original_phase():
 
     assert (
         analysis.strategy
-        == "RecoveryStrategy"
+        == "RegenerationStrategy"
     )

@@ -131,20 +131,20 @@ def test_recommend_propagates_warnings():
         today=date(2026, 3, 10),
     )
 
-    assert recommendation.strategy == "RecoveryStrategy"
+    assert recommendation.strategy == "RegenerationStrategy"
 
     assert recommendation.warnings == (
         "High accumulated fatigue.",
     )
 
 
-def test_recommend_orchestrates_context_and_analyzer(
+def test_recommend_orchestrates_components(
     monkeypatch,
 ):
     """
     Tests Coach orchestration independently from the
-    concrete implementations of CoachContext and
-    CoachAnalyzer.
+    concrete context, analyzer, selector and strategy
+    implementations.
     """
 
     athlete = object()
@@ -157,6 +157,10 @@ def test_recommend_orchestrates_context_and_analyzer(
         strategy="BuildStrategy",
         warnings=("Test warning.",),
         summary="Test summary.",
+    )
+
+    expected_plan = SimpleNamespace(
+        strategy="BuildStrategy",
     )
 
     calls = {}
@@ -180,12 +184,32 @@ def test_recommend_orchestrates_context_and_analyzer(
             self,
             context,
         ):
-            calls["context"] = context
+            calls["analyzer_context"] = context
 
         def analyze(self):
             calls["analyzed"] = True
 
             return expected_analysis
+
+    class FakeStrategy:
+
+        def build(
+            self,
+            context,
+        ):
+            calls["strategy_context"] = context
+
+            return expected_plan
+
+    class FakeStrategySelector:
+
+        def select(
+            self,
+            analysis,
+        ):
+            calls["analysis"] = analysis
+
+            return FakeStrategy()
 
     monkeypatch.setattr(
         coach_module,
@@ -199,6 +223,12 @@ def test_recommend_orchestrates_context_and_analyzer(
         FakeCoachAnalyzer,
     )
 
+    monkeypatch.setattr(
+        coach_module,
+        "StrategySelector",
+        FakeStrategySelector,
+    )
+
     recommendation = Coach().recommend(
         athlete,
         today=reference_date,
@@ -206,23 +236,44 @@ def test_recommend_orchestrates_context_and_analyzer(
 
     assert calls["athlete"] is athlete
     assert calls["today"] == reference_date
-    assert calls["context"] is expected_context
+
+    assert (
+        calls["analyzer_context"]
+        is expected_context
+    )
+
     assert calls["analyzed"] is True
 
-    assert recommendation.context is expected_context
-    assert recommendation.analysis is expected_analysis
+    assert (
+        calls["analysis"]
+        is expected_analysis
+    )
+
+    assert (
+        calls["strategy_context"]
+        is expected_context
+    )
+
+    assert (
+        recommendation.context
+        is expected_context
+    )
+
+    assert (
+        recommendation.analysis
+        is expected_analysis
+    )
 
     assert (
         recommendation.strategy
-        == expected_analysis.strategy
+        == "BuildStrategy"
     )
 
     assert (
         recommendation.summary
-        == expected_analysis.summary
+        == "Test summary."
     )
 
-    assert (
-        recommendation.warnings
-        == expected_analysis.warnings
+    assert recommendation.warnings == (
+        "Test warning.",
     )

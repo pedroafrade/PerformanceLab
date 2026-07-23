@@ -82,7 +82,7 @@ class CoachAnalyzer:
 
         if self.context.tsb < -20:
 
-            return "RecoveryStrategy"
+            return "RegenerationStrategy"
 
         return f"{phase}Strategy"
 

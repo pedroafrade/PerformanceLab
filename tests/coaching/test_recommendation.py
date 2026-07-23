@@ -99,8 +99,8 @@ def test_recommendation_accepts_warnings():
     recommendation = CoachRecommendation(
         context=make_context(),
         analysis=make_analysis(),
-        strategy="RecoveryStrategy",
-        summary="Recovery week.",
+        strategy="RegenerationStrategy",
+        summary="Regeneration week.",
         warnings=warnings,
     )
 
