@@ -3,22 +3,24 @@ PerformanceLab
 
 Week Structure Generator
 
-Creates a provisional weekly training structure from the
-athlete's availability, preferences, constraints and
-coaching strategy.
+Transforms a StrategyPlan into a provisional seven-day
+training structure.
 
-This generator does not create detailed workouts.
+The generator decides when training occurs. It does not
+create detailed workouts.
 """
 
 from collections.abc import Iterable
+from itertools import combinations
 
-from ..training.config.availability import (
+from performancelab.training.config import (
     AthleteAvailability,
+    AthletePreferences,
+    TrainingConstraints,
     Weekday,
 )
-from ..training.config.constraints import TrainingConstraints
+
 from .draft_slot import DraftTrainingSlot
-from ..training.config.preferences import AthletePreferences
 from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 
@@ -27,18 +29,14 @@ class WeekStructureGenerator:
     """
     Generates a provisional seven-day training structure.
 
-    The first version follows deterministic rules:
-
-    1. Block unavailable and prohibited weekdays.
-    2. Respect preferred rest days.
-    3. Fill usable days with easy sessions.
-    4. Place one long session when possible.
-    5. Place intensity on preferred intensity days.
-    6. Respect weekly duration and recovery limits.
-
-    StrategyPlan is accepted now so that the public API
-    remains stable as strategy-specific generation rules are
-    added later.
+    Responsibilities
+    ----------------
+    - select training days;
+    - distribute the strategy's weekly minutes;
+    - place long sessions;
+    - place intensity sessions;
+    - represent recovery guidance;
+    - respect athlete availability and constraints.
     """
 
     # ======================================================
@@ -62,31 +60,41 @@ class WeekStructureGenerator:
             constraints=constraints,
         )
 
-        slots = self._create_initial_slots(
+        training_days = self._select_training_days(
+            strategy_plan=strategy_plan,
             availability=availability,
             preferences=preferences,
             constraints=constraints,
         )
 
-        slots = self._place_long_session(
-            slots=slots,
+        purposes = self._assign_purposes(
+            training_days=training_days,
+            strategy_plan=strategy_plan,
+            availability=availability,
             preferences=preferences,
             constraints=constraints,
         )
 
-        slots = self._place_intensity_sessions(
-            slots=slots,
+        durations = self._allocate_durations(
+            training_days=training_days,
+            purposes=purposes,
+            strategy_plan=strategy_plan,
+            availability=availability,
+            constraints=constraints,
+        )
+
+        slots = self._build_slots(
+            training_days=training_days,
+            purposes=purposes,
+            durations=durations,
+            availability=availability,
             preferences=preferences,
             constraints=constraints,
         )
 
-        slots = self._enforce_consecutive_day_limit(
+        slots = self._apply_recovery_guidance(
             slots=slots,
-            constraints=constraints,
-        )
-
-        slots = self._enforce_recovery_day_requirement(
-            slots=slots,
+            strategy_plan=strategy_plan,
             constraints=constraints,
         )
 
@@ -98,325 +106,699 @@ class WeekStructureGenerator:
         )
 
     # ======================================================
+    # Training-day selection
+    # ======================================================
 
-    def _create_initial_slots(
+    def _select_training_days(
         self,
         *,
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> tuple[Weekday, ...]:
+        """
+        Selects training days while respecting the maximum number
+        of consecutive training days.
+
+        Preferred long and intensity days receive priority, followed
+        by days with the greatest usable availability.
+        """
+
+        usable_days = [
+            weekday
+            for weekday in Weekday
+            if self._is_usable_day(
+                weekday=weekday,
+                availability=availability,
+                preferences=preferences,
+                constraints=constraints,
+            )
+        ]
+
+        target = min(
+            strategy_plan.target_sessions,
+            len(usable_days),
+        )
+
+        if target <= 0:
+            return ()
+
+        ranked_days = sorted(
+            usable_days,
+            key=lambda weekday: self._training_day_priority(
+                weekday=weekday,
+                strategy_plan=strategy_plan,
+                availability=availability,
+                preferences=preferences,
+                constraints=constraints,
+            ),
+        )
+
+        maximum_consecutive = (
+            constraints.max_consecutive_training_days
+        )
+
+        for session_count in range(target, 0, -1):
+            valid_combinations = [
+                candidate
+                for candidate in combinations(
+                    ranked_days,
+                    session_count,
+                )
+                if self._respects_consecutive_day_limit(
+                    training_days=set(candidate),
+                    maximum=maximum_consecutive,
+                )
+            ]
+
+            if not valid_combinations:
+                continue
+
+            selected = min(
+                valid_combinations,
+                key=lambda candidate: (
+                    self._training_day_combination_priority(
+                        training_days=candidate,
+                        strategy_plan=strategy_plan,
+                        availability=availability,
+                        preferences=preferences,
+                        constraints=constraints,
+                    )
+                ),
+            )
+
+            return tuple(
+                sorted(
+                    selected,
+                    key=lambda weekday: weekday.value,
+                )
+            )
+
+        return ()
+
+    # ======================================================
+
+    @staticmethod
+    def _respects_consecutive_day_limit(
+        *,
+        training_days: set[Weekday],
+        maximum: int,
+    ) -> bool:
+        if maximum >= 7:
+            return True
+
+        if maximum <= 0:
+            return not training_days
+
+        consecutive_days = 0
+
+        for weekday in Weekday:
+            if weekday in training_days:
+                consecutive_days += 1
+
+                if consecutive_days > maximum:
+                    return False
+            else:
+                consecutive_days = 0
+
+        return True
+
+    # ======================================================
+
+    def _training_day_combination_priority(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> tuple[tuple[int, int, int, int], ...]:
+        """
+        Compares valid day combinations using the existing
+        individual day-priority rules.
+        """
+
+        return tuple(
+            sorted(
+                (
+                    self._training_day_priority(
+                        weekday=weekday,
+                        strategy_plan=strategy_plan,
+                        availability=availability,
+                        preferences=preferences,
+                        constraints=constraints,
+                    )
+                    for weekday in training_days
+                )
+            )
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _is_usable_day(
+        *,
+        weekday: Weekday,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> bool:
+        if constraints.is_blocked(weekday):
+            return False
+
+        if availability.minutes_for(weekday) <= 0:
+            return False
+
+        if preferences.prefers_rest(weekday):
+            return False
+
+        return True
+
+    # ======================================================
+
+    def _training_day_priority(
+        self,
+        *,
+        weekday: Weekday,
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> tuple[int, int, int, int]:
+        """
+        Lower tuples are selected first.
+        """
+
+        preferred_long = (
+            strategy_plan.long_sessions > 0
+            and preferences.preferred_long_day == weekday
+        )
+
+        preferred_intensity = (
+            strategy_plan.intensity_sessions > 0
+            and weekday
+            in preferences.preferred_intensity_days
+            and constraints.allows_intensity(weekday)
+        )
+
+        usable_minutes = self._usable_minutes(
+            weekday=weekday,
+            availability=availability,
+            constraints=constraints,
+        )
+
+        return (
+            0 if preferred_long else 1,
+            0 if preferred_intensity else 1,
+            -usable_minutes,
+            weekday.value,
+        )
+
+    # ======================================================
+    # Purpose assignment
+    # ======================================================
+
+    def _assign_purposes(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> dict[Weekday, SessionPurpose]:
+        purposes = {
+            weekday: SessionPurpose.EASY
+            for weekday in training_days
+        }
+
+        long_days = self._select_long_days(
+            training_days=training_days,
+            strategy_plan=strategy_plan,
+            availability=availability,
+            preferences=preferences,
+            constraints=constraints,
+        )
+
+        for weekday in long_days:
+            purposes[weekday] = SessionPurpose.LONG
+
+        intensity_days = self._select_intensity_days(
+            training_days=training_days,
+            excluded_days=set(long_days),
+            strategy_plan=strategy_plan,
+            availability=availability,
+            preferences=preferences,
+            constraints=constraints,
+        )
+
+        for weekday in intensity_days:
+            purposes[weekday] = SessionPurpose.INTENSITY
+
+        return purposes
+
+    # ======================================================
+
+    def _select_long_days(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> tuple[Weekday, ...]:
+        maximum = min(
+            strategy_plan.long_sessions,
+            constraints.max_long_sessions,
+            len(training_days),
+        )
+
+        if maximum <= 0:
+            return ()
+
+        candidates = sorted(
+            training_days,
+            key=lambda weekday: (
+                (
+                    0
+                    if weekday
+                    == preferences.preferred_long_day
+                    else 1
+                ),
+                -self._usable_minutes(
+                    weekday=weekday,
+                    availability=availability,
+                    constraints=constraints,
+                ),
+                -weekday.value,
+            ),
+        )
+
+        return tuple(candidates[:maximum])
+
+    # ======================================================
+
+    def _select_intensity_days(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        excluded_days: set[Weekday],
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
+        constraints: TrainingConstraints,
+    ) -> tuple[Weekday, ...]:
+        candidates = [
+            weekday
+            for weekday in training_days
+            if weekday not in excluded_days
+            and constraints.allows_intensity(weekday)
+        ]
+
+        maximum = min(
+            strategy_plan.intensity_sessions,
+            constraints.max_intensity_sessions,
+            len(candidates),
+        )
+
+        if maximum <= 0:
+            return ()
+
+        preferred_days = set(
+            preferences.preferred_intensity_days
+        )
+
+        candidates.sort(
+            key=lambda weekday: (
+                0 if weekday in preferred_days else 1,
+                -self._usable_minutes(
+                    weekday=weekday,
+                    availability=availability,
+                    constraints=constraints,
+                ),
+                weekday.value,
+            )
+        )
+
+        return tuple(candidates[:maximum])
+
+    # ======================================================
+    # Duration allocation
+    # ======================================================
+
+    def _allocate_durations(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        purposes: dict[Weekday, SessionPurpose],
+        strategy_plan: StrategyPlan,
+        availability: AthleteAvailability,
+        constraints: TrainingConstraints,
+    ) -> dict[Weekday, int]:
+        if not training_days:
+            return {}
+
+        weekly_target = self._weekly_minutes_target(
+            strategy_plan=strategy_plan,
+            constraints=constraints,
+        )
+
+        capacities = {
+            weekday: self._usable_minutes(
+                weekday=weekday,
+                availability=availability,
+                constraints=constraints,
+            )
+            for weekday in training_days
+        }
+
+        durations = {
+            weekday: 0
+            for weekday in training_days
+        }
+
+        remaining = weekly_target
+
+        remaining = self._allocate_long_session_minutes(
+            durations=durations,
+            capacities=capacities,
+            purposes=purposes,
+            strategy_plan=strategy_plan,
+            remaining=remaining,
+        )
+
+        self._distribute_remaining_minutes(
+            durations=durations,
+            capacities=capacities,
+            purposes=purposes,
+            remaining=remaining,
+        )
+
+        return durations
+
+    # ======================================================
+
+    @staticmethod
+    def _weekly_minutes_target(
+        *,
+        strategy_plan: StrategyPlan,
+        constraints: TrainingConstraints,
+    ) -> int:
+        candidates: list[int] = []
+
+        if strategy_plan.target_weekly_minutes is not None:
+            candidates.append(
+                strategy_plan.target_weekly_minutes
+            )
+
+        if constraints.max_weekly_minutes is not None:
+            candidates.append(
+                constraints.max_weekly_minutes
+            )
+
+        if not candidates:
+            return 0
+
+        return max(
+            0,
+            min(candidates),
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _allocate_long_session_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[Weekday, SessionPurpose],
+        strategy_plan: StrategyPlan,
+        remaining: int,
+    ) -> int:
+        long_days = [
+            weekday
+            for weekday, purpose in purposes.items()
+            if purpose is SessionPurpose.LONG
+        ]
+
+        if not long_days:
+            return remaining
+
+        requested = strategy_plan.long_session_minutes
+
+        for weekday in long_days:
+            if remaining <= 0:
+                break
+
+            target = (
+                requested
+                if requested is not None
+                else capacities[weekday]
+            )
+
+            duration = min(
+                target,
+                capacities[weekday],
+                remaining,
+            )
+
+            durations[weekday] = duration
+            remaining -= duration
+
+        return remaining
+
+    # ======================================================
+
+    @staticmethod
+    def _distribute_remaining_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[Weekday, SessionPurpose],
+        remaining: int,
+    ) -> None:
+        """
+        Distributes minutes using small rounds.
+
+        Intensity sessions receive priority over easy sessions once
+        the long-session allocation is complete.
+        """
+
+        ordered_days = sorted(
+            durations,
+            key=lambda weekday: (
+                WeekStructureGenerator._duration_priority(
+                    purposes[weekday]
+                ),
+                weekday.value,
+            ),
+        )
+
+        while remaining > 0:
+            changed = False
+
+            for weekday in ordered_days:
+                capacity_left = (
+                    capacities[weekday]
+                    - durations[weekday]
+                )
+
+                if capacity_left <= 0:
+                    continue
+
+                allocation = min(
+                    5,
+                    capacity_left,
+                    remaining,
+                )
+
+                durations[weekday] += allocation
+                remaining -= allocation
+                changed = True
+
+                if remaining <= 0:
+                    break
+
+            if not changed:
+                break
+
+    # ======================================================
+
+    @staticmethod
+    def _duration_priority(
+        purpose: SessionPurpose,
+    ) -> int:
+        priorities = {
+            SessionPurpose.INTENSITY: 0,
+            SessionPurpose.EASY: 1,
+            SessionPurpose.CROSS_TRAINING: 2,
+            SessionPurpose.RECOVERY: 3,
+            SessionPurpose.LONG: 4,
+            SessionPurpose.RACE: 5,
+        }
+
+        return priorities.get(
+            purpose,
+            6,
+        )
+
+    # ======================================================
+    # Slot creation
+    # ======================================================
+
+    def _build_slots(
+        self,
+        *,
+        training_days: tuple[Weekday, ...],
+        purposes: dict[Weekday, SessionPurpose],
+        durations: dict[Weekday, int],
         availability: AthleteAvailability,
         preferences: AthletePreferences,
         constraints: TrainingConstraints,
     ) -> list[DraftTrainingSlot]:
-
+        training_day_set = set(training_days)
         slots: list[DraftTrainingSlot] = []
 
-        remaining_weekly_minutes = (
-            constraints.max_weekly_minutes
-        )
-
         for weekday in Weekday:
-
-            if constraints.is_blocked(weekday):
-
-                slots.append(
-                    DraftTrainingSlot.rest(
-                        weekday,
-                        notes=(
-                            "Training is blocked by an "
-                            "athlete constraint."
-                        ),
-                    )
-                )
-
-                continue
-
-            available_minutes = (
-                availability.minutes_for(
+            if weekday in training_day_set:
+                duration = durations.get(
                     weekday,
+                    0,
                 )
-            )
 
-            if available_minutes <= 0:
+                if duration > 0:
+                    purpose = purposes[weekday]
 
-                slots.append(
-                    DraftTrainingSlot.rest(
-                        weekday,
-                        notes=(
-                            "The athlete is unavailable."
-                        ),
+                    slots.append(
+                        DraftTrainingSlot(
+                            weekday=weekday,
+                            purpose=purpose,
+                            duration_minutes=duration,
+                            notes=self._notes_for_purpose(
+                                purpose
+                            ),
+                        )
                     )
-                )
 
-                continue
-
-            if preferences.prefers_rest(weekday):
-
-                slots.append(
-                    DraftTrainingSlot.rest(
-                        weekday,
-                        notes=(
-                            "Preferred rest day."
-                        ),
-                    )
-                )
-
-                continue
-
-            duration = self._duration_for_day(
-                weekday=weekday,
-                available_minutes=available_minutes,
-                constraints=constraints,
-                remaining_weekly_minutes=(
-                    remaining_weekly_minutes
-                ),
-            )
-
-            if duration <= 0:
-
-                slots.append(
-                    DraftTrainingSlot.rest(
-                        weekday,
-                        notes=(
-                            "No weekly training time remains."
-                        ),
-                    )
-                )
-
-                continue
+                    continue
 
             slots.append(
-                DraftTrainingSlot(
-                    weekday=weekday,
-                    purpose=SessionPurpose.EASY,
-                    duration_minutes=duration,
-                    notes=(
-                        "Initial easy training slot."
+                DraftTrainingSlot.rest(
+                    weekday,
+                    notes=self._rest_note(
+                        weekday=weekday,
+                        availability=availability,
+                        preferences=preferences,
+                        constraints=constraints,
                     ),
                 )
             )
-
-            if remaining_weekly_minutes is not None:
-
-                remaining_weekly_minutes -= duration
 
         return slots
 
     # ======================================================
 
-    def _place_long_session(
-        self,
-        *,
-        slots: list[DraftTrainingSlot],
-        preferences: AthletePreferences,
-        constraints: TrainingConstraints,
-    ) -> list[DraftTrainingSlot]:
+    @staticmethod
+    def _notes_for_purpose(
+        purpose: SessionPurpose,
+    ) -> str:
+        notes = {
+            SessionPurpose.EASY: (
+                "Easy session assigned from the strategy plan."
+            ),
+            SessionPurpose.INTENSITY: (
+                "Intensity session assigned from the strategy plan."
+            ),
+            SessionPurpose.LONG: (
+                "Long session assigned from the strategy plan."
+            ),
+            SessionPurpose.RECOVERY: (
+                "Recovery session assigned from the strategy plan."
+            ),
+            SessionPurpose.CROSS_TRAINING: (
+                "Cross-training session assigned from the strategy plan."
+            ),
+            SessionPurpose.RACE: (
+                "Race session assigned from the strategy plan."
+            ),
+        }
 
-        if constraints.max_long_sessions <= 0:
-
-            return slots
-
-        candidates = [
-            slot
-            for slot in slots
-            if slot.is_training
-        ]
-
-        if not candidates:
-
-            return slots
-
-        selected: DraftTrainingSlot | None = None
-
-        preferred_day = preferences.preferred_long_day
-
-        if preferred_day is not None:
-
-            selected = next(
-                (
-                    slot
-                    for slot in candidates
-                    if slot.weekday == preferred_day
-                ),
-                None,
-            )
-
-        if selected is None:
-
-            selected = max(
-                candidates,
-                key=lambda slot: (
-                    slot.duration_minutes or 0,
-                    slot.weekday.value,
-                ),
-            )
-
-        return [
-            (
-                slot.with_purpose(
-                    SessionPurpose.LONG,
-                    notes="Provisional long session.",
-                )
-                if slot.weekday == selected.weekday
-                else slot
-            )
-            for slot in slots
-        ]
-
-    # ======================================================
-
-    def _place_intensity_sessions(
-        self,
-        *,
-        slots: list[DraftTrainingSlot],
-        preferences: AthletePreferences,
-        constraints: TrainingConstraints,
-    ) -> list[DraftTrainingSlot]:
-
-        maximum = constraints.max_intensity_sessions
-
-        if maximum <= 0:
-
-            return slots
-
-        preferred_days = (
-            preferences.preferred_intensity_days
+        return notes.get(
+            purpose,
+            "Training session assigned from the strategy plan.",
         )
 
-        if not preferred_days:
-
-            return slots
-
-        selected_days: list[Weekday] = []
-
-        for weekday in preferred_days:
-
-            if len(selected_days) >= maximum:
-
-                break
-
-            slot = self._slot_for_day(
-                slots,
-                weekday,
-            )
-
-            if slot is None:
-
-                continue
-
-            if not slot.is_training:
-
-                continue
-
-            if slot.is_long:
-
-                continue
-
-            if not constraints.allows_intensity(weekday):
-
-                continue
-
-            selected_days.append(
-                weekday,
-            )
-
-        return [
-            (
-                slot.with_purpose(
-                    SessionPurpose.INTENSITY,
-                    notes=(
-                        "Preferred provisional intensity "
-                        "session."
-                    ),
-                )
-                if slot.weekday in selected_days
-                else slot
-            )
-            for slot in slots
-        ]
-
     # ======================================================
 
-    def _enforce_consecutive_day_limit(
-        self,
+    @staticmethod
+    def _rest_note(
         *,
-        slots: list[DraftTrainingSlot],
+        weekday: Weekday,
+        availability: AthleteAvailability,
+        preferences: AthletePreferences,
         constraints: TrainingConstraints,
-    ) -> list[DraftTrainingSlot]:
+    ) -> str:
+        if constraints.is_blocked(weekday):
+            return (
+                "Training is blocked by an athlete constraint."
+            )
 
-        maximum = (
-            constraints.max_consecutive_training_days
+        if availability.minutes_for(weekday) <= 0:
+            return "The athlete is unavailable."
+
+        if preferences.prefers_rest(weekday):
+            return "Preferred rest day."
+
+        return (
+            "Rest day selected to respect the strategy's "
+            "session target."
         )
 
-        if maximum >= 7:
-
-            return slots
-
-        consecutive_days = 0
-        result: list[DraftTrainingSlot] = []
-
-        for slot in sorted(
-            slots,
-            key=lambda item: item.weekday.value,
-        ):
-
-            if slot.is_rest:
-
-                consecutive_days = 0
-                result.append(slot)
-
-                continue
-
-            consecutive_days += 1
-
-            if consecutive_days <= maximum:
-
-                result.append(slot)
-
-                continue
-
-            result.append(
-                DraftTrainingSlot.rest(
-                    slot.weekday,
-                    notes=(
-                        "Rest inserted to respect the "
-                        "consecutive training-day limit."
-                    ),
-                )
-            )
-
-            consecutive_days = 0
-
-        return result
-
+    # ======================================================
+    # Recovery and constraints
     # ======================================================
 
-    def _enforce_recovery_day_requirement(
+    def _apply_recovery_guidance(
         self,
         *,
         slots: list[DraftTrainingSlot],
+        strategy_plan: StrategyPlan,
         constraints: TrainingConstraints,
     ) -> list[DraftTrainingSlot]:
+        """
+        Satisfies recovery guidance using rest days first.
 
-        required = constraints.minimum_recovery_days
+        When the strategy requests more recovery days than the week
+        currently contains, easy sessions are converted to active
+        recovery before demanding sessions are removed.
+        """
+
+        required = max(
+            strategy_plan.recovery_days,
+            constraints.minimum_recovery_days,
+        )
 
         current = sum(
             slot.is_rest
+            or slot.purpose is SessionPurpose.RECOVERY
             for slot in slots
         )
 
         missing = required - current
 
         if missing <= 0:
-
             return slots
 
         candidates = sorted(
             (
                 slot
                 for slot in slots
-                if slot.is_training
+                if slot.purpose is SessionPurpose.EASY
             ),
             key=lambda slot: (
-                self._replacement_priority(slot),
                 slot.duration_minutes or 0,
                 slot.weekday.value,
             ),
@@ -429,11 +811,11 @@ class WeekStructureGenerator:
 
         return [
             (
-                DraftTrainingSlot.rest(
-                    slot.weekday,
+                slot.with_purpose(
+                    SessionPurpose.RECOVERY,
                     notes=(
-                        "Rest inserted to satisfy the "
-                        "minimum recovery-day requirement."
+                        "Active recovery assigned to satisfy "
+                        "the strategy's recovery guidance."
                     ),
                 )
                 if slot.weekday in selected_days
@@ -444,34 +826,27 @@ class WeekStructureGenerator:
 
     # ======================================================
 
+    # ======================================================
+    # Shared helpers
+    # ======================================================
+
     @staticmethod
-    def _duration_for_day(
+    def _usable_minutes(
         *,
         weekday: Weekday,
-        available_minutes: int,
+        availability: AthleteAvailability,
         constraints: TrainingConstraints,
-        remaining_weekly_minutes: int | None,
     ) -> int:
-
         limits = [
-            available_minutes,
+            availability.minutes_for(weekday),
         ]
 
         day_limit = constraints.duration_limit_for(
-            weekday,
+            weekday
         )
 
         if day_limit is not None:
-
-            limits.append(
-                day_limit,
-            )
-
-        if remaining_weekly_minutes is not None:
-
-            limits.append(
-                remaining_weekly_minutes,
-            )
+            limits.append(day_limit)
 
         return max(
             0,
@@ -485,7 +860,6 @@ class WeekStructureGenerator:
         slots: Iterable[DraftTrainingSlot],
         weekday: Weekday,
     ) -> DraftTrainingSlot | None:
-
         return next(
             (
                 slot
@@ -498,30 +872,6 @@ class WeekStructureGenerator:
     # ======================================================
 
     @staticmethod
-    def _replacement_priority(
-        slot: DraftTrainingSlot,
-    ) -> int:
-        """
-        Lower values are converted to rest first.
-        """
-
-        priorities = {
-            SessionPurpose.RECOVERY: 0,
-            SessionPurpose.EASY: 1,
-            SessionPurpose.CROSS_TRAINING: 2,
-            SessionPurpose.INTENSITY: 3,
-            SessionPurpose.LONG: 4,
-            SessionPurpose.RACE: 5,
-        }
-
-        return priorities.get(
-            slot.purpose,
-            6,
-        )
-
-    # ======================================================
-
-    @staticmethod
     def _validate_inputs(
         *,
         strategy_plan: StrategyPlan,
@@ -529,12 +879,10 @@ class WeekStructureGenerator:
         preferences: AthletePreferences,
         constraints: TrainingConstraints,
     ) -> None:
-
         if not isinstance(
             strategy_plan,
             StrategyPlan,
         ):
-
             raise TypeError(
                 "strategy_plan must be a StrategyPlan."
             )
@@ -543,27 +891,22 @@ class WeekStructureGenerator:
             availability,
             AthleteAvailability,
         ):
-
             raise TypeError(
-                "availability must be an "
-                "AthleteAvailability."
+                "availability must be an AthleteAvailability."
             )
 
         if not isinstance(
             preferences,
             AthletePreferences,
         ):
-
             raise TypeError(
-                "preferences must be an "
-                "AthletePreferences."
+                "preferences must be an AthletePreferences."
             )
 
         if not isinstance(
             constraints,
             TrainingConstraints,
         ):
-
             raise TypeError(
                 "constraints must be TrainingConstraints."
             )

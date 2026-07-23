@@ -19,15 +19,22 @@ from performancelab.coaching.strategy import StrategyPlan
 
 @pytest.fixture
 def strategy_plan() -> StrategyPlan:
-    """
-    Creates a StrategyPlan instance without depending on its
-    current constructor fields.
-
-    The structure generator and reviewer currently validate
-    only that the value is a StrategyPlan instance.
-    """
-
-    return object.__new__(StrategyPlan)
+    return StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=5,
+        intensity_sessions=2,
+        long_sessions=1,
+        recovery_days=2,
+        focus="threshold",
+        target_weekly_minutes=360,
+        target_weekly_load=400.0,
+        long_session_minutes=90,
+        objectives=(),
+        guidelines=(),
+        warnings=(),
+    )
 
 
 @pytest.fixture

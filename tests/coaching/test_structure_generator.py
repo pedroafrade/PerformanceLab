@@ -490,13 +490,18 @@ def test_inserts_rest_to_respect_consecutive_day_limit(
 
     ordered = list(slots)
 
-    assert ordered[0].is_training
-    assert ordered[1].is_training
-    assert ordered[2].is_rest
+    # O número de sessões deve respeitar o StrategyPlan.
+    assert sum(slot.is_training for slot in ordered) == strategy_plan.target_sessions
 
-    assert ordered[3].is_training
-    assert ordered[4].is_training
-    assert ordered[5].is_rest
+    # Nunca podem existir mais de 2 dias consecutivos de treino.
+    consecutive = 0
+
+    for slot in ordered:
+        if slot.is_training:
+            consecutive += 1
+            assert consecutive <= constraints.max_consecutive_training_days
+        else:
+            consecutive = 0
 
 
 def test_inserts_minimum_number_of_recovery_days(
