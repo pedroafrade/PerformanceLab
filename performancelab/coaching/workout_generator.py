@@ -127,7 +127,12 @@ class WorkoutGenerator:
             )
 
         template = template_for(
-            slot.purpose
+            slot.purpose,
+            focus=strategy_plan.focus,
+        )
+
+        template = template.customized_for(
+            strategy_plan
         )
 
         template = self._apply_sport(
@@ -139,7 +144,6 @@ class WorkoutGenerator:
             slot=slot,
             scheduled_day=scheduled_day,
             template=template,
-            strategy_plan=strategy_plan,
         )
 
     # ======================================================
@@ -172,7 +176,6 @@ class WorkoutGenerator:
         slot: DraftTrainingSlot,
         scheduled_day: date,
         template: WorkoutTemplate,
-        strategy_plan: StrategyPlan,
     ) -> PlannedWorkout:
 
         duration_minutes = slot.duration_minutes
@@ -200,34 +203,9 @@ class WorkoutGenerator:
             ),
             description=template.description,
             intensity=template.intensity,
-            objective=self._objective(
-                template=template,
-                strategy_plan=strategy_plan,
-            ),
+            objective=template.objective,
             structure=template.structure,
             equipment=template.equipment,
-        )
-
-    # ======================================================
-
-    @staticmethod
-    def _objective(
-        *,
-        template: WorkoutTemplate,
-        strategy_plan: StrategyPlan,
-    ) -> str:
-
-        if not strategy_plan.objectives:
-
-            return template.objective
-
-        weekly_objective = "; ".join(
-            strategy_plan.objectives
-        )
-
-        return (
-            f"{template.objective} "
-            f"Weekly focus: {weekly_objective}"
         )
 
     # ======================================================

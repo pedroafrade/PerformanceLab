@@ -9,6 +9,7 @@ Reusable description of a planned training session.
 from dataclasses import dataclass
 
 from .session_purpose import SessionPurpose
+from .strategy import StrategyPlan
 
 
 @dataclass(frozen=True)
@@ -149,7 +150,93 @@ class WorkoutTemplate:
                     f"{field_name} cannot contain "
                     "empty values"
                 )
+    # ======================================================
 
+    def customized_for(
+        self,
+        strategy_plan: StrategyPlan,
+    ) -> "WorkoutTemplate":
+        """
+        Returns a copy enriched with weekly strategy guidance.
+
+        Strategy guidance is included as descriptive information.
+        This method does not reinterpret session purpose, duration,
+        intensity, or structure.
+        """
+
+        if not isinstance(
+            strategy_plan,
+            StrategyPlan,
+        ):
+            raise TypeError(
+                "strategy_plan must be a StrategyPlan"
+            )
+
+        return WorkoutTemplate(
+            purpose=self.purpose,
+            title=self.title,
+            objective=self._customized_objective(
+                strategy_plan
+            ),
+            intensity=self.intensity,
+            description=self._customized_description(
+                strategy_plan
+            ),
+            structure=self.structure,
+            equipment=self.equipment,
+            sport=self.sport,
+        )
+        # ======================================================
+
+    def _customized_objective(
+        self,
+        strategy_plan: StrategyPlan,
+    ) -> str:
+
+        if not strategy_plan.objectives:
+            return self.objective
+
+        weekly_objectives = "; ".join(
+            strategy_plan.objectives
+        )
+
+        return (
+            f"{self.objective} "
+            f"Weekly objectives: {weekly_objectives}"
+        )
+
+    # ======================================================
+
+    def _customized_description(
+        self,
+        strategy_plan: StrategyPlan,
+    ) -> str:
+
+        sections: list[str] = []
+
+        if self.description:
+            sections.append(
+                self.description.strip()
+            )
+
+        if strategy_plan.focus is not None:
+            sections.append(
+                f"Weekly focus: {strategy_plan.focus}."
+            )
+
+        if strategy_plan.guidelines:
+            sections.append(
+                "Weekly guidelines: "
+                + " ".join(strategy_plan.guidelines)
+            )
+
+        if strategy_plan.warnings:
+            sections.append(
+                "Weekly warnings: "
+                + " ".join(strategy_plan.warnings)
+            )
+
+        return " ".join(sections)
     # ======================================================
 
     def for_sport(

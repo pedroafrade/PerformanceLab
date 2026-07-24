@@ -13,6 +13,8 @@ from performancelab.coaching import (
 
 from performancelab.training.config import Weekday
 
+from dataclasses import replace
+
 
 @pytest.fixture
 def strategy_plan() -> StrategyPlan:
@@ -549,4 +551,264 @@ def test_repr_contains_configuration() -> None:
     assert (
         "include_rest_days=True"
         in representation
+    )
+
+def test_uses_threshold_template_when_focus_is_threshold(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="threshold",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    generator = WorkoutGenerator()
+
+    workouts = generator.generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "Threshold Session"
+    assert workout.intensity == "Moderately hard"
+
+    assert (
+        "Controlled threshold intervals"
+        in workout.structure
+    )
+
+def test_uses_default_intensity_template_for_other_focus(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="aerobic endurance",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    generator = WorkoutGenerator()
+
+    workouts = generator.generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "Quality Session"
+    assert workout.intensity == "Hard"
+
+    assert (
+        "Main work intervals"
+        in workout.structure
+    )
+
+def test_uses_vo2max_template_when_focus_is_vo2max(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="vo2max",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    workouts = WorkoutGenerator().generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "VO₂max Session"
+    assert workout.intensity == "Very hard"
+
+    assert (
+        "VO₂max intervals"
+        in workout.structure
+    )
+
+def test_uses_tempo_template_when_focus_is_tempo(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="tempo",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    workouts = WorkoutGenerator().generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "Tempo Session"
+    assert workout.intensity == "Hard"
+
+    assert (
+        "Continuous tempo effort"
+        in workout.structure
+    )
+
+def test_uses_hills_template_when_focus_is_hills(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="hills",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    workouts = WorkoutGenerator().generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "Hill Session"
+    assert workout.intensity == "Hard"
+
+    assert (
+        "Uphill repetitions"
+        in workout.structure
+    )
+
+    assert (
+        "Easy downhill recovery"
+        in workout.structure
+    )
+
+def test_uses_speed_template_when_focus_is_speed(
+    strategy_plan: StrategyPlan,
+    coach_context: CoachContext,
+) -> None:
+
+    configure_context(
+        coach_context,
+        ("running",),
+    )
+
+    strategy_plan = replace(
+        strategy_plan,
+        focus="speed",
+    )
+
+    slot = make_slot(
+        weekday=Weekday.MONDAY,
+        purpose=SessionPurpose.INTENSITY,
+        duration_minutes=60,
+    )
+
+    training_week = make_training_week(
+        slot
+    )
+
+    workouts = WorkoutGenerator().generate(
+        strategy_plan=strategy_plan,
+        training_week=training_week,
+        coach_context=coach_context,
+    )
+
+    workout = workouts[0]
+
+    assert workout.title == "Speed Session"
+    assert workout.intensity == "Very hard"
+
+    assert (
+        "Short fast repetitions"
+        in workout.structure
+    )
+
+    assert (
+        "Full recovery between repetitions"
+        in workout.structure
     )

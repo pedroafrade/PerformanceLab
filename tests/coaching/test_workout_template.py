@@ -2,17 +2,29 @@ import pytest
 
 from performancelab.coaching import (
     DEFAULT_WORKOUT_TEMPLATES,
-    EASY_TEMPLATE,
-    INTENSITY_TEMPLATE,
     LONG_TEMPLATE,
     RACE_TEMPLATE,
     RECOVERY_TEMPLATE,
     REST_TEMPLATE,
-    SessionPurpose,
     WorkoutTemplate,
-    template_for,
     CROSS_TRAINING_TEMPLATE,
 )
+
+from performancelab.coaching.session_purpose import (
+    SessionPurpose,
+)
+from performancelab.coaching.workout_templates import (
+    EASY_TEMPLATE,
+    INTENSITY_TEMPLATE,
+    THRESHOLD_TEMPLATE,
+    VO2MAX_TEMPLATE,
+    TEMPO_TEMPLATE,
+    HILLS_TEMPLATE,
+    SPEED_TEMPLATE,
+    template_for,
+)
+
+from performancelab.coaching.strategy import StrategyPlan
 
 
 def test_creates_workout_template() -> None:
@@ -329,3 +341,230 @@ def test_repr_contains_useful_information() -> None:
     assert "'long'" in representation
     assert "'Long Run'" in representation
     assert "'running'" in representation
+
+    from performancelab.coaching.strategy import StrategyPlan
+
+
+def make_strategy_plan(
+    **overrides,
+) -> StrategyPlan:
+
+    values = {
+        "strategy": "BuildStrategy",
+        "phase": "Build",
+        "volume_factor": 1.0,
+        "target_sessions": 5,
+        "intensity_sessions": 1,
+        "long_sessions": 1,
+        "recovery_days": 2,
+    }
+
+    values.update(overrides)
+
+    return StrategyPlan(**values)
+
+
+def test_customizes_template_with_strategy_plan():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.INTENSITY,
+        title="Quality Session",
+        objective="Develop aerobic power.",
+        intensity="Hard",
+        description="Complete the intervals with control.",
+        structure=(
+            "Warm-up",
+            "Main intervals",
+            "Cool-down",
+        ),
+    )
+
+    strategy_plan = make_strategy_plan(
+        focus="threshold",
+        objectives=(
+            "Develop sustainable speed.",
+        ),
+        guidelines=(
+            "Keep the opening repetitions controlled.",
+        ),
+        warnings=(
+            "Monitor accumulated fatigue.",
+        ),
+    )
+
+    customized = template.customized_for(
+        strategy_plan
+    )
+
+    assert customized is not template
+
+    assert customized.purpose is template.purpose
+    assert customized.title == template.title
+    assert customized.intensity == template.intensity
+    assert customized.structure == template.structure
+
+    assert (
+        "Develop sustainable speed."
+        in customized.objective
+    )
+
+    assert (
+        "Weekly focus: threshold."
+        in customized.description
+    )
+
+    assert (
+        "Keep the opening repetitions controlled."
+        in customized.description
+    )
+
+    assert (
+        "Monitor accumulated fatigue."
+        in customized.description
+    )
+
+
+def test_customization_does_not_change_empty_template():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Develop aerobic endurance.",
+        intensity="Easy",
+    )
+
+    customized = template.customized_for(
+        make_strategy_plan()
+    )
+
+    assert customized.objective == template.objective
+    assert customized.description == template.description
+    assert customized.structure == template.structure
+
+
+def test_rejects_invalid_strategy_plan():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Develop aerobic endurance.",
+        intensity="Easy",
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="strategy_plan",
+    ):
+        template.customized_for(
+            object()
+        )
+
+def test_returns_threshold_template_for_threshold_focus():
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="threshold",
+    )
+
+    assert template is THRESHOLD_TEMPLATE
+    assert template.title == "Threshold Session"
+    assert template.purpose is SessionPurpose.INTENSITY
+
+
+def test_focus_matching_is_normalized():
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus=" Threshold ",
+    )
+
+    assert template is THRESHOLD_TEMPLATE
+
+
+def test_returns_default_when_focus_has_no_template():
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="aerobic endurance",
+    )
+
+    assert template is INTENSITY_TEMPLATE
+
+
+def test_focus_does_not_override_another_purpose():
+
+    template = template_for(
+        SessionPurpose.EASY,
+        focus="threshold",
+    )
+
+    assert template is EASY_TEMPLATE
+
+
+def test_rejects_invalid_focus_type():
+
+    with pytest.raises(
+        TypeError,
+        match="focus",
+    ):
+        template_for(
+            SessionPurpose.INTENSITY,
+            focus=123,
+        )
+
+
+def test_rejects_empty_focus():
+
+    with pytest.raises(
+        ValueError,
+        match="focus",
+    ):
+        template_for(
+            SessionPurpose.INTENSITY,
+            focus="   ",
+        )
+
+
+def test_returns_vo2max_template_for_vo2max_focus() -> None:
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="vo2max",
+    )
+
+    assert template is VO2MAX_TEMPLATE
+    assert template.title == "VO₂max Session"
+    assert template.intensity == "Very hard"
+
+def test_returns_tempo_template_for_tempo_focus() -> None:
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="tempo",
+    )
+
+    assert template is TEMPO_TEMPLATE
+    assert template.title == "Tempo Session"
+    assert template.intensity == "Hard"
+
+def test_returns_hills_template_for_hills_focus() -> None:
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="hills",
+    )
+
+    assert template is HILLS_TEMPLATE
+    assert template.title == "Hill Session"
+    assert template.intensity == "Hard"
+
+def test_returns_speed_template_for_speed_focus() -> None:
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus="speed",
+    )
+
+    assert template is SPEED_TEMPLATE
+    assert template.title == "Speed Session"
+    assert template.intensity == "Very hard"
