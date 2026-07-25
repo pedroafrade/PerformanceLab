@@ -60,17 +60,13 @@ class CoachAnalyzer:
         Determines the athlete's current coaching phase.
 
         A race completed during the previous seven days takes
-        priority over the next event cycle.
+        priority over the next event cycle. Once that recovery
+        window ends, the next upcoming event determines the
+        normal competitive phase. Without an upcoming event,
+        the athlete enters maintenance.
         """
 
-        days_since_event = (
-            self.context.days_since_event
-        )
-
-        if (
-            days_since_event is not None
-            and 0 <= days_since_event <= 7
-        ):
+        if self.context.is_post_race:
             return "Regeneration"
 
         days = self.context.days_until_event
@@ -94,6 +90,7 @@ class CoachAnalyzer:
             return "Build"
 
         return "Base"
+
     # ======================================================
 
     def _strategy(
@@ -101,7 +98,7 @@ class CoachAnalyzer:
         phase: str,
     ):
 
-        if self.context.tsb < -20:
+        if self.context.is_fatigue_regeneration:
 
             return "RegenerationStrategy"
 

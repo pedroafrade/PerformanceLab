@@ -98,6 +98,13 @@ class TaperStrategy(CoachStrategy):
 
             focus=focus,
 
+            key_session_focus=focus,
+            secondary_focus="race readiness",
+
+            recovery_priority="high",
+
+            race_specificity=0.95,
+
             target_weekly_minutes=240,
             target_weekly_load=350.0 * volume_factor,
             long_session_minutes=None,

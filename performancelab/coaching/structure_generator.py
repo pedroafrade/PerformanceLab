@@ -87,6 +87,7 @@ class WeekStructureGenerator:
             training_days=training_days,
             purposes=purposes,
             durations=durations,
+            strategy_plan=strategy_plan,
             availability=availability,
             preferences=preferences,
             constraints=constraints,
@@ -655,10 +656,12 @@ class WeekStructureGenerator:
         training_days: tuple[Weekday, ...],
         purposes: dict[Weekday, SessionPurpose],
         durations: dict[Weekday, int],
+        strategy_plan: StrategyPlan,
         availability: AthleteAvailability,
         preferences: AthletePreferences,
         constraints: TrainingConstraints,
     ) -> list[DraftTrainingSlot]:
+
         training_day_set = set(training_days)
         slots: list[DraftTrainingSlot] = []
 
@@ -678,7 +681,8 @@ class WeekStructureGenerator:
                             purpose=purpose,
                             duration_minutes=duration,
                             notes=self._notes_for_purpose(
-                                purpose
+                                purpose=purpose,
+                                strategy_plan=strategy_plan,
                             ),
                         )
                     )
@@ -703,33 +707,55 @@ class WeekStructureGenerator:
 
     @staticmethod
     def _notes_for_purpose(
+        *,
         purpose: SessionPurpose,
+        strategy_plan: StrategyPlan,
     ) -> str:
+
         notes = {
-            SessionPurpose.EASY: (
-                "Easy session assigned from the strategy plan."
-            ),
-            SessionPurpose.INTENSITY: (
-                "Intensity session assigned from the strategy plan."
-            ),
-            SessionPurpose.LONG: (
-                "Long session assigned from the strategy plan."
-            ),
-            SessionPurpose.RECOVERY: (
-                "Recovery session assigned from the strategy plan."
-            ),
-            SessionPurpose.CROSS_TRAINING: (
-                "Cross-training session assigned from the strategy plan."
-            ),
-            SessionPurpose.RACE: (
-                "Race session assigned from the strategy plan."
-            ),
+            SessionPurpose.EASY:
+                "Easy session assigned from the strategy plan.",
+
+            SessionPurpose.INTENSITY:
+                "Intensity session assigned from the strategy plan.",
+
+            SessionPurpose.LONG:
+                "Long session assigned from the strategy plan.",
+
+            SessionPurpose.RECOVERY:
+                "Recovery session assigned from the strategy plan.",
+
+            SessionPurpose.CROSS_TRAINING:
+                "Cross-training session assigned from the strategy plan.",
+
+            SessionPurpose.RACE:
+                "Race session assigned from the strategy plan.",
         }
 
-        return notes.get(
+        note = notes.get(
             purpose,
             "Training session assigned from the strategy plan.",
         )
+
+        if (
+            purpose is SessionPurpose.INTENSITY
+            and strategy_plan.key_session_focus
+        ):
+            note += (
+                f" Primary focus: "
+                f"{strategy_plan.key_session_focus}."
+            )
+
+        elif (
+            purpose is SessionPurpose.LONG
+            and strategy_plan.secondary_focus
+        ):
+            note += (
+                f" Secondary focus: "
+                f"{strategy_plan.secondary_focus}."
+            )
+
+        return note
 
     # ======================================================
 

@@ -63,15 +63,64 @@ class RegenerationStrategy(CoachStrategy):
         target_sessions = 4
         recovery_days = 3
 
-        if context.tsb < -30:
+        # ==================================================
+        # Post-race recovery
+        # ==================================================
 
-            volume_factor = 0.40
-            target_sessions = 3
-            recovery_days = 4
+        if context.is_post_race:
 
-            warnings.append(
-                "Accumulated fatigue is very high."
+            objectives.insert(
+                0,
+                "Recover from the recent event.",
             )
+
+            if context.days_since_event <= 3:
+
+                volume_factor = 0.30
+                target_sessions = 2
+                recovery_days = 5
+
+                guidelines.insert(
+                    0,
+                    (
+                        "Prioritize complete rest and very short "
+                        "recovery sessions after the event."
+                    ),
+                )
+
+            else:
+
+                volume_factor = 0.50
+                target_sessions = 3
+                recovery_days = 4
+
+                guidelines.insert(
+                    0,
+                    (
+                        "Resume easy aerobic training gradually "
+                        "as post-race recovery progresses."
+                    ),
+                )
+
+        # ==================================================
+        # Fatigue-based regeneration
+        # ==================================================
+
+        elif context.is_fatigue_regeneration:
+
+            if context.tsb < -30:
+
+                volume_factor = 0.40
+                target_sessions = 3
+                recovery_days = 4
+
+                warnings.append(
+                    "Accumulated fatigue is very high."
+                )
+
+        # ==================================================
+        # Perceived effort
+        # ==================================================
 
         if (
             context.average_rpe is not None
@@ -87,9 +136,14 @@ class RegenerationStrategy(CoachStrategy):
                 "Recent sessions have a high perceived effort."
             )
 
+        # ==================================================
+        # Approaching event warning
+        # ==================================================
+
         if (
-            context.days_until_event is not None
-            and context.days_until_event <= 7
+            not context.is_post_race
+            and context.days_until_event is not None
+            and 0 <= context.days_until_event <= 7
         ):
 
             warnings.append(
@@ -98,36 +152,34 @@ class RegenerationStrategy(CoachStrategy):
             )
 
         return StrategyPlan(
-
             strategy=self.name,
-
             phase=self.phase,
-
             volume_factor=volume_factor,
-
             target_sessions=target_sessions,
-
             intensity_sessions=0,
-
             long_sessions=0,
-
             recovery_days=recovery_days,
-
             objectives=tuple(objectives),
-
             guidelines=tuple(guidelines),
-
             warnings=tuple(warnings),
-
             focus="recovery",
 
+            key_session_focus="recovery",
+            secondary_focus="easy aerobic",
+
+            recovery_priority="high",
+
+            race_specificity=0.00,
+
             target_weekly_minutes=(
-                180
+                120
+                if volume_factor <= 0.30
+                else 180
                 if volume_factor <= 0.40
                 else 240
             ),
-
-            target_weekly_load=250.0 * volume_factor,
-
+            target_weekly_load=(
+                250.0 * volume_factor
+            ),
             long_session_minutes=None,
         )

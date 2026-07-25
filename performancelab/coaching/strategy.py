@@ -34,6 +34,13 @@ class StrategyPlan:
 
     # More concrete weekly targets
     focus: str | None = None
+
+    key_session_focus: str | None = None
+    secondary_focus: str | None = None
+
+    recovery_priority: str = "normal"
+    race_specificity: float = 0.0
+
     target_weekly_minutes: int | None = None
     target_weekly_load: float | None = None
     long_session_minutes: int | None = None
@@ -63,6 +70,27 @@ class StrategyPlan:
                 self.focus,
                 field="focus",
             )
+
+        if self.key_session_focus is not None:
+            self._validate_text(
+                self.key_session_focus,
+                field="key_session_focus",
+            )
+
+        if self.secondary_focus is not None:
+            self._validate_text(
+                self.secondary_focus,
+                field="secondary_focus",
+            )
+
+        self._validate_recovery_priority(
+            self.recovery_priority
+        )
+
+        self._validate_ratio(
+            self.race_specificity,
+            field="race_specificity",
+        )
 
         self._validate_non_negative_number(
             self.volume_factor,
@@ -206,6 +234,17 @@ class StrategyPlan:
     def has_long_session(self) -> bool:
         return self.long_sessions > 0
 
+    @property
+    def has_key_session_focus(self) -> bool:
+
+        return self.key_session_focus is not None
+
+
+    @property
+    def is_race_specific(self) -> bool:
+
+        return self.race_specificity > 0
+
     @staticmethod
     def _validate_text(
         value: str,
@@ -283,6 +322,46 @@ class StrategyPlan:
             value,
             field=field,
         )
+
+    @classmethod
+    def _validate_ratio(
+        cls,
+        value: float,
+        *,
+        field: str,
+    ) -> None:
+
+        cls._validate_non_negative_number(
+            value,
+            field=field,
+        )
+
+        if value > 1:
+            raise ValueError(
+                f"{field} must be between 0 and 1"
+            )
+
+    @staticmethod
+    def _validate_recovery_priority(
+        value: str,
+    ) -> None:
+
+        if not isinstance(value, str):
+            raise TypeError(
+                "recovery_priority must be a string"
+            )
+
+        allowed = {
+            "low",
+            "normal",
+            "high",
+        }
+
+        if value not in allowed:
+            raise ValueError(
+                "recovery_priority must be one of: "
+                "low, normal, high"
+            )
 
     @staticmethod
     def _validate_string_tuple(

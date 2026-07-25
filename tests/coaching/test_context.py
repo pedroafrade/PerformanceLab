@@ -289,3 +289,312 @@ def test_context_does_not_treat_today_event_as_previous():
 
     assert context.previous_event is None
     assert context.days_since_event is None
+
+def test_context_collects_upcoming_events_in_date_order():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    later_event = make_event_entry(
+        today + timedelta(
+            days=60,
+        )
+    )
+
+    next_event = make_event_entry(
+        today + timedelta(
+            days=20,
+        )
+    )
+
+    athlete.events.add(
+        later_event
+    )
+
+    athlete.events.add(
+        next_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.upcoming_events == (
+        next_event,
+        later_event,
+    )
+
+    assert context.next_event is next_event
+    assert context.days_until_event == 20
+
+
+def test_upcoming_events_ignore_past_events():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    previous_event = make_event_entry(
+        today - timedelta(
+            days=10,
+        )
+    )
+
+    future_event = make_event_entry(
+        today + timedelta(
+            days=20,
+        )
+    )
+
+    athlete.events.add(
+        previous_event
+    )
+
+    athlete.events.add(
+        future_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.upcoming_events == (
+        future_event,
+    )
+
+    assert context.next_event is future_event
+
+
+def test_context_ignores_events_beyond_planning_horizon():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    inside_horizon = make_event_entry(
+        today + timedelta(
+            days=365,
+        )
+    )
+
+    outside_horizon = make_event_entry(
+        today + timedelta(
+            days=366,
+        )
+    )
+
+    athlete.events.add(
+        inside_horizon
+    )
+
+    athlete.events.add(
+        outside_horizon
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.upcoming_events == (
+        inside_horizon,
+    )
+
+
+def test_context_returns_event_after_current_next_event():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    first_event = make_event_entry(
+        today + timedelta(
+            days=20,
+        )
+    )
+
+    second_event = make_event_entry(
+        today + timedelta(
+            days=40,
+        )
+    )
+
+    athlete.events.add(
+        first_event
+    )
+
+    athlete.events.add(
+        second_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.next_event_after_current
+        is second_event
+    )
+
+    assert context.days_between_events == 20
+
+
+def test_context_classifies_close_events_as_cluster():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today + timedelta(
+                days=20,
+            )
+        )
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today + timedelta(
+                days=60,
+            )
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.days_between_events == 40
+    assert context.competition_block == "cluster"
+
+
+def test_context_classifies_distant_events_as_single():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today + timedelta(
+                days=20,
+            )
+        )
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today + timedelta(
+                days=100,
+            )
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.days_between_events == 80
+    assert context.competition_block == "single"
+
+
+def test_context_without_future_events_is_season_end():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date(
+            2026,
+            7,
+            20,
+        ),
+    )
+
+    assert context.has_upcoming_event is False
+    assert context.competition_block == "season_end"
+
+
+def test_context_preserves_cluster_after_first_event():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    first_event_date = date(
+        2026,
+        7,
+        10,
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    first_event = make_event_entry(
+        first_event_date
+    )
+
+    second_event = make_event_entry(
+        first_event_date
+        + timedelta(
+            days=35,
+        )
+    )
+
+    athlete.events.add(
+        first_event
+    )
+
+    athlete.events.add(
+        second_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.previous_event is first_event
+    assert context.next_event is second_event
+    assert context.days_between_events == 35
+    assert context.competition_block == "cluster"

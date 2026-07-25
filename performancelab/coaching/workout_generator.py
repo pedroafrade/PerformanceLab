@@ -126,9 +126,14 @@ class WorkoutGenerator:
                 scheduled_day
             )
 
+        focus = self._focus_for_slot(
+            purpose=slot.purpose,
+            strategy_plan=strategy_plan,
+        )
+
         template = template_for(
             slot.purpose,
-            focus=strategy_plan.focus,
+            focus=focus,
         )
 
         template = template.customized_for(
@@ -145,6 +150,46 @@ class WorkoutGenerator:
             scheduled_day=scheduled_day,
             template=template,
         )
+
+    # ======================================================
+
+    @staticmethod
+    def _focus_for_slot(
+        *,
+        purpose: SessionPurpose,
+        strategy_plan: StrategyPlan,
+    ) -> str | None:
+        """
+        Selects the most appropriate strategic focus for a slot.
+
+        Demanding and race sessions use the primary key-session
+        focus. Long and easy sessions use the secondary focus when
+        available. Other session purposes retain the general focus.
+        """
+
+        if purpose in {
+            SessionPurpose.INTENSITY,
+            SessionPurpose.RACE,
+        }:
+            return (
+                strategy_plan.key_session_focus
+                or strategy_plan.focus
+            )
+
+        if purpose in {
+            SessionPurpose.LONG,
+            SessionPurpose.EASY,
+            SessionPurpose.CROSS_TRAINING,
+        }:
+            return (
+                strategy_plan.secondary_focus
+                or strategy_plan.focus
+            )
+
+        if purpose is SessionPurpose.RECOVERY:
+            return "recovery"
+
+        return strategy_plan.focus
 
     # ======================================================
 

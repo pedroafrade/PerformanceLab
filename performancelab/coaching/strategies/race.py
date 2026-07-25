@@ -101,6 +101,13 @@ class RaceStrategy(CoachStrategy):
 
             focus=focus,
 
+            key_session_focus="competition",
+            secondary_focus="recovery",
+
+            recovery_priority="high",
+
+            race_specificity=1.00,
+
             target_weekly_minutes=150,
             target_weekly_load=250.0 * volume_factor,
             long_session_minutes=None,

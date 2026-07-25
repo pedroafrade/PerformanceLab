@@ -8,7 +8,7 @@ engine.
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from performancelab.athlete import Athlete
 
@@ -38,6 +38,8 @@ class CoachContext:
     previous_event: object | None = None
     days_since_event: int | None = None
 
+    upcoming_events: tuple[object, ...] = ()
+
     # ======================================================
 
     @classmethod
@@ -64,6 +66,30 @@ class CoachContext:
         reference_date = today or date.today()
         analytics = athlete.analytics
 
+        upcoming_events = cls._upcoming_events(
+            athlete=athlete,
+            today=reference_date,
+        )
+
+        next_event = (
+            upcoming_events[0]
+            if upcoming_events
+            else analytics.next_event
+        )
+
+        days_until_event = cls._days_until_event(
+            event_entry=next_event,
+            today=reference_date,
+        )
+
+        if (
+            days_until_event is None
+            and next_event is analytics.next_event
+        ):
+            days_until_event = (
+                analytics.days_until_next_event
+            )
+
         previous_event = cls._previous_event(
             athlete=athlete,
             today=reference_date,
@@ -82,10 +108,8 @@ class CoachContext:
             ctl=analytics.ctl,
             atl=analytics.atl,
             tsb=analytics.tsb,
-            next_event=analytics.next_event,
-            days_until_event=(
-                analytics.days_until_next_event
-            ),
+            next_event=next_event,
+            days_until_event=days_until_event,
             sports=tuple(
                 analytics.sports
             ),
@@ -93,7 +117,100 @@ class CoachContext:
             training_plan=analytics.training_plan,
             previous_event=previous_event,
             days_since_event=days_since_event,
+            upcoming_events=upcoming_events,
         )
+
+    # ======================================================
+
+    @staticmethod
+    def _upcoming_events(
+        *,
+        athlete: Athlete,
+        today: date,
+        horizon_days: int = 365,
+    ) -> tuple[object, ...]:
+        """
+        Returns registered events occurring from today through
+        the configured planning horizon, ordered chronologically.
+        """
+
+        event_book = getattr(
+            athlete,
+            "events",
+            None,
+        )
+
+        if event_book is None:
+            return ()
+
+        horizon_date = (
+            today
+            + timedelta(
+                days=horizon_days,
+            )
+        )
+
+        candidates = [
+            entry
+            for entry in event_book
+            if (
+                getattr(
+                    getattr(
+                        entry,
+                        "event",
+                        None,
+                    ),
+                    "date",
+                    None,
+                )
+                is not None
+                and today <= entry.event.date <= horizon_date
+            )
+        ]
+
+        return tuple(
+            sorted(
+                candidates,
+                key=lambda entry: entry.event.date,
+            )
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _days_until_event(
+        *,
+        event_entry: object | None,
+        today: date,
+    ) -> int | None:
+        """
+        Returns the number of days until an event.
+        """
+
+        if event_entry is None:
+            return None
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        if event is None:
+            return None
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        if event_date is None:
+            return None
+
+        return (
+            event_date - today
+        ).days
 
     # ======================================================
 
@@ -183,3 +300,163 @@ class CoachContext:
             return None
 
         return days
+
+    # ======================================================
+
+    @property
+    def is_post_race(self) -> bool:
+        """
+        Indicates whether the athlete is inside the automatic
+        post-race recovery window.
+        """
+
+        return (
+            self.days_since_event is not None
+            and 0 <= self.days_since_event <= 7
+        )
+
+    # ======================================================
+
+    @property
+    def is_fatigue_regeneration(self) -> bool:
+        """
+        Indicates whether regeneration was triggered by fatigue
+        rather than by a recent race.
+        """
+
+        return (
+            self.tsb < -20
+            and not self.is_post_race
+        )
+
+    # ======================================================
+
+    @property
+    def has_upcoming_event(self) -> bool:
+        """
+        Indicates whether at least one upcoming event exists.
+        """
+
+        return self.next_event is not None
+
+    # ======================================================
+
+    @property
+    def has_multiple_events(self) -> bool:
+        """
+        Indicates whether the competition calendar contains
+        more than one upcoming event.
+        """
+
+        return len(self.upcoming_events) > 1
+
+    # ======================================================
+
+    @property
+    def next_event_after_current(
+        self,
+    ) -> object | None:
+        """
+        Returns the event following the current next event.
+        """
+
+        if len(self.upcoming_events) < 2:
+            return None
+
+        return self.upcoming_events[1]
+
+    # ======================================================
+
+    @property
+    def days_between_events(
+        self,
+    ) -> int | None:
+        """
+        Returns the distance in days between the consecutive
+        events relevant to the current competition cycle.
+        """
+
+        first_event = None
+        second_event = None
+
+        if (
+            self.previous_event is not None
+            and self.next_event is not None
+        ):
+            first_event = self.previous_event
+            second_event = self.next_event
+
+        elif (
+            self.next_event is not None
+            and self.next_event_after_current is not None
+        ):
+            first_event = self.next_event
+            second_event = self.next_event_after_current
+
+        if (
+            first_event is None
+            or second_event is None
+        ):
+            return None
+
+        first_date = getattr(
+            getattr(
+                first_event,
+                "event",
+                None,
+            ),
+            "date",
+            None,
+        )
+
+        second_date = getattr(
+            getattr(
+                second_event,
+                "event",
+                None,
+            ),
+            "date",
+            None,
+        )
+
+        if (
+            first_date is None
+            or second_date is None
+        ):
+            return None
+
+        days = (
+            second_date - first_date
+        ).days
+
+        if days < 0:
+            return None
+
+        return days
+
+    # ======================================================
+
+    @property
+    def competition_block(self) -> str:
+        """
+        Classifies the current competition calendar.
+
+        Returns ``season_end`` when no future event exists,
+        ``cluster`` when consecutive events are no more than
+        eight weeks apart, and ``single`` otherwise.
+        """
+
+        if self.next_event is None:
+            return "season_end"
+
+        days_between_events = (
+            self.days_between_events
+        )
+
+        if (
+            days_between_events is not None
+            and days_between_events <= 56
+        ):
+            return "cluster"
+
+        return "single"

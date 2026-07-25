@@ -96,6 +96,21 @@ class BuildStrategy(CoachStrategy):
 
             focus=focus,
 
+            key_session_focus=focus,
+            secondary_focus="aerobic endurance",
+
+            recovery_priority=(
+                "high"
+                if context.tsb < -10
+                or (
+                    context.average_rpe is not None
+                    and context.average_rpe >= 8
+                )
+                else "normal"
+            ),
+
+            race_specificity=0.30,
+
             target_weekly_minutes=420,
             target_weekly_load=500.0 * volume_factor,
             long_session_minutes=120,

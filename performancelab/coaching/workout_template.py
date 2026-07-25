@@ -175,6 +175,8 @@ class WorkoutTemplate:
         objective = self.objective
         description_parts: list[str] = []
 
+        structure = list(self.structure)
+
         if self.description:
             description_parts.append(
                 self.description
@@ -196,6 +198,79 @@ class WorkoutTemplate:
                 f"Weekly focus: {focus_value}."
             )
 
+        if strategy_plan.key_session_focus is not None:
+            description_parts.append(
+                f"Primary session focus: "
+                f"{strategy_plan.key_session_focus}."
+            )
+
+        if (
+            self.purpose is SessionPurpose.INTENSITY
+            and strategy_plan.key_session_focus
+        ):
+
+            structure.insert(
+                2,
+                f"Primary focus: "
+                f"{strategy_plan.key_session_focus}."
+            )
+
+        if strategy_plan.secondary_focus is not None:
+            description_parts.append(
+                f"Secondary session focus: "
+                f"{strategy_plan.secondary_focus}."
+            )
+
+        if (
+            self.purpose is SessionPurpose.LONG
+            and strategy_plan.secondary_focus
+        ):
+
+            structure.insert(
+                1,
+                f"Secondary focus: "
+                f"{strategy_plan.secondary_focus}."
+            )
+
+        if strategy_plan.recovery_priority != "normal":
+            description_parts.append(
+                f"Recovery priority: "
+                f"{strategy_plan.recovery_priority}."
+            )
+
+        if strategy_plan.recovery_priority == "high":
+
+            structure.append(
+                "Prioritize recovery between efforts."
+            )
+
+            structure.append(
+                "Finish feeling capable of another interval."
+            )
+
+        if strategy_plan.race_specificity >= 0.80:
+
+            structure.insert(
+                -1,
+                "Include race-specific pacing."
+            )
+
+        elif strategy_plan.race_specificity >= 0.50:
+
+            structure.insert(
+                -1,
+                "Practice sustained race rhythm."
+            )
+
+        if strategy_plan.race_specificity > 0:
+            percentage = round(
+                strategy_plan.race_specificity * 100
+            )
+
+            description_parts.append(
+                f"Race specificity: {percentage}%."
+            )
+
         description_parts.extend(
             strategy_plan.guidelines
         )
@@ -211,7 +286,7 @@ class WorkoutTemplate:
             description=" ".join(
                 description_parts
             ),
-            structure=self.structure,
+            structure=tuple(structure),
             equipment=self.equipment,
             sport=self.sport,
         )

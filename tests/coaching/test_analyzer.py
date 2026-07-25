@@ -23,6 +23,7 @@ def make_context(
     atl=50.0,
     next_event=None,
     previous_event=None,
+    upcoming_events=(),
 ):
     """
     Creates a CoachContext suitable for analyzer tests.
@@ -68,6 +69,7 @@ def make_context(
         days_until_event=days_until_event,
         previous_event=previous_event,
         days_since_event=days_since_event,
+        upcoming_events=upcoming_events,
         sports=("Running",),
         average_rpe=5.0,
         training_plan=object(),

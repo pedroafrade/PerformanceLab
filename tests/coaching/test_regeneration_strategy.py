@@ -20,17 +20,29 @@ def make_context(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     days_until_event: int | None = None,
+    days_since_event: int | None = None,
 ):
     """
-    Creates the minimum context required by RegenerationStrategy.
+    Creates the minimum context required by
+    RegenerationStrategy.
     """
+
+    is_post_race = (
+        days_since_event is not None
+        and 0 <= days_since_event <= 7
+    )
 
     return SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
         days_until_event=days_until_event,
+        days_since_event=days_since_event,
+        is_post_race=is_post_race,
+        is_fatigue_regeneration=(
+            tsb < -20
+            and not is_post_race
+        ),
     )
-
 
 # ======================================================
 # Default regeneration week
@@ -465,3 +477,133 @@ def test_repr_contains_strategy_class_and_phase():
 
     assert "RegenerationStrategy" in representation
     assert "Regeneration" in representation
+
+# ======================================================
+# Post-race regeneration
+# ======================================================
+
+
+@pytest.mark.parametrize(
+    "days_since_event",
+    [
+        0,
+        1,
+        2,
+        3,
+    ],
+)
+def test_first_post_race_days_use_deep_recovery(
+    days_since_event,
+):
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=days_since_event,
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(0.30)
+    assert plan.target_sessions == 2
+    assert plan.recovery_days == 5
+    assert plan.target_weekly_minutes == 120
+
+
+@pytest.mark.parametrize(
+    "days_since_event",
+    [
+        4,
+        5,
+        6,
+        7,
+    ],
+)
+def test_later_post_race_days_use_progressive_recovery(
+    days_since_event,
+):
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=days_since_event,
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(0.50)
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
+    assert plan.target_weekly_minutes == 240
+
+
+def test_post_race_plan_adds_specific_objective():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=2,
+        )
+    )
+
+    assert (
+        "Recover from the recent event."
+        in plan.objectives
+    )
+
+
+def test_early_post_race_plan_adds_rest_guideline():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=2,
+        )
+    )
+
+    assert any(
+        "complete rest" in guideline
+        for guideline in plan.guidelines
+    )
+
+
+def test_later_post_race_plan_adds_gradual_return_guideline():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=5,
+        )
+    )
+
+    assert any(
+        "gradually" in guideline
+        for guideline in plan.guidelines
+    )
+
+
+def test_post_race_recovery_takes_priority_over_low_tsb():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=2,
+            tsb=-40.0,
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(0.30)
+    assert plan.target_sessions == 2
+    assert plan.recovery_days == 5
+
+
+def test_event_warning_is_not_added_during_post_race_recovery():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=2,
+            days_until_event=5,
+        )
+    )
+
+    assert not any(
+        "event is approaching" in warning
+        for warning in plan.warnings
+    )
+
+
+def test_event_older_than_seven_days_uses_normal_regeneration():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=8,
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(0.60)
+    assert plan.target_sessions == 4
+    assert plan.recovery_days == 3

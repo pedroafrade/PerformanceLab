@@ -98,6 +98,21 @@ class PeakStrategy(CoachStrategy):
 
             focus=focus,
 
+            key_session_focus=focus,
+            secondary_focus="race pace",
+
+            recovery_priority=(
+                "high"
+                if context.tsb < -10
+                or (
+                    context.average_rpe is not None
+                    and context.average_rpe >= 8
+                )
+                else "normal"
+            ),
+
+            race_specificity=0.80,
+
             target_weekly_minutes=330,
             target_weekly_load=450.0 * volume_factor,
             long_session_minutes=90,

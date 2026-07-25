@@ -10,7 +10,10 @@ Vamos começar por:
 3. adicionar widget com descritivo específico do próximo treino (ou integrar esse descritivo numa linha em rodapé do widget weekly plan, já existente no dashboard) 
 4. Qualidade dos treinos – enriquecer o WorkoutGenerator para produzir sessões mais variadas e específicas.
 
-
+5. Prioridade alta: tornar as estratégias dependentes do desporto (running, cycling, triathlon, etc.), ajustando volume, sessões intensas e sessões longas.
+6. Prioridade média: distinguir eventos A/B/C (prova principal vs secundária), para que uma corrida de treino não desencadeie a mesma recuperação que uma maratona-alvo.
+7. Prioridade média: considerar a distância/tipo do evento (5 km, meia maratona, maratona, ultra), adaptando a recuperação pós-prova.
+8. Prioridade baixa: usar o histórico das últimas semanas (consistência, carga, progressão) para personalizar ainda mais a estratégia.
 ____________________________
 
 Eu também reparei noutra coisa
