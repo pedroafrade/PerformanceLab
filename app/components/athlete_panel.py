@@ -8,6 +8,8 @@ from datetime import date
 
 import streamlit as st
 
+from performancelab.training.config import AthleteAvailability
+
 
 # ======================================================
 # Constants
@@ -24,6 +26,7 @@ _FORM_KEYS = (
     "athlete_edit_ftp",
     "athlete_edit_max_hr",
     "athlete_edit_resting_hr",
+    "athlete_edit_train_any_day",
 )
 
 
@@ -96,6 +99,10 @@ def _start_editing(
     ] = int(
         athlete.resting_hr or 0
     )
+
+    st.session_state[
+        "athlete_edit_train_any_day"
+    ] = athlete.train_any_day
 
     st.session_state[
         _EDIT_STATE_KEY
@@ -274,6 +281,15 @@ def _show_athlete_form(
             current_gender,
         )
 
+    st.divider()
+
+    st.subheader("Training availability")
+
+    train_any_day = st.checkbox(
+        "Available to train on any day",
+        key="athlete_edit_train_any_day",
+    )
+
     with st.form(
         "athlete_edit_form",
     ):
@@ -345,6 +361,68 @@ def _show_athlete_form(
             step=1,
             key="athlete_edit_resting_hr",
         )
+
+        if not train_any_day:
+
+            st.caption(
+                "Enter the maximum training time available on each day."
+            )
+
+            monday_minutes = st.number_input(
+                "Monday (minutes)",
+                min_value=0,
+                max_value=300,
+                step=15,
+                value=athlete.availability.minutes_for(0),
+            )
+
+            tuesday_minutes = st.number_input(
+                "Tuesday (minutes)",
+                min_value=0,
+                max_value=300,
+                step=15,
+                value=athlete.availability.minutes_for(1),
+            )
+
+            wednesday_minutes = st.number_input(
+                "Wednesday (minutes)",
+                min_value=0,
+                max_value=300,
+                step=15,
+                value=athlete.availability.minutes_for(2),
+            )
+
+            thursday_minutes = st.number_input(
+                "Thursday (minutes)",
+                min_value=0,
+                max_value=300,
+                step=15,
+                value=athlete.availability.minutes_for(3),
+            )
+
+            friday_minutes = st.number_input(
+                "Friday (minutes)",
+                min_value=0,
+                max_value=300,
+                step=15,
+                value=athlete.availability.minutes_for(4),
+            )
+
+            saturday_minutes = st.number_input(
+                "Saturday (minutes)",
+                min_value=0,
+                max_value=480,
+                step=15,
+                value=athlete.availability.minutes_for(5),
+            )
+
+            sunday_minutes = st.number_input(
+                "Sunday (minutes)",
+                min_value=0,
+                max_value=480,
+                step=15,
+                value=athlete.availability.minutes_for(6),
+            )
 
         save_column, cancel_column = st.columns(
             2
@@ -425,6 +503,20 @@ def _show_athlete_form(
         athlete.resting_hr = _optional_int(
             resting_hr
         )
+
+        athlete.train_any_day = train_any_day
+
+        if not train_any_day:
+            athlete.availability = AthleteAvailability.from_minutes(
+                monday=int(monday_minutes),
+                tuesday=int(tuesday_minutes),
+                wednesday=int(wednesday_minutes),
+                thursday=int(thursday_minutes),
+                friday=int(friday_minutes),
+                saturday=int(saturday_minutes),
+                sunday=int(sunday_minutes),
+            )
+    
 
         st.session_state[
             _EDIT_STATE_KEY

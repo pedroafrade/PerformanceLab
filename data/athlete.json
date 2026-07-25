@@ -3,18 +3,18 @@
   "version": 1,
   "athlete": {
     "name": "Pedro",
-    "birth_date": "1992-12-02",
-    "gender": "Male",
-    "height": 1.78,
-    "weight": 74.0,
-    "ftp": 211.0,
-    "max_hr": 205,
-    "resting_hr": 65
+    "birth_date": null,
+    "gender": "",
+    "height": null,
+    "weight": 70.0,
+    "ftp": 280.0,
+    "max_hr": 190,
+    "resting_hr": 50
   },
   "workouts": [
     {
       "info": {
-        "date": "2026-07-10",
+        "date": "2026-07-12",
         "sport": "Running",
         "title": "Easy Run",
         "description": "",
@@ -44,7 +44,7 @@
     },
     {
       "info": {
-        "date": "2026-07-12",
+        "date": "2026-07-14",
         "sport": "Cycling",
         "title": "Endurance Ride",
         "description": "",
@@ -74,7 +74,7 @@
     },
     {
       "info": {
-        "date": "2026-07-14",
+        "date": "2026-07-16",
         "sport": "Running",
         "title": "Tempo Run",
         "description": "",
@@ -104,7 +104,7 @@
     },
     {
       "info": {
-        "date": "2026-07-16",
+        "date": "2026-07-18",
         "sport": "Swimming",
         "title": "Pool Session",
         "description": "",
@@ -134,7 +134,7 @@
     },
     {
       "info": {
-        "date": "2026-07-18",
+        "date": "2026-07-20",
         "sport": "Cycling",
         "title": "Long Ride",
         "description": "",
@@ -164,7 +164,7 @@
     },
     {
       "info": {
-        "date": "2026-07-20",
+        "date": "2026-07-22",
         "sport": "Running",
         "title": "Steady Run",
         "description": "",
@@ -194,7 +194,7 @@
     },
     {
       "info": {
-        "date": "2026-07-23",
+        "date": "2026-07-25",
         "sport": "Running",
         "title": "Long Run",
         "description": "",
@@ -224,82 +224,23 @@
     }
   ],
   "goals": [],
-  "events": [
+  "events": [],
+  "training_plan": [
     {
-      "event": {
-        "name": "Sealand",
-        "location": "Santa Cruz",
-        "country": "Portugal",
-        "date": "2026-09-13",
-        "sport": "Road Running",
-        "distance": 10.0,
-        "elevation_gain": 113.0,
-        "terrain": "",
-        "surface": "",
-        "organizer": "",
-        "website": "",
-        "gpx_file": "",
-        "description": ""
-      },
-      "priority": "A",
-      "target_time": null,
-      "result_time": null,
-      "position": null,
-      "finished": false,
-      "dnf": false,
-      "dns": false,
-      "notes": ""
-    },
-    {
-      "event": {
-        "name": "Pé Firme",
-        "location": "Santa Cruz",
-        "country": "Portugal",
-        "date": "2026-09-27",
-        "sport": "Trail Running",
-        "distance": 24.0,
-        "elevation_gain": 950.0,
-        "terrain": "",
-        "surface": "",
-        "organizer": "",
-        "website": "",
-        "gpx_file": "",
-        "description": ""
-      },
-      "priority": "A",
-      "target_time": null,
-      "result_time": null,
-      "position": null,
-      "finished": false,
-      "dnf": false,
-      "dns": false,
-      "notes": ""
-    },
-    {
-      "event": {
-        "name": "Lidl São Silvestre",
-        "location": "Lisboa",
-        "country": "Portugal",
-        "date": "2026-12-26",
-        "sport": "Road Running",
-        "distance": 10.0,
-        "elevation_gain": 61.0,
-        "terrain": "",
-        "surface": "",
-        "organizer": "",
-        "website": "",
-        "gpx_file": "",
-        "description": ""
-      },
-      "priority": "A",
-      "target_time": null,
-      "result_time": null,
-      "position": null,
-      "finished": false,
-      "dnf": false,
-      "dns": false,
-      "notes": ""
+      "scheduled_at": "2026-07-24T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
+      "duration": 3600.0,
+      "distance": null,
+      "description": "Maintain a controlled conversational effort throughout the session. Weekly focus: recovery. Use rest or short easy sessions during the first part of the week. Avoid threshold, interval and maximal strength sessions. Resume normal training only when recovery indicators improve. Prefer low-impact training when practical. Regeneration takes priority over planned training progression. Accumulated fatigue is very high.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Easy warm-up",
+        "Continuous aerobic training",
+        "Easy cool-down"
+      ],
+      "equipment": []
     }
-  ],
-  "training_plan": []
+  ]
 }

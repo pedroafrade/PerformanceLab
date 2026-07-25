@@ -75,21 +75,29 @@ class Planner:
         overrides. When omitted, the values stored on ``athlete`` are used.
         """
 
+        print(">>> Planner.build() foi chamado")
+
         self._validate_athlete(athlete)
+
         self._validate_optional_date(
             week_start,
             field="week_start",
         )
+        
         self._validate_optional_date(
             today,
             field="today",
         )
 
-        resolved_availability = (
-            availability
-            if availability is not None
-            else athlete.availability
-        )
+        if availability is not None:
+            resolved_availability = availability
+
+        elif athlete.train_any_day:
+            resolved_availability.unrestricted()
+
+        else:
+            resolved_availability = athlete.availability
+
         resolved_preferences = (
             preferences
             if preferences is not None
@@ -136,6 +144,14 @@ class Planner:
             constraints=resolved_constraints,
         )
 
+        print()
+        print("Slots gerados:", len(slots))
+
+        for slot in slots:
+            print(slot)
+
+        print()
+
         training_week = TrainingWeek(
             start_date=start_date,
             slots=slots,
@@ -145,6 +161,11 @@ class Planner:
             strategy_plan=strategy_plan,
             training_week=training_week,
             coach_context=context,
+        )
+
+        self._print_diagnostics(
+            strategy_plan=strategy_plan,
+            workouts=workouts,
         )
 
         return WeeklyPlanBuilder(
@@ -223,6 +244,115 @@ class Planner:
             raise TypeError(
                 f"{field} must be a date or None"
             )
+
+    @staticmethod
+    def _print_diagnostics(
+        *,
+        strategy_plan,
+        workouts,
+    ) -> None:
+        """
+        Temporary console diagnostics for weekly-plan generation.
+
+        Remove this method after validating the coaching pipeline.
+        """
+
+        separator = "=" * 72
+
+        print()
+        print(separator)
+        print("PERFORMANCELAB — GENERATED WEEKLY PLAN")
+        print(separator)
+
+        print(
+            "Strategy:",
+            getattr(
+                strategy_plan,
+                "strategy",
+                None,
+            ),
+        )
+
+        print(
+            "Phase:",
+            getattr(
+                strategy_plan,
+                "phase",
+                None,
+            ),
+        )
+
+        print(
+            "Focus:",
+            getattr(
+                strategy_plan,
+                "focus",
+                None,
+            ),
+        )
+
+        print(
+            "Target sessions:",
+            getattr(
+                strategy_plan,
+                "target_sessions",
+                None,
+            ),
+        )
+
+        print(
+            "Intensity sessions:",
+            getattr(
+                strategy_plan,
+                "intensity_sessions",
+                None,
+            ),
+        )
+
+        print(
+            "Long sessions:",
+            getattr(
+                strategy_plan,
+                "long_sessions",
+                None,
+            ),
+        )
+
+        print("-" * 72)
+
+        if not workouts:
+            print("No workouts generated.")
+
+        for workout in workouts:
+            duration_minutes = None
+
+            if workout.duration is not None:
+                duration_minutes = int(
+                    workout.duration.total_seconds()
+                    // 60
+                )
+
+            print(
+                f"{workout.day} | "
+                f"{workout.sport or 'rest'} | "
+                f"{workout.title or 'Rest'} | "
+                f"{duration_minutes or '-'} min | "
+                f"{workout.intensity or '-'}"
+            )
+
+            if workout.objective:
+                print(
+                    f"  Objective: {workout.objective}"
+                )
+
+            if workout.structure:
+                print("  Structure:")
+
+                for step in workout.structure:
+                    print(f"    - {step}")
+
+        print(separator)
+        print()
 
     def __repr__(self) -> str:
         return (

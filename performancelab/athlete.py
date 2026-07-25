@@ -31,6 +31,7 @@ class Athlete:
     ftp: float | None = None
     max_hr: int | None = None
     resting_hr: int | None = None
+    train_any_day: bool = True
 
     history: History = field(default_factory=History)
     training_plan: TrainingPlan = field(default_factory=TrainingPlan)

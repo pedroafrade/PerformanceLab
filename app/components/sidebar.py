@@ -403,6 +403,8 @@ def _show_user_account(
 
 def show_sidebar(
     athlete,
+    *,
+    on_generate_plan=None,
 ):
     """
     Displays the application sidebar.
@@ -441,23 +443,41 @@ def show_sidebar(
 
         st.divider()
 
+    with st.container(
+        key="sidebar_lower",
+    ):
+
+        st.markdown(
+            '<div class="sidebar-section-label">'
+            'Plano de treino'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+        st.button(
+            "Gerar plano semanal",
+            icon=":material/auto_awesome:",
+            use_container_width=True,
+            key="sidebar_generate_plan",
+            on_click=on_generate_plan,
+            disabled=on_generate_plan is None,
+        )
+
+        st.divider()
+
+        st.markdown(
+            '<div class="sidebar-section-label">'
+            'Importar treino'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
         with st.container(
-            key="sidebar_lower",
+            key="sidebar_activity",
         ):
 
-            st.markdown(
-                '<div class="sidebar-section-label">'
-                'Importar treino'
-                '</div>',
-                unsafe_allow_html=True,
+            athlete = show_activity_input(
+                athlete
             )
-
-            with st.container(
-                key="sidebar_activity",
-            ):
-
-                athlete = show_activity_input(
-                    athlete
-                )
 
     return athlete
