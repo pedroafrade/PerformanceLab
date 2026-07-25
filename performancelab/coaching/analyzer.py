@@ -55,7 +55,23 @@ class CoachAnalyzer:
 
     # ======================================================
 
-    def _phase(self):
+    def _phase(self) -> str:
+        """
+        Determines the athlete's current coaching phase.
+
+        A race completed during the previous seven days takes
+        priority over the next event cycle.
+        """
+
+        days_since_event = (
+            self.context.days_since_event
+        )
+
+        if (
+            days_since_event is not None
+            and 0 <= days_since_event <= 7
+        ):
+            return "Regeneration"
 
         days = self.context.days_until_event
 
@@ -78,7 +94,6 @@ class CoachAnalyzer:
             return "Build"
 
         return "Base"
-
     # ======================================================
 
     def _strategy(

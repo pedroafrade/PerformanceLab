@@ -17,10 +17,12 @@ from performancelab.coaching import (
 def make_context(
     *,
     days_until_event=None,
+    days_since_event=None,
     tsb=0.0,
     ctl=50.0,
     atl=50.0,
     next_event=None,
+    previous_event=None,
 ):
     """
     Creates a CoachContext suitable for analyzer tests.
@@ -37,23 +39,39 @@ def make_context(
             priority="A",
         )
 
+    if (
+        previous_event is None
+        and days_since_event is not None
+    ):
+        previous_event = SimpleNamespace(
+            event=SimpleNamespace(
+                name="Previous Race",
+            ),
+            priority="A",
+        )
+
     athlete = SimpleNamespace(
         name="Test Athlete",
     )
 
     return CoachContext(
         athlete=athlete,
-        today=date(2026, 3, 10),
+        today=date(
+            2026,
+            3,
+            10,
+        ),
         ctl=ctl,
         atl=atl,
         tsb=tsb,
         next_event=next_event,
         days_until_event=days_until_event,
+        previous_event=previous_event,
+        days_since_event=days_since_event,
         sports=("Running",),
         average_rpe=5.0,
         training_plan=object(),
     )
-
 
 def test_analyze_returns_coach_analysis():
 
@@ -465,3 +483,75 @@ def test_regeneration_strategy_preserves_original_phase():
         analysis.strategy
         == "RegenerationStrategy"
     )
+
+@pytest.mark.parametrize(
+    "days_since_event",
+    [
+        0,
+        1,
+        3,
+        7,
+    ],
+)
+def test_recent_event_returns_regeneration_phase(
+    days_since_event,
+):
+    context = make_context(
+        days_since_event=days_since_event,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Regeneration"
+    assert (
+        analysis.strategy
+        == "RegenerationStrategy"
+    )
+
+
+def test_event_eight_days_ago_does_not_force_regeneration():
+    context = make_context(
+        days_since_event=8,
+        days_until_event=85,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Base"
+    assert analysis.strategy == "BaseStrategy"
+
+
+def test_recent_event_takes_priority_over_upcoming_event():
+    context = make_context(
+        days_since_event=2,
+        days_until_event=30,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Regeneration"
+    assert (
+        analysis.strategy
+        == "RegenerationStrategy"
+    )
+
+
+def test_no_previous_event_uses_normal_event_cycle():
+    context = make_context(
+        previous_event=None,
+        days_since_event=None,
+        days_until_event=30,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Peak"
+    assert analysis.strategy == "PeakStrategy"

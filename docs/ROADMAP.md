@@ -11,6 +11,39 @@ Vamos começar por:
 4. Qualidade dos treinos – enriquecer o WorkoutGenerator para produzir sessões mais variadas e específicas.
 
 
+____________________________
+
+Eu também reparei noutra coisa
+
+Neste momento a máquina de estados é apenas baseada em:
+
+days_until_event
+
+Mas um treinador normalmente pensa em dois estados:
+
+Antes da prova
+↓
+
+Base
+Build
+Peak
+Taper
+Race
+
+Depois da prova
+↓
+
+Regeneration
+↓
+Maintenance
+↓
+Base...
+
+Só que isso assume que não existe outra competição logo a seguir.
+
+________________________
+
+
 # Version 0.1
 
 ## Foundation

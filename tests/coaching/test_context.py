@@ -2,10 +2,17 @@
 Tests for CoachContext.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from types import SimpleNamespace
 
+from performancelab.athlete import Athlete
+
 from performancelab.coaching import CoachContext
+
+from performancelab.race import (
+    Event,
+    EventEntry,
+)
 
 
 def make_athlete(
@@ -173,3 +180,112 @@ def test_context_accepts_missing_average_rpe():
     )
 
     assert context.average_rpe is None
+
+
+def make_event_entry(
+    event_date: date,
+) -> EventEntry:
+    return EventEntry(
+        event=Event(
+            name="Test Race",
+            date=event_date,
+        ),
+    )
+
+
+def test_context_selects_most_recent_previous_event():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    older_event = make_event_entry(
+        today - timedelta(
+            days=30,
+        )
+    )
+
+    recent_event = make_event_entry(
+        today - timedelta(
+            days=3,
+        )
+    )
+
+    athlete.events.add(
+        recent_event
+    )
+
+    athlete.events.add(
+        older_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.previous_event
+        is recent_event
+    )
+
+    assert context.days_since_event == 3
+
+
+def test_context_ignores_future_events_for_previous_event():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today + timedelta(
+                days=5,
+            )
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.previous_event is None
+    assert context.days_since_event is None
+
+
+def test_context_does_not_treat_today_event_as_previous():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        20,
+    )
+
+    athlete.events.add(
+        make_event_entry(
+            today
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.previous_event is None
+    assert context.days_since_event is None

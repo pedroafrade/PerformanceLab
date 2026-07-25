@@ -180,13 +180,19 @@ class WorkoutGenerator:
 
         duration_minutes = slot.duration_minutes
 
-        if duration_minutes is None:
+        if (
+            duration_minutes is None
+            and slot.purpose is not SessionPurpose.RACE
+        ):
 
             raise ValueError(
                 "training slots must have a duration"
             )
 
-        if duration_minutes <= 0:
+        if (
+            duration_minutes is not None
+            and duration_minutes <= 0
+        ):
 
             raise ValueError(
                 "training slots must have a positive duration"
@@ -198,8 +204,12 @@ class WorkoutGenerator:
             ),
             sport=template.sport,
             title=template.title,
-            duration=timedelta(
-                minutes=duration_minutes
+            duration=(
+                timedelta(
+                    minutes=duration_minutes
+                )
+                if duration_minutes is not None
+                else None
             ),
             description=template.description,
             intensity=template.intensity,

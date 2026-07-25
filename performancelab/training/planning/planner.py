@@ -19,11 +19,21 @@ from performancelab.coaching.structure_generator import (
 )
 from performancelab.coaching.training_week import TrainingWeek
 from performancelab.coaching.workout_generator import WorkoutGenerator
+from performancelab.coaching.draft_slot import DraftTrainingSlot
+from performancelab.coaching.session_purpose import SessionPurpose
+
 from performancelab.training.config import (
     AthleteAvailability,
     AthletePreferences,
     TrainingConstraints,
 )
+from performancelab.training.config import (
+    AthleteAvailability,
+    AthletePreferences,
+    TrainingConstraints,
+    Weekday,
+)
+
 
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
@@ -93,7 +103,7 @@ class Planner:
             resolved_availability = availability
 
         elif athlete.train_any_day:
-            resolved_availability.unrestricted()
+            resolved_availability = AthleteAvailability.unrestricted()
 
         else:
             resolved_availability = athlete.availability
@@ -144,6 +154,12 @@ class Planner:
             constraints=resolved_constraints,
         )
 
+        slots = self._apply_event_to_week(
+            slots=slots,
+            week_start=start_date,
+            next_event=context.next_event,
+        )
+
         print()
         print("Slots gerados:", len(slots))
 
@@ -173,6 +189,212 @@ class Planner:
         ).week(
             start_date,
         )
+
+    @staticmethod
+    def _apply_event_to_week(
+        *,
+        slots: tuple[DraftTrainingSlot, ...],
+        week_start: date,
+        next_event,
+    ) -> tuple[DraftTrainingSlot, ...]:
+        """
+        Inserts the athlete's next event into the requested training week.
+
+        The event replaces the slot assigned to its weekday. If that day was
+        originally a rest day, another training slot is converted to rest so
+        that the event does not increase the planned number of sessions.
+        """
+
+        if next_event is None:
+            return slots
+
+        event = getattr(
+            next_event,
+            "event",
+            None,
+        )
+
+        if event is None:
+            return slots
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        if event_date is None:
+            return slots
+
+        week_end = week_start + timedelta(
+            days=6,
+        )
+
+        if not (
+            week_start
+            <= event_date
+            <= week_end
+        ):
+            return slots
+
+        event_weekday = Weekday(
+            event_date.weekday()
+        )
+
+        updated_slots = list(slots)
+
+        event_index = next(
+            (
+                index
+                for index, slot in enumerate(
+                    updated_slots
+                )
+                if slot.weekday == event_weekday
+            ),
+            None,
+        )
+
+        if event_index is None:
+            return slots
+
+        original_slot = updated_slots[
+            event_index
+        ]
+
+        race_duration = Planner._event_duration_minutes(
+            next_event
+        )
+
+        if (
+            race_duration is None
+            and original_slot.duration_minutes is not None
+        ):
+            race_duration = (
+                original_slot.duration_minutes
+            )
+
+        event_name = (
+            getattr(
+                event,
+                "name",
+                "",
+            ).strip()
+            or "Race"
+        )
+
+        updated_slots[event_index] = (
+            DraftTrainingSlot(
+                weekday=event_weekday,
+                purpose=SessionPurpose.RACE,
+                duration_minutes=race_duration,
+                notes=(
+                    f"Registered event: {event_name}."
+                ),
+            )
+        )
+
+        if original_slot.is_rest:
+            updated_slots = (
+                Planner._remove_replaced_training_session(
+                    slots=updated_slots,
+                    race_weekday=event_weekday,
+                )
+            )
+
+        return tuple(
+            sorted(
+                updated_slots,
+                key=lambda slot: slot.weekday.value,
+            )
+        )
+
+
+    @staticmethod
+    def _event_duration_minutes(
+        next_event,
+    ) -> int | None:
+        """
+        Returns the event target time in whole minutes, when available.
+        """
+
+        target_time = getattr(
+            next_event,
+            "target_time",
+            None,
+        )
+
+        if target_time is None:
+            return None
+
+        minutes = int(
+            target_time.total_seconds()
+            // 60
+        )
+
+        if minutes <= 0:
+            return None
+
+        return minutes
+
+
+    @staticmethod
+    def _remove_replaced_training_session(
+        *,
+        slots: list[DraftTrainingSlot],
+        race_weekday: Weekday,
+    ) -> list[DraftTrainingSlot]:
+        """
+        Removes one ordinary training session when a race replaces a rest day.
+
+        Short easy sessions are removed first. Quality and long sessions are
+        only removed when no lower-priority session exists.
+        """
+
+        removal_priority = {
+            SessionPurpose.EASY: 0,
+            SessionPurpose.CROSS_TRAINING: 1,
+            SessionPurpose.RECOVERY: 2,
+            SessionPurpose.INTENSITY: 3,
+            SessionPurpose.LONG: 4,
+        }
+
+        candidates = [
+            slot
+            for slot in slots
+            if slot.weekday != race_weekday
+            and slot.is_training
+            and slot.purpose is not SessionPurpose.RACE
+        ]
+
+        if not candidates:
+            return slots
+
+        selected = min(
+            candidates,
+            key=lambda slot: (
+                removal_priority.get(
+                    slot.purpose,
+                    5,
+                ),
+                slot.duration_minutes or 0,
+                slot.weekday.value,
+            ),
+        )
+
+        return [
+            (
+                DraftTrainingSlot.rest(
+                    slot.weekday,
+                    notes=(
+                        "Rest assigned because the registered "
+                        "event counts as a weekly session."
+                    ),
+                )
+                if slot.weekday == selected.weekday
+                else slot
+            )
+            for slot in slots
+        ]
 
     @staticmethod
     def _week_start(
