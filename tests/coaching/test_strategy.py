@@ -14,7 +14,6 @@ from performancelab.coaching.strategy import (
     StrategyPlan,
 )
 
-
 def make_strategy_plan(
     **overrides,
 ) -> StrategyPlan:
@@ -667,3 +666,14 @@ def test_repr_contains_class_and_phase():
 
     assert "ExampleStrategy" in representation
     assert "Example" in representation
+
+
+def test_rejects_invalid_focus_type() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match="focus",
+    ):
+        make_strategy_plan(
+            focus=123,
+        )

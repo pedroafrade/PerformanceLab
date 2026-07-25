@@ -13,7 +13,6 @@ from performancelab.coaching.strategy import (
     StrategyPlan,
 )
 
-
 class BuildStrategy(CoachStrategy):
 
     name = "BuildStrategy"

@@ -25,6 +25,7 @@ from performancelab.coaching.workout_templates import (
 )
 
 from performancelab.coaching.strategy import StrategyPlan
+from performancelab.coaching.training_focus import TrainingFocus
 
 
 def test_creates_workout_template() -> None:
@@ -568,3 +569,4 @@ def test_returns_speed_template_for_speed_focus() -> None:
     assert template is SPEED_TEMPLATE
     assert template.title == "Speed Session"
     assert template.intensity == "Very hard"
+

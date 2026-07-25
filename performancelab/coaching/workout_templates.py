@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import Mapping
 
 from .session_purpose import SessionPurpose
+from .training_focus import TrainingFocus
 from .workout_template import WorkoutTemplate
 
 
@@ -69,111 +70,95 @@ INTENSITY_TEMPLATE = WorkoutTemplate(
     ),
 )
 
+
 THRESHOLD_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="Threshold Session",
-    objective=(
-        "Develop sustainable speed and threshold capacity."
-    ),
+    objective="Develop sustainable threshold capacity.",
     intensity="Moderately hard",
     description=(
-        "Complete the main efforts at a controlled, "
-        "sustainable intensity. The effort should be "
-        "demanding without becoming maximal."
+        "Complete sustained efforts near threshold while "
+        "maintaining controlled pacing and good technique."
     ),
     structure=(
         "Progressive warm-up",
-        "Technique drills",
         "Controlled threshold intervals",
-        "Short recovery intervals",
+        "Controlled recoveries",
         "Easy cool-down",
     ),
 )
 
+
 VO2MAX_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="VO₂max Session",
-    objective=(
-        "Develop aerobic power and tolerance to high-intensity effort."
-    ),
+    objective="Develop maximal aerobic power.",
     intensity="Very hard",
     description=(
-        "Complete short to medium-duration intervals at a strong, "
-        "controlled intensity. Recover sufficiently to preserve "
-        "quality across all repetitions."
+        "Perform short, demanding intervals with enough "
+        "recovery to preserve movement quality."
     ),
     structure=(
         "Progressive warm-up",
-        "Technique drills",
         "VO₂max intervals",
         "Recovery intervals",
         "Easy cool-down",
     ),
 )
 
+
 TEMPO_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="Tempo Session",
-    objective=(
-        "Improve sustained aerobic performance at a comfortably "
-        "hard pace."
-    ),
+    objective="Develop sustained aerobic speed.",
     intensity="Hard",
     description=(
-        "Maintain a steady, controlled effort for an extended "
-        "period without significant pace fluctuations."
+        "Maintain a strong but controlled continuous effort."
     ),
     structure=(
         "Progressive warm-up",
-        "Running drills",
         "Continuous tempo effort",
         "Easy cool-down",
     ),
 )
 
+
 HILLS_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="Hill Session",
-    objective=(
-        "Develop strength, running economy, and the ability to "
-        "sustain controlled effort on climbs."
-    ),
+    objective="Develop strength and power on climbs.",
     intensity="Hard",
     description=(
-        "Complete repeated uphill efforts with strong posture, "
-        "controlled technique, and sufficient recovery to preserve "
-        "quality across all repetitions."
+        "Run or ride the climbs with controlled power and "
+        "recover fully enough to maintain good technique."
     ),
     structure=(
         "Progressive warm-up",
-        "Running drills",
         "Uphill repetitions",
         "Easy downhill recovery",
         "Easy cool-down",
     ),
 )
 
+
 SPEED_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="Speed Session",
-    objective=(
-        "Develop running speed, neuromuscular coordination, "
-        "and efficient movement at high intensity."
-    ),
+    objective="Develop speed and neuromuscular efficiency.",
     intensity="Very hard",
     description=(
-        "Complete short, fast repetitions with full control and "
-        "sufficient recovery. Prioritize technique and movement "
-        "quality over accumulated fatigue."
+        "Perform short fast repetitions with complete or "
+        "near-complete recovery."
     ),
     structure=(
         "Progressive warm-up",
-        "Running drills",
+        "Technique drills",
         "Short fast repetitions",
         "Full recovery between repetitions",
         "Easy cool-down",
     ),
 )
+
 
 LONG_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.LONG,
@@ -222,6 +207,7 @@ REST_TEMPLATE = WorkoutTemplate(
     ),
 )
 
+
 CROSS_TRAINING_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.CROSS_TRAINING,
     title="Cross-Training Session",
@@ -242,6 +228,7 @@ CROSS_TRAINING_TEMPLATE = WorkoutTemplate(
     ),
 )
 
+
 _DEFAULT_TEMPLATES = {
     SessionPurpose.REST: REST_TEMPLATE,
     SessionPurpose.RECOVERY: RECOVERY_TEMPLATE,
@@ -252,34 +239,6 @@ _DEFAULT_TEMPLATES = {
     SessionPurpose.CROSS_TRAINING: CROSS_TRAINING_TEMPLATE,
 }
 
-_FOCUSED_TEMPLATES = {
-    (
-        SessionPurpose.INTENSITY,
-        "threshold",
-    ): THRESHOLD_TEMPLATE,
-
-    (
-        SessionPurpose.INTENSITY,
-        "vo2max",
-    ): VO2MAX_TEMPLATE,
-
-    (
-        SessionPurpose.INTENSITY,
-        "tempo",
-    ): TEMPO_TEMPLATE,
-
-    (
-        SessionPurpose.INTENSITY,
-        "hills",
-    ): HILLS_TEMPLATE,
-
-    (
-        SessionPurpose.INTENSITY,
-        "speed",
-    ): SPEED_TEMPLATE,
-
-}
-
 
 DEFAULT_WORKOUT_TEMPLATES: Mapping[
     SessionPurpose,
@@ -288,41 +247,83 @@ DEFAULT_WORKOUT_TEMPLATES: Mapping[
     _DEFAULT_TEMPLATES
 )
 
-def _normalize_focus(
-    focus: str | None,
-) -> str | None:
 
+_FOCUSED_TEMPLATES = {
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.THRESHOLD,
+    ): THRESHOLD_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.VO2MAX,
+    ): VO2MAX_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.TEMPO,
+    ): TEMPO_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.HILLS,
+    ): HILLS_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.SPEED,
+    ): SPEED_TEMPLATE,
+}
+
+
+FOCUSED_WORKOUT_TEMPLATES: Mapping[
+    tuple[SessionPurpose, TrainingFocus],
+    WorkoutTemplate,
+] = MappingProxyType(
+    _FOCUSED_TEMPLATES
+)
+
+
+def _normalize_focus(
+    focus: str | TrainingFocus | None,
+) -> TrainingFocus | None:
     if focus is None:
         return None
+
+    if isinstance(
+        focus,
+        TrainingFocus,
+    ):
+        return focus
 
     if not isinstance(
         focus,
         str,
     ):
         raise TypeError(
-            "focus must be a string or None"
+            "focus must be a string or TrainingFocus"
         )
 
-    normalized = focus.strip().casefold()
+    normalized_focus = focus.strip().lower()
 
-    if not normalized:
+    if not normalized_focus:
         raise ValueError(
-            "focus cannot be empty"
+            "focus must not be empty"
         )
 
-    return normalized
+    try:
+        return TrainingFocus(
+            normalized_focus
+        )
+    except ValueError:
+        return None
+
 
 def template_for(
     purpose: SessionPurpose,
     *,
-    focus: str | None = None,
+    focus: str | TrainingFocus | None = None,
 ) -> WorkoutTemplate:
     """
-    Returns the most specific template available.
+    Returns a focus-specific template when available.
 
-    A focused template is preferred when one exists.
-    Otherwise, the default template for the session
-    purpose is returned.
+    Otherwise, returns the default template for the session purpose.
     """
 
     if not isinstance(
@@ -338,8 +339,7 @@ def template_for(
     )
 
     if normalized_focus is not None:
-
-        focused_template = _FOCUSED_TEMPLATES.get(
+        focused_template = FOCUSED_WORKOUT_TEMPLATES.get(
             (
                 purpose,
                 normalized_focus,
@@ -350,13 +350,10 @@ def template_for(
             return focused_template
 
     try:
-
         return DEFAULT_WORKOUT_TEMPLATES[
             purpose
         ]
-
     except KeyError as error:
-
         raise ValueError(
             f"No workout template exists for "
             f"{purpose.value!r}"

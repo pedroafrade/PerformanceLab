@@ -6,10 +6,14 @@ Workout Template
 Reusable description of a planned training session.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from .session_purpose import SessionPurpose
-from .strategy import StrategyPlan
+if TYPE_CHECKING:
+    from .strategy import StrategyPlan
 
 
 @dataclass(frozen=True)
@@ -23,30 +27,21 @@ class WorkoutTemplate:
     """
 
     purpose: SessionPurpose
-
     title: str
-
     objective: str
-
     intensity: str
-
     description: str = ""
-
     structure: tuple[str, ...] = ()
-
     equipment: tuple[str, ...] = ()
-
     sport: str | None = None
 
     # ======================================================
 
     def __post_init__(self) -> None:
-
         if not isinstance(
             self.purpose,
             SessionPurpose,
         ):
-
             raise TypeError(
                 "purpose must be a SessionPurpose"
             )
@@ -55,24 +50,20 @@ class WorkoutTemplate:
             "title",
             self.title,
         )
-
         self._validate_required_text(
             "objective",
             self.objective,
         )
-
         self._validate_required_text(
             "intensity",
             self.intensity,
         )
-
         self._validate_optional_text(
             "description",
             self.description,
         )
 
         if self.sport is not None:
-
             self._validate_required_text(
                 "sport",
                 self.sport,
@@ -82,7 +73,6 @@ class WorkoutTemplate:
             "structure",
             self.structure,
         )
-
         self._validate_text_tuple(
             "equipment",
             self.equipment,
@@ -95,15 +85,12 @@ class WorkoutTemplate:
         field_name: str,
         value: str,
     ) -> None:
-
         if not isinstance(value, str):
-
             raise TypeError(
                 f"{field_name} must be a string"
             )
 
         if not value.strip():
-
             raise ValueError(
                 f"{field_name} cannot be empty"
             )
@@ -115,9 +102,7 @@ class WorkoutTemplate:
         field_name: str,
         value: str,
     ) -> None:
-
         if not isinstance(value, str):
-
             raise TypeError(
                 f"{field_name} must be a string"
             )
@@ -129,114 +114,23 @@ class WorkoutTemplate:
         field_name: str,
         values: tuple[str, ...],
     ) -> None:
-
         if not isinstance(values, tuple):
-
             raise TypeError(
                 f"{field_name} must be a tuple"
             )
 
         for value in values:
-
             if not isinstance(value, str):
-
                 raise TypeError(
                     f"{field_name} must contain strings"
                 )
 
             if not value.strip():
-
                 raise ValueError(
                     f"{field_name} cannot contain "
                     "empty values"
                 )
-    # ======================================================
 
-    def customized_for(
-        self,
-        strategy_plan: StrategyPlan,
-    ) -> "WorkoutTemplate":
-        """
-        Returns a copy enriched with weekly strategy guidance.
-
-        Strategy guidance is included as descriptive information.
-        This method does not reinterpret session purpose, duration,
-        intensity, or structure.
-        """
-
-        if not isinstance(
-            strategy_plan,
-            StrategyPlan,
-        ):
-            raise TypeError(
-                "strategy_plan must be a StrategyPlan"
-            )
-
-        return WorkoutTemplate(
-            purpose=self.purpose,
-            title=self.title,
-            objective=self._customized_objective(
-                strategy_plan
-            ),
-            intensity=self.intensity,
-            description=self._customized_description(
-                strategy_plan
-            ),
-            structure=self.structure,
-            equipment=self.equipment,
-            sport=self.sport,
-        )
-        # ======================================================
-
-    def _customized_objective(
-        self,
-        strategy_plan: StrategyPlan,
-    ) -> str:
-
-        if not strategy_plan.objectives:
-            return self.objective
-
-        weekly_objectives = "; ".join(
-            strategy_plan.objectives
-        )
-
-        return (
-            f"{self.objective} "
-            f"Weekly objectives: {weekly_objectives}"
-        )
-
-    # ======================================================
-
-    def _customized_description(
-        self,
-        strategy_plan: StrategyPlan,
-    ) -> str:
-
-        sections: list[str] = []
-
-        if self.description:
-            sections.append(
-                self.description.strip()
-            )
-
-        if strategy_plan.focus is not None:
-            sections.append(
-                f"Weekly focus: {strategy_plan.focus}."
-            )
-
-        if strategy_plan.guidelines:
-            sections.append(
-                "Weekly guidelines: "
-                + " ".join(strategy_plan.guidelines)
-            )
-
-        if strategy_plan.warnings:
-            sections.append(
-                "Weekly warnings: "
-                + " ".join(strategy_plan.warnings)
-            )
-
-        return " ".join(sections)
     # ======================================================
 
     def for_sport(
@@ -260,8 +154,71 @@ class WorkoutTemplate:
 
     # ======================================================
 
-    def __repr__(self) -> str:
+    def customized_for(
+        self,
+        strategy_plan: "StrategyPlan",
+    ) -> "WorkoutTemplate":
+        """
+        Returns a copy enriched with the strategy plan context.
+        """
 
+        from .strategy import StrategyPlan
+
+        if not isinstance(
+            strategy_plan,
+            StrategyPlan,
+        ):
+            raise TypeError(
+                "strategy_plan must be a StrategyPlan"
+            )
+
+        objective = self.objective
+        description_parts: list[str] = []
+
+        if self.description:
+            description_parts.append(
+                self.description
+            )
+
+        if strategy_plan.objectives:
+            objective = (
+                f"{self.objective} "
+                f"{' '.join(strategy_plan.objectives)}"
+            )
+
+        if strategy_plan.focus is not None:
+            focus_value = getattr(
+                strategy_plan.focus,
+                "value",
+                str(strategy_plan.focus),
+            )
+            description_parts.append(
+                f"Weekly focus: {focus_value}."
+            )
+
+        description_parts.extend(
+            strategy_plan.guidelines
+        )
+        description_parts.extend(
+            strategy_plan.warnings
+        )
+
+        return WorkoutTemplate(
+            purpose=self.purpose,
+            title=self.title,
+            objective=objective,
+            intensity=self.intensity,
+            description=" ".join(
+                description_parts
+            ),
+            structure=self.structure,
+            equipment=self.equipment,
+            sport=self.sport,
+        )
+
+    # ======================================================
+
+    def __repr__(self) -> str:
         return (
             f"WorkoutTemplate("
             f"purpose={self.purpose.value!r}, "
