@@ -26,11 +26,6 @@ from performancelab.training.config import (
     AthleteAvailability,
     AthletePreferences,
     TrainingConstraints,
-)
-from performancelab.training.config import (
-    AthleteAvailability,
-    AthletePreferences,
-    TrainingConstraints,
     Weekday,
 )
 

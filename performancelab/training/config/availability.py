@@ -120,6 +120,22 @@ class AthleteAvailability:
         )
 
     # ======================================================
+    @classmethod
+    def unrestricted(cls) -> "AthleteAvailability":
+        """
+        Returns an availability with no weekday restrictions.
+        """
+
+        return cls.from_minutes(
+            monday=24 * 60,
+            tuesday=24 * 60,
+            wednesday=24 * 60,
+            thursday=24 * 60,
+            friday=24 * 60,
+            saturday=24 * 60,
+            sunday=24 * 60,
+        )
+    # ======================================================
 
     @property
     def available_days(self) -> tuple[Weekday, ...]:

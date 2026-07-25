@@ -227,18 +227,56 @@
   "events": [],
   "training_plan": [
     {
-      "scheduled_at": "2026-07-24T00:00:00",
+      "scheduled_at": "2026-07-20T00:00:00",
       "sport": "Cycling",
       "title": "Easy Aerobic Session",
       "duration": 3600.0,
       "distance": null,
-      "description": "Maintain a controlled conversational effort throughout the session. Weekly focus: recovery. Use rest or short easy sessions during the first part of the week. Avoid threshold, interval and maximal strength sessions. Resume normal training only when recovery indicators improve. Prefer low-impact training when practical. Regeneration takes priority over planned training progression. Accumulated fatigue is very high.",
+      "description": "Maintain a controlled conversational effort throughout the session. Weekly focus: recovery. Primary session focus: recovery. Secondary session focus: easy aerobic. Recovery priority: high. Use rest or short easy sessions during the first part of the week. Avoid threshold, interval and maximal strength sessions. Resume normal training only when recovery indicators improve. Prefer low-impact training when practical. Regeneration takes priority over planned training progression. Accumulated fatigue is very high.",
       "intensity": "Easy",
       "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
       "structure": [
         "Easy warm-up",
         "Continuous aerobic training",
-        "Easy cool-down"
+        "Easy cool-down",
+        "Prioritize recovery between efforts.",
+        "Finish feeling capable of another interval."
+      ],
+      "equipment": []
+    },
+    {
+      "scheduled_at": "2026-07-21T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
+      "duration": 3600.0,
+      "distance": null,
+      "description": "Maintain a controlled conversational effort throughout the session. Weekly focus: recovery. Primary session focus: recovery. Secondary session focus: easy aerobic. Recovery priority: high. Use rest or short easy sessions during the first part of the week. Avoid threshold, interval and maximal strength sessions. Resume normal training only when recovery indicators improve. Prefer low-impact training when practical. Regeneration takes priority over planned training progression. Accumulated fatigue is very high.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Easy warm-up",
+        "Continuous aerobic training",
+        "Easy cool-down",
+        "Prioritize recovery between efforts.",
+        "Finish feeling capable of another interval."
+      ],
+      "equipment": []
+    },
+    {
+      "scheduled_at": "2026-07-22T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
+      "duration": 3600.0,
+      "distance": null,
+      "description": "Maintain a controlled conversational effort throughout the session. Weekly focus: recovery. Primary session focus: recovery. Secondary session focus: easy aerobic. Recovery priority: high. Use rest or short easy sessions during the first part of the week. Avoid threshold, interval and maximal strength sessions. Resume normal training only when recovery indicators improve. Prefer low-impact training when practical. Regeneration takes priority over planned training progression. Accumulated fatigue is very high.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Easy warm-up",
+        "Continuous aerobic training",
+        "Easy cool-down",
+        "Prioritize recovery between efforts.",
+        "Finish feeling capable of another interval."
       ],
       "equipment": []
     }

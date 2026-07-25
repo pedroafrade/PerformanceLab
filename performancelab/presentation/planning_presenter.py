@@ -7,7 +7,7 @@ Converts training planning domain objects into dashboard
 presentation models.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 
 from performancelab.history import History
 from performancelab.presentation.dashboard_models import (
@@ -182,7 +182,7 @@ class PlanningPresenter:
         )
 
         next_workout = self.plan.next_workout(
-            reference=self.reference,
+            reference=self._next_workout_reference(),
         )
 
         next_workout_day = None
@@ -293,7 +293,7 @@ class PlanningPresenter:
     def _next_workout(self):
 
         workout = self.plan.next_workout(
-            reference=self.reference,
+            reference=self._next_workout_reference(),
         )
 
         if workout is None:
@@ -318,7 +318,7 @@ class PlanningPresenter:
     def _coach_recommendation(self):
 
         next_workout = self.plan.next_workout(
-            reference=self.reference,
+            reference=self._next_workout_reference(),
         )
 
         if next_workout is None:
@@ -371,4 +371,18 @@ class PlanningPresenter:
             "PlanningPresenter("
             f"{self.plan.start_date} -> "
             f"{self.plan.end_date})"
+        )
+    
+    # ======================================================
+
+    def _next_workout_reference(
+        self,
+    ) -> datetime:
+        """
+        Includes planned workouts scheduled for the current day.
+        """
+
+        return datetime.combine(
+            self.reference.date(),
+            time.min,
         )

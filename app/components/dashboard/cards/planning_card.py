@@ -138,61 +138,44 @@ def _marker_html(
         "</div>"
     )
 
-
 def _next_workout_description(
     workout,
 ) -> str | None:
+    """
+    Builds a single-line practical summary of the next workout.
+    """
+
     if workout is None:
         return None
 
-    title = (
-        workout.title
-        or workout.sport
-        or "Treino"
+    parts = []
+
+    objective = (
+        workout.objective
+        or workout.description
     )
 
-    details = []
-
-    if workout.scheduled_at is not None:
-        weekday = WEEKDAY_LABELS[
-            workout.scheduled_at.weekday()
-        ]
-
-        details.append(
-            workout.scheduled_at.strftime(
-                f"{weekday}, %d/%m às %H:%M"
-            )
+    if objective:
+        parts.append(
+            str(objective).strip()
         )
 
-    distance = _format_distance(workout.distance)
-    duration = _format_duration(workout.duration)
+    structure = [
+        str(step).strip()
+        for step in workout.structure
+        if str(step).strip()
+    ]
 
-    if distance:
-        details.append(distance)
-
-    if duration:
-        details.append(duration)
-
-    summary = escape(title)
-
-    if details:
-        summary += (
-            " · "
-            + escape(" · ".join(details))
+    if structure:
+        parts.append(
+            " + ".join(structure)
         )
 
-    description = ""
+    if not parts:
+        return None
 
-    if workout.description:
-        description = (
-            '<span class="weekly-plan-next-description">'
-            f" — {escape(workout.description)}"
-            "</span>"
-        )
-
-    return (
-        f"<strong>{summary}</strong>"
-        f"{description}"
+    return escape(
+        "  ".join(parts)
     )
 
 
@@ -277,27 +260,18 @@ def show_planning_card(
 }
 
 .weekly-plan-next {
-    margin-top: 6px;
-    padding: 7px 10px;
-    border: 1px solid rgba(128, 128, 128, 0.48);
-    border-radius: 8px;
-    font-size: 0.78rem;
-    line-height: 1.25;
+    margin-top: 5px;
+    padding-top: 6px;
+    overflow: hidden;
+    border-top: 1px solid rgba(128, 128, 128, 0.30);
+    font-size: 0.72rem;
+    line-height: 1.2;
+    opacity: 0.72;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.weekly-plan-next-label {
-    margin-right: 6px;
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    opacity: 0.58;
-    text-transform: uppercase;
-}
 
-.weekly-plan-next-description {
-    font-size: 0.74rem;
-    opacity: 0.62;
-}
 </style>
         """,
         unsafe_allow_html=True,
@@ -365,9 +339,6 @@ def show_planning_card(
         st.markdown(
             (
                 '<div class="weekly-plan-next">'
-                '<span class="weekly-plan-next-label">'
-                "Próximo treino"
-                "</span>"
                 f"{next_description}"
                 "</div>"
             ),
