@@ -69,7 +69,7 @@ def test_analyze_returns_coach_analysis():
     )
 
 
-def test_no_event_returns_base_phase():
+def test_no_event_returns_maintenance_phase():
 
     context = make_context(
         next_event=None,
@@ -80,8 +80,8 @@ def test_no_event_returns_base_phase():
         context,
     ).analyze()
 
-    assert analysis.phase == "Base"
-    assert analysis.strategy == "BaseStrategy"
+    assert analysis.phase == "Maintenance"
+    assert analysis.strategy == "MaintenanceStrategy"
 
     assert analysis.summary == (
         "No upcoming event. "
@@ -92,13 +92,36 @@ def test_no_event_returns_base_phase():
 @pytest.mark.parametrize(
     "days_until_event",
     [
-        57,
-        84,
+        85,
         120,
         365,
     ],
 )
-def test_event_more_than_eight_weeks_away_returns_build_phase(
+def test_event_more_than_twelve_weeks_away_returns_base_phase(
+    days_until_event,
+):
+
+    context = make_context(
+        days_until_event=days_until_event,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Base"
+    assert analysis.strategy == "BaseStrategy"
+
+
+@pytest.mark.parametrize(
+    "days_until_event",
+    [
+        43,
+        56,
+        84,
+    ],
+)
+def test_event_between_six_and_twelve_weeks_returns_build_phase(
     days_until_event,
 ):
 
@@ -117,13 +140,12 @@ def test_event_more_than_eight_weeks_away_returns_build_phase(
 @pytest.mark.parametrize(
     "days_until_event",
     [
-        22,
-        28,
+        15,
+        21,
         42,
-        56,
     ],
 )
-def test_event_between_three_and_eight_weeks_returns_specific_phase(
+def test_event_between_two_and_six_weeks_returns_peak_phase(
     days_until_event,
 ):
 
@@ -135,25 +157,19 @@ def test_event_between_three_and_eight_weeks_returns_specific_phase(
         context,
     ).analyze()
 
-    assert analysis.phase == "Specific"
-
-    assert (
-        analysis.strategy
-        == "SpecificStrategy"
-    )
+    assert analysis.phase == "Peak"
+    assert analysis.strategy == "PeakStrategy"
 
 
 @pytest.mark.parametrize(
     "days_until_event",
     [
-        0,
-        1,
-        7,
+        8,
+        10,
         14,
-        21,
     ],
 )
-def test_event_within_three_weeks_returns_taper_phase(
+def test_event_between_eight_and_fourteen_days_returns_taper_phase(
     days_until_event,
 ):
 
@@ -169,23 +185,58 @@ def test_event_within_three_weeks_returns_taper_phase(
     assert analysis.strategy == "TaperStrategy"
 
 
-def test_phase_boundary_at_56_days_is_specific():
+@pytest.mark.parametrize(
+    "days_until_event",
+    [
+        0,
+        1,
+        7,
+    ],
+)
+def test_event_within_race_week_returns_race_phase(
+    days_until_event,
+):
 
     context = make_context(
-        days_until_event=56,
+        days_until_event=days_until_event,
     )
 
     analysis = CoachAnalyzer(
         context,
     ).analyze()
 
-    assert analysis.phase == "Specific"
+    assert analysis.phase == "Race"
+    assert analysis.strategy == "RaceStrategy"
 
 
-def test_phase_boundary_at_57_days_is_build():
+@pytest.mark.parametrize(
+    "days_until_event",
+    [
+        -1,
+        -7,
+        -30,
+    ],
+)
+def test_past_event_returns_regeneration_phase(
+    days_until_event,
+):
 
     context = make_context(
-        days_until_event=57,
+        days_until_event=days_until_event,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Regeneration"
+    assert analysis.strategy == "RegenerationStrategy"
+
+
+def test_phase_boundary_at_84_days_is_build():
+
+    context = make_context(
+        days_until_event=84,
     )
 
     analysis = CoachAnalyzer(
@@ -195,10 +246,49 @@ def test_phase_boundary_at_57_days_is_build():
     assert analysis.phase == "Build"
 
 
-def test_phase_boundary_at_21_days_is_taper():
+def test_phase_boundary_at_85_days_is_base():
 
     context = make_context(
-        days_until_event=21,
+        days_until_event=85,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Base"
+
+
+def test_phase_boundary_at_42_days_is_peak():
+
+    context = make_context(
+        days_until_event=42,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Peak"
+
+
+def test_phase_boundary_at_43_days_is_build():
+
+    context = make_context(
+        days_until_event=43,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Build"
+
+
+def test_phase_boundary_at_14_days_is_taper():
+
+    context = make_context(
+        days_until_event=14,
     )
 
     analysis = CoachAnalyzer(
@@ -208,17 +298,69 @@ def test_phase_boundary_at_21_days_is_taper():
     assert analysis.phase == "Taper"
 
 
-def test_phase_boundary_at_22_days_is_specific():
+def test_phase_boundary_at_15_days_is_peak():
 
     context = make_context(
-        days_until_event=22,
+        days_until_event=15,
     )
 
     analysis = CoachAnalyzer(
         context,
     ).analyze()
 
-    assert analysis.phase == "Specific"
+    assert analysis.phase == "Peak"
+
+
+def test_phase_boundary_at_7_days_is_race():
+
+    context = make_context(
+        days_until_event=7,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Race"
+
+
+def test_phase_boundary_at_8_days_is_taper():
+
+    context = make_context(
+        days_until_event=8,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Taper"
+
+
+def test_phase_boundary_at_zero_days_is_race():
+
+    context = make_context(
+        days_until_event=0,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Race"
+
+
+def test_phase_boundary_at_minus_one_day_is_regeneration():
+
+    context = make_context(
+        days_until_event=-1,
+    )
+
+    analysis = CoachAnalyzer(
+        context,
+    ).analyze()
+
+    assert analysis.phase == "Regeneration"
 
 
 def test_negative_tsb_selects_regeneration_strategy():
@@ -317,7 +459,7 @@ def test_regeneration_strategy_preserves_original_phase():
         context,
     ).analyze()
 
-    assert analysis.phase == "Specific"
+    assert analysis.phase == "Peak"
 
     assert (
         analysis.strategy

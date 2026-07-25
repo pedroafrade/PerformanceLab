@@ -2,6 +2,15 @@
 
 ---
 
+ONGOING
+
+Vamos começar por: 
+1. Eventos – fazer o planeador olhar para provas futuras e periodizar automaticamente, 
+2. Mover campo de gerador de treino, importador de treino de dashboard para sidebar, onde estavam anteriormente 
+3. adicionar widget com descritivo específico do próximo treino (ou integrar esse descritivo numa linha em rodapé do widget weekly plan, já existente no dashboard) 
+4. Qualidade dos treinos – enriquecer o WorkoutGenerator para produzir sessões mais variadas e específicas.
+
+
 # Version 0.1
 
 ## Foundation

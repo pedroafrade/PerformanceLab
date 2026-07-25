@@ -12,6 +12,9 @@ from performancelab.coaching.strategy import CoachStrategy
 from performancelab.coaching.strategies import (
     BaseStrategy,
     BuildStrategy,
+    MaintenanceStrategy,
+    PeakStrategy,
+    RaceStrategy,
     RegenerationStrategy,
     TaperStrategy,
 )
@@ -38,17 +41,26 @@ class StrategySelector:
 
         match analysis.phase:
 
+            case "Maintenance":
+                return MaintenanceStrategy()
+
             case "Base":
                 return BaseStrategy()
 
             case "Build":
                 return BuildStrategy()
 
-            case "Specific":
-                return BuildStrategy()
+            case "Peak":
+                return PeakStrategy()
 
             case "Taper":
                 return TaperStrategy()
+
+            case "Race":
+                return RaceStrategy()
+
+            case "Regeneration":
+                return RegenerationStrategy()
 
         raise ValueError(
             f"Unsupported coaching phase: {analysis.phase}"

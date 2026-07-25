@@ -60,18 +60,24 @@ class CoachAnalyzer:
         days = self.context.days_until_event
 
         if days is None:
+            return "Maintenance"
 
-            return "Base"
+        if days < 0:
+            return "Regeneration"
 
-        if days > 56:
+        if days <= 7:
+            return "Race"
 
+        if days <= 14:
+            return "Taper"
+
+        if days <= 42:
+            return "Peak"
+
+        if days <= 84:
             return "Build"
 
-        if days > 21:
-
-            return "Specific"
-
-        return "Taper"
+        return "Base"
 
     # ======================================================
 
