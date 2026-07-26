@@ -169,6 +169,10 @@ def test_athlete_to_dict():
 
     assert data["version"] == 1
 
+    assert "id" in data["athlete"]
+
+    assert isinstance(data["athlete"]["id"], str)
+
     assert data["athlete"]["name"] == "Pedro"
 
     assert len(data["workouts"]) == 1
@@ -187,6 +191,8 @@ def test_athlete_round_trip():
     data = athlete_to_dict(original)
 
     loaded = athlete_from_dict(data)
+
+    assert loaded.athlete_id == original.athlete_id
 
     assert loaded.name == original.name
 
@@ -270,20 +276,16 @@ def test_save_and_load_athlete(tmp_path):
     )
 
     assert result == path
-
     assert path.exists()
 
     loaded = load_athlete(path)
 
+    assert loaded.athlete_id == athlete.athlete_id
     assert loaded.name == "Pedro"
-
     assert len(loaded.history) == 1
-
     assert len(loaded.goals) == 1
-
     assert len(loaded.events) == 1
-
-
+    
 # ======================================================
 
 def test_saved_file_is_valid_json(tmp_path):
@@ -361,3 +363,18 @@ def test_invalid_file_format():
             }
 
         )
+
+# ======================================================
+
+def test_load_old_json_without_id():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(athlete)
+
+    del data["athlete"]["id"]
+
+    loaded = athlete_from_dict(data)
+
+    assert loaded.athlete_id is not None
+    assert isinstance(loaded.athlete_id, str)

@@ -23,6 +23,8 @@ from performancelab.training.planning.planned_workout import (
     PlannedWorkout,
 )
 
+from uuid import uuid4
+
 
 # ======================================================
 # Date serialization
@@ -614,6 +616,8 @@ def athlete_to_dict(athlete):
 
         "athlete": {
 
+            "id": athlete.athlete_id,
+
             "name": athlete.name,
 
             "birth_date": _serialize_date(
@@ -685,6 +689,11 @@ def athlete_from_dict(data):
     )
 
     athlete = Athlete(
+
+        athlete_id=athlete_data.get(
+            "id",
+            str(uuid4()),
+        ),
 
         name=athlete_data.get(
             "name",

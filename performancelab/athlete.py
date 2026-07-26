@@ -8,6 +8,8 @@ Represents an athlete and all associated training data.
 
 from dataclasses import dataclass, field
 from datetime import date
+from uuid import uuid4
+
 
 from .analysis import AthleteAnalytics
 from .goals.goalbook import GoalBook
@@ -23,6 +25,10 @@ from .training.planning import TrainingPlan
 
 @dataclass
 class Athlete:
+    athlete_id: str = field(
+        default_factory=lambda: str(uuid4())
+    )
+
     name: str = ""
     birth_date: date | None = None
     gender: str = ""
