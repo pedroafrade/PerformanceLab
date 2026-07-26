@@ -6,14 +6,15 @@ ONGOING
 
 Vamos começar por: 
 1. Eventos – fazer o planeador olhar para provas futuras e periodizar automaticamente, 
-2. Mover campo de gerador de treino, importador de treino de dashboard para sidebar, onde estavam anteriormente 
-3. adicionar widget com descritivo específico do próximo treino (ou integrar esse descritivo numa linha em rodapé do widget weekly plan, já existente no dashboard) 
+
 4. Qualidade dos treinos – enriquecer o WorkoutGenerator para produzir sessões mais variadas e específicas.
 
 5. Prioridade alta: tornar as estratégias dependentes do desporto (running, cycling, triathlon, etc.), ajustando volume, sessões intensas e sessões longas.
 6. Prioridade média: distinguir eventos A/B/C (prova principal vs secundária), para que uma corrida de treino não desencadeie a mesma recuperação que uma maratona-alvo.
 7. Prioridade média: considerar a distância/tipo do evento (5 km, meia maratona, maratona, ultra), adaptando a recuperação pós-prova.
 8. Prioridade baixa: usar o histórico das últimas semanas (consistência, carga, progressão) para personalizar ainda mais a estratégia.
+
+9. O plano não deveria ser gerado a cada semana, mas por provas. No weekly plan, a semana deveria ir avançando - o centro deveria ser sempre o dia actual, à esquerda com os 3 dias anteriores e à direita com os 3 dias seguintes. Isto evitaria o que acontece agora, que ao Domingo, não é visivel o treino de segunda-feira. Devem ser ainda implementadas setas de forma a poder fazer scroll horizontal para os dias passados e para os futuros.
 ____________________________
 
 Eu também reparei noutra coisa
