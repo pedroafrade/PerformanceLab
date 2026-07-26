@@ -2,6 +2,7 @@
   "format": "PerformanceLab",
   "version": 1,
   "athlete": {
+    "id": "ffd7f527-d205-486a-9434-e2859a15b078",
     "name": "Pedro",
     "birth_date": null,
     "gender": "",
