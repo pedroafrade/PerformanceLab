@@ -10,9 +10,9 @@ from performancelab.presentation import (
     DashboardData,
     has_route,
 )
-from performancelab.training import planning
 
 from .cards import (
+    next_workout_card,
     show_athlete_overview_card,
     show_performance_chart_card,
     show_performance_management_card,
@@ -40,7 +40,6 @@ from .event_manager import (
 from .grid import (
     dashboard_bottom_row,
     dashboard_row,
-    dashboard_top_row,
 )
 from .widget import (
     DashboardAction,
@@ -127,9 +126,25 @@ def show_dashboard(
                 next_event,
             )
 
-    left, right = dashboard_top_row()
+    (
+        physiology_col,
+        workout_col,
+        summary_col,
+        status_col,
+        recovery_col,
+        load_col,
+    ) = dashboard_row(
+        (
+            1.7,
+            1.6,
+            1,
+            1,
+            1,
+            1,
+        ),
+    )
 
-    with left:
+    with physiology_col:
 
         with dashboard_widget(
             title="Physiology",
@@ -141,64 +156,65 @@ def show_dashboard(
                 physiology,
             )
 
-    with right:
+    with workout_col:
 
-        (
-            summary_col,
-            status_col,
-            recovery_col,
-            load_col,
-        ) = dashboard_row(
-            (1, 1, 1, 1),
-        )
+        with dashboard_widget(
+            title="Next Workout",
+            icon=":material/fitness_center:",
+            divider=False,
+        ):
 
-        with summary_col:
+            next_workout_card(
+                planning.next_workout,
+            )
 
-            with dashboard_widget(
-                title="Training Summary",
-                icon=":material/calendar_month:",
-                divider=False,
-            ):
+    with summary_col:
 
-                show_training_summary_card(
-                    summary,
-                )
+        with dashboard_widget(
+            title="Training Summary",
+            icon=":material/calendar_month:",
+            divider=False,
+        ):
 
-        with status_col:
+            show_training_summary_card(
+                summary,
+            )
 
-            with dashboard_widget(
-                title="Performance Status",
-                icon=":material/monitoring:",
-                divider=False,
-            ):
+    with status_col:
 
-                show_performance_management_card(
-                    summary,
-                )
+        with dashboard_widget(
+            title="Performance Status",
+            icon=":material/monitoring:",
+            divider=False,
+        ):
 
-        with recovery_col:
+            show_performance_management_card(
+                summary,
+            )
 
-            with dashboard_widget(
-                title="Recovery",
-                icon=":material/favorite:",
-                divider=False,
-            ):
+    with recovery_col:
 
-                recovery_card(
-                    recovery,
-                )
+        with dashboard_widget(
+            title="Recovery",
+            icon=":material/favorite:",
+            divider=False,
+        ):
 
-        with load_col:
+            recovery_card(
+                recovery,
+            )
 
-            with dashboard_widget(
-                title="Training Load",
-                icon=":material/monitoring:",
-                divider=False,
-            ):
+    with load_col:
 
-                training_load_card(
-                    training_load,
-                )
+        with dashboard_widget(
+            title="Training Load",
+            icon=":material/monitoring:",
+            divider=False,
+        ):
+
+            training_load_card(
+                training_load,
+            )
 
     with dashboard_widget(
         title="Performance",

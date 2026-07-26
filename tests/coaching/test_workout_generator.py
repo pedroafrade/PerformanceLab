@@ -1,814 +1,566 @@
-from datetime import date, timedelta
-
 import pytest
 
 from performancelab.coaching import (
-    CoachContext,
-    DraftTrainingSlot,
-    SessionPurpose,
-    StrategyPlan,
-    TrainingWeek,
-    WorkoutGenerator,
+    DEFAULT_WORKOUT_TEMPLATES,
+    LONG_TEMPLATE,
+    RACE_TEMPLATE,
+    RECOVERY_TEMPLATE,
+    REST_TEMPLATE,
+    WorkoutTemplate,
+    CROSS_TRAINING_TEMPLATE,
 )
 
-from performancelab.training.config import Weekday
+from performancelab.coaching.session_purpose import (
+    SessionPurpose,
+)
+from performancelab.coaching.workout_templates import (
+    EASY_TEMPLATE,
+    INTENSITY_TEMPLATE,
+    THRESHOLD_TEMPLATE,
+    VO2MAX_TEMPLATE,
+    TEMPO_TEMPLATE,
+    HILLS_TEMPLATE,
+    SPEED_TEMPLATE,
+    template_for,
+)
 
-from dataclasses import replace
-
-
-@pytest.fixture
-def strategy_plan() -> StrategyPlan:
-
-    return StrategyPlan(
-        strategy="balanced",
-        phase="base",
-        volume_factor=1.0,
-        target_sessions=4,
-        intensity_sessions=1,
-        long_sessions=1,
-        recovery_days=2,
-        objectives=(
-            "Build aerobic endurance.",
-        ),
-    )
+from performancelab.coaching.strategy import StrategyPlan
+from performancelab.coaching.training_focus import TrainingFocus
 
 
-@pytest.fixture
-def coach_context() -> CoachContext:
+def test_creates_workout_template() -> None:
 
-    return object.__new__(
-        CoachContext
-    )
-
-
-def configure_context(
-    context: CoachContext,
-    sports: tuple[str, ...],
-) -> CoachContext:
-    """
-    Sets fields on a frozen dataclass fixture created without
-    invoking its production constructor.
-    """
-
-    object.__setattr__(
-        context,
-        "sports",
-        sports,
-    )
-
-    return context
-
-
-def make_slot(
-    weekday: Weekday,
-    purpose: SessionPurpose,
-    duration_minutes: int | None,
-) -> DraftTrainingSlot:
-
-    return DraftTrainingSlot(
-        weekday=weekday,
-        purpose=purpose,
-        duration_minutes=duration_minutes,
-    )
-
-
-def make_training_week(
-    *slots: DraftTrainingSlot,
-) -> TrainingWeek:
-
-    return TrainingWeek(
-        start_date=date(
-            2026,
-            7,
-            20,
-        ),
-        slots=slots,
-    )
-
-
-def test_generates_planned_workout(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
+    template = WorkoutTemplate(
         purpose=SessionPurpose.EASY,
-        duration_minutes=60,
+        title="Easy Run",
+        objective="Aerobic endurance",
+        intensity="Easy",
+        description="Run comfortably.",
+        structure=(
+            "Warm-up",
+            "Continuous running",
+            "Cool-down",
+        ),
+        equipment=(
+            "Running shoes",
+        ),
+        sport="running",
     )
 
-    training_week = make_training_week(
-        slot
+    assert template.purpose is SessionPurpose.EASY
+    assert template.title == "Easy Run"
+    assert template.objective == "Aerobic endurance"
+    assert template.intensity == "Easy"
+    assert template.description == "Run comfortably."
+    assert template.sport == "running"
+
+    assert template.structure == (
+        "Warm-up",
+        "Continuous running",
+        "Cool-down",
     )
 
-    generator = WorkoutGenerator()
-
-    workouts = generator.generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    assert len(workouts) == 1
-
-    workout = workouts[0]
-
-    assert workout.day == date(
-        2026,
-        7,
-        20,
-    )
-
-    assert workout.sport == "running"
-
-    assert (
-        workout.title
-        == "Easy Aerobic Session"
-    )
-
-    assert workout.duration == timedelta(
-        minutes=60
-    )
-
-    assert workout.intensity == "Easy"
-
-    assert (
-        "Develop aerobic endurance"
-        in workout.objective
+    assert template.equipment == (
+        "Running shoes",
     )
 
 
-def test_generates_workouts_in_date_order(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
+def test_template_is_immutable() -> None:
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Aerobic endurance",
+        intensity="Easy",
+    )
+
+    with pytest.raises(
+        AttributeError,
+    ):
+
+        template.title = "Changed"
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "title",
+        "objective",
+        "intensity",
+    ),
+)
+def test_required_text_cannot_be_empty(
+    field_name: str,
 ) -> None:
 
-    configure_context(
-        coach_context,
-        ("running",),
-    )
+    values = {
+        "purpose": SessionPurpose.EASY,
+        "title": "Easy Session",
+        "objective": "Aerobic endurance",
+        "intensity": "Easy",
+    }
 
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.WEDNESDAY,
-            purpose=SessionPurpose.INTENSITY,
-            duration_minutes=50,
+    values[field_name] = "   "
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            f"{field_name} cannot be empty"
         ),
-        make_slot(
-            weekday=Weekday.MONDAY,
+    ):
+
+        WorkoutTemplate(**values)
+
+
+def test_purpose_must_be_session_purpose() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "purpose must be a SessionPurpose"
+        ),
+    ):
+
+        WorkoutTemplate(
+            purpose="easy",
+            title="Easy Session",
+            objective="Aerobic endurance",
+            intensity="Easy",
+        )
+
+
+def test_structure_must_be_tuple() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match="structure must be a tuple",
+    ):
+
+        WorkoutTemplate(
             purpose=SessionPurpose.EASY,
-            duration_minutes=45,
+            title="Easy Session",
+            objective="Aerobic endurance",
+            intensity="Easy",
+            structure=[
+                "Warm-up",
+            ],
+        )
+
+
+def test_structure_must_contain_strings() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "structure must contain strings"
         ),
-        make_slot(
-            weekday=Weekday.TUESDAY,
-            purpose=SessionPurpose.RECOVERY,
-            duration_minutes=30,
-        ),
-    )
+    ):
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    assert tuple(
-        workout.day
-        for workout in workouts
-    ) == (
-        date(2026, 7, 20),
-        date(2026, 7, 21),
-        date(2026, 7, 22),
-    )
-
-
-def test_maps_weekdays_to_calendar_dates(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
+        WorkoutTemplate(
             purpose=SessionPurpose.EASY,
-            duration_minutes=30,
+            title="Easy Session",
+            objective="Aerobic endurance",
+            intensity="Easy",
+            structure=(
+                "Warm-up",
+                10,
+            ),
+        )
+
+
+def test_structure_cannot_contain_empty_values() -> None:
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "structure cannot contain empty values"
         ),
-        make_slot(
-            weekday=Weekday.SUNDAY,
-            purpose=SessionPurpose.LONG,
-            duration_minutes=90,
-        ),
+    ):
+
+        WorkoutTemplate(
+            purpose=SessionPurpose.EASY,
+            title="Easy Session",
+            objective="Aerobic endurance",
+            intensity="Easy",
+            structure=(
+                "Warm-up",
+                "",
+            ),
+        )
+
+
+def test_equipment_must_be_tuple() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match="equipment must be a tuple",
+    ):
+
+        WorkoutTemplate(
+            purpose=SessionPurpose.EASY,
+            title="Easy Session",
+            objective="Aerobic endurance",
+            intensity="Easy",
+            equipment=[
+                "Shoes",
+            ],
+        )
+
+
+def test_for_sport_returns_new_template() -> None:
+
+    original = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Aerobic endurance",
+        intensity="Easy",
     )
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
+    running = original.for_sport(
+        "running"
     )
 
-    assert workouts[0].day == date(
-        2026,
-        7,
-        20,
+    assert running is not original
+    assert original.sport is None
+    assert running.sport == "running"
+
+    assert running.purpose is original.purpose
+    assert running.title == original.title
+    assert running.objective == original.objective
+    assert running.intensity == original.intensity
+    assert running.structure == original.structure
+
+
+def test_for_sport_rejects_empty_sport() -> None:
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Aerobic endurance",
+        intensity="Easy",
     )
 
-    assert workouts[1].day == date(
-        2026,
-        7,
-        26,
-    )
+    with pytest.raises(
+        ValueError,
+        match="sport cannot be empty",
+    ):
+
+        template.for_sport("   ")
 
 
-def test_rest_slots_are_skipped_by_default(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    slot = DraftTrainingSlot.rest(
-        Weekday.MONDAY
-    )
-
-    training_week = make_training_week(
-        slot
-    )
-
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    assert workouts == ()
-
-
-def test_can_generate_rest_placeholders(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    slot = DraftTrainingSlot.rest(
-        Weekday.MONDAY
-    )
-
-    training_week = make_training_week(
-        slot
-    )
-
-    generator = WorkoutGenerator(
-        include_rest_days=True
-    )
-
-    workouts = generator.generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    assert len(workouts) == 1
-
-    assert workouts[0].is_rest
-
-    assert workouts[0].day == date(
-        2026,
-        7,
-        20,
-    )
-
-
-def test_uses_first_context_sport(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
+@pytest.mark.parametrize(
+    (
+        "purpose",
+        "expected",
+    ),
+    (
         (
-            "cycling",
-            "running",
+            SessionPurpose.REST,
+            REST_TEMPLATE,
+        ),
+        (
+            SessionPurpose.RECOVERY,
+            RECOVERY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.EASY,
+            EASY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.INTENSITY,
+            INTENSITY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.LONG,
+            LONG_TEMPLATE,
+        ),
+        (
+            SessionPurpose.RACE,
+            RACE_TEMPLATE,
+        ),
+        (
+            SessionPurpose.CROSS_TRAINING,
+            CROSS_TRAINING_TEMPLATE,
+        ),
+    ),
+)
+def test_returns_default_template(
+    purpose: SessionPurpose,
+    expected: WorkoutTemplate,
+) -> None:
+
+    assert template_for(
+        purpose
+    ) is expected
+
+
+def test_catalog_contains_every_purpose() -> None:
+
+    assert set(
+        DEFAULT_WORKOUT_TEMPLATES
+    ) == set(
+        SessionPurpose
+    )
+
+
+def test_catalog_is_immutable() -> None:
+
+    with pytest.raises(
+        TypeError,
+    ):
+
+        DEFAULT_WORKOUT_TEMPLATES[
+            SessionPurpose.EASY
+        ] = REST_TEMPLATE
+
+
+def test_template_for_rejects_invalid_purpose() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "purpose must be a SessionPurpose"
+        ),
+    ):
+
+        template_for("easy")
+
+
+def test_repr_contains_useful_information() -> None:
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.LONG,
+        title="Long Run",
+        objective="Endurance",
+        intensity="Easy",
+        sport="running",
+    )
+
+    representation = repr(template)
+
+    assert "WorkoutTemplate" in representation
+    assert "'long'" in representation
+    assert "'Long Run'" in representation
+    assert "'running'" in representation
+
+
+def make_strategy_plan(
+    **overrides,
+) -> StrategyPlan:
+
+    values = {
+        "strategy": "BuildStrategy",
+        "phase": "Build",
+        "volume_factor": 1.0,
+        "target_sessions": 5,
+        "intensity_sessions": 1,
+        "long_sessions": 1,
+        "recovery_days": 2,
+    }
+
+    values.update(overrides)
+
+    return StrategyPlan(**values)
+
+
+def test_customizes_template_with_strategy_plan():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.INTENSITY,
+        title="Quality Session",
+        objective="Develop aerobic power.",
+        intensity="Hard",
+        description="Complete the intervals with control.",
+        structure=(
+            "Warm-up",
+            "Main intervals",
+            "Cool-down",
         ),
     )
 
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
-            purpose=SessionPurpose.EASY,
-            duration_minutes=60,
-        )
+    strategy_plan = make_strategy_plan(
+        focus="threshold",
+        objectives=(
+            "Develop sustainable speed.",
+        ),
+        guidelines=(
+            "Keep the opening repetitions controlled.",
+        ),
+        warnings=(
+            "Monitor accumulated fatigue.",
+        ),
     )
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
+    customized = template.customized_for(
+        strategy_plan
     )
 
-    assert workouts[0].sport == "cycling"
+    assert customized is not template
 
-
-def test_allows_context_without_sports(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        (),
-    )
-
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
-            purpose=SessionPurpose.EASY,
-            duration_minutes=60,
-        )
-    )
-
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    assert workouts[0].sport is None
-
-
-def test_uses_template_structure(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
-            purpose=SessionPurpose.INTENSITY,
-            duration_minutes=60,
-        )
-    )
-
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    workout = workouts[0]
-
-    assert workout.structure
+    assert customized.purpose is template.purpose
+    assert customized.title == template.title
+    assert customized.intensity == template.intensity
+    assert customized.structure == template.structure
 
     assert (
-        "Main work intervals"
-        in workout.structure
+        "Develop sustainable speed."
+        in customized.objective
     )
 
+    description = customized.description.lower()
 
-def test_rejects_training_slot_without_duration(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
+    assert "threshold" in description
+    assert "main work" in description
+    assert "controlled pacing" in description
+    assert "opening repetitions controlled" in description
+    assert "accumulated fatigue" in description
 
-    configure_context(
-        coach_context,
-        ("running",),
+
+def test_customization_enriches_empty_template_description():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Develop aerobic endurance.",
+        intensity="Easy",
     )
 
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
-            purpose=SessionPurpose.EASY,
-            duration_minutes=None,
-        )
+    customized = template.customized_for(
+        make_strategy_plan()
     )
 
-    with pytest.raises(
-        ValueError,
-        match=(
-            "training slots must have a duration"
-        ),
-    ):
-
-        WorkoutGenerator().generate(
-            strategy_plan=strategy_plan,
-            training_week=training_week,
-            coach_context=coach_context,
-        )
-
-
-def test_rejects_zero_duration_training_slot(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    training_week = make_training_week(
-        make_slot(
-            weekday=Weekday.MONDAY,
-            purpose=SessionPurpose.EASY,
-            duration_minutes=0,
-        )
-    )
-
-    with pytest.raises(
-        ValueError,
-        match=(
-            "training slots must have a positive duration"
-        ),
-    ):
-
-        WorkoutGenerator().generate(
-            strategy_plan=strategy_plan,
-            training_week=training_week,
-            coach_context=coach_context,
-        )
-
-
-def test_rejects_invalid_strategy_plan(
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    training_week = make_training_week()
-
-    with pytest.raises(
-        TypeError,
-        match=(
-            "strategy_plan must be a StrategyPlan"
-        ),
-    ):
-
-        WorkoutGenerator().generate(
-            strategy_plan=object(),
-            training_week=training_week,
-            coach_context=coach_context,
-        )
-
-
-def test_rejects_invalid_training_week(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    with pytest.raises(
-        TypeError,
-        match=(
-            "training_week must be a TrainingWeek"
-        ),
-    ):
-
-        WorkoutGenerator().generate(
-            strategy_plan=strategy_plan,
-            training_week=object(),
-            coach_context=coach_context,
-        )
-
-
-def test_rejects_invalid_context(
-    strategy_plan: StrategyPlan,
-) -> None:
-
-    training_week = make_training_week()
-
-    with pytest.raises(
-        TypeError,
-        match=(
-            "coach_context must be a CoachContext"
-        ),
-    ):
-
-        WorkoutGenerator().generate(
-            strategy_plan=strategy_plan,
-            training_week=training_week,
-            coach_context=object(),
-        )
-
-
-def test_rejects_invalid_rest_configuration() -> None:
-
-    with pytest.raises(
-        TypeError,
-        match=(
-            "include_rest_days must be a bool"
-        ),
-    ):
-
-        WorkoutGenerator(
-            include_rest_days="yes"
-        )
-
-
-def test_repr_contains_configuration() -> None:
-
-    generator = WorkoutGenerator(
-        include_rest_days=True
-    )
-
-    representation = repr(
-        generator
-    )
-
+    assert customized.objective == template.objective
+    assert customized.description
     assert (
-        "WorkoutGenerator"
-        in representation
+        "comfortably aerobic"
+        in customized.description.lower()
+    )
+    assert customized.structure == template.structure
+
+
+def test_rejects_invalid_strategy_plan():
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.EASY,
+        title="Easy Session",
+        objective="Develop aerobic endurance.",
+        intensity="Easy",
     )
 
-    assert (
-        "include_rest_days=True"
-        in representation
-    )
+    with pytest.raises(
+        TypeError,
+        match="strategy_plan",
+    ):
+        template.customized_for(
+            object()
+        )
 
-def test_uses_threshold_template_when_focus_is_threshold(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
+def test_returns_threshold_template_for_threshold_focus():
 
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    strategy_plan = replace(
-        strategy_plan,
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="threshold",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
+    assert template is THRESHOLD_TEMPLATE
+    assert template.title == "Threshold Session"
+    assert template.purpose is SessionPurpose.INTENSITY
+
+
+def test_focus_matching_is_normalized():
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
+        focus=" Threshold ",
     )
 
-    training_week = make_training_week(
-        slot
-    )
+    assert template is THRESHOLD_TEMPLATE
 
-    generator = WorkoutGenerator()
 
-    workouts = generator.generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
+def test_returns_default_when_focus_has_no_template():
 
-    workout = workouts[0]
-
-    assert workout.title == "Threshold Session"
-    assert workout.intensity == "Moderately hard"
-
-    assert (
-        "Controlled threshold intervals"
-        in workout.structure
-    )
-
-def test_uses_default_intensity_template_for_other_focus(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    strategy_plan = replace(
-        strategy_plan,
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="aerobic endurance",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
+    assert template is INTENSITY_TEMPLATE
+
+
+def test_focus_does_not_override_another_purpose():
+
+    template = template_for(
+        SessionPurpose.EASY,
+        focus="threshold",
     )
 
-    training_week = make_training_week(
-        slot
-    )
+    assert template is EASY_TEMPLATE
 
-    generator = WorkoutGenerator()
 
-    workouts = generator.generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
+def test_rejects_invalid_focus_type():
 
-    workout = workouts[0]
+    with pytest.raises(
+        TypeError,
+        match="focus",
+    ):
+        template_for(
+            SessionPurpose.INTENSITY,
+            focus=123,
+        )
 
-    assert workout.title == "Quality Session"
-    assert workout.intensity == "Hard"
 
-    assert (
-        "Main work intervals"
-        in workout.structure
-    )
+def test_rejects_empty_focus():
 
-def test_uses_vo2max_template_when_focus_is_vo2max(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
+    with pytest.raises(
+        ValueError,
+        match="focus",
+    ):
+        template_for(
+            SessionPurpose.INTENSITY,
+            focus="   ",
+        )
 
-    configure_context(
-        coach_context,
-        ("running",),
-    )
 
-    strategy_plan = replace(
-        strategy_plan,
+def test_returns_vo2max_template_for_vo2max_focus() -> None:
+
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="vo2max",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
-    )
+    assert template is VO2MAX_TEMPLATE
+    assert template.title == "VO₂max Session"
+    assert template.intensity == "Very hard"
 
-    training_week = make_training_week(
-        slot
-    )
+def test_returns_tempo_template_for_tempo_focus() -> None:
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    workout = workouts[0]
-
-    assert workout.title == "VO₂max Session"
-    assert workout.intensity == "Very hard"
-
-    assert (
-        "VO₂max intervals"
-        in workout.structure
-    )
-
-def test_uses_tempo_template_when_focus_is_tempo(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    strategy_plan = replace(
-        strategy_plan,
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="tempo",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
-    )
+    assert template is TEMPO_TEMPLATE
+    assert template.title == "Tempo Session"
+    assert template.intensity == "Hard"
 
-    training_week = make_training_week(
-        slot
-    )
+def test_returns_hills_template_for_hills_focus() -> None:
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    workout = workouts[0]
-
-    assert workout.title == "Tempo Session"
-    assert workout.intensity == "Hard"
-
-    assert (
-        "Continuous tempo effort"
-        in workout.structure
-    )
-
-def test_uses_hills_template_when_focus_is_hills(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    strategy_plan = replace(
-        strategy_plan,
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="hills",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
-    )
+    assert template is HILLS_TEMPLATE
+    assert template.title == "Hill Session"
+    assert template.intensity == "Hard"
 
-    training_week = make_training_week(
-        slot
-    )
+def test_returns_speed_template_for_speed_focus() -> None:
 
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    workout = workouts[0]
-
-    assert workout.title == "Hill Session"
-    assert workout.intensity == "Hard"
-
-    assert (
-        "Uphill repetitions"
-        in workout.structure
-    )
-
-    assert (
-        "Easy downhill recovery"
-        in workout.structure
-    )
-
-def test_uses_speed_template_when_focus_is_speed(
-    strategy_plan: StrategyPlan,
-    coach_context: CoachContext,
-) -> None:
-
-    configure_context(
-        coach_context,
-        ("running",),
-    )
-
-    strategy_plan = replace(
-        strategy_plan,
+    template = template_for(
+        SessionPurpose.INTENSITY,
         focus="speed",
     )
 
-    slot = make_slot(
-        weekday=Weekday.MONDAY,
-        purpose=SessionPurpose.INTENSITY,
-        duration_minutes=60,
-    )
-
-    training_week = make_training_week(
-        slot
-    )
-
-    workouts = WorkoutGenerator().generate(
-        strategy_plan=strategy_plan,
-        training_week=training_week,
-        coach_context=coach_context,
-    )
-
-    workout = workouts[0]
-
-    assert workout.title == "Speed Session"
-    assert workout.intensity == "Very hard"
-
-    assert (
-        "Short fast repetitions"
-        in workout.structure
-    )
-
-    assert (
-        "Full recovery between repetitions"
-        in workout.structure
-    )
+    assert template is SPEED_TEMPLATE
+    assert template.title == "Speed Session"
+    assert template.intensity == "Very hard"

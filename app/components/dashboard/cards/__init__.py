@@ -4,6 +4,9 @@ from .athlete_overview import (
 from .common import (
     format_duration,
 )
+from .next_workout_card import (
+    next_workout_card,
+)
 from .performance_chart import (
     show_performance_chart_card,
 )
@@ -20,8 +23,10 @@ from .workout_history import (
     show_workout_history_card,
 )
 
+
 __all__ = [
     "format_duration",
+    "next_workout_card",
     "show_athlete_overview_card",
     "show_performance_chart_card",
     "show_performance_management_card",

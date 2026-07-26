@@ -11,6 +11,7 @@ import streamlit as st
 from .activity_input import (
     show_activity_input,
 )
+from .i18n import translate
 
 
 # ======================================================
@@ -20,42 +21,32 @@ from .activity_input import (
 _NAVIGATION_ITEMS = (
     (
         "dashboard",
-        "Dashboard",
+        "nav.dashboard",
         ":material/dashboard:",
     ),
     (
         "training",
-        "Treinos",
+        "nav.training",
         ":material/fitness_center:",
     ),
     (
-        "goals",
-        "Objetivos",
-        ":material/flag:",
-    ),
-    (
         "events",
-        "Eventos",
+        "nav.events",
         ":material/event:",
     ),
     (
         "analytics",
-        "Análises",
+        "nav.analytics",
         ":material/analytics:",
     ),
     (
         "statistics",
-        "Estatísticas",
+        "nav.statistics",
         ":material/bar_chart:",
     ),
     (
-        "equipment",
-        "Equipamento",
-        ":material/directions_bike:",
-    ),
-    (
         "settings",
-        "Configurações",
+        "nav.settings",
         ":material/settings:",
     ),
 )
@@ -92,8 +83,19 @@ def _sidebar_styles(
         }}
 
         [data-testid="stSidebarContent"] {{
-            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
+        }}
+
+        [data-testid="stSidebarContent"]
+        > div:first-child {{
+            min-height: 0;
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
         }}
 
         [data-testid="stSidebarHeader"] {{
@@ -103,24 +105,35 @@ def _sidebar_styles(
         }}
 
         [data-testid="stSidebar"] > div:first-child {{
-            padding: 0 0.7rem 0.25rem;
+            padding:
+                0
+                0.7rem
+                clamp(0.12rem, 0.45vh, 0.25rem);
         }}
 
         .performancelab-brand {{
-            margin: -0.55rem 0 0;
+            margin:
+                clamp(-0.55rem, -0.8vh, -0.2rem)
+                0
+                0;
             padding: 0 0.45rem;
-            font-size: 1.3rem;
+            font-size: clamp(1.02rem, 2.2vh, 1.3rem);
             font-weight: 700;
             letter-spacing: -0.04em;
-            line-height: 1.2;
+            line-height: 1.15;
         }}
 
         .sidebar-account {{
             display: flex;
             align-items: center;
-            gap: 0.55rem;
-            margin: 0.2rem 0 0.25rem;
-            padding: 0.3rem 0.45rem;
+            gap: clamp(0.4rem, 0.8vh, 0.55rem);
+            margin:
+                clamp(0.08rem, 0.35vh, 0.2rem)
+                0
+                clamp(0.1rem, 0.4vh, 0.25rem);
+            padding:
+                clamp(0.18rem, 0.55vh, 0.3rem)
+                0.45rem;
             border-radius: 0.5rem;
         }}
 
@@ -128,12 +141,12 @@ def _sidebar_styles(
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 1.7rem;
-            height: 1.7rem;
-            flex: 0 0 1.7rem;
+            width: clamp(1.4rem, 3.1vh, 1.7rem);
+            height: clamp(1.4rem, 3.1vh, 1.7rem);
+            flex: 0 0 clamp(1.4rem, 3.1vh, 1.7rem);
             border: 1px solid rgba(128, 128, 128, 0.35);
             border-radius: 50%;
-            font-size: 0.8rem;
+            font-size: clamp(0.68rem, 1.45vh, 0.8rem);
         }}
 
         .sidebar-account-name {{
@@ -147,12 +160,21 @@ def _sidebar_styles(
         }}
 
         [data-testid="stSidebar"] hr {{
-            margin: 0.25rem 0;
+            margin: clamp(0.08rem, 0.42vh, 0.25rem) 0;
             border-color: rgba(128, 128, 128, 0.22);
         }}
 
         .st-key-sidebar_navigation {{
+            min-height: 0;
             margin: 0;
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+        }}
+
+        .st-key-sidebar_navigation
+        > [data-testid="stVerticalBlock"] {{
+            gap: clamp(0.01rem, 0.16vh, 0.08rem);
         }}
 
         .st-key-sidebar_navigation .stButton {{
@@ -160,17 +182,19 @@ def _sidebar_styles(
         }}
 
         .st-key-sidebar_navigation .stButton button {{
-            min-height: 1.95rem;
-            height: 1.95rem;
-            margin: 0.015rem 0;
-            padding: 0.25rem 0.55rem;
+            min-height: clamp(1.55rem, 3.55vh, 1.95rem);
+            height: clamp(1.55rem, 3.55vh, 1.95rem);
+            margin: 0;
+            padding:
+                clamp(0.08rem, 0.35vh, 0.25rem)
+                0.55rem;
             justify-content: flex-start;
             border: 0;
             border-radius: 0.5rem;
             background: transparent;
             box-shadow: none;
             color: inherit;
-            font-size: 0.86rem;
+            font-size: clamp(0.74rem, 1.55vh, 0.86rem);
             font-weight: 500;
         }}
 
@@ -197,17 +221,27 @@ def _sidebar_styles(
         }}
 
         .st-key-sidebar_lower {{
-            margin-top: 0.15rem;
+            flex: 0 0 auto;
+            margin-top: auto;
+            padding-top: clamp(0.05rem, 0.3vh, 0.15rem);
+        }}
+
+        .st-key-sidebar_lower
+        > [data-testid="stVerticalBlock"] {{
+            gap: clamp(0.12rem, 0.42vh, 0.45rem);
         }}
 
         .sidebar-section-label {{
-            margin: 0.15rem 0 0.05rem;
+            margin:
+                clamp(0.05rem, 0.3vh, 0.15rem)
+                0
+                clamp(0.02rem, 0.14vh, 0.05rem);
             padding: 0 0.4rem;
             color: rgba(128, 128, 128, 0.9);
-            font-size: 0.63rem;
+            font-size: clamp(0.56rem, 1.12vh, 0.63rem);
             font-weight: 600;
             letter-spacing: 0.05em;
-            line-height: 1.1;
+            line-height: 1.05;
             text-transform: uppercase;
         }}
 
@@ -216,10 +250,10 @@ def _sidebar_styles(
         }}
 
         [data-testid="stSidebar"] details summary {{
-            min-height: 1.85rem;
-            padding-top: 0.2rem;
-            padding-bottom: 0.2rem;
-            font-size: 0.8rem;
+            min-height: clamp(1.55rem, 3.3vh, 1.85rem);
+            padding-top: clamp(0.08rem, 0.3vh, 0.2rem);
+            padding-bottom: clamp(0.08rem, 0.3vh, 0.2rem);
+            font-size: clamp(0.72rem, 1.42vh, 0.8rem);
         }}
 
         [data-testid="stSidebar"] h1,
@@ -242,10 +276,10 @@ def _sidebar_styles(
 
         .st-key-sidebar_activity
         [data-testid="stSegmentedControl"] button {{
-            min-height: 1.75rem;
-            padding-top: 0.15rem;
-            padding-bottom: 0.15rem;
-            font-size: 0.76rem;
+            min-height: clamp(1.45rem, 3.1vh, 1.75rem);
+            padding-top: clamp(0.05rem, 0.22vh, 0.15rem);
+            padding-bottom: clamp(0.05rem, 0.22vh, 0.15rem);
+            font-size: clamp(0.68rem, 1.35vh, 0.76rem);
         }}
 
         .st-key-sidebar_activity
@@ -255,8 +289,8 @@ def _sidebar_styles(
 
         .st-key-sidebar_activity
         [data-testid="stFileUploaderDropzone"] {{
-            min-height: 2.85rem;
-            padding: 0.3rem;
+            min-height: clamp(2.2rem, 5.1vh, 2.85rem);
+            padding: clamp(0.18rem, 0.45vh, 0.3rem);
         }}
 
         .st-key-sidebar_activity
@@ -308,6 +342,59 @@ def _sidebar_styles(
             text-align: left !important;
         }}
 
+        @media (max-height: 820px) {{
+            [data-testid="stSidebarHeader"] {{
+                min-height: 0.5rem;
+                height: 0.5rem;
+            }}
+
+            .st-key-sidebar_navigation .stButton button {{
+                min-height: 1.62rem;
+                height: 1.62rem;
+                font-size: 0.76rem;
+            }}
+
+            .st-key-sidebar_lower
+            > [data-testid="stVerticalBlock"] {{
+                gap: 0.12rem;
+            }}
+
+            .st-key-sidebar_activity p {{
+                margin: 0;
+                font-size: 0.67rem;
+                line-height: 1.05;
+            }}
+        }}
+
+        @media (max-height: 700px) {{
+            .performancelab-brand {{
+                font-size: 1rem;
+            }}
+
+            .sidebar-account {{
+                margin: 0;
+                padding-top: 0.12rem;
+                padding-bottom: 0.12rem;
+            }}
+
+            .st-key-sidebar_navigation .stButton button {{
+                min-height: 1.45rem;
+                height: 1.45rem;
+                padding-top: 0.04rem;
+                padding-bottom: 0.04rem;
+                font-size: 0.72rem;
+            }}
+
+            .sidebar-section-label {{
+                margin: 0;
+                font-size: 0.54rem;
+            }}
+
+            [data-testid="stSidebar"] hr {{
+                margin: 0.05rem 0;
+            }}
+        }}
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -346,10 +433,10 @@ def _show_navigation() -> str:
         key="sidebar_navigation",
     ):
 
-        for page, label, icon in _NAVIGATION_ITEMS:
+        for page, label_key, icon in _NAVIGATION_ITEMS:
 
             st.button(
-                label,
+                translate(label_key),
                 icon=icon,
                 use_container_width=True,
                 key=f"sidebar_nav_{page}",
@@ -388,7 +475,7 @@ def _show_user_account(
     )
 
     st.button(
-        "Edit athlete",
+        translate("athlete.edit"),
         icon=":material/edit:",
         use_container_width=True,
         key="sidebar_edit_athlete",
@@ -448,14 +535,16 @@ def show_sidebar(
             ):
 
                 st.markdown(
-                    '<div class="sidebar-section-label">'
-                    'Plano de treino'
-                    '</div>',
+                    (
+                        '<div class="sidebar-section-label">'
+                        f'{translate("plan.section")}'
+                        '</div>'
+                    ),
                     unsafe_allow_html=True,
                 )
 
                 st.button(
-                    "Gerar plano semanal",
+                    translate("plan.generate"),
                     icon=":material/auto_awesome:",
                     use_container_width=True,
                     key="sidebar_generate_plan",
@@ -466,9 +555,11 @@ def show_sidebar(
                 st.divider()
 
                 st.markdown(
-                    '<div class="sidebar-section-label">'
-                    'Importar treino'
-                    '</div>',
+                    (
+                        '<div class="sidebar-section-label">'
+                        f'{translate("activity.section")}'
+                        '</div>'
+                    ),
                     unsafe_allow_html=True,
                 )
 

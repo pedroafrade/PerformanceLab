@@ -142,23 +142,12 @@ def _next_workout_description(
     workout,
 ) -> str | None:
     """
-    Builds a single-line practical summary of the next workout.
+    Builds a compact single-line execution summary for the
+    next workout.
     """
 
     if workout is None:
         return None
-
-    parts = []
-
-    objective = (
-        workout.objective
-        or workout.description
-    )
-
-    if objective:
-        parts.append(
-            str(objective).strip()
-        )
 
     structure = [
         str(step).strip()
@@ -166,16 +155,11 @@ def _next_workout_description(
         if str(step).strip()
     ]
 
-    if structure:
-        parts.append(
-            " + ".join(structure)
-        )
-
-    if not parts:
+    if not structure:
         return None
 
     return escape(
-        "  ".join(parts)
+        " + ".join(structure)
     )
 
 
@@ -329,10 +313,8 @@ def show_planning_card(
                 unsafe_allow_html=True,
             )
 
-    next_description = (
-        _next_workout_description(
-            planning.next_workout
-        )
+    next_description = _next_workout_description(
+        planning.next_workout
     )
 
     if next_description:

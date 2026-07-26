@@ -409,10 +409,12 @@ def test_customizes_template_with_strategy_plan():
         in customized.objective
     )
 
-    assert (
-        "Weekly focus: threshold."
-        in customized.description
-    )
+    description = customized.description.lower()
+
+    assert "threshold" in description
+    assert "main work" in description
+    assert "controlled pacing" in description
+    assert "accumulated fatigue" in description
 
     assert (
         "Keep the opening repetitions controlled."
@@ -439,7 +441,11 @@ def test_customization_does_not_change_empty_template():
     )
 
     assert customized.objective == template.objective
-    assert customized.description == template.description
+    assert customized.description
+    assert (
+        "comfortably aerobic"
+        in customized.description.lower()
+    )
     assert customized.structure == template.structure
 
 

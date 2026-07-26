@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from .recommendation import CoachRecommendation
 from .session_purpose import SessionPurpose
 if TYPE_CHECKING:
     from .strategy import StrategyPlan
@@ -154,12 +155,17 @@ class WorkoutTemplate:
 
     # ======================================================
 
+
     def customized_for(
         self,
         strategy_plan: "StrategyPlan",
     ) -> "WorkoutTemplate":
         """
         Returns a copy enriched with the strategy plan context.
+
+        Athlete-facing language is delegated to
+        CoachRecommendation so this class remains focused on
+        describing the workout itself.
         """
 
         from .strategy import StrategyPlan
@@ -173,14 +179,6 @@ class WorkoutTemplate:
             )
 
         objective = self.objective
-        description_parts: list[str] = []
-
-        structure = list(self.structure)
-
-        if self.description:
-            description_parts.append(
-                self.description
-            )
 
         if strategy_plan.objectives:
             objective = (
@@ -188,94 +186,11 @@ class WorkoutTemplate:
                 f"{' '.join(strategy_plan.objectives)}"
             )
 
-        if strategy_plan.focus is not None:
-            focus_value = getattr(
-                strategy_plan.focus,
-                "value",
-                str(strategy_plan.focus),
+        description = (
+            CoachRecommendation.workout_summary(
+                strategy_plan=strategy_plan,
+                workout_template=self,
             )
-            description_parts.append(
-                f"Weekly focus: {focus_value}."
-            )
-
-        if strategy_plan.key_session_focus is not None:
-            description_parts.append(
-                f"Primary session focus: "
-                f"{strategy_plan.key_session_focus}."
-            )
-
-        if (
-            self.purpose is SessionPurpose.INTENSITY
-            and strategy_plan.key_session_focus
-        ):
-
-            structure.insert(
-                2,
-                f"Primary focus: "
-                f"{strategy_plan.key_session_focus}."
-            )
-
-        if strategy_plan.secondary_focus is not None:
-            description_parts.append(
-                f"Secondary session focus: "
-                f"{strategy_plan.secondary_focus}."
-            )
-
-        if (
-            self.purpose is SessionPurpose.LONG
-            and strategy_plan.secondary_focus
-        ):
-
-            structure.insert(
-                1,
-                f"Secondary focus: "
-                f"{strategy_plan.secondary_focus}."
-            )
-
-        if strategy_plan.recovery_priority != "normal":
-            description_parts.append(
-                f"Recovery priority: "
-                f"{strategy_plan.recovery_priority}."
-            )
-
-        if strategy_plan.recovery_priority == "high":
-
-            structure.append(
-                "Prioritize recovery between efforts."
-            )
-
-            structure.append(
-                "Finish feeling capable of another interval."
-            )
-
-        if strategy_plan.race_specificity >= 0.80:
-
-            structure.insert(
-                -1,
-                "Include race-specific pacing."
-            )
-
-        elif strategy_plan.race_specificity >= 0.50:
-
-            structure.insert(
-                -1,
-                "Practice sustained race rhythm."
-            )
-
-        if strategy_plan.race_specificity > 0:
-            percentage = round(
-                strategy_plan.race_specificity * 100
-            )
-
-            description_parts.append(
-                f"Race specificity: {percentage}%."
-            )
-
-        description_parts.extend(
-            strategy_plan.guidelines
-        )
-        description_parts.extend(
-            strategy_plan.warnings
         )
 
         return WorkoutTemplate(
@@ -283,14 +198,11 @@ class WorkoutTemplate:
             title=self.title,
             objective=objective,
             intensity=self.intensity,
-            description=" ".join(
-                description_parts
-            ),
-            structure=tuple(structure),
+            description=description,
+            structure=self.structure,
             equipment=self.equipment,
             sport=self.sport,
         )
-
     # ======================================================
 
     def __repr__(self) -> str:
