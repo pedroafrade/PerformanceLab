@@ -1,5 +1,5 @@
 from performancelab.athlete import Athlete
-from performancelab.storage.json_repository import (
+from performancelab.storage.json_athlete_repository import (
     JsonAthleteRepository,
 )
 

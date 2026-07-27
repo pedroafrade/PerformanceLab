@@ -5,18 +5,23 @@ Authentication service.
 """
 
 from performancelab.identity import User
+from performancelab.storage.user_repository import UserRepository
 
 
 class AuthenticationService:
     """
-    Manage the currently authenticated user.
+    Manage user authentication.
 
-    This initial implementation stores authentication state only in memory.
-    Passwords, tokens and persistent sessions can be added later without
-    changing the rest of the application.
+    This initial implementation authenticates users by email only.
+    Password validation can be introduced later without changing the
+    application-facing interface.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        repository: UserRepository,
+    ) -> None:
+        self._repository = repository
         self._current_user: User | None = None
 
     @property
@@ -35,18 +40,17 @@ class AuthenticationService:
         """
         return self._current_user is not None
 
-    def login(self, user: User) -> None:
+    def login(self, email: str) -> User:
         """
-        Authenticate a user.
+        Authenticate a user by email.
 
-        This initial version receives an already validated User object.
+        Raise KeyError when no user exists with the provided email.
         """
-        if not isinstance(user, User):
-            raise TypeError(
-                "AuthenticationService.login expects a User instance."
-            )
+        user = self._repository.get_by_email(email)
 
         self._current_user = user
+
+        return user
 
     def logout(self) -> None:
         """

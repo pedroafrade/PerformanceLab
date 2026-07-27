@@ -22,7 +22,7 @@ from performancelab import (
     create_workout,
 )
 
-from performancelab.storage.json_repository import (
+from performancelab.storage.json_athlete_repository import (
     JsonAthleteRepository,
 )
 
