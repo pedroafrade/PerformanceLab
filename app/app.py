@@ -331,6 +331,43 @@ def show_accounts_page() -> None:
         hide_index=True,
     )
 
+def load_active_athlete(
+    current_user: User,
+) -> Athlete:
+    """
+    Load the athlete whose dashboard should be displayed.
+
+    Athlete users see their own profile.
+
+    Coach users initially see the first athlete in
+    alphabetical order.
+    """
+
+    if current_user.is_athlete:
+
+        if current_user.athlete_id is None:
+            raise ValueError(
+                "Athlete user has no athlete profile."
+            )
+
+        return athlete_repository.get(
+            current_user.athlete_id
+        )
+
+    athletes = athlete_repository.list()
+
+    if not athletes:
+        raise LookupError(
+            "No athlete profiles are available."
+        )
+
+    athletes = sorted(
+        athletes,
+        key=lambda athlete: athlete.name.lower(),
+    )
+
+    return athletes[0]
+
 def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
@@ -350,6 +387,7 @@ def initialize_session_state() -> None:
     # --------------------------------------------------
 
     if not user_repository.list():
+
         existing_athletes = athlete_repository.list()
 
         if existing_athletes:
@@ -362,14 +400,23 @@ def initialize_session_state() -> None:
                 demo_athlete
             )
 
-        demo_user = User(
+        athlete_user = User(
             email="demo@performancelab.local",
             role="athlete",
             athlete_id=demo_athlete.athlete_id,
         )
 
         user_repository.save(
-            demo_user
+            athlete_user
+        )
+
+        coach_user = User(
+            email="coach@performancelab.local",
+            role="coach",
+        )
+
+        user_repository.save(
+            coach_user
         )
 
     # --------------------------------------------------
@@ -424,23 +471,30 @@ if st.sidebar.button(
 ):
     logout()
 
-if current_user.athlete_id is None:
-    st.error(
-        "Este utilizador não tem um perfil de atleta associado."
-    )
-    st.stop()
-
 if "athlete" not in st.session_state:
+
     try:
         st.session_state.athlete = (
-            athlete_repository.get(
-                current_user.athlete_id
+            load_active_athlete(
+                current_user
             )
         )
 
     except KeyError:
         st.error(
             "Não foi possível encontrar o perfil de atleta."
+        )
+        st.stop()
+
+    except LookupError:
+        st.warning(
+            "Ainda não existem atletas disponíveis."
+        )
+        st.stop()
+
+    except ValueError:
+        st.error(
+            "Esta conta de atleta não tem um perfil associado."
         )
         st.stop()
 
@@ -453,6 +507,12 @@ if "athlete" not in st.session_state:
         st.stop()
 
 athlete: Athlete = st.session_state.athlete
+
+if current_user.is_coach:
+
+    st.sidebar.caption(
+        f"Viewing athlete: {athlete.name}"
+    )
 
 athlete = show_sidebar(
     athlete,
