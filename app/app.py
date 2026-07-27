@@ -42,10 +42,10 @@ st.set_page_config(
 
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
-DATA_FILE = PROJECT_ROOT / "data" / "athlete.json"
+DATA_DIR = PROJECT_ROOT / "data" / "athletes"
 
 repository = JsonAthleteRepository(
-    DATA_FILE,
+    DATA_DIR / "athlete.json"
 )
 
 # ======================================================

@@ -2,20 +2,20 @@
   "format": "PerformanceLab",
   "version": 1,
   "athlete": {
-    "id": "ffd7f527-d205-486a-9434-e2859a15b078",
+    "id": "790ffcc4-baeb-48c2-8d6a-e750c527aa8c",
     "name": "Pedro",
-    "birth_date": null,
-    "gender": "",
-    "height": null,
-    "weight": 70.0,
-    "ftp": 280.0,
-    "max_hr": 190,
-    "resting_hr": 50
+    "birth_date": "1992-12-02",
+    "gender": "Male",
+    "height": 1.78,
+    "weight": 74.0,
+    "ftp": 220.0,
+    "max_hr": 205,
+    "resting_hr": 65
   },
   "workouts": [
     {
       "info": {
-        "date": "2026-07-12",
+        "date": "2026-07-14",
         "sport": "Running",
         "title": "Easy Run",
         "description": "",
@@ -45,7 +45,7 @@
     },
     {
       "info": {
-        "date": "2026-07-14",
+        "date": "2026-07-16",
         "sport": "Cycling",
         "title": "Endurance Ride",
         "description": "",
@@ -75,7 +75,7 @@
     },
     {
       "info": {
-        "date": "2026-07-16",
+        "date": "2026-07-18",
         "sport": "Running",
         "title": "Tempo Run",
         "description": "",
@@ -105,7 +105,7 @@
     },
     {
       "info": {
-        "date": "2026-07-18",
+        "date": "2026-07-20",
         "sport": "Swimming",
         "title": "Pool Session",
         "description": "",
@@ -135,7 +135,7 @@
     },
     {
       "info": {
-        "date": "2026-07-20",
+        "date": "2026-07-22",
         "sport": "Cycling",
         "title": "Long Ride",
         "description": "",
@@ -165,7 +165,7 @@
     },
     {
       "info": {
-        "date": "2026-07-22",
+        "date": "2026-07-24",
         "sport": "Running",
         "title": "Steady Run",
         "description": "",
@@ -195,7 +195,7 @@
     },
     {
       "info": {
-        "date": "2026-07-25",
+        "date": "2026-07-27",
         "sport": "Running",
         "title": "Long Run",
         "description": "",
@@ -228,51 +228,39 @@
   "events": [],
   "training_plan": [
     {
-      "scheduled_at": "2026-07-27T00:00:00",
-      "sport": "Cycling",
-      "title": "Easy Aerobic Session",
-      "duration": 3600.0,
+      "scheduled_at": "2026-07-27T18:00:00",
+      "sport": "Running",
+      "title": "Easy Run",
+      "duration": 2700.0,
       "distance": null,
-      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
-      "intensity": "Easy",
-      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
-      "structure": [
-        "Warm up 10 min",
-        "Easy aerobic ride 45 min",
-        "Cool down 5 min"
-      ],
+      "description": "Easy aerobic run",
+      "intensity": null,
+      "objective": null,
+      "structure": [],
       "equipment": []
     },
     {
-      "scheduled_at": "2026-07-28T00:00:00",
-      "sport": "Cycling",
-      "title": "Easy Aerobic Session",
+      "scheduled_at": "2026-07-29T18:00:00",
+      "sport": "Running",
+      "title": "Intervals",
       "duration": 3600.0,
       "distance": null,
-      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
-      "intensity": "Easy",
-      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
-      "structure": [
-        "Warm up 10 min",
-        "Easy aerobic ride 45 min",
-        "Cool down 5 min"
-      ],
+      "description": "6 × 800 m",
+      "intensity": null,
+      "objective": null,
+      "structure": [],
       "equipment": []
     },
     {
-      "scheduled_at": "2026-07-29T00:00:00",
-      "sport": "Cycling",
-      "title": "Easy Aerobic Session",
-      "duration": 3600.0,
+      "scheduled_at": "2026-08-01T08:00:00",
+      "sport": "Running",
+      "title": "Long Run",
+      "duration": 5400.0,
       "distance": null,
-      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
-      "intensity": "Easy",
-      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
-      "structure": [
-        "Warm up 10 min",
-        "Easy aerobic ride 45 min",
-        "Cool down 5 min"
-      ],
+      "description": "Long endurance run",
+      "intensity": null,
+      "objective": null,
+      "structure": [],
       "equipment": []
     }
   ]
