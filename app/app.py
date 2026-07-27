@@ -22,9 +22,8 @@ from performancelab import (
     create_workout,
 )
 
-from performancelab.storage import (
-    load_athlete,
-    save_athlete,
+from performancelab.storage.json_repository import (
+    JsonAthleteRepository,
 )
 
 from performancelab.coaching import Coach
@@ -44,6 +43,10 @@ st.set_page_config(
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
 DATA_FILE = PROJECT_ROOT / "data" / "athlete.json"
+
+repository = JsonAthleteRepository(
+    DATA_FILE,
+)
 
 # ======================================================
 # Demonstration athlete
@@ -215,13 +218,11 @@ def initialize_session_state() -> None:
 
     if "athlete" not in st.session_state:
 
-        if DATA_FILE.exists():
+        if repository.exists():
 
             try:
 
-                st.session_state.athlete = load_athlete(
-                    DATA_FILE
-                )
+                st.session_state.athlete = repository.load()
 
             except Exception as error:
 
@@ -241,9 +242,8 @@ def initialize_session_state() -> None:
                 create_demo_athlete()
             )
 
-            save_athlete(
+            repository.save(
                 st.session_state.athlete,
-                DATA_FILE,
             )
 
     if "notice" not in st.session_state:
@@ -340,9 +340,8 @@ else:
 
 st.session_state.athlete = athlete
 
-save_athlete(
+repository.save(
     athlete,
-    DATA_FILE,
 )
 
 if (
