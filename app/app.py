@@ -59,10 +59,6 @@ user_repository = JsonUserRepository(
     USER_DATA_DIR
 )
 
-auth = AuthenticationService(
-    user_repository
-)
-
 # ======================================================
 # Demonstration athlete
 # ======================================================
@@ -229,13 +225,61 @@ def regenerate_weekly_plan() -> None:
         "Plano semanal gerado."
     )
 
+def show_login_screen(
+    auth: AuthenticationService,
+) -> None:
+    """
+    Display the PerformanceLab login screen.
+    """
+
+    st.title("PerformanceLab")
+
+    st.subheader("Entrar")
+
+    st.write(
+        "Introduz o teu endereço de email para continuar."
+    )
+
+    with st.form("login_form"):
+        email = st.text_input(
+            "Email",
+            placeholder="nome@exemplo.com",
+        )
+
+        submitted = st.form_submit_button(
+            "Entrar",
+            use_container_width=True,
+        )
+
+    if not submitted:
+        return
+
+    normalized_email = email.strip().lower()
+
+    if not normalized_email:
+        st.error(
+            "Introduz um endereço de email."
+        )
+        return
+
+    try:
+        auth.login(normalized_email)
+
+    except KeyError:
+        st.error(
+            "Não existe nenhum utilizador com este email."
+        )
+        return
+
+    st.rerun()
+
 def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
     """
 
     # --------------------------------------------------
-    # Authentication service
+    # Authentication
     # --------------------------------------------------
 
     if "auth" not in st.session_state:
@@ -243,12 +287,8 @@ def initialize_session_state() -> None:
             user_repository
         )
 
-    session_auth: AuthenticationService = (
-        st.session_state.auth
-    )
-
     # --------------------------------------------------
-    # Development user and athlete
+    # Development user
     # --------------------------------------------------
 
     if not user_repository.list():
@@ -275,67 +315,6 @@ def initialize_session_state() -> None:
         )
 
     # --------------------------------------------------
-    # Temporary automatic login
-    # --------------------------------------------------
-
-    if not session_auth.is_authenticated:
-        session_auth.login(
-            "demo@performancelab.local"
-        )
-
-    # --------------------------------------------------
-    # Active athlete
-    # --------------------------------------------------
-
-    if "athlete" not in st.session_state:
-        current_user = session_auth.current_user
-
-        if current_user is None:
-            raise RuntimeError(
-                "No authenticated user is available."
-            )
-
-        if current_user.athlete_id is None:
-            raise RuntimeError(
-                "The authenticated user has no athlete profile."
-            )
-
-        try:
-            st.session_state.athlete = (
-                athlete_repository.get(
-                    current_user.athlete_id
-                )
-            )
-
-        except KeyError:
-            st.error(
-                "Could not load the authenticated user's athlete."
-            )
-
-            demo_athlete = create_demo_athlete()
-
-            demo_athlete.athlete_id = (
-                current_user.athlete_id
-            )
-
-            athlete_repository.save(
-                demo_athlete
-            )
-
-            st.session_state.athlete = demo_athlete
-
-        except Exception as error:
-            st.error(
-                "Could not load the saved athlete."
-            )
-
-            st.exception(error)
-
-            st.session_state.athlete = (
-                create_demo_athlete()
-            )
-
-    # --------------------------------------------------
     # Interface state
     # --------------------------------------------------
 
@@ -353,12 +332,55 @@ def initialize_session_state() -> None:
 
     if "page" not in st.session_state:
         st.session_state.page = "dashboard"
-
 # ======================================================
 # Application
 # ======================================================
 
 initialize_session_state()
+
+auth: AuthenticationService = (
+    st.session_state.auth
+)
+
+if not auth.is_authenticated:
+    show_login_screen(auth)
+    st.stop()
+
+current_user = auth.current_user
+
+if current_user is None:
+    st.error(
+        "Não foi possível identificar o utilizador autenticado."
+    )
+    st.stop()
+
+if current_user.athlete_id is None:
+    st.error(
+        "Este utilizador não tem um perfil de atleta associado."
+    )
+    st.stop()
+
+if "athlete" not in st.session_state:
+    try:
+        st.session_state.athlete = (
+            athlete_repository.get(
+                current_user.athlete_id
+            )
+        )
+
+    except KeyError:
+        st.error(
+            "Não foi possível encontrar o perfil de atleta."
+        )
+        st.stop()
+
+    except Exception as error:
+        st.error(
+            "Não foi possível carregar o perfil de atleta."
+        )
+
+        st.exception(error)
+        st.stop()
 
 athlete: Athlete = st.session_state.athlete
 
