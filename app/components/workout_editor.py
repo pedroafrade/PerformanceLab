@@ -9,67 +9,57 @@ from datetime import timedelta
 import streamlit as st
 
 
-# ======================================================
-# Session state
-# ======================================================
-
 def _initialize_workout_editor_state() -> None:
-
-    """
-    Initializes the session-state values used by the
-    workout editor.
-    """
-
+    """Initialize session-state values used by the workout editor."""
     if "confirm_delete" not in st.session_state:
-
         st.session_state.confirm_delete = False
 
     if "edit_workout" not in st.session_state:
-
         st.session_state.edit_workout = False
 
 
-# ======================================================
-# Workout actions
-# ======================================================
+def show_workout_edit_action(
+    selected_workout,
+    *,
+    key: str = "edit_workout_action",
+) -> None:
+    """Display the Edit action for the selected workout."""
+    _initialize_workout_editor_state()
 
-def _show_workout_actions(
+    if selected_workout is None:
+        return
+
+    if st.button(
+        "Edit",
+        key=key,
+        use_container_width=True,
+    ):
+        st.session_state.confirm_delete = False
+        st.session_state.edit_workout = True
+        st.rerun()
+
+
+def show_workout_delete_action(
     athlete,
     selected_workout,
+    *,
+    key_prefix: str = "delete_workout_action",
 ) -> None:
+    """Display the Delete action and its confirmation."""
+    _initialize_workout_editor_state()
 
-    """
-    Displays the edit and delete actions for the selected
-    workout.
-    """
-
-    st.divider()
+    if selected_workout is None:
+        return
 
     if not st.session_state.confirm_delete:
-
-        action_column_1, action_column_2 = st.columns(2)
-
-        with action_column_1:
-
-            if st.button(
-                "🗑 Delete workout",
-                use_container_width=True,
-            ):
-
-                st.session_state.confirm_delete = True
-
-                st.rerun()
-
-        with action_column_2:
-
-            if st.button(
-                "✏️ Edit workout",
-                use_container_width=True,
-            ):
-
-                st.session_state.edit_workout = True
-
-                st.rerun()
+        if st.button(
+            "Delete",
+            key=f"{key_prefix}_open",
+            use_container_width=True,
+        ):
+            st.session_state.edit_workout = False
+            st.session_state.confirm_delete = True
+            st.rerun()
 
         return
 
@@ -80,20 +70,18 @@ def _show_workout_actions(
     confirm_column, cancel_column = st.columns(2)
 
     with confirm_column:
-
         if st.button(
-            "✅ Delete",
+            "Delete",
+            key=f"{key_prefix}_confirm",
             type="primary",
             use_container_width=True,
         ):
-
             athlete.history.remove(
                 selected_workout
             )
 
             st.session_state.confirm_delete = False
             st.session_state.edit_workout = False
-
             st.session_state.notice = (
                 "Workout deleted."
             )
@@ -101,43 +89,37 @@ def _show_workout_actions(
             st.rerun()
 
     with cancel_column:
-
         if st.button(
             "Cancel",
+            key=f"{key_prefix}_cancel",
             use_container_width=True,
         ):
-
             st.session_state.confirm_delete = False
-
             st.rerun()
 
 
-# ======================================================
-# Workout edit form
-# ======================================================
-
-def _show_workout_edit_form(
+def show_workout_edit_form(
     athlete,
     selected_workout,
+    *,
+    key_prefix: str = "workout_edit_form",
 ) -> None:
+    """Display the form used to edit the selected workout."""
+    _initialize_workout_editor_state()
 
-    """
-    Displays the form used to edit the selected workout.
-    """
-
-    if not st.session_state.edit_workout:
-
+    if (
+        selected_workout is None
+        or not st.session_state.edit_workout
+    ):
         return
 
     st.divider()
-
-    st.subheader(
-        "Edit workout"
-    )
+    st.subheader("Edit workout")
 
     title = st.text_input(
         "Title",
         value=selected_workout.info.title or "",
+        key=f"{key_prefix}_title",
     )
 
     sports = [
@@ -159,14 +141,14 @@ def _show_workout_edit_form(
     sport = st.selectbox(
         "Sport",
         sports,
-        index=sports.index(
-            current_sport
-        ),
+        index=sports.index(current_sport),
+        key=f"{key_prefix}_sport",
     )
 
     workout_date = st.date_input(
         "Date",
         value=selected_workout.date,
+        key=f"{key_prefix}_date",
     )
 
     distance = st.number_input(
@@ -176,6 +158,7 @@ def _show_workout_edit_form(
             selected_workout.distance or 0
         ),
         step=0.1,
+        key=f"{key_prefix}_distance",
     )
 
     duration = (
@@ -188,17 +171,11 @@ def _show_workout_edit_form(
         duration.total_seconds()
     )
 
-    initial_hours = (
-        total_seconds // 3600
-    )
-
+    initial_hours = total_seconds // 3600
     initial_minutes = (
         total_seconds % 3600
     ) // 60
-
-    initial_seconds = (
-        total_seconds % 60
-    )
+    initial_seconds = total_seconds % 60
 
     (
         duration_column_1,
@@ -207,32 +184,32 @@ def _show_workout_edit_form(
     ) = st.columns(3)
 
     with duration_column_1:
-
         hours = st.number_input(
             "Hours",
             min_value=0,
             value=initial_hours,
             step=1,
+            key=f"{key_prefix}_hours",
         )
 
     with duration_column_2:
-
         minutes = st.number_input(
             "Minutes",
             min_value=0,
             max_value=59,
             value=initial_minutes,
             step=1,
+            key=f"{key_prefix}_minutes",
         )
 
     with duration_column_3:
-
         seconds = st.number_input(
             "Seconds",
             min_value=0,
             max_value=59,
             value=initial_seconds,
             step=1,
+            key=f"{key_prefix}_seconds",
         )
 
     elevation = st.number_input(
@@ -242,6 +219,7 @@ def _show_workout_edit_form(
             selected_workout.elevation_gain or 0
         ),
         step=1.0,
+        key=f"{key_prefix}_elevation",
     )
 
     rpe = st.slider(
@@ -251,18 +229,18 @@ def _show_workout_edit_form(
         value=int(
             selected_workout.feedback.rpe or 5
         ),
+        key=f"{key_prefix}_rpe",
     )
 
     save_column, cancel_column = st.columns(2)
 
     with save_column:
-
         if st.button(
-            "💾 Save",
+            "Save",
+            key=f"{key_prefix}_save",
             type="primary",
             use_container_width=True,
         ):
-
             selected_workout.info.title = title
             selected_workout.info.sport = sport
             selected_workout.info.date = workout_date
@@ -288,7 +266,6 @@ def _show_workout_edit_form(
             athlete.history._sort()
 
             st.session_state.edit_workout = False
-
             st.session_state.notice = (
                 "Workout updated."
             )
@@ -296,54 +273,50 @@ def _show_workout_edit_form(
             st.rerun()
 
     with cancel_column:
-
         if st.button(
             "Cancel",
+            key=f"{key_prefix}_cancel",
             use_container_width=True,
         ):
-
             st.session_state.edit_workout = False
-
             st.rerun()
 
-
-# ======================================================
-# Public component
-# ======================================================
 
 def show_workout_editor(
     athlete,
     selected_workout,
+    *,
+    key_prefix: str = "workout_editor",
 ) -> None:
-
-    """
-    Displays the actions and editor for the selected
-    workout.
-
-    Parameters
-    ----------
-    athlete
-        Athlete that owns the selected workout.
-
-    selected_workout
-        Workout currently selected in the dashboard.
-    """
-
+    """Display workout actions and the edit form."""
     _initialize_workout_editor_state()
 
     if selected_workout is None:
-
         st.session_state.confirm_delete = False
         st.session_state.edit_workout = False
-
         return
 
-    _show_workout_actions(
-        athlete,
-        selected_workout,
+    st.divider()
+
+    action_spacer, edit_column, delete_column = (
+        st.columns(3)
     )
 
-    _show_workout_edit_form(
+    with edit_column:
+        show_workout_edit_action(
+            selected_workout,
+            key=f"{key_prefix}_edit",
+        )
+
+    with delete_column:
+        show_workout_delete_action(
+            athlete,
+            selected_workout,
+            key_prefix=f"{key_prefix}_delete",
+        )
+
+    show_workout_edit_form(
         athlete,
         selected_workout,
+        key_prefix=f"{key_prefix}_form",
     )

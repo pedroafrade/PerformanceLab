@@ -319,7 +319,7 @@ def test_delete_button_enables_confirmation(
 
     fake_streamlit = FakeStreamlit(
         button_values={
-            "🗑 Delete workout": True,
+            "Delete": True,
         },
     )
 
@@ -353,7 +353,7 @@ def test_confirm_delete_removes_workout(
 
     fake_streamlit = FakeStreamlit(
         button_values={
-            "✅ Delete": True,
+            "Delete": True,
         },
     )
 
@@ -402,7 +402,7 @@ def test_save_updates_selected_workout(
 
     fake_streamlit = FakeStreamlit(
         button_values={
-            "💾 Save": True,
+            "Save": True,
         },
         input_values={
             "Title": "Tempo Run",

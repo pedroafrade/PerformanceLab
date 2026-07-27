@@ -30,7 +30,8 @@ def show_workout_history_card(
     """
 
     selected_workout = show_workout_table(
-        athlete
+        athlete,
+        key="dashboard_workout_history_table",
     )
 
     if selected_workout is not None:

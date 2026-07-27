@@ -80,25 +80,64 @@ def format_elevation(
 
     return f"{value:.0f} m"
 
-
-# ======================================================
-# Workout label
 # ======================================================
 
-def workout_label(workout) -> str:
+def get_selected_workout(
+    athlete,
+    *,
+    key: str = "workout_history_table",
+):
+    """
+    Return the workout currently selected in the dataframe.
 
-    return (
+    This reads the dataframe selection from Streamlit
+    session state, allowing other components to be rendered
+    before the dataframe itself.
+    """
 
-        f"{format_workout_date(workout.date)} — "
-
-        f"{workout.sport or 'Unknown'} — "
-
-        f"{workout.info.title or 'Untitled'} — "
-
-        f"{workout.info.source or 'unknown'}"
-
+    workouts = list(
+        reversed(
+            athlete.history.workouts
+        )
     )
 
+    if not workouts:
+        return None
+
+    selection_state = st.session_state.get(
+        key
+    )
+
+    if selection_state is None:
+        return None
+
+    try:
+        selected_rows = (
+            selection_state.selection.rows
+        )
+    except AttributeError:
+        selection = selection_state.get(
+            "selection",
+            {},
+        )
+
+        try:
+            selected_rows = selection.rows
+        except AttributeError:
+            selected_rows = selection.get(
+                "rows",
+                [],
+            )
+
+    if not selected_rows:
+        return None
+
+    selected_index = selected_rows[0]
+
+    if selected_index >= len(workouts):
+        return None
+
+    return workouts[selected_index]
 
 # ======================================================
 # Workout table
@@ -106,11 +145,18 @@ def workout_label(workout) -> str:
 
 def show_workout_table(
     athlete,
+    *,
+    key: str = "workout_history_table",
+    show_header: bool = True,
 ):
 
-    st.divider()
+    if show_header:
 
-    st.subheader("Workout history")
+        st.divider()
+
+        st.subheader(
+            "Workout history"
+        )
 
     workouts = list(
 
@@ -172,30 +218,28 @@ def show_workout_table(
 
     table = pd.DataFrame(rows)
 
-    st.dataframe(
-
+    selection_event = st.dataframe(
         table,
-
         width="stretch",
-
         hide_index=True,
-
+        key=key,
+        on_select="rerun",
+        selection_mode="single-row",
     )
 
-    st.subheader("Workout details")
-
-    selected_index = st.selectbox(
-
-        "Select workout",
-
-        options=range(len(workouts)),
-
-        format_func=lambda index: (
-            workout_label(
-                workouts[index]
-            )
-        ),
-
+    selected_rows = (
+        selection_event.selection.rows
     )
+
+    if not selected_rows:
+
+        st.caption(
+            "Select a workout in the table "
+            "to view its details."
+        )
+
+        return None
+
+    selected_index = selected_rows[0]
 
     return workouts[selected_index]

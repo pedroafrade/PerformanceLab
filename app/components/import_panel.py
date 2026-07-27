@@ -82,6 +82,15 @@ def show_import_panel(
             uploaded_file
         )
 
+        if extension == "fit":
+
+            file_title = (
+                uploaded_file.name
+                .rsplit(".", 1)[0]
+            )
+
+            workout.info.title = file_title
+
         athlete.history.add(
             workout
         )
