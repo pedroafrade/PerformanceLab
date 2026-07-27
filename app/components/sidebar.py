@@ -96,6 +96,20 @@ def _sidebar_styles(
             display: flex;
             flex: 1 1 auto;
             flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+        }}
+
+        [data-testid="stSidebarContent"]
+        > div:first-child
+        > [data-testid="stVerticalBlock"] {{
+            width: 100%;
+            min-height: 0;
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
         }}
 
         [data-testid="stSidebarHeader"] {{
@@ -159,6 +173,15 @@ def _sidebar_styles(
             white-space: nowrap;
         }}
 
+        .st-key-sidebar_edit_athlete button,
+        .st-key-sidebar_logout button {{
+            min-height: clamp(1.65rem, 3.6vh, 2rem);
+            padding:
+                clamp(0.08rem, 0.3vh, 0.2rem)
+                0.35rem;
+            font-size: clamp(0.7rem, 1.4vh, 0.8rem);
+        }}
+
         [data-testid="stSidebar"] hr {{
             margin: clamp(0.08rem, 0.42vh, 0.25rem) 0;
             border-color: rgba(128, 128, 128, 0.22);
@@ -168,7 +191,7 @@ def _sidebar_styles(
             min-height: 0;
             margin: 0;
             display: flex;
-            flex: 1 1 auto;
+            flex: 0 0 auto;
             flex-direction: column;
         }}
 
@@ -220,10 +243,25 @@ def _sidebar_styles(
             border-left: 3px solid rgb(100, 149, 237);
         }}
 
-        .st-key-sidebar_lower {{
+        .st-key-sidebar_top {{
+            position: sticky;
+            top: 0;
+            z-index: 2;
             flex: 0 0 auto;
-            margin-top: auto;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            background: var(--background-color);
+        }}
+
+        .st-key-sidebar_lower {{
+            flex: 1 1 auto;
+            min-height: 0;
+            margin: 0;
             padding-top: clamp(0.05rem, 0.3vh, 0.15rem);
+            padding-right: 0.15rem;
+            overflow-y: auto;
+            overflow-x: hidden;
         }}
 
         .st-key-sidebar_lower
@@ -415,23 +453,32 @@ def _set_page(
     st.session_state.page = page
 
 
-def _show_navigation() -> str:
+def _show_navigation(
+    current_user,
+) -> str:
     """
-    Displays the application navigation.
+    Display the application navigation.
 
-    Returns
-    -------
-    str
-        Selected page identifier.
+    Coach accounts receive access to the Accounts page.
     """
 
     if "page" not in st.session_state:
-
         st.session_state.page = "dashboard"
 
     with st.container(
         key="sidebar_navigation",
     ):
+
+        if current_user.is_coach:
+
+            st.button(
+                "Accounts",
+                icon=":material/group:",
+                use_container_width=True,
+                key="sidebar_nav_accounts",
+                on_click=_set_page,
+                args=("accounts",),
+            )
 
         for page, label_key, icon in _NAVIGATION_ITEMS:
 
@@ -446,17 +493,27 @@ def _show_navigation() -> str:
 
     return st.session_state.page
 
-
 # ======================================================
 # User account
 # ======================================================
 
 def _show_user_account(
     athlete,
+    current_user,
+    on_logout,
 ) -> None:
     """
-    Displays the athlete name below the branding.
+    Display the authenticated account and its actions.
     """
+
+    if current_user.is_coach:
+        account_name = "Coach"
+    else:
+        account_name = str(athlete.name)
+
+    account_name = escape(
+        account_name
+    )
 
     athlete_name = escape(
         str(athlete.name)
@@ -467,21 +524,44 @@ def _show_user_account(
         <div class="sidebar-account">
             <span class="sidebar-account-avatar">◯</span>
             <span class="sidebar-account-name">
-                {athlete_name}
+                {account_name}
             </span>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.button(
-        translate("athlete.edit"),
-        icon=":material/edit:",
-        use_container_width=True,
-        key="sidebar_edit_athlete",
-        on_click=_set_page,
-        args=("athlete",),
+    edit_column, logout_column = st.columns(
+        2,
+        gap="small",
     )
+
+    with edit_column:
+
+        st.button(
+            "Edit",
+            icon=":material/edit:",
+            use_container_width=True,
+            key="sidebar_edit_athlete",
+            on_click=_set_page,
+            args=("athlete",),
+        )
+
+    with logout_column:
+
+        if st.button(
+            "Logout",
+            icon=":material/logout:",
+            use_container_width=True,
+            key="sidebar_logout",
+        ):
+            on_logout()
+
+    if current_user.is_coach:
+
+        st.caption(
+            f"Viewing: {athlete_name}"
+        )
 
 
 # ======================================================
@@ -491,6 +571,8 @@ def _show_user_account(
 def show_sidebar(
     athlete,
     *,
+    current_user,
+    on_logout,
     on_generate_plan=None,
 ):
     """
@@ -513,62 +595,70 @@ def show_sidebar(
             active_page
         )
 
-        st.markdown(
-            '<div class="performancelab-brand">'
-            'performancelab'
-            '</div>',
-            unsafe_allow_html=True,
-        )
+        with st.container(
+            key="sidebar_top",
+        ):
 
-        _show_user_account(
-            athlete
-        )
+            st.markdown(
+                '<div class="performancelab-brand">'
+                'performancelab'
+                '</div>',
+                unsafe_allow_html=True,
+            )
 
-        st.divider()
+            _show_user_account(
+                athlete,
+                current_user,
+                on_logout,
+            )
 
-        _show_navigation()
+            st.divider()
 
-        st.divider()
+            _show_navigation(
+                current_user
+            )
+
+            st.divider()
 
         with st.container(
-                key="sidebar_lower",
+            key="sidebar_lower",
+        ):
+
+            st.markdown(
+                (
+                    '<div class="sidebar-section-label">'
+                    f'{translate("plan.section")}'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
+            )
+
+            st.button(
+                translate("plan.generate"),
+                icon=":material/auto_awesome:",
+                use_container_width=True,
+                key="sidebar_generate_plan",
+                on_click=on_generate_plan,
+                disabled=on_generate_plan is None,
+            )
+
+            st.divider()
+
+            st.markdown(
+                (
+                    '<div class="sidebar-section-label">'
+                    f'{translate("activity.section")}'
+                    '</div>'
+                ),
+                unsafe_allow_html=True,
+            )
+
+            with st.container(
+                key="sidebar_activity",
             ):
 
-                st.markdown(
-                    (
-                        '<div class="sidebar-section-label">'
-                        f'{translate("plan.section")}'
-                        '</div>'
-                    ),
-                    unsafe_allow_html=True,
+                athlete = show_activity_input(
+                    athlete
                 )
-
-                st.button(
-                    translate("plan.generate"),
-                    icon=":material/auto_awesome:",
-                    use_container_width=True,
-                    key="sidebar_generate_plan",
-                    on_click=on_generate_plan,
-                    disabled=on_generate_plan is None,
-                )
-
-                st.divider()
-
-                st.markdown(
-                    (
-                        '<div class="sidebar-section-label">'
-                        f'{translate("activity.section")}'
-                        '</div>'
-                    ),
-                    unsafe_allow_html=True,
-                )
-
-                with st.container(
-                    key="sidebar_activity",
-                ):
-
-                    athlete = show_activity_input(
-                        athlete
-                    )
 
         return athlete

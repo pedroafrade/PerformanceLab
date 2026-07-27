@@ -15,6 +15,7 @@ from components import (
     show_selected_workout_route,
     show_sidebar,
     show_workout_editor,
+    show_training_page,
 )
 
 from performancelab import (
@@ -232,46 +233,68 @@ def show_login_screen(
     Display the PerformanceLab login screen.
     """
 
-    st.title("PerformanceLab")
-
-    st.subheader("Entrar")
-
-    st.write(
-        "Introduz o teu endereço de email para continuar."
+    left, centre, right = st.columns(
+        [2, 3, 2]
     )
 
-    with st.form("login_form"):
-        email = st.text_input(
-            "Email",
-            placeholder="nome@exemplo.com",
+    with centre:
+
+        st.markdown(
+            "## PerformanceLab"
         )
 
-        submitted = st.form_submit_button(
-            "Entrar",
-            use_container_width=True,
+        st.caption(
+            "Sign in to continue."
         )
 
-    if not submitted:
-        return
+        st.write("")
 
-    normalized_email = email.strip().lower()
+        with st.form(
+            "login_form",
+        ):
 
-    if not normalized_email:
-        st.error(
-            "Introduz um endereço de email."
+            email = st.text_input(
+                "Email",
+                placeholder="name@example.com",
+            )
+
+            submitted = (
+                st.form_submit_button(
+                    "Sign in",
+                    use_container_width=True,
+                )
+            )
+
+        if not submitted:
+            return
+
+        normalized_email = (
+            email.strip().lower()
         )
-        return
 
-    try:
-        auth.login(normalized_email)
+        if not normalized_email:
 
-    except KeyError:
-        st.error(
-            "Não existe nenhum utilizador com este email."
-        )
-        return
+            st.error(
+                "Enter an email address."
+            )
 
-    st.rerun()
+            return
+
+        try:
+
+            auth.login(
+                normalized_email
+            )
+
+        except KeyError:
+
+            st.error(
+                "No account exists with this email."
+            )
+
+            return
+
+        st.rerun()
 
 def logout() -> None:
     """
@@ -459,18 +482,6 @@ if current_user is None:
     )
     st.stop()
 
-st.sidebar.divider()
-
-st.sidebar.caption(
-    current_user.email
-)
-
-if st.sidebar.button(
-    "🚪 Terminar sessão",
-    use_container_width=True,
-):
-    logout()
-
 if "athlete" not in st.session_state:
 
     try:
@@ -508,27 +519,12 @@ if "athlete" not in st.session_state:
 
 athlete: Athlete = st.session_state.athlete
 
-if current_user.is_coach:
-
-    st.sidebar.caption(
-        f"Viewing athlete: {athlete.name}"
-    )
-
 athlete = show_sidebar(
     athlete,
+    current_user=current_user,
+    on_logout=logout,
     on_generate_plan=regenerate_weekly_plan,
 )
-
-if current_user.is_coach:
-
-    st.sidebar.divider()
-
-    if st.sidebar.button(
-        "👥 Accounts",
-        use_container_width=True,
-    ):
-        st.session_state.page = "accounts"
-        st.rerun()
 
 page = st.session_state.page
 
@@ -566,6 +562,12 @@ if page == "dashboard":
 
     show_selected_workout_route(
         selected_workout,
+    )
+
+elif page == "training":
+
+    show_training_page(
+        athlete
     )
 
 elif page == "athlete":

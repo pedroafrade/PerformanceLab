@@ -18,6 +18,8 @@ from performancelab.importers import (
 
 def show_import_panel(
     athlete,
+    *,
+    key_prefix: str = "activity",
 ) -> None:
     """
     Displays the activity file import panel.
@@ -31,7 +33,7 @@ def show_import_panel(
             "gpx",
             "fit",
         ],
-        key="activity_file_uploader",
+        key=f"{key_prefix}_file_uploader",
     )
 
     if uploaded_file is None:
@@ -45,7 +47,7 @@ def show_import_panel(
 
     if (
         st.session_state.get(
-            "imported_activity_file_token"
+            f"{key_prefix}_imported_file_token"
         )
         == file_token
     ):
@@ -85,7 +87,7 @@ def show_import_panel(
         )
 
         st.session_state[
-            "imported_activity_file_token"
+            f"{key_prefix}_imported_file_token"
         ] = file_token
 
         st.session_state.notice = (
