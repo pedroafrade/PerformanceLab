@@ -228,39 +228,51 @@
   "events": [],
   "training_plan": [
     {
-      "scheduled_at": "2026-07-27T18:00:00",
-      "sport": "Running",
-      "title": "Easy Run",
-      "duration": 2700.0,
-      "distance": null,
-      "description": "Easy aerobic run",
-      "intensity": null,
-      "objective": null,
-      "structure": [],
-      "equipment": []
-    },
-    {
-      "scheduled_at": "2026-07-29T18:00:00",
-      "sport": "Running",
-      "title": "Intervals",
+      "scheduled_at": "2026-07-27T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
       "duration": 3600.0,
       "distance": null,
-      "description": "6 × 800 m",
-      "intensity": null,
-      "objective": null,
-      "structure": [],
+      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Warm up 10 min",
+        "Easy aerobic ride 45 min",
+        "Cool down 5 min"
+      ],
       "equipment": []
     },
     {
-      "scheduled_at": "2026-08-01T08:00:00",
-      "sport": "Running",
-      "title": "Long Run",
-      "duration": 5400.0,
+      "scheduled_at": "2026-07-28T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
+      "duration": 3600.0,
       "distance": null,
-      "description": "Long endurance run",
-      "intensity": null,
-      "objective": null,
-      "structure": [],
+      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Warm up 10 min",
+        "Easy aerobic ride 45 min",
+        "Cool down 5 min"
+      ],
+      "equipment": []
+    },
+    {
+      "scheduled_at": "2026-07-29T00:00:00",
+      "sport": "Cycling",
+      "title": "Easy Aerobic Session",
+      "duration": 3600.0,
+      "distance": null,
+      "description": "This session belongs to a recovery-focused week after a period of accumulated fatigue. The aim is to preserve movement and routine while allowing freshness to return.\n\nKeep the session comfortably aerobic, using a conversational effort to develop easy aerobic. Avoid turning the final part into an unplanned hard effort.\n\nIf fatigue still feels unusually high, shorten the session or replace it with complete rest. Postpone threshold, interval and maximal-strength work until recovery indicators improve.",
+      "intensity": "Easy",
+      "objective": "Develop aerobic endurance. Reduce accumulated fatigue. Restore readiness for future training. Maintain movement without creating new stress.",
+      "structure": [
+        "Warm up 10 min",
+        "Easy aerobic ride 45 min",
+        "Cool down 5 min"
+      ],
       "equipment": []
     }
   ]

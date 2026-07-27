@@ -1,22 +1,12 @@
 # PerformanceLab - Persistence & Multi-Athlete Roadmap
 
 
-Primeiro incremento concreto
-
-O primeiro commit deve limitar-se a:
-
-1. Adicionar athlete_id ao Athlete
-2. Criar AthleteRepository
-3. Criar JsonAthleteRepository
-4. Adaptar os testes de serialização
-5. Manter a aplicação a funcionar com um único atleta
-
-Só no commit seguinte adicionamos:
-
-6. Migração do athlete.json atual
-7. Lista de atletas
-8. Seleção e troca de perfil
-9. Criação do segundo atleta
+1. Repositório com vários atletas
+2. Dois perfis para testes
+3. Seleção temporária sem autenticação
+4. Autenticação
+5. Cada utilizador atleta abre diretamente o próprio perfil
+6. Opcionalmente, papel de treinador com acesso a vários atletas
 
 Critérios para considerar a primeira fase concluída
 [ ] O Athlete possui um ID persistente
