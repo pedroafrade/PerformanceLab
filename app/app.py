@@ -273,6 +273,64 @@ def show_login_screen(
 
     st.rerun()
 
+def logout() -> None:
+    """
+    End the current user session.
+    """
+
+    auth: AuthenticationService = (
+        st.session_state.auth
+    )
+
+    auth.logout()
+
+    st.session_state.pop(
+        "athlete",
+        None,
+    )
+
+    st.rerun()
+
+def show_accounts_page() -> None:
+    """
+    Display the existing PerformanceLab accounts.
+    """
+
+    st.title("Accounts")
+
+    st.write(
+        "View the accounts that can access PerformanceLab."
+    )
+
+    users = user_repository.list()
+
+    if not users:
+        st.info(
+            "No accounts found."
+        )
+        return
+
+    rows = []
+
+    for user in users:
+        rows.append(
+            {
+                "Email": user.email,
+                "Role": user.role,
+                "Athlete ID": (
+                    user.athlete_id
+                    if user.athlete_id is not None
+                    else "—"
+                ),
+            }
+        )
+
+    st.dataframe(
+        rows,
+        use_container_width=True,
+        hide_index=True,
+    )
+
 def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
@@ -354,6 +412,18 @@ if current_user is None:
     )
     st.stop()
 
+st.sidebar.divider()
+
+st.sidebar.caption(
+    current_user.email
+)
+
+if st.sidebar.button(
+    "🚪 Terminar sessão",
+    use_container_width=True,
+):
+    logout()
+
 if current_user.athlete_id is None:
     st.error(
         "Este utilizador não tem um perfil de atleta associado."
@@ -388,6 +458,17 @@ athlete = show_sidebar(
     athlete,
     on_generate_plan=regenerate_weekly_plan,
 )
+
+if current_user.is_coach:
+
+    st.sidebar.divider()
+
+    if st.sidebar.button(
+        "👥 Accounts",
+        use_container_width=True,
+    ):
+        st.session_state.page = "accounts"
+        st.rerun()
 
 page = st.session_state.page
 
@@ -433,6 +514,16 @@ elif page == "athlete":
         athlete,
     )
 
+elif page == "accounts":
+
+    if not current_user.is_coach:
+        st.error(
+            "Only coaches can access account management."
+        )
+        st.stop()
+
+    show_accounts_page()
+
 else:
 
     TITLES = {
@@ -453,11 +544,13 @@ else:
         "🚧 Página em desenvolvimento."
     )
 
-st.session_state.athlete = athlete
+if page != "accounts":
 
-athlete_repository.save(
-    athlete,
-)
+    st.session_state.athlete = athlete
+
+    athlete_repository.save(
+        athlete,
+    )
 
 if (
     page == "athlete"

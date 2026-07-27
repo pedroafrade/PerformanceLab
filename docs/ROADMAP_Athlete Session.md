@@ -12,10 +12,10 @@ Fase 1 — Identidade (quase concluída)
 ✅ Migração do atleta de demonstração
 
 Fase 2 — Login
-⏭️ Ecrã de login (apenas email)
-⏭️ Remover o login automático
-⏭️ Mostrar mensagem quando o utilizador não existe
-⏭️ Botão Logout
+✅ Ecrã de login (apenas email)
+✅ Remover o login automático
+✅ Mostrar mensagem quando o utilizador não existe
+✅ Botão Logout
 
 Fase 3 — Gestão de utilizadores
 ⏭️ Criar utilizador
@@ -23,7 +23,7 @@ Fase 3 — Gestão de utilizadores
 ⏭️ Alterar email
 ⏭️ Apagar utilizador
 
-Fase 4 — Segurança
+Fase 4 — Segurança 
 ⏭️ Password
 ⏭️ Hash (Argon2 ou bcrypt)
 ⏭️ Sessões persistentes
