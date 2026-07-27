@@ -22,8 +22,13 @@ from performancelab import (
     create_workout,
 )
 
+from performancelab.authentication import AuthenticationService
+from performancelab.identity import User
 from performancelab.storage.json_athlete_repository import (
     JsonAthleteRepository,
+)
+from performancelab.storage.json_user_repository import (
+    JsonUserRepository,
 )
 
 from performancelab.coaching import Coach
@@ -42,10 +47,20 @@ st.set_page_config(
 
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
-DATA_DIR = PROJECT_ROOT / "data" / "athletes"
 
-repository = JsonAthleteRepository(
-    DATA_DIR / "athlete.json"
+ATHLETE_DATA_DIR = PROJECT_ROOT / "data" / "athletes"
+USER_DATA_DIR = PROJECT_ROOT / "data" / "users"
+
+athlete_repository = JsonAthleteRepository(
+    ATHLETE_DATA_DIR
+)
+
+user_repository = JsonUserRepository(
+    USER_DATA_DIR
+)
+
+auth = AuthenticationService(
+    user_repository
 )
 
 # ======================================================
@@ -215,36 +230,114 @@ def regenerate_weekly_plan() -> None:
     )
 
 def initialize_session_state() -> None:
+    """
+    Initialize the Streamlit application state.
+    """
 
-    if "athlete" not in st.session_state:
+    # --------------------------------------------------
+    # Authentication service
+    # --------------------------------------------------
 
-        if repository.exists():
+    if "auth" not in st.session_state:
+        st.session_state.auth = AuthenticationService(
+            user_repository
+        )
 
-            try:
+    session_auth: AuthenticationService = (
+        st.session_state.auth
+    )
 
-                st.session_state.athlete = repository.load()
+    # --------------------------------------------------
+    # Development user and athlete
+    # --------------------------------------------------
 
-            except Exception as error:
+    if not user_repository.list():
+        existing_athletes = athlete_repository.list()
 
-                st.error(
-                    "Could not load the saved athlete."
-                )
-
-                st.exception(error)
-
-                st.session_state.athlete = (
-                    create_demo_athlete()
-                )
+        if existing_athletes:
+            demo_athlete = existing_athletes[0]
 
         else:
+            demo_athlete = create_demo_athlete()
+
+            athlete_repository.save(
+                demo_athlete
+            )
+
+        demo_user = User(
+            email="demo@performancelab.local",
+            role="athlete",
+            athlete_id=demo_athlete.athlete_id,
+        )
+
+        user_repository.save(
+            demo_user
+        )
+
+    # --------------------------------------------------
+    # Temporary automatic login
+    # --------------------------------------------------
+
+    if not session_auth.is_authenticated:
+        session_auth.login(
+            "demo@performancelab.local"
+        )
+
+    # --------------------------------------------------
+    # Active athlete
+    # --------------------------------------------------
+
+    if "athlete" not in st.session_state:
+        current_user = session_auth.current_user
+
+        if current_user is None:
+            raise RuntimeError(
+                "No authenticated user is available."
+            )
+
+        if current_user.athlete_id is None:
+            raise RuntimeError(
+                "The authenticated user has no athlete profile."
+            )
+
+        try:
+            st.session_state.athlete = (
+                athlete_repository.get(
+                    current_user.athlete_id
+                )
+            )
+
+        except KeyError:
+            st.error(
+                "Could not load the authenticated user's athlete."
+            )
+
+            demo_athlete = create_demo_athlete()
+
+            demo_athlete.athlete_id = (
+                current_user.athlete_id
+            )
+
+            athlete_repository.save(
+                demo_athlete
+            )
+
+            st.session_state.athlete = demo_athlete
+
+        except Exception as error:
+            st.error(
+                "Could not load the saved athlete."
+            )
+
+            st.exception(error)
 
             st.session_state.athlete = (
                 create_demo_athlete()
             )
 
-            repository.save(
-                st.session_state.athlete,
-            )
+    # --------------------------------------------------
+    # Interface state
+    # --------------------------------------------------
 
     if "notice" not in st.session_state:
         st.session_state.notice = None
@@ -340,7 +433,7 @@ else:
 
 st.session_state.athlete = athlete
 
-repository.save(
+athlete_repository.save(
     athlete,
 )
 
