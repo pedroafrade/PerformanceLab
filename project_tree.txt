@@ -1,0 +1,289 @@
+PerformanceLab
+├── .ipynb_checkpoints
+├── app
+│   ├── components
+│   │   ├── dashboard
+│   │   │   ├── cards
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── athlete_overview.py
+│   │   │   │   ├── common.py
+│   │   │   │   ├── latest_activity_card.py
+│   │   │   │   ├── metric_card_body.py
+│   │   │   │   ├── monthly_summary_card.py
+│   │   │   │   ├── next_event_card.py
+│   │   │   │   ├── next_goal_card.py
+│   │   │   │   ├── next_workout_card.py
+│   │   │   │   ├── performance_chart.py
+│   │   │   │   ├── performance_management.py
+│   │   │   │   ├── planning_card.py
+│   │   │   │   ├── recovery_card.py
+│   │   │   │   ├── training_load_card.py
+│   │   │   │   ├── training_summary.py
+│   │   │   │   ├── weekly_summary_card.py
+│   │   │   │   └── workout_history.py
+│   │   │   ├── __init__.py
+│   │   │   ├── dashboard_view.py
+│   │   │   ├── event_manager.py
+│   │   │   ├── grid.py
+│   │   │   └── widget.py
+│   │   ├── __init__.py
+│   │   ├── _manual_workout_form.py
+│   │   ├── activity_input.py
+│   │   ├── athlete_panel.py
+│   │   ├── elevation_profile.py
+│   │   ├── i18n.py
+│   │   ├── import_panel.py
+│   │   ├── route_map.py
+│   │   ├── sensor_card.py
+│   │   ├── sidebar.py
+│   │   ├── storage_panel.py
+│   │   ├── training_page.py
+│   │   ├── workout_details.py
+│   │   ├── workout_editor.py
+│   │   └── workout_table.py
+│   ├── __init__.py
+│   ├── app.py
+│   └── app_backup.py
+├── data
+│   ├── athletes
+│   │   └── d6af7bda-8cc3-48e5-8ea0-7c3630641fa3.json
+│   └── users
+│       ├── 7db54966-99ed-4674-b234-a4a7785eb5f0.json
+│       └── ac01dbed-ba71-488b-bb53-567019353ab2.json
+├── docs
+│   ├── ARCHITECTURE.md
+│   ├── DOMAIN_MODEL.md
+│   ├── FOUNDATIONS.md
+│   ├── MANIFESTO.md
+│   ├── ROADMAP.md
+│   ├── ROADMAP_Athlete Session.md
+│   ├── ROADMAP_Training plan.md
+│   └── SCIENTIFIC_PRINCIPLES.md
+├── examples
+│   └── first_session.py
+├── performancelab
+│   ├── analysis
+│   │   ├── performance
+│   │   │   ├── __init__.py
+│   │   │   ├── _ema.py
+│   │   │   ├── atl.py
+│   │   │   ├── ctl.py
+│   │   │   ├── pmc.py
+│   │   │   └── tsb.py
+│   │   ├── planning
+│   │   │   ├── __init__.py
+│   │   │   └── planning.py
+│   │   ├── __init__.py
+│   │   ├── analytics.py
+│   │   ├── consistency.py
+│   │   ├── time.py
+│   │   └── volume.py
+│   ├── builders
+│   │   ├── __init__.py
+│   │   └── workout_factory.py
+│   ├── coaching
+│   │   ├── strategies
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── build.py
+│   │   │   ├── maintenance.py
+│   │   │   ├── peak.py
+│   │   │   ├── race.py
+│   │   │   ├── regeneration.py
+│   │   │   └── taper.py
+│   │   ├── __init__.py
+│   │   ├── analyzer.py
+│   │   ├── coach.py
+│   │   ├── context.py
+│   │   ├── draft_slot.py
+│   │   ├── recommendation.py
+│   │   ├── review.py
+│   │   ├── reviewer.py
+│   │   ├── selector.py
+│   │   ├── session_purpose.py
+│   │   ├── strategy.py
+│   │   ├── structure_generator.py
+│   │   ├── training_focus.py
+│   │   ├── training_week.py
+│   │   ├── workout_generator.py
+│   │   ├── workout_template.py
+│   │   └── workout_templates.py
+│   ├── goals
+│   │   ├── __init__.py
+│   │   ├── goal.py
+│   │   └── goalbook.py
+│   ├── history
+│   │   ├── __init__.py
+│   │   └── history.py
+│   ├── importers
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── fit.py
+│   │   └── gpx.py
+│   ├── physiology
+│   │   ├── __init__.py
+│   │   ├── cadence.py
+│   │   ├── efficiency.py
+│   │   ├── fatigue.py
+│   │   ├── heartrate.py
+│   │   ├── pace.py
+│   │   ├── power.py
+│   │   ├── recovery.py
+│   │   ├── thresholds.py
+│   │   ├── vo2max.py
+│   │   └── zones.py
+│   ├── presentation
+│   │   ├── __init__.py
+│   │   ├── card.py
+│   │   ├── chart.py
+│   │   ├── dashboard.py
+│   │   ├── dashboard_models.py
+│   │   ├── elevation.py
+│   │   ├── performance.py
+│   │   ├── planning_presenter.py
+│   │   └── route.py
+│   ├── race
+│   │   ├── __init__.py
+│   │   ├── entry.py
+│   │   ├── event.py
+│   │   └── eventbook.py
+│   ├── storage
+│   │   ├── __init__.py
+│   │   ├── athlete_repository.py
+│   │   ├── json.py
+│   │   ├── json_athlete_repository.py
+│   │   ├── json_user_repository.py
+│   │   └── user_repository.py
+│   ├── training
+│   │   ├── config
+│   │   │   ├── __init__.py
+│   │   │   ├── availability.py
+│   │   │   ├── constraints.py
+│   │   │   └── preferences.py
+│   │   ├── planning
+│   │   │   ├── __init__.py
+│   │   │   ├── planned_workout.py
+│   │   │   ├── planner.py
+│   │   │   ├── training_plan.py
+│   │   │   ├── weekly_plan.py
+│   │   │   ├── weekly_plan_builder.py
+│   │   │   └── workout_collection.py
+│   │   ├── __init__.py
+│   │   ├── daily_load.py
+│   │   ├── load.py
+│   │   ├── monthly.py
+│   │   ├── monthly_builder.py
+│   │   ├── progression.py
+│   │   ├── weekly.py
+│   │   └── weekly_builder.py
+│   ├── workout
+│   │   ├── __init__.py
+│   │   ├── environment.py
+│   │   ├── feedback.py
+│   │   ├── info.py
+│   │   ├── model.py
+│   │   └── sensors.py
+│   ├── __init__.py
+│   ├── athlete.py
+│   ├── authentication.py
+│   ├── comparison.py
+│   ├── identity.py
+│   ├── metrics.py
+│   ├── plots.py
+│   ├── readers.py
+│   ├── sensor.py
+│   ├── session.py
+│   ├── sync.py
+│   └── workspace.py
+├── performancelab.egg-info
+│   ├── dependency_links.txt
+│   ├── PKG-INFO
+│   ├── requires.txt
+│   ├── SOURCES.txt
+│   └── top_level.txt
+├── tests
+│   ├── coaching
+│   │   ├── conftest.py
+│   │   ├── test_analyzer.py
+│   │   ├── test_base_strategy.py
+│   │   ├── test_build_strategy.py
+│   │   ├── test_coach.py
+│   │   ├── test_coach_planning.py
+│   │   ├── test_context.py
+│   │   ├── test_draft_slot.py
+│   │   ├── test_maintenance_strategy.py
+│   │   ├── test_peak_strategy.py
+│   │   ├── test_planner.py
+│   │   ├── test_race_strategy.py
+│   │   ├── test_recommendation.py
+│   │   ├── test_regeneration_strategy.py
+│   │   ├── test_reviewer.py
+│   │   ├── test_session_purpose.py
+│   │   ├── test_strategy.py
+│   │   ├── test_structure_generator.py
+│   │   ├── test_taper_strategy.py
+│   │   ├── test_workout_generator.py
+│   │   └── test_workout_template.py
+│   ├── __init__.py
+│   ├── test_analytics.py
+│   ├── test_athlete.py
+│   ├── test_athlete_analytics.py
+│   ├── test_atl.py
+│   ├── test_authentication.py
+│   ├── test_cadence.py
+│   ├── test_card.py
+│   ├── test_chart.py
+│   ├── test_consistency.py
+│   ├── test_ctl.py
+│   ├── test_daily_load.py
+│   ├── test_dashboard.py
+│   ├── test_efficiency.py
+│   ├── test_elevation.py
+│   ├── test_environment.py
+│   ├── test_event.py
+│   ├── test_eventbook.py
+│   ├── test_fatigue.py
+│   ├── test_feedback.py
+│   ├── test_fit_importer.py
+│   ├── test_goal.py
+│   ├── test_goalbook.py
+│   ├── test_gpx_importer.py
+│   ├── test_heartrate.py
+│   ├── test_history.py
+│   ├── test_json_repository.py
+│   ├── test_json_user_repository.py
+│   ├── test_pace.py
+│   ├── test_planner_events.py
+│   ├── test_planning.py
+│   ├── test_pmc.py
+│   ├── test_power.py
+│   ├── test_progression.py
+│   ├── test_recovery.py
+│   ├── test_route.py
+│   ├── test_sensors.py
+│   ├── test_sidebar.py
+│   ├── test_storage_json.py
+│   ├── test_thresholds.py
+│   ├── test_time.py
+│   ├── test_training_builder.py
+│   ├── test_training_load.py
+│   ├── test_training_monthly.py
+│   ├── test_training_monthly_builder.py
+│   ├── test_tsb.py
+│   ├── test_vo2max.py
+│   ├── test_volume.py
+│   ├── test_weekly.py
+│   ├── test_workout.py
+│   ├── test_workout_collection.py
+│   ├── test_workout_editor.py
+│   └── test_zones.py
+├── tools
+│   └── project_tree.py
+├── .coverage
+├── .gitignore
+├── LICENSE
+├── project_files.txt
+├── project_structure.txt
+├── pyproject.toml
+├── README.md
+└── requirements.txt
