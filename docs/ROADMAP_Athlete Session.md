@@ -1,20 +1,46 @@
 # PerformanceLab - Persistence & Multi-Athlete Roadmap
 
 
-1. Repositório com vários atletas
-2. Dois perfis para testes
-3. Seleção temporária sem autenticação
-4. Autenticação
-5. Cada utilizador atleta abre diretamente o próprio perfil
-6. Opcionalmente, papel de treinador com acesso a vários atletas
+Roadmap — Identity & Access
 
-Critérios para considerar a primeira fase concluída
-[ ] O Athlete possui um ID persistente
-[ ] O app.py não chama diretamente load_athlete/save_athlete
-[ ] O JSON está escondido atrás de AthleteRepository
-[ ] Guardar e carregar mantém o mesmo athlete_id
-[ ] Os testes continuam a passar
-[ ] A aplicação continua funcional com um atleta
+1. Modelo de utilizador
+Criar performancelab/identity.py.
+Introduzir User.
+Distinguir os papéis athlete e coach.
+Associar diretamente um utilizador-atleta ao respetivo athlete_id.
+
+2. Testes do modelo
+Confirmar que cada utilizador recebe um user_id.
+Validar email.
+Validar os papéis permitidos.
+Garantir que um utilizador com papel athlete tem athlete_id.
+
+3. Serviço de autenticação
+Criar performancelab/authentication.py.
+Implementar login temporário sem password.
+Guardar o utilizador autenticado.
+Implementar logout.
+
+4. Persistência de utilizadores
+Criar um UserRepository.
+Começar com JSON.
+Manter a possibilidade de migrar para SQLite ou PostgreSQL.
+
+5. Controlo de acesso
+Atleta: acesso apenas ao próprio athlete_id.
+Treinador: acesso aos atletas que lhe forem atribuídos.
+Não colocar esta lógica diretamente no app.py.
+
+6. Integração com Streamlit
+Mostrar login quando não existe utilizador autenticado.
+Carregar diretamente o atleta do utilizador.
+Mostrar seletor apenas quando o utilizador é treinador.
+
+7. Autenticação real
+Adicionar passwords com hash seguro ou serviço externo.
+Sessões persistentes.
+Recuperação de acesso.
+OAuth, caso venha a fazer sentido.
 
 ## Vision
 
