@@ -6,6 +6,9 @@ Import Panel Component.
 from gzip import decompress
 from io import BytesIO
 
+from csv import DictReader
+from io import StringIO
+
 import streamlit as st
 
 from performancelab.importers import (
@@ -91,11 +94,117 @@ def _prepare_uploaded_file(
     )
 
     return uploaded_file, extension
+
+# ======================================================
+
+def _normalized_file_name(
+    value,
+) -> str:
+    """
+    Returns only the normalized file name.
+    """
+
+    return (
+        str(value or "")
+        .replace("\\", "/")
+        .rsplit("/", 1)[-1]
+        .strip()
+        .lower()
+    )
+
+
+# ======================================================
+
+def _read_strava_titles(
+    uploaded_files,
+) -> dict[str, str]:
+    """
+    Reads activity titles from Strava's activities.csv.
+    """
+
+    titles = {}
+
+    for uploaded_file in uploaded_files:
+
+        if (
+            uploaded_file.name.lower()
+            != "activities.csv"
+        ):
+            continue
+
+        content = (
+            uploaded_file.getvalue()
+            .decode("utf-8-sig")
+        )
+
+        rows = DictReader(
+            StringIO(content)
+        )
+
+        for row in rows:
+
+            file_name = (
+                _normalized_file_name(
+                    row.get("Filename")
+                )
+            )
+
+            title = str(
+                row.get("Activity Name")
+                or ""
+            ).strip()
+
+            if file_name and title:
+
+                titles[file_name] = title
+
+    return titles
+
+
+# ======================================================
+
+def _activity_title(
+    uploaded_file,
+    strava_titles,
+) -> str:
+    """
+    Returns the Strava title or a file-name fallback.
+    """
+
+    normalized_name = (
+        _normalized_file_name(
+            uploaded_file.name
+        )
+    )
+
+    strava_title = (
+        strava_titles.get(
+            normalized_name
+        )
+    )
+
+    if strava_title:
+
+        return strava_title
+
+    file_name = uploaded_file.name
+
+    if file_name.lower().endswith(
+        ".fit.gz"
+    ):
+
+        file_name = file_name[:-3]
+
+    return (
+        file_name
+        .rsplit(".", 1)[0]
+    )
 # ======================================================
 
 def _import_uploaded_file(
     uploaded_file,
     athlete,
+    strava_titles=None,
 ) -> bool:
     """
     Imports one uploaded activity.
@@ -126,17 +235,11 @@ def _import_uploaded_file(
 
     if extension == "fit":
 
-        file_name = uploaded_file.name
-
-        if file_name.lower().endswith(
-            ".fit.gz"
-        ):
-
-            file_name = file_name[:-3]
-
         workout.info.title = (
-            file_name
-            .rsplit(".", 1)[0]
+            _activity_title(
+                uploaded_file,
+                strava_titles or {},
+            )
         )
 
         _estimate_imported_workout_rpe(
@@ -160,18 +263,29 @@ def _import_uploaded_files(
 
     Returns added, updated and failed counts.
     """
-
+    strava_titles = (
+        _read_strava_titles(
+            uploaded_files
+        )
+    )
     added_count = 0
     updated_count = 0
     failed_count = 0
 
     for uploaded_file in uploaded_files:
 
+        if (
+            uploaded_file.name.lower()
+            == "activities.csv"
+        ):
+            continue
+
         try:
 
             added = _import_uploaded_file(
                 uploaded_file,
                 athlete,
+                strava_titles,
             )
 
         except Exception:
@@ -207,11 +321,12 @@ def show_import_panel(
     """
 
     uploaded_files = st.file_uploader(
-        "Choose activity files",
+        "Choose files",
         type=[
             "gpx",
             "fit",
             "gz",
+            "csv",
         ],
         accept_multiple_files=True,
         key=f"{key_prefix}_file_uploader",

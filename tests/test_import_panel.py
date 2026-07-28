@@ -90,13 +90,22 @@ def test_imports_multiple_files_and_counts_results(
     monkeypatch,
 ):
 
-    new_file = object()
-    existing_file = object()
-    failed_file = object()
+    new_file = SimpleNamespace(
+        name="new.fit"
+    )
+
+    existing_file = SimpleNamespace(
+        name="existing.fit"
+    )
+
+    failed_file = SimpleNamespace(
+        name="failed.fit"
+    )
 
     def fake_import(
         uploaded_file,
         athlete,
+        strava_titles=None,
     ):
 
         if uploaded_file is new_file:
@@ -154,3 +163,46 @@ def test_prepares_compressed_fit_upload():
     assert source.read() == (
         b"FIT activity data"
     )
+
+def test_reads_strava_activity_titles():
+
+    csv_file = SimpleNamespace(
+        name="activities.csv",
+        getvalue=lambda: (
+            (
+                '"Activity Name","Filename"\n'
+                '"Morning Run",'
+                '"activities/20284257187.fit.gz"\n'
+            ).encode("utf-8")
+        ),
+    )
+
+    titles = (
+        import_panel._read_strava_titles(
+            [csv_file]
+        )
+    )
+
+    assert titles == {
+        "20284257187.fit.gz": (
+            "Morning Run"
+        )
+    }
+
+
+def test_uses_strava_activity_title():
+
+    uploaded_file = SimpleNamespace(
+        name="20284257187.fit.gz",
+    )
+
+    title = import_panel._activity_title(
+        uploaded_file,
+        {
+            "20284257187.fit.gz": (
+                "Morning Run"
+            ),
+        },
+    )
+
+    assert title == "Morning Run"
