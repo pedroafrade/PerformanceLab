@@ -12,8 +12,11 @@ from dataclasses import dataclass
 @dataclass
 class AthleteFeedback:
 
-    # Perceived exertion (0-10 Borg CR10)
+    # Athlete-confirmed perceived exertion (0-10 Borg CR10)
     rpe: float | None = None
+
+    # Automatically estimated exertion (0-10)
+    estimated_rpe: float | None = None
 
     # General feeling (0-10)
     feeling: float | None = None
@@ -32,6 +35,19 @@ class AthleteFeedback:
 
     # Free text
     notes: str = ""
+
+    # ======================================================
+
+    @property
+    def effective_rpe(self) -> float | None:
+        """
+        Returns manual RPE when available, otherwise the estimate.
+        """
+
+        if self.rpe is not None:
+            return self.rpe
+
+        return self.estimated_rpe
 
     # ======================================================
 
