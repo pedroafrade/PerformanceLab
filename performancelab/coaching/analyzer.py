@@ -34,7 +34,30 @@ class CoachAnalyzer:
 
         strategy = self._strategy(phase)
 
-        if self.context.tsb < -20:
+        training_state = getattr(
+            self.context,
+            "training_state",
+            None,
+        )
+
+        if training_state is not None:
+
+            needs_recovery = (
+                training_state.needs_recovery
+            )
+
+        else:
+
+            needs_recovery = (
+                getattr(
+                    self.context,
+                    "tsb",
+                    0.0,
+                )
+                < -20
+            )
+
+        if needs_recovery:
 
             warnings.append(
                 "High accumulated fatigue."

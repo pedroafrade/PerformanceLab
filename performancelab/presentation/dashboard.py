@@ -25,6 +25,8 @@ from .dashboard_models import (
 )
 from .planning_presenter import PlanningPresenter
 
+import streamlit as st
+
 
 class DashboardData:
 
@@ -829,7 +831,7 @@ class DashboardData:
     @property
     def planning(self):
         """
-        Builds the combined weekly plan, next workout and
+        Builds the combined rolling plan, next workout and
         virtual coach presentation model.
         """
 
@@ -837,9 +839,16 @@ class DashboardData:
             WeeklyPlanBuilder,
         )
 
+        center_date = st.session_state.get(
+            "planning_window_center_date",
+            date.today(),
+        )
+
         plan = WeeklyPlanBuilder(
             self.analytics.training_plan,
-        ).week()
+        ).window(
+            center_day=center_date,
+        )
 
         return PlanningPresenter(
             plan=plan,

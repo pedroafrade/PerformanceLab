@@ -11,6 +11,9 @@ from performancelab.analysis.performance import (
 )
 from performancelab.training import DailyLoadBuilder
 
+from .performance_profile import PerformanceProfile
+from .training_state import TrainingState
+
 from . import consistency
 from . import time
 from . import volume
@@ -23,6 +26,10 @@ class AthleteAnalytics:
     def __init__(self, athlete):
 
         self.athlete = athlete
+
+        self._training_state = None
+
+        self._performance_profile = None
 
     # ======================================================
     # Shortcuts
@@ -186,9 +193,109 @@ class AthleteAnalytics:
 
         return time.last_training_date(self.history)
 
+    @property
+    def days_since_last_workout(self) -> int | None:
+
+        if self.last_training_date is None:
+
+            return None
+
+        from datetime import date
+
+        return (
+            date.today()
+            - self.last_training_date
+        ).days
+
+    @property
+    def weekly_frequency(self) -> float:
+
+        if not self.history:
+
+            return 0.0
+
+        first = self.first_training_date
+
+        last = self.last_training_date
+
+        if (
+            first is None
+            or last is None
+        ):
+
+            return 0.0
+
+        total_days = max(
+            (last - first).days + 1,
+            1,
+        )
+
+        total_weeks = total_days / 7
+
+        return (
+            len(self.history)
+            / total_weeks
+        )
+
+    @property
+    def recent_training_load(self) -> float:
+
+        loads = self.daily_loads.loads
+
+        if not loads:
+
+            return 0.0
+
+        return sum(
+            load.load
+            for load in loads[-7:]
+        )
+
+    @property
+    def age(self) -> int | None:
+
+        if self.athlete.birth_date is None:
+
+            return None
+
+        from datetime import date
+
+        today = date.today()
+
+        return (
+            today.year
+            - self.athlete.birth_date.year
+            - (
+                (
+                    today.month,
+                    today.day,
+                )
+                < (
+                    self.athlete.birth_date.month,
+                    self.athlete.birth_date.day,
+                )
+            )
+        )
+
     # ======================================================
     # Consistency
     # ======================================================
+
+    @property
+    def consistency_score(self) -> float:
+
+        workouts = len(self.history)
+
+        if workouts == 0:
+
+            return 0.0
+
+        frequency = self.weekly_frequency
+
+        return min(
+            frequency / 7.0,
+            1.0,
+        )
 
     @property
     def current_streak(self):
@@ -246,6 +353,66 @@ class AthleteAnalytics:
     def training_plan(self):
 
         return self.athlete.training_plan
+
+    @property
+    def training_state(self) -> TrainingState:
+
+        if self._training_state is None:
+
+            self._training_state = TrainingState(
+
+                ctl=self.ctl,
+
+                atl=self.atl,
+
+                tsb=self.tsb,
+
+                acute_chronic_ratio=None,
+
+                monotony=None,
+
+                strain=None,
+
+                consistency=self.consistency_score,
+
+                weekly_frequency=self.weekly_frequency,
+
+                days_since_last_workout=self.days_since_last_workout,
+
+                recent_training_load=self.recent_training_load,
+
+            )
+
+        return self._training_state
+
+    @property
+    def performance_profile(self) -> PerformanceProfile:
+
+        if self._performance_profile is None:
+
+            self._performance_profile = PerformanceProfile(
+
+                age=self.age,
+
+                gender=self.athlete.gender or None,
+
+                height=self.athlete.height,
+
+                weight=self.athlete.weight,
+
+                ftp=self.athlete.ftp,
+
+                vo2max=None,
+
+                max_hr=self.athlete.max_hr,
+
+                resting_hr=self.athlete.resting_hr,
+
+                running_economy=None,
+
+            )
+
+        return self._performance_profile
 
     # ======================================================
     # Summary

@@ -120,8 +120,12 @@ def dashboard_widget(
 
                 if subtitle:
 
-                    st.caption(
-                        subtitle
+                    st.markdown(
+                        f"<div style='margin-top:-0.35rem; margin-bottom:0.15rem; "
+                        "font-size:0.82rem; color:#8b949e;'>"
+                        f"{subtitle}"
+                        "</div>",
+                        unsafe_allow_html=True,
                     )
 
             with action_col:

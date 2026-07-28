@@ -112,10 +112,12 @@ class BaseStrategy(CoachStrategy):
 
             recovery_priority=(
                 "high"
-                if context.tsb < -10
-                or (
-                    context.average_rpe is not None
-                    and context.average_rpe >= 8
+                if (
+                    context.tsb < -10
+                    or (
+                        context.average_rpe is not None
+                        and context.average_rpe >= 8
+                    )
                 )
                 else "normal"
             ),

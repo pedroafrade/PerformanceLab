@@ -4,7 +4,7 @@ PerformanceLab
 Planning dashboard card.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 from html import escape
 
 import streamlit as st
@@ -162,6 +162,76 @@ def _next_workout_description(
         " + ".join(structure)
     )
 
+def _planning_window_center() -> date:
+    """
+    Return the date at the centre of the planning viewport.
+    """
+
+    center_date = st.session_state.get(
+        "planning_window_center_date"
+    )
+
+    if not isinstance(center_date, date):
+        center_date = date.today()
+        st.session_state[
+            "planning_window_center_date"
+        ] = center_date
+
+    return center_date
+
+
+def _move_planning_window(days: int) -> None:
+    """
+    Move the viewport without regenerating the training plan.
+    """
+
+    st.session_state[
+        "planning_window_center_date"
+    ] = (
+        _planning_window_center()
+        + timedelta(days=days)
+    )
+
+
+def _show_previous_button() -> None:
+    """
+    Display the button that moves the viewport three days back.
+    """
+
+    st.markdown(
+        '<div class="weekly-plan-arrow-spacer"></div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button(
+        "‹",
+        key="planning_window_previous",
+        type="tertiary",
+        use_container_width=True,
+    ):
+        _move_planning_window(-3)
+        st.rerun()
+
+
+def _show_next_button() -> None:
+    """
+    Display the button that moves the viewport three days forward.
+    """
+
+    st.markdown(
+        '<div class="weekly-plan-arrow-spacer"></div>',
+        unsafe_allow_html=True,
+    )
+
+    if st.button(
+        "›",
+        key="planning_window_next",
+        type="tertiary",
+        use_container_width=True,
+    ):
+        _move_planning_window(3)
+        st.rerun()
+
 
 def show_planning_card(
     planning,
@@ -244,8 +314,8 @@ def show_planning_card(
 }
 
 .weekly-plan-next {
-    margin-top: 5px;
-    padding-top: 6px;
+    margin-top: 2px;
+    padding-top: 4px;
     overflow: hidden;
     border-top: 1px solid rgba(128, 128, 128, 0.30);
     font-size: 0.72rem;
@@ -255,19 +325,61 @@ def show_planning_card(
     white-space: nowrap;
 }
 
+.weekly-plan-arrow-spacer {
+    height: 6px;
+}
 
+/*
+The navigation columns contain only these tertiary buttons.
+Their height matches the 29 px day markers.
+*/
+div[data-testid="stButton"] > button[kind="tertiary"] {
+    min-height: 29px;
+    height: 29px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+div[data-testid="stButton"] > button[kind="tertiary"]:hover,
+div[data-testid="stButton"] > button[kind="tertiary"]:focus,
+div[data-testid="stButton"] > button[kind="tertiary"]:active {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
 </style>
         """,
         unsafe_allow_html=True,
     )
 
     columns = st.columns(
-        7,
+        [
+            0.55,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            0.55,
+        ],
         gap="small",
     )
 
+    previous_column = columns[0]
+    day_columns = columns[1:-1]
+    next_column = columns[-1]
+
+    with previous_column:
+        _show_previous_button()
+
     for column, day in zip(
-        columns,
+        day_columns,
         planning.weekly_plan.days,
     ):
         classes = [
@@ -312,6 +424,9 @@ def show_planning_card(
                 ),
                 unsafe_allow_html=True,
             )
+
+    with next_column:
+        _show_next_button()
 
     next_description = _next_workout_description(
         planning.next_workout

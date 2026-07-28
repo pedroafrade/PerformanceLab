@@ -12,6 +12,9 @@ from datetime import date, timedelta
 
 from performancelab.athlete import Athlete
 
+from performancelab.analysis.performance_profile import PerformanceProfile
+from performancelab.analysis.training_state import TrainingState
+
 
 @dataclass(frozen=True)
 class CoachContext:
@@ -39,6 +42,69 @@ class CoachContext:
     days_since_event: int | None = None
 
     upcoming_events: tuple[object, ...] = ()
+
+    # ======================================================
+
+    @property
+    def training_state(self):
+        """
+        Returns the athlete's physiological training state.
+
+        Test doubles that do not expose analytics continue to work by
+        returning None.
+        """
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        if analytics is None:
+            return None
+
+        return analytics.training_state
+    
+    # ======================================================
+
+    @property
+    def needs_recovery(self) -> bool:
+        """
+        Returns whether the athlete should prioritise recovery.
+
+        New code uses TrainingState when available.
+        Older tests and lightweight context doubles continue to
+        work through the legacy TSB heuristic.
+        """
+
+        training_state = self.training_state
+
+        if training_state is not None:
+            return training_state.needs_recovery
+
+        return self.tsb < -10
+
+    # ======================================================
+
+    @property
+    def performance_profile(self):
+        """
+        Returns the athlete's physiological performance profile.
+
+        Test doubles that do not expose analytics continue to work by
+        returning None.
+        """
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        if analytics is None:
+            return None
+
+        return analytics.performance_profile
 
     # ======================================================
 
@@ -108,6 +174,7 @@ class CoachContext:
             ctl=analytics.ctl,
             atl=analytics.atl,
             tsb=analytics.tsb,
+
             next_event=next_event,
             days_until_event=days_until_event,
             sports=tuple(

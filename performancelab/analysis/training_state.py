@@ -1,0 +1,120 @@
+"""
+PerformanceLab
+
+Training State
+
+Represents the athlete's current physiological training state.
+
+This object summarizes recent training load, fitness, fatigue and
+recovery into a single immutable domain model that can be consumed
+by the planning engine without exposing low-level physiological
+metrics.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True, slots=True)
+class TrainingState:
+    """
+    Snapshot of an athlete's current training state.
+
+    The values stored in this object describe the athlete at a
+    specific moment in time. The object is immutable and should be
+    recreated whenever new training data becomes available.
+    """
+
+    ctl: float
+    atl: float
+    tsb: float
+    acute_chronic_ratio: float | None
+    monotony: float | None
+    strain: float | None
+    consistency: float | None
+    weekly_frequency: float | None
+    days_since_last_workout: int | None
+    recent_training_load: float | None
+
+    @property
+    def fitness(self) -> float:
+        """Long-term fitness indicator."""
+
+        return self.ctl
+
+    @property
+    def fatigue(self) -> float:
+        """Short-term fatigue indicator."""
+
+        return self.atl
+
+    @property
+    def form(self) -> float:
+        """Current freshness indicator."""
+
+        return self.tsb
+
+    @property
+    def needs_recovery(self) -> bool:
+        """
+        Indicates whether the athlete should enter a recovery phase
+        based on current physiological state.
+        """
+
+        return self.tsb < -20
+
+    @property
+    def can_absorb_more_volume(self) -> bool:
+        """
+        Returns whether the athlete appears able to tolerate
+        additional training volume.
+        """
+
+        return self.tsb > -10
+
+    @property
+    def can_tolerate_intensity(self) -> bool:
+        """
+        Returns whether the athlete appears ready for quality
+        sessions.
+        """
+
+        return self.tsb >= 0
+
+    @property
+    def recovery_score(self) -> float:
+        """Returns a simple recovery score between 0 and 100."""
+
+        score = self.tsb + 50
+
+        return max(
+            0.0,
+            min(
+                score,
+                100.0,
+            ),
+        )
+
+    @property
+    def training_trend(self) -> str:
+        """Returns the current training trend."""
+
+        if self.ctl > self.atl:
+            return "building"
+
+        if self.tsb > 10:
+            return "fresh"
+
+        if self.needs_recovery:
+            return "fatigued"
+
+        return "stable"
+
+    def __repr__(self) -> str:
+        return (
+            "TrainingState("
+            f"CTL={self.ctl:.1f}, "
+            f"ATL={self.atl:.1f}, "
+            f"TSB={self.tsb:.1f})"
+        )
