@@ -93,6 +93,19 @@ class History:
             return workout, True
 
         if (
+            self._is_placeholder_title(
+                existing.info.title
+            )
+            and not self._is_placeholder_title(
+                workout.info.title
+            )
+        ):
+
+            existing.info.title = (
+                workout.info.title
+            )
+
+        if (
             workout.feedback.estimated_rpe
             is not None
         ):
@@ -113,7 +126,24 @@ class History:
         return existing, False
 
     # ======================================================
+    @staticmethod
+    def _is_placeholder_title(
+        value,
+    ) -> bool:
+        """
+        Identifies an empty or numeric activity title.
+        """
 
+        title = str(
+            value or ""
+        ).strip()
+
+        return (
+            not title
+            or title.isdigit()
+        )
+
+    # ======================================================
     @classmethod
     def _workouts_match(
         cls,

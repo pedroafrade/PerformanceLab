@@ -276,3 +276,90 @@ def test_history_merges_matching_workout():
             },
         ]
     )
+
+def test_history_replaces_numeric_title():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            0,
+        )
+    )
+
+    existing.info.title = "20284257187"
+
+    imported = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            2,
+        ),
+        distance=10.05,
+        duration=timedelta(
+            hours=1,
+            seconds=20,
+        ),
+    )
+
+    imported.info.title = (
+        "Morning Run"
+    )
+
+    history.add(existing)
+    history.merge(imported)
+
+    assert (
+        existing.info.title
+        == "Morning Run"
+    )
+
+
+def test_history_preserves_meaningful_title():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            0,
+        )
+    )
+
+    existing.info.title = "T73_shakeout"
+
+    imported = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            2,
+        ),
+        distance=10.05,
+        duration=timedelta(
+            hours=1,
+            seconds=20,
+        ),
+    )
+
+    imported.info.title = (
+        "Morning Run"
+    )
+
+    history.add(existing)
+    history.merge(imported)
+
+    assert (
+        existing.info.title
+        == "T73_shakeout"
+    )
