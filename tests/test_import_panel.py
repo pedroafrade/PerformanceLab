@@ -170,9 +170,9 @@ def test_reads_strava_activity_titles():
         name="activities.csv",
         getvalue=lambda: (
             (
-                '"Activity Name","Filename"\n'
-                '"Morning Run",'
-                '"activities/20284257187.fit.gz"\n'
+                '"Nome da atividade","Nome do ficheiro"\n'
+                '"T68- 6x20 + Z2 (pt 2)",'
+                '"activities\\20284257187.fit.gz"\n'
             ).encode("utf-8")
         ),
     )
@@ -185,7 +185,7 @@ def test_reads_strava_activity_titles():
 
     assert titles == {
         "20284257187.fit.gz": (
-            "Morning Run"
+            "T68- 6x20 + Z2 (pt 2)"
         )
     }
 

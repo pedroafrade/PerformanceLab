@@ -143,14 +143,32 @@ def _read_strava_titles(
 
         for row in rows:
 
-            file_name = (
-                _normalized_file_name(
-                    row.get("Filename")
-                )
+            file_name = next(
+                (
+                    candidate
+                    for candidate in (
+                        _normalized_file_name(
+                            value
+                        )
+                        for value in row.values()
+                    )
+                    if candidate.endswith(
+                        (
+                            ".fit",
+                            ".fit.gz",
+                            ".gpx",
+                            ".gpx.gz",
+                        )
+                    )
+                ),
+                "",
             )
 
             title = str(
                 row.get("Activity Name")
+                or row.get(
+                    "Nome da atividade"
+                )
                 or ""
             ).strip()
 
