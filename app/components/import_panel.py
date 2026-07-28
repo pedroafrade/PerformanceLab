@@ -3,6 +3,8 @@ PerformanceLab
 
 Import Panel Component.
 """
+from gzip import decompress
+from io import BytesIO
 
 import streamlit as st
 
@@ -58,6 +60,39 @@ def _store_imported_workout(
 
 # ======================================================
 
+def _prepare_uploaded_file(
+    uploaded_file,
+):
+    """
+    Prepares an uploaded activity for its importer.
+
+    Strava FIT files may be compressed as .fit.gz.
+    """
+
+    file_name = uploaded_file.name.lower()
+
+    if file_name.endswith(".fit.gz"):
+
+        source = BytesIO(
+            decompress(
+                uploaded_file.getvalue()
+            )
+        )
+
+        source.name = (
+            uploaded_file.name[:-3]
+        )
+
+        return source, "fit"
+
+    extension = (
+        file_name
+        .rsplit(".", 1)[-1]
+    )
+
+    return uploaded_file, extension
+# ======================================================
+
 def _import_uploaded_file(
     uploaded_file,
     athlete,
@@ -68,10 +103,10 @@ def _import_uploaded_file(
     Returns whether a new workout was added.
     """
 
-    extension = (
-        uploaded_file.name
-        .rsplit(".", 1)[-1]
-        .lower()
+    source, extension = (
+        _prepare_uploaded_file(
+            uploaded_file
+        )
     )
 
     if extension == "gpx":
@@ -86,13 +121,21 @@ def _import_uploaded_file(
         )
 
     workout = importer.read(
-        uploaded_file
+        source
     )
 
     if extension == "fit":
 
+        file_name = uploaded_file.name
+
+        if file_name.lower().endswith(
+            ".fit.gz"
+        ):
+
+            file_name = file_name[:-3]
+
         workout.info.title = (
-            uploaded_file.name
+            file_name
             .rsplit(".", 1)[0]
         )
 
@@ -168,6 +211,7 @@ def show_import_panel(
         type=[
             "gpx",
             "fit",
+            "gz",
         ],
         accept_multiple_files=True,
         key=f"{key_prefix}_file_uploader",

@@ -1,3 +1,5 @@
+from gzip import compress
+
 from types import SimpleNamespace
 
 import app.components.import_panel as import_panel
@@ -128,4 +130,27 @@ def test_imports_multiple_files_and_counts_results(
         1,
         1,
         1,
+    )
+
+def test_prepares_compressed_fit_upload():
+
+    uploaded_file = SimpleNamespace(
+        name="strava_activity.fit.gz",
+        getvalue=lambda: compress(
+            b"FIT activity data"
+        ),
+    )
+
+    source, extension = (
+        import_panel._prepare_uploaded_file(
+            uploaded_file
+        )
+    )
+
+    assert extension == "fit"
+    assert source.name == (
+        "strava_activity.fit"
+    )
+    assert source.read() == (
+        b"FIT activity data"
     )
