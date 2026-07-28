@@ -521,8 +521,6 @@ def test_performance_management():
 
     ]
 
-    assert analytics.recent_training_load == 660
-
     assert analytics.pmc is not None
 
     assert isinstance(
@@ -548,3 +546,65 @@ def test_performance_management():
         float,
 
     )
+
+# ======================================================
+
+def test_current_training_loads_feed_training_state():
+
+    today = date.today()
+
+    athlete = Athlete(name="Pedro")
+
+    athlete.history.add(
+
+        create_workout(
+
+            "Running",
+
+            today - timedelta(days=6),
+
+            10,
+
+            timedelta(hours=1),
+
+            100,
+
+            5,
+
+        )
+
+    )
+
+    athlete.history.add(
+
+        create_workout(
+
+            "Running",
+
+            today,
+
+            12,
+
+            timedelta(hours=1),
+
+            120,
+
+            6,
+
+        )
+
+    )
+
+    analytics = athlete.analytics
+
+    training_state = analytics.training_state
+
+    assert len(analytics.current_training_loads) == 28
+
+    assert analytics.recent_training_load == 660
+
+    assert analytics.acute_training_load == 660 / 7
+
+    assert analytics.chronic_training_load == 660 / 28
+
+    assert training_state.acute_chronic_ratio == 4.0

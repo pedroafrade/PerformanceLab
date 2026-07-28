@@ -171,14 +171,14 @@ Criar TrainingState (estado atual do atleta).
 Criar PerformanceProfile (capacidade fisiológica do atleta).
 Tornar ambos objetos imutáveis (@dataclass(frozen=True)).
 Não depender do Planner.
+
 Fase 2 — Integração
 Adicionar training_state a AthleteAnalytics.
 Adicionar performance_profile a AthleteAnalytics.
 Construir ambos apenas com informação já existente no projeto.
+
 Fase 3 — Estado de treino
-
 Expandir TrainingState para representar o estado fisiológico atual.
-
 Indicadores iniciais:
 
 CTL
@@ -193,10 +193,9 @@ Days Since Last Workout
 Recent Training Load
 Training Trend
 Recovery Status
+
 Fase 4 — Perfil fisiológico
-
 Expandir PerformanceProfile.
-
 Indicadores iniciais:
 
 VO₂max
@@ -210,8 +209,8 @@ Weight
 Age
 Maximum Heart Rate
 Resting Heart Rate
-Fase 5 — Capacidades derivadas
 
+Fase 5 — Capacidades derivadas
 Adicionar propriedades de domínio.
 
 Exemplos:
@@ -228,7 +227,6 @@ fatigue_level
 Estas propriedades escondem toda a matemática ao restante sistema.
 
 Fase 6 — Refatoração do Planner
-
 O Planner deixa de utilizar diretamente:
 
 CTL
@@ -242,8 +240,8 @@ Passa apenas a consumir:
 athlete.analytics.training_state
 
 athlete.analytics.performance_profile
-Fase 7 — Planeamento Inteligente
 
+Fase 7 — Planeamento Inteligente
 O algoritmo passa a decidir:
 
 fase de treino

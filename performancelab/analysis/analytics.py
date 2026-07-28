@@ -6,8 +6,13 @@ AthleteAnalytics
 Public analytics interface for an athlete.
 """
 
+from datetime import date, timedelta
+
 from performancelab.analysis.performance import (
     PerformanceManagementChart,
+)
+from performancelab.physiology import (
+    acute_chronic_ratio as calculate_acute_chronic_ratio,
 )
 from performancelab.training import DailyLoadBuilder
 
@@ -238,16 +243,46 @@ class AthleteAnalytics:
         )
 
     @property
+    def current_training_loads(self) -> list[float]:
+
+        today = date.today()
+
+        start_date = today - timedelta(days=27)
+
+        return DailyLoadBuilder(
+            self.history
+        ).build(
+            start_date=start_date,
+            end_date=today,
+        ).loads
+
+    @property
+    def acute_training_load(self) -> float:
+
+        loads = self.current_training_loads[-7:]
+
+        return sum(loads) / 7
+
+    @property
+    def chronic_training_load(self) -> float:
+
+        loads = self.current_training_loads
+
+        return sum(loads) / 28
+
+    @property
+    def acute_chronic_ratio(self) -> float | None:
+
+        return calculate_acute_chronic_ratio(
+            self.acute_training_load,
+            self.chronic_training_load,
+        )
+
+    @property
     def recent_training_load(self) -> float:
 
-        loads = self.daily_loads.loads
-
-        if not loads:
-
-            return 0.0
-
         return sum(
-            loads[-7:]
+            self.current_training_loads[-7:]
         )
 
     @property
@@ -366,7 +401,7 @@ class AthleteAnalytics:
 
                 tsb=self.tsb,
 
-                acute_chronic_ratio=None,
+                acute_chronic_ratio=self.acute_chronic_ratio,
 
                 monotony=None,
 
