@@ -11,6 +11,8 @@ from datetime import date, datetime, time, timedelta
 
 from performancelab.workout import Workout
 
+from collections.abc import Callable
+
 
 MATCHING_TIME_TOLERANCE = timedelta(
     minutes=5
@@ -26,6 +28,18 @@ MATCHING_DISTANCE_TOLERANCE_KM = 0.1
 class History:
 
     workouts: list[Workout] = field(default_factory=list)
+
+    on_change: Callable[[], None] | None = field(
+        default=None,
+        repr=False,
+        compare=False,
+    )
+
+    def _notify_change(self) -> None:
+
+        if self.on_change is not None:
+
+            self.on_change()
 
     # ======================================================
 
@@ -93,6 +107,8 @@ class History:
                 name,
                 sensor,
             )
+
+        self._notify_change()
 
         return existing, False
 
@@ -179,11 +195,15 @@ class History:
 
             self.workouts.remove(workout)
 
+            self._notify_change()
+
     # ======================================================
 
     def clear(self):
 
         self.workouts.clear()
+
+        self._notify_change()
 
     # ======================================================
 
@@ -218,6 +238,8 @@ class History:
                 workout.date
             )
         )
+
+        self._notify_change()
 
     # ======================================================
 

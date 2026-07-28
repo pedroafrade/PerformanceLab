@@ -58,7 +58,15 @@ class Athlete:
     analytics: AthleteAnalytics = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self.analytics = AthleteAnalytics(self)
+
+        self.analytics = AthleteAnalytics(
+            self
+        )
+
+        self.history.on_change = (
+            self.analytics
+            .invalidate_training_state
+        )
 
     def __repr__(self) -> str:
         return (

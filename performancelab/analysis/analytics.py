@@ -40,6 +40,15 @@ class AthleteAnalytics:
 
         self._performance_profile = None
 
+    def invalidate_training_state(
+        self,
+    ) -> None:
+        """
+        Discards the cached state after training history changes.
+        """
+
+        self._training_state = None
+
     # ======================================================
     # Shortcuts
     # ======================================================

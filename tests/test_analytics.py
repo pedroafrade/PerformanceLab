@@ -671,3 +671,35 @@ def test_current_training_loads_feed_training_state():
         training_state.strain
         == 660 * expected_monotony
     )
+
+def test_training_state_refreshes_after_history_change():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    initial_state = (
+        athlete.analytics.training_state
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Running",
+            date.today(),
+            10,
+            timedelta(hours=1),
+            100,
+            5,
+        )
+    )
+
+    refreshed_state = (
+        athlete.analytics.training_state
+    )
+
+    assert refreshed_state is not initial_state
+
+    assert (
+        refreshed_state.recent_training_load
+        == 300
+    )
