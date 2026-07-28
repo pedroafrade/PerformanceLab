@@ -261,6 +261,7 @@ class FakeHistory:
     def __init__(self):
 
         self.removed_workout = None
+        self.removed_workouts = []
         self.sort_called = False
 
     def remove(
@@ -269,6 +270,19 @@ class FakeHistory:
     ):
 
         self.removed_workout = workout
+
+    def remove_many(
+        self,
+        workouts,
+    ):
+
+        self.removed_workouts = list(
+            workouts
+        )
+
+        return len(
+            self.removed_workouts
+        )
 
     def _sort(self):
 
@@ -420,8 +434,8 @@ def test_confirm_delete_removes_workout(
     )
 
     assert (
-        athlete.history.removed_workout
-        is workout
+        athlete.history.removed_workouts
+        == [workout]
     )
 
     assert (
@@ -628,3 +642,53 @@ def test_automatic_rpe_can_be_overridden(
 
     assert workout.feedback.rpe == 8
     assert workout.feedback.estimated_rpe == 6.0
+
+def test_confirm_delete_removes_multiple_workouts(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit(
+        button_values={
+            "multiple_delete_confirm": True,
+        },
+    )
+
+    fake_streamlit.session_state.confirm_delete = True
+    fake_streamlit.session_state.edit_workout = False
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+
+    workout_1 = create_fake_workout()
+    workout_2 = create_fake_workout()
+
+    workout_editor.show_workout_delete_action(
+        athlete,
+        [
+            workout_1,
+            workout_2,
+        ],
+        key_prefix="multiple_delete",
+    )
+
+    assert (
+        athlete.history.removed_workouts
+        == [
+            workout_1,
+            workout_2,
+        ]
+    )
+
+    assert (
+        fake_streamlit
+        .session_state
+        .notice
+        == "2 workouts deleted."
+    )
+
+    assert fake_streamlit.rerun_called is True

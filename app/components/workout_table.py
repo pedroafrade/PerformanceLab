@@ -82,17 +82,13 @@ def format_elevation(
 
 # ======================================================
 
-def get_selected_workout(
+def get_selected_workouts(
     athlete,
     *,
     key: str = "workout_history_table",
-):
+) -> list:
     """
-    Return the workout currently selected in the dataframe.
-
-    This reads the dataframe selection from Streamlit
-    session state, allowing other components to be rendered
-    before the dataframe itself.
+    Return all workouts selected in the dataframe.
     """
 
     workouts = list(
@@ -102,14 +98,14 @@ def get_selected_workout(
     )
 
     if not workouts:
-        return None
+        return []
 
     selection_state = st.session_state.get(
         key
     )
 
     if selection_state is None:
-        return None
+        return []
 
     try:
         selected_rows = (
@@ -129,15 +125,35 @@ def get_selected_workout(
                 [],
             )
 
-    if not selected_rows:
+    return [
+        workouts[index]
+        for index in selected_rows
+        if index < len(workouts)
+    ]
+
+
+# ======================================================
+
+def get_selected_workout(
+    athlete,
+    *,
+    key: str = "workout_history_table",
+):
+    """
+    Return the single selected workout.
+    """
+
+    selected_workouts = (
+        get_selected_workouts(
+            athlete,
+            key=key,
+        )
+    )
+
+    if len(selected_workouts) != 1:
         return None
 
-    selected_index = selected_rows[0]
-
-    if selected_index >= len(workouts):
-        return None
-
-    return workouts[selected_index]
+    return selected_workouts[0]
 
 # ======================================================
 # Workout table
@@ -148,6 +164,7 @@ def show_workout_table(
     *,
     key: str = "workout_history_table",
     show_header: bool = True,
+    selection_mode: str = "single-row",
 ):
 
     if show_header:
@@ -224,7 +241,7 @@ def show_workout_table(
         hide_index=True,
         key=key,
         on_select="rerun",
-        selection_mode="single-row",
+        selection_mode=selection_mode,
     )
 
     selected_rows = (
@@ -240,10 +257,18 @@ def show_workout_table(
 
         return None
 
-    selected_index = selected_rows[0]
+    selected_workouts = [
+        workouts[index]
+        for index in selected_rows
+        if index < len(workouts)
+    ]
 
-    if selected_index >= len(workouts):
+    if selection_mode == "multi-row":
+
+        return selected_workouts
+
+    if not selected_workouts:
 
         return None
 
-    return workouts[selected_index]
+    return selected_workouts[0]

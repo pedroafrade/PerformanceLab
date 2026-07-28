@@ -45,23 +45,66 @@ def show_workout_delete_action(
     *,
     key_prefix: str = "delete_workout_action",
 ) -> None:
-    """Display the Delete action and its confirmation."""
+    """
+    Display deletion for one or multiple workouts.
+    """
+
     _initialize_workout_editor_state()
 
     if selected_workout is None:
         return
 
+    if isinstance(
+        selected_workout,
+        (list, tuple),
+    ):
+
+        selected_workouts = list(
+            selected_workout
+        )
+
+    else:
+
+        selected_workouts = [
+            selected_workout
+        ]
+
+    if not selected_workouts:
+        return
+
+    workout_count = len(
+        selected_workouts
+    )
+
+    dialog_title = (
+        "Delete workout"
+        if workout_count == 1
+        else f"Delete {workout_count} workouts"
+    )
+
     @st.dialog(
-        "Delete workout",
+        dialog_title,
         width="small",
         dismissible=False,
     )
     def confirm_deletion():
 
-        st.warning(
-            "Are you sure you want to delete "
-            "this workout?"
-        )
+        if workout_count == 1:
+
+            message = (
+                "Are you sure you want to "
+                "delete this workout?"
+            )
+
+        else:
+
+            message = (
+                "Are you sure you want to "
+                f"delete these {workout_count} "
+                "workouts?"
+            )
+
+        st.warning(message)
 
         confirm_column, cancel_column = (
             st.columns(2)
@@ -76,15 +119,27 @@ def show_workout_delete_action(
                 use_container_width=True,
             ):
 
-                athlete.history.remove(
-                    selected_workout
+                removed_count = (
+                    athlete.history.remove_many(
+                        selected_workouts
+                    )
                 )
 
                 st.session_state.confirm_delete = False
                 st.session_state.edit_workout = False
-                st.session_state.notice = (
-                    "Workout deleted."
-                )
+
+                if removed_count == 1:
+
+                    st.session_state.notice = (
+                        "Workout deleted."
+                    )
+
+                else:
+
+                    st.session_state.notice = (
+                        f"{removed_count} workouts "
+                        "deleted."
+                    )
 
                 st.rerun()
 
@@ -111,8 +166,7 @@ def show_workout_delete_action(
     if st.session_state.confirm_delete:
 
         confirm_deletion()
-
-
+        
 def show_workout_edit_form(
     athlete,
     selected_workout,

@@ -15,7 +15,7 @@ from .workout_editor import (
     show_workout_edit_form,
 )
 from .workout_table import (
-    get_selected_workout,
+    get_selected_workouts,
     show_workout_table,
 )
 
@@ -49,9 +49,17 @@ def show_training_page(
 
     table_key = "training_workout_history_table"
 
-    selected_workout = get_selected_workout(
-        athlete,
-        key=table_key,
+    selected_workouts = (
+        get_selected_workouts(
+            athlete,
+            key=table_key,
+        )
+    )
+
+    selected_workout = (
+        selected_workouts[0]
+        if len(selected_workouts) == 1
+        else None
     )
 
     st.divider()
@@ -73,21 +81,40 @@ def show_training_page(
                 key="training_edit_workout",
             )
 
+    if selected_workouts:
+
         with delete_column:
             show_workout_delete_action(
                 athlete,
-                selected_workout,
+                selected_workouts,
                 key_prefix="training_delete_workout",
             )
 
-    selected_workout = show_workout_table(
-        athlete,
-        key=table_key,
-        show_header=False,
+    selected_workouts = (
+        show_workout_table(
+            athlete,
+            key=table_key,
+            show_header=False,
+            selection_mode="multi-row",
+        )
+        or []
     )
 
-    if selected_workout is None:
+    if not selected_workouts:
         return None
+
+    if len(selected_workouts) > 1:
+
+        st.caption(
+            f"{len(selected_workouts)} "
+            "workouts selected."
+        )
+
+        return None
+
+    selected_workout = (
+        selected_workouts[0]
+    )
 
     # --------------------------------------------------
     # Workout details
