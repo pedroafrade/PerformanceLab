@@ -7,6 +7,7 @@ from .info import WorkoutInfo
 from .environment import Environment
 from .feedback import AthleteFeedback
 from .sensors import SensorCollection
+from .rpe_estimation import estimate_workout_rpe
 
 __all__ = [
     "Workout",
@@ -14,4 +15,5 @@ __all__ = [
     "Environment",
     "AthleteFeedback",
     "SensorCollection",
+    "estimate_workout_rpe",
 ]
