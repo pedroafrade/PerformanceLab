@@ -76,35 +76,78 @@ def show_workout_delete_action(
         selected_workouts
     )
 
-    dialog_title = (
-        "Delete workout"
-        if workout_count == 1
-        else f"Delete {workout_count} workouts"
+    if st.button(
+        "Delete",
+        key=f"{key_prefix}_open",
+        use_container_width=True,
+    ):
+
+        st.session_state.edit_workout = False
+        st.session_state.confirm_delete = True
+
+    if not st.session_state.confirm_delete:
+        return
+
+    modal_key = f"{key_prefix}_modal"
+
+    st.markdown(
+        f"""
+        <style>
+        .workout-delete-backdrop {{
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 999;
+        }}
+
+        .st-key-{modal_key} {{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(500px, calc(100vw - 2rem));
+            padding: 1.25rem;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 0.75rem;
+            box-shadow:
+                0 1rem 3rem rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+        }}
+        </style>
+
+        <div class="workout-delete-backdrop"></div>
+        """,
+        unsafe_allow_html=True,
     )
 
-    @st.dialog(
-        dialog_title,
-        width="small",
-        dismissible=False,
-    )
-    def confirm_deletion():
+    with st.container(
+        key=modal_key,
+        border=True,
+    ):
 
         if workout_count == 1:
 
-            message = (
+            st.subheader(
+                "Delete workout"
+            )
+
+            st.warning(
                 "Are you sure you want to "
                 "delete this workout?"
             )
 
         else:
 
-            message = (
+            st.subheader(
+                f"Delete {workout_count} workouts"
+            )
+
+            st.warning(
                 "Are you sure you want to "
                 f"delete these {workout_count} "
                 "workouts?"
             )
-
-        st.warning(message)
 
         confirm_column, cancel_column = (
             st.columns(2)
@@ -153,19 +196,6 @@ def show_workout_delete_action(
 
                 st.session_state.confirm_delete = False
                 st.rerun()
-
-    if st.button(
-        "Delete",
-        key=f"{key_prefix}_open",
-        use_container_width=True,
-    ):
-
-        st.session_state.edit_workout = False
-        st.session_state.confirm_delete = True
-
-    if st.session_state.confirm_delete:
-
-        confirm_deletion()
         
 def show_workout_edit_form(
     athlete,

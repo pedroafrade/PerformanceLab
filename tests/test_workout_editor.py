@@ -231,6 +231,21 @@ class FakeStreamlit:
             message
         )
 
+    def markdown(
+        self,
+        message,
+        **kwargs,
+    ):
+
+        return None
+
+    def container(
+        self,
+        **kwargs,
+    ):
+
+        return FakeColumn()
+
     def rerun(self):
 
         self.rerun_called = True
