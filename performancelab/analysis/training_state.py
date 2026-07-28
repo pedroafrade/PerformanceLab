@@ -15,6 +15,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from performancelab.physiology import (
+    risk_score as workload_ratio_band,
+)
+
 
 @dataclass(frozen=True, slots=True)
 class TrainingState:
@@ -81,6 +85,69 @@ class TrainingState:
         """
 
         return self.tsb >= 0
+
+    @property
+    def load_state(self) -> str:
+        """
+        Describes the relationship between recent and habitual load.
+        """
+
+        band = workload_ratio_band(
+            self.acute_chronic_ratio
+        )
+
+        if band == "Low":
+            return "low"
+
+        if band == "Moderate":
+            return "balanced"
+
+        if band == "High":
+            return "high"
+
+        return "unknown"
+
+    @property
+    def fatigue_level(self) -> str:
+        """
+        Returns a semantic description of current fatigue.
+        """
+
+        if self.needs_recovery:
+            return "high"
+
+        if not self.can_tolerate_intensity:
+            return "moderate"
+
+        return "low"
+
+    @property
+    def should_reduce_volume(self) -> bool:
+        """
+        Indicates whether planned volume should be reduced.
+        """
+
+        return (
+            self.needs_recovery
+            or self.load_state == "high"
+        )
+
+    @property
+    def readiness(self) -> str:
+        """
+        Returns the athlete's current training readiness.
+        """
+
+        if self.needs_recovery:
+            return "recovery"
+
+        if self.should_reduce_volume:
+            return "cautious"
+
+        if not self.can_tolerate_intensity:
+            return "easy"
+
+        return "ready"
 
     @property
     def recovery_score(self) -> float:
