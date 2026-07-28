@@ -70,6 +70,55 @@ class WeeklyPlanBuilder:
 
     # ======================================================
 
+    def window(
+        self,
+        center_day=None,
+    ):
+        """
+        Builds a seven-day window centred on the supplied day.
+
+        The returned range contains:
+
+        - three days before the centre day;
+        - the centre day;
+        - three days after the centre day.
+        """
+
+        center_day = center_day or date.today()
+
+        if isinstance(
+            center_day,
+            datetime,
+        ):
+            center_day = center_day.date()
+
+        start = center_day - timedelta(
+            days=3,
+        )
+
+        end = center_day + timedelta(
+            days=3,
+        )
+
+        plan = WeeklyPlan(
+            start_date=start,
+            end_date=end,
+        )
+
+        for workout in self.workouts:
+
+            if (
+                start
+                <= workout.day
+                <= end
+            ):
+
+                plan.add(workout)
+
+        return plan
+
+    # ======================================================
+
     def next_workout(self):
 
         return self.week().next_workout()

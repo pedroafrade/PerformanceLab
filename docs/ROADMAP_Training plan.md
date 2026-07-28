@@ -1,3 +1,9 @@
+1 - Janela móvel de 7 dias (sem alterar a lógica do plano).
+2 - Setas de navegação e estado em session_state.
+3 - Plano persistente associado a uma prova, substituindo a geração "por semana" por um plano completo que depois é apenas "recortado" para apresentação.
+4 - Revisão do algoritmo de prescrição (distribuição de intensidade, dias de recuperação, duração mínima, progressão e taper).
+
+
 Passo 1 — Corrigir o ciclo de vida do plano
 
 Confirmar que o plano:
