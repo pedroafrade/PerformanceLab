@@ -203,7 +203,7 @@ def show_workout_table(
                 workout.elevation_gain
             ),
 
-            "RPE": workout.feedback.rpe,
+            "RPE": workout.feedback.effective_rpe,
 
             "Source": (
                 workout.info.source
