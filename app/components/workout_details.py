@@ -107,11 +107,15 @@ def show_workout_summary(
         ),
     )
 
+    effective_rpe = (
+        workout.feedback.effective_rpe
+    )
+
     column_4.metric(
         "RPE",
         (
-            f"{workout.feedback.rpe:.1f}"
-            if workout.feedback.rpe is not None
+            f"{effective_rpe:.1f}"
+            if effective_rpe is not None
             else "—"
         ),
     )
