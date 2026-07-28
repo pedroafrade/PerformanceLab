@@ -144,6 +144,10 @@ def _workout_to_dict(workout):
 
             "rpe": workout.feedback.rpe,
 
+            "estimated_rpe": (
+                workout.feedback.estimated_rpe
+            ),
+
             "feeling": workout.feedback.feeling,
 
             "sleep_quality": (
@@ -245,6 +249,10 @@ def _workout_from_dict(data):
     feedback = data.get("feedback", {})
 
     workout.feedback.rpe = feedback.get("rpe")
+
+    workout.feedback.estimated_rpe = feedback.get(
+        "estimated_rpe"
+    )
 
     workout.feedback.feeling = feedback.get(
         "feeling"

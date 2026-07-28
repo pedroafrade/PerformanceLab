@@ -80,6 +80,7 @@ def create_athlete():
     workout.environment.weather = "Sunny"
 
     workout.feedback.rpe = 6
+    workout.feedback.estimated_rpe = 5.4
     workout.feedback.feeling = 8
     workout.feedback.sleep_quality = 7
     workout.feedback.motivation = 9
@@ -232,6 +233,10 @@ def test_athlete_round_trip():
 
     assert workout.feedback.rpe == 6
 
+    assert workout.feedback.estimated_rpe == 5.4
+
+    assert workout.feedback.effective_rpe == 6
+
     assert workout.environment.terrain == (
         "Road"
     )
@@ -378,3 +383,27 @@ def test_load_old_json_without_id():
 
     assert loaded.athlete_id is not None
     assert isinstance(loaded.athlete_id, str)
+
+# ======================================================
+
+def test_load_old_json_without_estimated_rpe():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["workouts"][0]["feedback"][
+        "estimated_rpe"
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    workout = loaded.history[0]
+
+    assert workout.feedback.rpe == 6
+    assert workout.feedback.estimated_rpe is None
+    assert workout.feedback.effective_rpe == 6
