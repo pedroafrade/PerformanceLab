@@ -63,39 +63,55 @@ def show_workout_delete_action(
 
         return
 
-    st.warning(
-        "Are you sure you want to delete this workout?"
+    @st.dialog(
+        "Delete workout",
+        width="small",
+        dismissible=False,
     )
+    def confirm_deletion():
 
-    confirm_column, cancel_column = st.columns(2)
+        st.warning(
+            "Are you sure you want to delete "
+            "this workout?"
+        )
 
-    with confirm_column:
-        if st.button(
-            "Delete",
-            key=f"{key_prefix}_confirm",
-            type="primary",
-            use_container_width=True,
-        ):
-            athlete.history.remove(
-                selected_workout
-            )
+        confirm_column, cancel_column = (
+            st.columns(2)
+        )
 
-            st.session_state.confirm_delete = False
-            st.session_state.edit_workout = False
-            st.session_state.notice = (
-                "Workout deleted."
-            )
+        with confirm_column:
 
-            st.rerun()
+            if st.button(
+                "Delete",
+                key=f"{key_prefix}_confirm",
+                type="primary",
+                use_container_width=True,
+            ):
 
-    with cancel_column:
-        if st.button(
-            "Cancel",
-            key=f"{key_prefix}_cancel",
-            use_container_width=True,
-        ):
-            st.session_state.confirm_delete = False
-            st.rerun()
+                athlete.history.remove(
+                    selected_workout
+                )
+
+                st.session_state.confirm_delete = False
+                st.session_state.edit_workout = False
+                st.session_state.notice = (
+                    "Workout deleted."
+                )
+
+                st.rerun()
+
+        with cancel_column:
+
+            if st.button(
+                "Cancel",
+                key=f"{key_prefix}_cancel",
+                use_container_width=True,
+            ):
+
+                st.session_state.confirm_delete = False
+                st.rerun()
+
+    confirm_deletion()
 
 
 def show_workout_edit_form(

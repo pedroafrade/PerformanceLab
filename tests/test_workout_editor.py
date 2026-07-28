@@ -225,6 +225,22 @@ class FakeStreamlit:
 
         self.rerun_called = True
 
+    def dialog(
+        self,
+        title,
+        **kwargs,
+    ):
+
+        self.messages.append(
+            title
+        )
+
+        def decorator(function):
+
+            return function
+
+        return decorator
+
 
 class FakeHistory:
 

@@ -544,9 +544,11 @@ if (
     page == "dashboard"
     and st.session_state.notice
 ):
-    st.success(
-        st.session_state.notice
+    st.toast(
+        st.session_state.notice,
+        icon="✅",
     )
+
     st.session_state.notice = None
 
 if page == "dashboard":
