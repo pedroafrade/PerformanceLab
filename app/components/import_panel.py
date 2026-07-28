@@ -337,6 +337,17 @@ def show_import_panel(
 
     Multiple selected files are imported together.
     """
+    
+    uploader_version_key = (
+        f"{key_prefix}_file_uploader_version"
+    )
+
+    uploader_version = (
+        st.session_state.get(
+            uploader_version_key,
+            0,
+        )
+    )
 
     uploaded_files = st.file_uploader(
         "Choose files",
@@ -347,32 +358,16 @@ def show_import_panel(
             "csv",
         ],
         accept_multiple_files=True,
-        key=f"{key_prefix}_file_uploader",
+        key=(
+            f"{key_prefix}_file_uploader_"
+            f"{uploader_version}"
+        ),
     )
 
     if not uploaded_files:
 
         return
 
-    file_token = tuple(
-        sorted(
-            (
-                uploaded_file.name,
-                uploaded_file.size,
-            )
-            for uploaded_file
-            in uploaded_files
-        )
-    )
-
-    if (
-        st.session_state.get(
-            f"{key_prefix}_imported_file_token"
-        )
-        == file_token
-    ):
-
-        return
 
     (
         added_count,
@@ -383,15 +378,15 @@ def show_import_panel(
         athlete,
     )
 
-    st.session_state[
-        f"{key_prefix}_imported_file_token"
-    ] = file_token
-
     st.session_state.notice = (
         f"Import complete: "
         f"{added_count} added, "
         f"{updated_count} updated, "
         f"{failed_count} failed."
     )
+
+    st.session_state[
+        uploader_version_key
+    ] = uploader_version + 1
 
     st.rerun()
