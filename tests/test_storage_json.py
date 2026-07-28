@@ -315,6 +315,26 @@ def test_saved_file_is_valid_json(tmp_path):
         "Pedro"
     )
 
+# ======================================================
+
+def test_saved_file_uses_compact_json(
+    tmp_path,
+):
+
+    athlete = create_athlete()
+
+    path = tmp_path / "athlete.json"
+
+    save_athlete(
+        athlete,
+        path,
+    )
+
+    content = path.read_text(
+        encoding="utf-8"
+    )
+
+    assert "\n" not in content
 
 # ======================================================
 

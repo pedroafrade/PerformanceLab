@@ -817,7 +817,7 @@ def save_athlete(
 
             ensure_ascii=False,
 
-            indent=2,
+            separators=(",", ":"),
 
         )
 
