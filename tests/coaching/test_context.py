@@ -7,6 +7,8 @@ from types import SimpleNamespace
 
 from performancelab.athlete import Athlete
 
+from performancelab.analysis.training_state import TrainingState
+
 from performancelab.coaching import CoachContext
 
 from performancelab.race import (
@@ -598,3 +600,47 @@ def test_context_preserves_cluster_after_first_event():
     assert context.next_event is second_event
     assert context.days_between_events == 35
     assert context.competition_block == "cluster"
+
+def test_context_uses_semantic_training_state():
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    athlete.analytics._training_state = TrainingState(
+        ctl=50.0,
+        atl=45.0,
+        tsb=5.0,
+        acute_chronic_ratio=1.4,
+        monotony=None,
+        strain=None,
+        consistency=None,
+        weekly_frequency=None,
+        days_since_last_workout=None,
+        recent_training_load=None,
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date.today(),
+    )
+
+    assert context.readiness == "cautious"
+    assert context.should_reduce_volume is True
+    assert context.can_tolerate_intensity is True
+    assert context.can_absorb_more_volume is True
+
+def test_context_preserves_legacy_fallbacks():
+    athlete = make_athlete(
+        tsb=-15.0,
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date.today(),
+    )
+
+    assert context.training_state is None
+    assert context.readiness == "easy"
+    assert context.should_reduce_volume is True
+    assert context.can_tolerate_intensity is False
+    assert context.can_absorb_more_volume is False

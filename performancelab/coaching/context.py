@@ -63,7 +63,11 @@ class CoachContext:
         if analytics is None:
             return None
 
-        return analytics.training_state
+        return getattr(
+            analytics,
+            "training_state",
+            None,
+        )
     
     # ======================================================
 
@@ -83,6 +87,72 @@ class CoachContext:
             return training_state.needs_recovery
 
         return self.tsb < -10
+
+    # ======================================================
+
+    @property
+    def readiness(self) -> str:
+        """
+        Returns the athlete's current training readiness.
+        """
+
+        training_state = self.training_state
+
+        if training_state is not None:
+            return training_state.readiness
+
+        if self.tsb < -20:
+            return "recovery"
+
+        if self.tsb < 0:
+            return "easy"
+
+        return "ready"
+
+    # ======================================================
+
+    @property
+    def should_reduce_volume(self) -> bool:
+        """
+        Indicates whether planned volume should be reduced.
+        """
+
+        training_state = self.training_state
+
+        if training_state is not None:
+            return training_state.should_reduce_volume
+
+        return self.tsb < -10
+
+    # ======================================================
+
+    @property
+    def can_tolerate_intensity(self) -> bool:
+        """
+        Indicates whether intensity sessions are appropriate.
+        """
+
+        training_state = self.training_state
+
+        if training_state is not None:
+            return training_state.can_tolerate_intensity
+
+        return self.tsb >= 0
+
+    # ======================================================
+
+    @property
+    def can_absorb_more_volume(self) -> bool:
+        """
+        Indicates whether additional volume can be tolerated.
+        """
+
+        training_state = self.training_state
+
+        if training_state is not None:
+            return training_state.can_absorb_more_volume
+
+        return self.tsb > -10
 
     # ======================================================
 
