@@ -32,6 +32,10 @@ from .fatigue import (
     strain,
 )
 
+from .exertion import (
+    estimate_rpe_from_heart_rate,
+)
+
 from .heartrate import (
     average as average_heart_rate,
     heart_rate_reserve,
@@ -96,6 +100,8 @@ from .zones import (
 
 
 __all__ = [
+
+    "estimate_rpe_from_heart_rate",
 
     # Heart rate
     "heart_rate_reserve",
