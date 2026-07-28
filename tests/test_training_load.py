@@ -65,7 +65,31 @@ def test_workout_load():
 
     assert workout_load(workout) == 300
 
+# ======================================================
 
+def test_workout_load_uses_estimated_rpe():
+
+    workout = create_workout(
+        timedelta(hours=1),
+        None,
+    )
+
+    workout.feedback.estimated_rpe = 6
+
+    assert workout_load(workout) == 360
+
+# ======================================================
+
+def test_manual_rpe_has_priority_for_workout_load():
+
+    workout = create_workout(
+        timedelta(hours=1),
+        5,
+    )
+
+    workout.feedback.estimated_rpe = 8
+
+    assert workout_load(workout) == 300
 # ======================================================
 
 def test_workout_without_duration():

@@ -14,7 +14,7 @@ Utilities for calculating training load.
 def workout_load(workout):
 
     duration = workout.duration
-    rpe = workout.feedback.rpe
+    rpe = workout.feedback.effective_rpe
 
     if duration is None:
 
