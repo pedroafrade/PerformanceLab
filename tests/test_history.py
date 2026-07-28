@@ -4,7 +4,7 @@ PerformanceLab
 Tests for History.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from performancelab.history import History
 from performancelab.workout import Workout
@@ -111,3 +111,90 @@ def test_history_sorts_date_and_datetime():
 
     assert history.first is imported
     assert history.last is manual
+
+# ======================================================
+
+def create_identifiable_workout(
+    workout_date,
+    *,
+    distance=10.0,
+    duration=timedelta(hours=1),
+):
+
+    workout = Workout()
+
+    workout.info.date = workout_date
+    workout.info.sport = "Running"
+    workout.info.distance = distance
+    workout.info.duration = duration
+
+    return workout
+
+
+def test_history_finds_matching_workout():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            0,
+        )
+    )
+
+    candidate = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            3,
+        ),
+        distance=10.05,
+        duration=timedelta(
+            hours=1,
+            seconds=30,
+        ),
+    )
+
+    history.add(existing)
+
+    assert (
+        history.find_matching(candidate)
+        is existing
+    )
+
+
+def test_history_does_not_match_different_workout():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            0,
+        )
+    )
+
+    candidate = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            18,
+            0,
+        )
+    )
+
+    history.add(existing)
+
+    assert (
+        history.find_matching(candidate)
+        is None
+    )

@@ -7,10 +7,20 @@ Container for an athlete's workouts.
 """
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from performancelab.workout import Workout
 
+
+MATCHING_TIME_TOLERANCE = timedelta(
+    minutes=5
+)
+
+MATCHING_DURATION_TOLERANCE = timedelta(
+    minutes=1
+)
+
+MATCHING_DISTANCE_TOLERANCE_KM = 0.1
 
 @dataclass
 class History:
@@ -24,6 +34,102 @@ class History:
         self.workouts.append(workout)
 
         self._sort()
+
+    # ======================================================
+    
+    def find_matching(
+        self,
+        workout: Workout,
+    ) -> Workout | None:
+        """
+        Finds an existing workout representing the same activity.
+        """
+
+        for existing in self.workouts:
+
+            if self._workouts_match(
+                existing,
+                workout,
+            ):
+
+                return existing
+
+        return None
+
+    # ======================================================
+
+    @classmethod
+    def _workouts_match(
+        cls,
+        existing: Workout,
+        candidate: Workout,
+    ) -> bool:
+        """
+        Compares the identifying information of two workouts.
+        """
+
+        if (
+            existing.date is None
+            or candidate.date is None
+        ):
+            return False
+
+        if (
+            str(existing.sport or "").lower()
+            != str(candidate.sport or "").lower()
+        ):
+            return False
+
+        existing_date = cls._sortable_date(
+            existing.date
+        )
+
+        candidate_date = cls._sortable_date(
+            candidate.date
+        )
+
+        if (
+            isinstance(existing.date, datetime)
+            and isinstance(candidate.date, datetime)
+        ):
+
+            if (
+                abs(existing_date - candidate_date)
+                > MATCHING_TIME_TOLERANCE
+            ):
+                return False
+
+        elif existing_date.date() != candidate_date.date():
+            return False
+
+        if (
+            existing.duration is None
+            or candidate.duration is None
+        ):
+            return False
+
+        if (
+            abs(
+                existing.duration
+                - candidate.duration
+            )
+            > MATCHING_DURATION_TOLERANCE
+        ):
+            return False
+
+        if (
+            existing.distance is None
+            or candidate.distance is None
+        ):
+            return False
+
+        return (
+            abs(
+                existing.distance
+                - candidate.distance
+            )
+            <= MATCHING_DISTANCE_TOLERANCE_KM
+        )
 
     # ======================================================
 
