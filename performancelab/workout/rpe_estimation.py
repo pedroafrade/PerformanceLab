@@ -12,6 +12,31 @@ from performancelab.physiology import (
 
 from .model import Workout
 
+MINUTES_PER_DURATION_RPE_POINT = 30.0
+MAX_DURATION_RPE_BONUS = 3.0
+MAX_RPE = 10.0
+
+
+def _duration_rpe_bonus(
+    duration,
+) -> float:
+    """
+    Returns additional exertion caused by workout duration.
+    """
+
+    if duration is None:
+        return 0.0
+
+    duration_minutes = max(
+        0.0,
+        duration.total_seconds() / 60,
+    )
+
+    return min(
+        MAX_DURATION_RPE_BONUS,
+        duration_minutes
+        / MINUTES_PER_DURATION_RPE_POINT,
+    )
 
 def estimate_workout_rpe(
     workout: Workout,
@@ -49,11 +74,26 @@ def estimate_workout_rpe(
         )
     ]
 
-    estimate = estimate_rpe_from_heart_rate(
+    intensity_estimate = estimate_rpe_from_heart_rate(
         heart_rates,
         max_hr=max_hr,
         resting_hr=resting_hr,
     )
+
+    if intensity_estimate is None:
+        estimate = None
+
+    else:
+        estimate = round(
+            min(
+                MAX_RPE,
+                intensity_estimate
+                + _duration_rpe_bonus(
+                    workout.duration
+                ),
+            ),
+            1,
+        )
 
     workout.feedback.estimated_rpe = estimate
 

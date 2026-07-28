@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from performancelab.workout import (
     Workout,
     estimate_workout_rpe,
@@ -82,3 +84,47 @@ def test_missing_athlete_profile_keeps_estimate_empty():
 
     assert estimate is None
     assert workout.feedback.estimated_rpe is None
+
+
+def test_duration_increases_estimated_rpe():
+
+    workout = workout_with_heart_rate()
+
+    workout.info.duration = timedelta(
+        minutes=60
+    )
+
+    estimate = estimate_workout_rpe(
+        workout,
+        max_hr=190,
+        resting_hr=50,
+    )
+
+    assert estimate == 7.0
+
+
+def test_estimated_rpe_is_limited_to_ten():
+
+    workout = Workout()
+
+    workout.info.duration = timedelta(
+        hours=2
+    )
+
+    workout.sensors.add(
+        "heart_rate",
+        [
+            {
+                "time": "2026-07-28T10:00:00",
+                "value": 176,
+            },
+        ],
+    )
+
+    estimate = estimate_workout_rpe(
+        workout,
+        max_hr=190,
+        resting_hr=50,
+    )
+
+    assert estimate == 10.0
