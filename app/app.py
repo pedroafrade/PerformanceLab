@@ -519,6 +519,11 @@ if "athlete" not in st.session_state:
 
 athlete: Athlete = st.session_state.athlete
 
+should_save_athlete = (
+    st.session_state.notice
+    is not None
+)
+
 athlete = show_sidebar(
     athlete,
     current_user=current_user,
@@ -540,10 +545,8 @@ if st.session_state.plan_error:
 
     st.session_state.plan_error = None
 
-if (
-    page == "dashboard"
-    and st.session_state.notice
-):
+if st.session_state.notice:
+
     st.toast(
         st.session_state.notice,
     )
@@ -611,9 +614,11 @@ if page != "accounts":
 
     st.session_state.athlete = athlete
 
-    athlete_repository.save(
-        athlete,
-    )
+    if should_save_athlete:
+
+        athlete_repository.save(
+            athlete,
+        )
 
 if (
     page == "athlete"
