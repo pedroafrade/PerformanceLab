@@ -229,6 +229,34 @@ class History:
 
     # ======================================================
 
+    def remove_many(
+        self,
+        workouts,
+    ) -> int:
+        """
+        Removes multiple workouts and notifies once.
+
+        Returns the number of removed workouts.
+        """
+
+        removed_count = 0
+
+        for workout in list(workouts):
+
+            if workout not in self.workouts:
+                continue
+
+            self.workouts.remove(workout)
+            removed_count += 1
+
+        if removed_count:
+
+            self._notify_change()
+
+        return removed_count
+
+    # ======================================================
+
     def clear(self):
 
         self.workouts.clear()

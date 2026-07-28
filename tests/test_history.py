@@ -363,3 +363,41 @@ def test_history_preserves_meaningful_title():
         existing.info.title
         == "T73_shakeout"
     )
+
+def test_history_removes_multiple_workouts():
+
+    history = History()
+
+    workout_1 = Workout()
+    workout_2 = Workout()
+    workout_3 = Workout()
+
+    workout_1.info.title = "Workout 1"
+    workout_2.info.title = "Workout 2"
+    workout_3.info.title = "Workout 3"
+
+    history.add(workout_1)
+    history.add(workout_2)
+    history.add(workout_3)
+
+    notifications = []
+
+    history.on_change = (
+        lambda: notifications.append(
+            "changed"
+        )
+    )
+
+    removed_count = history.remove_many(
+        [
+            workout_1,
+            workout_3,
+        ]
+    )
+
+    assert removed_count == 2
+    assert len(history) == 1
+    assert workout_2 in history
+    assert workout_1 not in history
+    assert workout_3 not in history
+    assert notifications == ["changed"]
