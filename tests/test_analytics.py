@@ -7,6 +7,8 @@ Tests for AthleteAnalytics.
 from datetime import date
 from datetime import timedelta
 
+from statistics import pstdev
+
 from performancelab import Athlete
 from performancelab.workout import Workout
 
@@ -608,3 +610,29 @@ def test_current_training_loads_feed_training_state():
     assert analytics.chronic_training_load == 660 / 28
 
     assert training_state.acute_chronic_ratio == 4.0
+
+    weekly_loads = analytics.current_training_loads[-7:]
+
+    expected_monotony = (
+        sum(weekly_loads) / 7
+    ) / pstdev(weekly_loads)
+
+    assert (
+        analytics.training_monotony
+        == expected_monotony
+    )
+
+    assert (
+        training_state.monotony
+        == expected_monotony
+    )
+
+    assert (
+        analytics.training_strain
+        == 660 * expected_monotony
+    )
+
+    assert (
+        training_state.strain
+        == 660 * expected_monotony
+    )

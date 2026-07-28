@@ -8,11 +8,15 @@ Public analytics interface for an athlete.
 
 from datetime import date, timedelta
 
+from statistics import pstdev
+
 from performancelab.analysis.performance import (
     PerformanceManagementChart,
 )
 from performancelab.physiology import (
     acute_chronic_ratio as calculate_acute_chronic_ratio,
+    monotony as calculate_training_monotony,
+    strain as calculate_training_strain,
 )
 from performancelab.training import DailyLoadBuilder
 
@@ -286,6 +290,24 @@ class AthleteAnalytics:
         )
 
     @property
+    def training_monotony(self) -> float | None:
+
+        loads = self.current_training_loads[-7:]
+
+        return calculate_training_monotony(
+            self.acute_training_load,
+            pstdev(loads),
+        )
+
+    @property
+    def training_strain(self) -> float | None:
+
+        return calculate_training_strain(
+            self.recent_training_load,
+            self.training_monotony,
+        )
+
+    @property
     def age(self) -> int | None:
 
         if self.athlete.birth_date is None:
@@ -403,9 +425,9 @@ class AthleteAnalytics:
 
                 acute_chronic_ratio=self.acute_chronic_ratio,
 
-                monotony=None,
+                monotony=self.training_monotony,
 
-                strain=None,
+                strain=self.training_strain,
 
                 consistency=self.consistency_score,
 
