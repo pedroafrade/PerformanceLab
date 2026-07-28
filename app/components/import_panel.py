@@ -55,6 +55,99 @@ def _store_imported_workout(
     )
 
     return added
+
+# ======================================================
+
+def _import_uploaded_file(
+    uploaded_file,
+    athlete,
+) -> bool:
+    """
+    Imports one uploaded activity.
+
+    Returns whether a new workout was added.
+    """
+
+    extension = (
+        uploaded_file.name
+        .rsplit(".", 1)[-1]
+        .lower()
+    )
+
+    if extension == "gpx":
+        importer = GPXImporter()
+
+    elif extension == "fit":
+        importer = FITImporter()
+
+    else:
+        raise ValueError(
+            "Unsupported file format."
+        )
+
+    workout = importer.read(
+        uploaded_file
+    )
+
+    if extension == "fit":
+
+        workout.info.title = (
+            uploaded_file.name
+            .rsplit(".", 1)[0]
+        )
+
+        _estimate_imported_workout_rpe(
+            workout,
+            athlete,
+        )
+
+    return _store_imported_workout(
+        workout,
+        athlete,
+    )
+
+# ======================================================
+
+def _import_uploaded_files(
+    uploaded_files,
+    athlete,
+) -> tuple[int, int, int]:
+    """
+    Imports multiple activities.
+
+    Returns added, updated and failed counts.
+    """
+
+    added_count = 0
+    updated_count = 0
+    failed_count = 0
+
+    for uploaded_file in uploaded_files:
+
+        try:
+
+            added = _import_uploaded_file(
+                uploaded_file,
+                athlete,
+            )
+
+        except Exception:
+
+            failed_count += 1
+
+            continue
+
+        if added:
+            added_count += 1
+
+        else:
+            updated_count += 1
+
+    return (
+        added_count,
+        updated_count,
+        failed_count,
+    )
 # ======================================================
 # Import panel
 # ======================================================
@@ -67,25 +160,32 @@ def show_import_panel(
     """
     Displays the activity file import panel.
 
-    The selected file is imported automatically.
+    Multiple selected files are imported together.
     """
 
-    uploaded_file = st.file_uploader(
-        "Choose activity file",
+    uploaded_files = st.file_uploader(
+        "Choose activity files",
         type=[
             "gpx",
             "fit",
         ],
+        accept_multiple_files=True,
         key=f"{key_prefix}_file_uploader",
     )
 
-    if uploaded_file is None:
+    if not uploaded_files:
 
         return
 
-    file_token = (
-        uploaded_file.name,
-        uploaded_file.size,
+    file_token = tuple(
+        sorted(
+            (
+                uploaded_file.name,
+                uploaded_file.size,
+            )
+            for uploaded_file
+            in uploaded_files
+        )
     )
 
     if (
@@ -97,67 +197,24 @@ def show_import_panel(
 
         return
 
-    try:
+    (
+        added_count,
+        updated_count,
+        failed_count,
+    ) = _import_uploaded_files(
+        uploaded_files,
+        athlete,
+    )
 
-        extension = (
-            uploaded_file.name
-            .rsplit(".", 1)[-1]
-            .lower()
-        )
+    st.session_state[
+        f"{key_prefix}_imported_file_token"
+    ] = file_token
 
-        if extension == "gpx":
+    st.session_state.notice = (
+        f"Import complete: "
+        f"{added_count} added, "
+        f"{updated_count} updated, "
+        f"{failed_count} failed."
+    )
 
-            importer = GPXImporter()
-
-        elif extension == "fit":
-
-            importer = FITImporter()
-
-        else:
-
-            st.error(
-                "Unsupported file format."
-            )
-
-            return
-
-        workout = importer.read(
-            uploaded_file
-        )
-
-        if extension == "fit":
-
-            file_title = (
-                uploaded_file.name
-                .rsplit(".", 1)[0]
-            )
-
-            workout.info.title = file_title
-
-            _estimate_imported_workout_rpe(
-                workout,
-                athlete,
-            )
-
-        added = _store_imported_workout(
-            workout,
-            athlete,
-        )
-
-        st.session_state[
-            f"{key_prefix}_imported_file_token"
-        ] = file_token
-
-        st.session_state.notice = (
-            "Workout imported successfully."
-            if added
-            else "Existing workout updated."
-        )
-
-        st.rerun()
-
-    except Exception as error:
-
-        st.error(
-            str(error)
-        )
+    st.rerun()
