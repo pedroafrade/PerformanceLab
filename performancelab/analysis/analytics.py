@@ -135,11 +135,14 @@ class AthleteAnalytics:
 
         values = [
 
-            workout.feedback.rpe
+            workout.feedback.effective_rpe
 
             for workout in self.history
 
-            if workout.feedback.rpe is not None
+            if (
+                workout.feedback.effective_rpe
+                is not None
+            )
 
         ]
 

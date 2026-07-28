@@ -312,6 +312,41 @@ def test_average_rpe():
 
     assert athlete.analytics.average_rpe == 7
 
+# ======================================================
+
+def test_average_rpe_uses_estimated_values():
+
+    athlete = Athlete()
+
+    manual_workout = create_workout(
+        "Running",
+        date(2026, 7, 1),
+        10,
+        timedelta(hours=1),
+        100,
+        6,
+    )
+
+    estimated_workout = create_workout(
+        "Running",
+        date(2026, 7, 2),
+        10,
+        timedelta(hours=1),
+        100,
+        None,
+    )
+
+    estimated_workout.feedback.estimated_rpe = 8
+
+    athlete.history.add(
+        manual_workout
+    )
+
+    athlete.history.add(
+        estimated_workout
+    )
+
+    assert athlete.analytics.average_rpe == 7
 
 # ======================================================
 
