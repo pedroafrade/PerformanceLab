@@ -644,3 +644,34 @@ def test_context_preserves_legacy_fallbacks():
     assert context.should_reduce_volume is True
     assert context.can_tolerate_intensity is False
     assert context.can_absorb_more_volume is False
+
+def test_fatigue_regeneration_uses_training_state():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    athlete.analytics._training_state = TrainingState(
+        ctl=40.0,
+        atl=65.0,
+        tsb=-25.0,
+        acute_chronic_ratio=1.4,
+        monotony=None,
+        strain=None,
+        consistency=None,
+        weekly_frequency=None,
+        days_since_last_workout=0,
+        recent_training_load=600.0,
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date.today(),
+    )
+
+    assert context.needs_recovery is True
+
+    assert (
+        context.is_fatigue_regeneration
+        is True
+    )

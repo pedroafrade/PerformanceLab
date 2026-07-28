@@ -86,7 +86,7 @@ class CoachContext:
         if training_state is not None:
             return training_state.needs_recovery
 
-        return self.tsb < -10
+        return self.tsb < -20
 
     # ======================================================
 
@@ -462,7 +462,7 @@ class CoachContext:
         """
 
         return (
-            self.tsb < -20
+            self.needs_recovery
             and not self.is_post_race
         )
 
