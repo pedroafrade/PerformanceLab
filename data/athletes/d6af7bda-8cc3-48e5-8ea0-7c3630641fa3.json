@@ -34,6 +34,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -22015,6 +22016,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -31012,6 +31014,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -43771,6 +43774,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -86056,6 +86060,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -108103,6 +108108,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -170278,6 +170284,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -191269,6 +191276,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -202312,6 +202320,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": null,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -286439,6 +286448,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": 3.7,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -322286,6 +322296,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": 3.8,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,
@@ -361275,6 +361286,7 @@
       },
       "feedback": {
         "rpe": null,
+        "estimated_rpe": 4.3,
         "feeling": null,
         "sleep_quality": null,
         "motivation": null,

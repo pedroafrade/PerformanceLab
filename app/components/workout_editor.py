@@ -222,13 +222,46 @@ def show_workout_edit_form(
         key=f"{key_prefix}_elevation",
     )
 
+    estimated_rpe = getattr(
+        selected_workout.feedback,
+        "estimated_rpe",
+        None,
+    )
+
+    manual_rpe = selected_workout.feedback.rpe
+
+    effective_rpe = getattr(
+        selected_workout.feedback,
+        "effective_rpe",
+        manual_rpe or estimated_rpe,
+    )
+
+    if estimated_rpe is not None:
+
+        st.info(
+            f"Automatic RPE estimate: "
+            f"{estimated_rpe:.1f}"
+        )
+
+    use_manual_rpe = st.checkbox(
+        "Set RPE manually",
+        value=(
+            manual_rpe is not None
+            or estimated_rpe is None
+        ),
+        key=f"{key_prefix}_manual_rpe",
+    )
+
     rpe = st.slider(
         "RPE",
         min_value=1,
         max_value=10,
         value=int(
-            selected_workout.feedback.rpe or 5
+            round(
+                effective_rpe or 5
+            )
         ),
+        disabled=not use_manual_rpe,
         key=f"{key_prefix}_rpe",
     )
 
@@ -261,7 +294,11 @@ def show_workout_edit_form(
                 elevation
             )
 
-            selected_workout.feedback.rpe = rpe
+            selected_workout.feedback.rpe = (
+                rpe
+                if use_manual_rpe
+                else None
+            )
 
             athlete.history._sort()
 

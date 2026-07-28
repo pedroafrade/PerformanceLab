@@ -169,6 +169,18 @@ class FakeStreamlit:
             value,
         )
 
+    def checkbox(
+        self,
+        label,
+        value=False,
+        **kwargs,
+    ):
+
+        return self.input_values.get(
+            label,
+            value,
+        )
+
     def divider(self):
 
         return None
@@ -254,6 +266,8 @@ def create_fake_workout():
 
     feedback = SimpleNamespace(
         rpe=5,
+        estimated_rpe=None,
+        effective_rpe=5,
     )
 
     return SimpleNamespace(
@@ -502,3 +516,84 @@ def test_no_workout_closes_editor_state(
         .edit_workout
         is False
     )
+    
+def test_automatic_rpe_is_preserved_when_not_overridden(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit(
+        button_values={
+            "Save": True,
+        },
+        input_values={
+            "Set RPE manually": False,
+        },
+    )
+
+    fake_streamlit.session_state.confirm_delete = False
+    fake_streamlit.session_state.edit_workout = True
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+    workout = create_fake_workout()
+
+    workout.feedback.rpe = None
+    workout.feedback.estimated_rpe = 6.0
+    workout.feedback.effective_rpe = 6.0
+
+    workout_editor.show_workout_editor(
+        athlete,
+        workout,
+    )
+
+    assert workout.feedback.rpe is None
+    assert workout.feedback.estimated_rpe == 6.0
+
+    assert (
+        "Automatic RPE estimate: 6.0"
+        in fake_streamlit.messages
+    )
+
+
+def test_automatic_rpe_can_be_overridden(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit(
+        button_values={
+            "Save": True,
+        },
+        input_values={
+            "Set RPE manually": True,
+            "RPE": 8,
+        },
+    )
+
+    fake_streamlit.session_state.confirm_delete = False
+    fake_streamlit.session_state.edit_workout = True
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+    workout = create_fake_workout()
+
+    workout.feedback.rpe = None
+    workout.feedback.estimated_rpe = 6.0
+    workout.feedback.effective_rpe = 6.0
+
+    workout_editor.show_workout_editor(
+        athlete,
+        workout,
+    )
+
+    assert workout.feedback.rpe == 8
+    assert workout.feedback.estimated_rpe == 6.0
