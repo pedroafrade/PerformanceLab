@@ -11,6 +11,33 @@ from performancelab.importers import (
     GPXImporter,
 )
 
+from performancelab.workout import (
+    estimate_workout_rpe,
+)
+
+# ======================================================
+
+def _estimate_imported_workout_rpe(
+    workout,
+    athlete,
+) -> float | None:
+    """
+    Applies automatic RPE estimation using the athlete profile.
+    """
+
+    return estimate_workout_rpe(
+        workout,
+        max_hr=getattr(
+            athlete,
+            "max_hr",
+            None,
+        ),
+        resting_hr=getattr(
+            athlete,
+            "resting_hr",
+            None,
+        ),
+    )
 
 # ======================================================
 # Import panel
@@ -90,6 +117,11 @@ def show_import_panel(
             )
 
             workout.info.title = file_title
+
+            _estimate_imported_workout_rpe(
+                workout,
+                athlete,
+            )
 
         athlete.history.add(
             workout
