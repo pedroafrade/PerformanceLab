@@ -242,4 +242,8 @@ def show_workout_table(
 
     selected_index = selected_rows[0]
 
+    if selected_index >= len(workouts):
+
+        return None
+
     return workouts[selected_index]

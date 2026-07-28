@@ -103,6 +103,16 @@ class FakeStreamlit:
         **kwargs,
     ):
 
+        key = kwargs.get(
+            "key"
+        )
+
+        if key in self.button_values:
+
+            return self.button_values[
+                key
+            ]
+
         return self.button_values.get(
             label,
             False,
@@ -349,7 +359,7 @@ def test_delete_button_enables_confirmation(
 
     fake_streamlit = FakeStreamlit(
         button_values={
-            "Delete": True,
+            "workout_editor_delete_open": True,
         },
     )
 
@@ -374,7 +384,12 @@ def test_delete_button_enables_confirmation(
         is True
     )
 
-    assert fake_streamlit.rerun_called is True
+    assert (
+        "Delete workout"
+        in fake_streamlit.messages
+    )
+
+    assert fake_streamlit.rerun_called is False
 
 
 def test_confirm_delete_removes_workout(
@@ -383,7 +398,7 @@ def test_confirm_delete_removes_workout(
 
     fake_streamlit = FakeStreamlit(
         button_values={
-            "Delete": True,
+            "workout_editor_delete_confirm": True,
         },
     )
 

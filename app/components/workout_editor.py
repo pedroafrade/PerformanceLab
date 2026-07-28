@@ -51,18 +51,6 @@ def show_workout_delete_action(
     if selected_workout is None:
         return
 
-    if not st.session_state.confirm_delete:
-        if st.button(
-            "Delete",
-            key=f"{key_prefix}_open",
-            use_container_width=True,
-        ):
-            st.session_state.edit_workout = False
-            st.session_state.confirm_delete = True
-            st.rerun()
-
-        return
-
     @st.dialog(
         "Delete workout",
         width="small",
@@ -111,7 +99,18 @@ def show_workout_delete_action(
                 st.session_state.confirm_delete = False
                 st.rerun()
 
-    confirm_deletion()
+    if st.button(
+        "Delete",
+        key=f"{key_prefix}_open",
+        use_container_width=True,
+    ):
+
+        st.session_state.edit_workout = False
+        st.session_state.confirm_delete = True
+
+    if st.session_state.confirm_delete:
+
+        confirm_deletion()
 
 
 def show_workout_edit_form(

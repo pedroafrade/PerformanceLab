@@ -546,7 +546,6 @@ if (
 ):
     st.toast(
         st.session_state.notice,
-        icon="✅",
     )
 
     st.session_state.notice = None
