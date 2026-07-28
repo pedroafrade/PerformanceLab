@@ -25,6 +25,7 @@ from performancelab.storage import (
     save_athlete,
 )
 
+import performancelab.storage.json as json_storage
 
 # ======================================================
 # Helpers
@@ -427,3 +428,50 @@ def test_load_old_json_without_estimated_rpe():
     assert workout.feedback.rpe == 6
     assert workout.feedback.estimated_rpe is None
     assert workout.feedback.effective_rpe == 6
+
+def test_failed_save_preserves_existing_file(
+    tmp_path,
+    monkeypatch,
+):
+
+    athlete = create_athlete()
+
+    path = tmp_path / "athlete.json"
+
+    path.write_text(
+        "original content",
+        encoding="utf-8",
+    )
+
+    def fail_dump(
+        *args,
+        **kwargs,
+    ):
+
+        raise RuntimeError(
+            "Simulated write failure"
+        )
+
+    monkeypatch.setattr(
+        json_storage.json_module,
+        "dump",
+        fail_dump,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Simulated write failure",
+    ):
+
+        save_athlete(
+            athlete,
+            path,
+        )
+
+    assert path.read_text(
+        encoding="utf-8"
+    ) == "original content"
+
+    assert list(
+        tmp_path.glob("*.tmp")
+    ) == []

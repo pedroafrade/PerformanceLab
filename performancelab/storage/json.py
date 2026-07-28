@@ -802,27 +802,43 @@ def save_athlete(
         exist_ok=True,
     )
 
+    temporary = destination.with_name(
+        f".{destination.name}."
+        f"{uuid4().hex}.tmp"
+    )
+
     data = athlete_to_dict(athlete)
 
-    with destination.open(
-        "w",
-        encoding="utf-8",
-    ) as file:
+    try:
 
-        json_module.dump(
+        with temporary.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
 
-            data,
+            json_module.dump(
 
-            file,
+                data,
 
-            ensure_ascii=False,
+                file,
 
-            separators=(",", ":"),
+                ensure_ascii=False,
 
+                separators=(",", ":"),
+
+            )
+
+        temporary.replace(
+            destination
         )
 
-    return destination
+    finally:
 
+        if temporary.exists():
+
+            temporary.unlink()
+
+    return destination
 
 # ======================================================
 # Load Athlete
