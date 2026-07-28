@@ -97,6 +97,45 @@ class TrainingState:
         )
 
     @property
+    def recovery_status(self) -> str:
+        """Returns a concise description of the recovery state."""
+
+        if self.needs_recovery:
+            return "Recovery needed"
+
+        if self.can_tolerate_intensity:
+            return "Good"
+
+        if self.can_absorb_more_volume:
+            return "Moderate"
+
+        return "Low"
+
+    @property
+    def recovery_recommendation(self) -> str:
+        """Returns a training recommendation for the recovery state."""
+
+        if self.needs_recovery:
+            return (
+                "Prioritise recovery before the next demanding "
+                "training session."
+            )
+
+        if self.can_tolerate_intensity:
+            return "Ready for a normal training session."
+
+        if self.can_absorb_more_volume:
+            return (
+                "Training can continue, but keep demanding sessions "
+                "controlled."
+            )
+
+        return (
+            "Keep training easy and monitor recovery before adding "
+            "more load."
+        )
+
+    @property
     def training_trend(self) -> str:
         """Returns the current training trend."""
 
