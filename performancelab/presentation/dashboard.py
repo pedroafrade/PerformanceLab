@@ -862,17 +862,17 @@ class DashboardData:
     @property
     def recovery(self):
 
+        training_state = self.analytics.training_state
+
         return RecoveryCardData(
 
-            score=82,
+            score=training_state.recovery_score,
 
-            status="Good",
+            status=training_state.recovery_status,
 
-            recommendation=(
-                "Ready for a normal training session."
-            ),
+            recommendation=training_state.recovery_recommendation,
 
-            trend="↑ 4%",
+            trend=training_state.training_trend,
 
         )
 

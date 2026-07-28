@@ -247,8 +247,7 @@ class AthleteAnalytics:
             return 0.0
 
         return sum(
-            load.load
-            for load in loads[-7:]
+            loads[-7:]
         )
 
     @property

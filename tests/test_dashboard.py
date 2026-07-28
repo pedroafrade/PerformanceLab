@@ -71,6 +71,27 @@ def test_empty_dashboard():
 
     assert data["performance"].tsb == []
 
+# ======================================================
+
+def test_recovery_uses_training_state():
+
+    athlete = Athlete(name="Pedro")
+
+    training_state = athlete.analytics.training_state
+
+    recovery = DashboardData(athlete).recovery
+
+    assert recovery.score == training_state.recovery_score
+
+    assert recovery.status == training_state.recovery_status
+
+    assert (
+        recovery.recommendation
+        == training_state.recovery_recommendation
+    )
+
+    assert recovery.trend == training_state.training_trend
+
 
 # ======================================================
 

@@ -521,6 +521,8 @@ def test_performance_management():
 
     ]
 
+    assert analytics.recent_training_load == 660
+
     assert analytics.pmc is not None
 
     assert isinstance(
