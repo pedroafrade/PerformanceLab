@@ -46,3 +46,40 @@ def test_import_panel_uses_athlete_profile_for_rpe(
     assert calls["workout"] is workout
     assert calls["max_hr"] == 190
     assert calls["resting_hr"] == 50
+
+def test_import_panel_merges_workout_into_history():
+
+    workout = object()
+    stored_workout = object()
+
+    calls = {}
+
+    class FakeHistory:
+
+        def merge(
+            self,
+            received_workout,
+        ):
+
+            calls["workout"] = (
+                received_workout
+            )
+
+            return (
+                stored_workout,
+                False,
+            )
+
+    athlete = SimpleNamespace(
+        history=FakeHistory(),
+    )
+
+    added = (
+        import_panel._store_imported_workout(
+            workout,
+            athlete,
+        )
+    )
+
+    assert calls["workout"] is workout
+    assert added is False

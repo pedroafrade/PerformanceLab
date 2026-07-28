@@ -38,7 +38,23 @@ def _estimate_imported_workout_rpe(
             None,
         ),
     )
+# ======================================================
 
+def _store_imported_workout(
+    workout,
+    athlete,
+) -> bool:
+    """
+    Stores a new workout or enriches an existing one.
+
+    Returns whether a new workout was added.
+    """
+
+    _, added = athlete.history.merge(
+        workout
+    )
+
+    return added
 # ======================================================
 # Import panel
 # ======================================================
@@ -123,8 +139,9 @@ def show_import_panel(
                 athlete,
             )
 
-        athlete.history.add(
-            workout
+        added = _store_imported_workout(
+            workout,
+            athlete,
         )
 
         st.session_state[
@@ -133,6 +150,8 @@ def show_import_panel(
 
         st.session_state.notice = (
             "Workout imported successfully."
+            if added
+            else "Existing workout updated."
         )
 
         st.rerun()
