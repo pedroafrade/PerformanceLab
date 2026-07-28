@@ -310,15 +310,48 @@ def test_long_session_metadata_is_consistent():
     assert plan.long_session_minutes == 90
 
 
-def test_intensity_target_remains_low_during_base_phase():
+def test_intensity_target_responds_to_training_state():
     normal_plan = build_plan()
+
     fatigued_plan = build_plan(
         tsb=-20.0,
         average_rpe=9.0,
     )
 
     assert normal_plan.intensity_sessions == 1
-    assert fatigued_plan.intensity_sessions == 1
+    assert fatigued_plan.intensity_sessions == 0
+
+def test_semantic_training_state_reduces_volume():
+    context = SimpleNamespace(
+        tsb=5.0,
+        average_rpe=None,
+        should_reduce_volume=True,
+        can_tolerate_intensity=True,
+    )
+
+    plan = DummyBaseStrategy().build(
+        context
+    )
+
+    assert plan.volume_factor == pytest.approx(0.80)
+    assert plan.recovery_days == 3
+    assert plan.intensity_sessions == 1
+
+
+def test_semantic_training_state_removes_intensity():
+    context = SimpleNamespace(
+        tsb=5.0,
+        average_rpe=None,
+        should_reduce_volume=False,
+        can_tolerate_intensity=False,
+    )
+
+    plan = DummyBaseStrategy().build(
+        context
+    )
+
+    assert plan.volume_factor == pytest.approx(0.90)
+    assert plan.intensity_sessions == 0
 
 
 @pytest.mark.parametrize(

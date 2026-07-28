@@ -58,7 +58,19 @@ class BaseStrategy(CoachStrategy):
 
         focus = "aerobic endurance"
 
-        if context.tsb < -10:
+        should_reduce_volume = getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
+        )
+
+        can_tolerate_intensity = getattr(
+            context,
+            "can_tolerate_intensity",
+            context.tsb >= 0,
+        )
+
+        if should_reduce_volume:
 
             volume_factor = 0.80
             recovery_days = 3
@@ -66,6 +78,10 @@ class BaseStrategy(CoachStrategy):
             warnings.append(
                 "Fatigue is elevated; prioritise recovery."
             )
+
+        if not can_tolerate_intensity:
+
+            intensity_sessions = 0
 
         if (
             context.average_rpe is not None
@@ -113,7 +129,7 @@ class BaseStrategy(CoachStrategy):
             recovery_priority=(
                 "high"
                 if (
-                    context.tsb < -10
+                    should_reduce_volume
                     or (
                         context.average_rpe is not None
                         and context.average_rpe >= 8
