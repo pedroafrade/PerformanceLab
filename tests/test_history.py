@@ -198,3 +198,81 @@ def test_history_does_not_match_different_workout():
         history.find_matching(candidate)
         is None
     )
+
+def test_history_merges_matching_workout():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            0,
+        )
+    )
+
+    existing.feedback.rpe = 6
+
+    imported = create_identifiable_workout(
+        datetime(
+            2026,
+            7,
+            20,
+            8,
+            2,
+        ),
+        distance=10.05,
+        duration=timedelta(
+            hours=1,
+            seconds=20,
+        ),
+    )
+
+    imported.feedback.estimated_rpe = 7.5
+
+    imported.sensors.add(
+        "heart_rate",
+        [
+            {
+                "value": 150,
+            },
+        ],
+    )
+
+    history.add(existing)
+
+    stored, added = history.merge(
+        imported
+    )
+
+    assert added is False
+    assert stored is existing
+    assert len(history) == 1
+
+    assert (
+        existing.feedback.rpe
+        == 6
+    )
+
+    assert (
+        existing.feedback.estimated_rpe
+        == 7.5
+    )
+
+    assert (
+        existing.feedback.effective_rpe
+        == 6
+    )
+
+    assert (
+        existing.sensors.get(
+            "heart_rate"
+        )
+        == [
+            {
+                "value": 150,
+            },
+        ]
+    )

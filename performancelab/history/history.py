@@ -58,6 +58,46 @@ class History:
 
     # ======================================================
 
+    def merge(
+        self,
+        workout: Workout,
+    ) -> tuple[Workout, bool]:
+        """
+        Adds a new workout or enriches an existing matching workout.
+
+        Returns the stored workout and whether it was newly added.
+        """
+
+        existing = self.find_matching(
+            workout
+        )
+
+        if existing is None:
+
+            self.add(workout)
+
+            return workout, True
+
+        if (
+            workout.feedback.estimated_rpe
+            is not None
+        ):
+
+            existing.feedback.estimated_rpe = (
+                workout.feedback.estimated_rpe
+            )
+
+        for name, sensor in workout.sensors:
+
+            existing.sensors.add(
+                name,
+                sensor,
+            )
+
+        return existing, False
+
+    # ======================================================
+
     @classmethod
     def _workouts_match(
         cls,
