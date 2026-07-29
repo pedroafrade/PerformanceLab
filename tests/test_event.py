@@ -2,6 +2,8 @@
 Tests for Event and EventEntry.
 """
 
+import pytest
+
 from datetime import timedelta
 
 from performancelab.race import Event
@@ -54,3 +56,54 @@ def test_event_entry_creation():
     assert entry.pending is True
 
     assert entry.event.name == "Trail Serra da Estrela"
+
+def test_running_event_effort_distance():
+
+    event = Event(
+        name="Sealand",
+        sport="Road Running",
+        distance=10,    
+        elevation_gain=113,
+    )
+
+    assert event.effort_distance == pytest.approx(
+        11.13
+    )
+
+
+def test_trail_event_has_greater_effort_distance():
+
+    road_event = Event(
+        name="Sealand",
+        sport="Road Running",
+        distance=10,
+        elevation_gain=113,
+    )
+
+    trail_event = Event(
+        name="III Trail Pé Firme",
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    assert (
+        trail_event.effort_distance
+        > road_event.effort_distance
+    )
+
+    assert trail_event.effort_distance == pytest.approx(
+        32.5
+    )
+
+
+def test_non_running_event_has_no_effort_distance():
+
+    event = Event(
+        name="Cycling Event",
+        sport="Cycling",
+        distance=100,
+        elevation_gain=1500,
+    )
+
+    assert event.effort_distance is None
