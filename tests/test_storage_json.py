@@ -27,6 +27,11 @@ from performancelab.storage import (
 
 import performancelab.storage.json as json_storage
 
+from performancelab.training.planning import (
+    PlannedWorkout,
+    TrainingPlan,
+)
+
 # ======================================================
 # Helpers
 # ======================================================
@@ -169,7 +174,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 1
+    assert data["version"] == 2
 
     assert "id" in data["athlete"]
 
@@ -475,3 +480,129 @@ def test_failed_save_preserves_existing_file(
     assert list(
         tmp_path.glob("*.tmp")
     ) == []
+
+def test_training_plan_metadata_round_trip():
+
+    athlete = create_athlete()
+
+    athlete.training_plan = TrainingPlan(
+        plan_id="plan-sealand-trail",
+        start_date=date(2026, 7, 29),
+        end_date=date(2026, 9, 27),
+    )
+
+    athlete.training_plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                8,
+                2,
+            ),
+            sport="Trail Running",
+            title="Long Aerobic Run",
+            duration=timedelta(
+                hours=2,
+            ),
+        )
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    assert data["training_plan"][
+        "id"
+    ] == "plan-sealand-trail"
+
+    assert data["training_plan"][
+        "start_date"
+    ] == "2026-07-29"
+
+    assert data["training_plan"][
+        "end_date"
+    ] == "2026-09-27"
+
+    assert len(
+        data["training_plan"]["workouts"]
+    ) == 1
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.plan_id
+        == "plan-sealand-trail"
+    )
+
+    assert (
+        loaded.training_plan.start_date
+        == date(2026, 7, 29)
+    )
+
+    assert (
+        loaded.training_plan.end_date
+        == date(2026, 9, 27)
+    )
+
+    assert len(
+        loaded.training_plan
+    ) == 1
+
+    assert (
+        loaded.training_plan[0].title
+        == "Long Aerobic Run"
+    )
+
+
+def test_loads_legacy_training_plan_list():
+
+    athlete = create_athlete()
+
+    athlete.training_plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                8,
+                2,
+            ),
+            sport="Running",
+            title="Legacy Long Run",
+        )
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    legacy_workouts = data[
+        "training_plan"
+    ]["workouts"]
+
+    data["version"] = 1
+    data["training_plan"] = (
+        legacy_workouts
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.start_date
+        is None
+    )
+
+    assert (
+        loaded.training_plan.end_date
+        is None
+    )
+
+    assert len(
+        loaded.training_plan
+    ) == 1
+
+    assert (
+        loaded.training_plan[0].title
+        == "Legacy Long Run"
+    )

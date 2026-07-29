@@ -22,6 +22,9 @@ from performancelab import (
 from performancelab.training.planning.planned_workout import (
     PlannedWorkout,
 )
+from performancelab.training.planning.training_plan import (
+    TrainingPlan,
+)
 
 from uuid import uuid4
 
@@ -620,7 +623,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 1,
+        "version": 2,
 
         "athlete": {
 
@@ -670,13 +673,27 @@ def athlete_to_dict(athlete):
 
         ],
 
-        "training_plan": [
+        "training_plan": {
 
-            _planned_workout_to_dict(workout)
+            "id": athlete.training_plan.plan_id,
 
-            for workout in athlete.training_plan
+            "start_date": _serialize_date(
+                athlete.training_plan.start_date
+            ),
 
-        ],
+            "end_date": _serialize_date(
+                athlete.training_plan.end_date
+            ),
+
+            "workouts": [
+
+                _planned_workout_to_dict(workout)
+
+                for workout in athlete.training_plan
+
+            ],
+
+        },
 
     }
 
@@ -731,6 +748,64 @@ def athlete_from_dict(data):
 
     )
 
+
+    training_plan_data = data.get(
+        "training_plan",
+        [],
+    )
+
+    if isinstance(
+        training_plan_data,
+        list,
+    ):
+
+        plan_workouts = (
+            training_plan_data
+        )
+
+        athlete.training_plan = (
+            TrainingPlan()
+        )
+
+    elif isinstance(
+        training_plan_data,
+        dict,
+    ):
+
+        plan_workouts = (
+            training_plan_data.get(
+                "workouts",
+                [],
+            )
+        )
+
+        athlete.training_plan = TrainingPlan(
+
+            plan_id=training_plan_data.get(
+                "id",
+                str(uuid4()),
+            ),
+
+            start_date=_deserialize_date(
+                training_plan_data.get(
+                    "start_date"
+                )
+            ),
+
+            end_date=_deserialize_date(
+                training_plan_data.get(
+                    "end_date"
+                )
+            ),
+
+        )
+
+    else:
+
+        raise ValueError(
+            "Invalid training_plan data"
+        )
+    
     for workout_data in data.get(
         "workouts",
         [],
@@ -770,10 +845,7 @@ def athlete_from_dict(data):
 
         )
 
-    for workout_data in data.get(
-        "training_plan",
-        [],
-    ):
+    for workout_data in plan_workouts:
 
         athlete.training_plan.add(
 
