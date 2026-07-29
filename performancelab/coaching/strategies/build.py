@@ -80,6 +80,12 @@ class BuildStrategy(CoachStrategy):
             0.0,
         )
 
+        typical_long_minutes = getattr(
+            training_state,
+            "typical_running_long_session_minutes",
+            0.0,
+        )
+
         if typical_weekly_sessions > 0:
 
             target_sessions = max(
@@ -141,6 +147,35 @@ class BuildStrategy(CoachStrategy):
 
             target_weekly_minutes = 420
 
+        if typical_long_minutes > 0:
+
+            long_session_minutes = (
+                self._round_to_five(
+                    typical_long_minutes
+                )
+            )
+
+            can_progress_long = getattr(
+                training_state,
+                "can_absorb_more_volume",
+                context.tsb > -10,
+            )
+
+            if (
+                volume_factor > 1.0
+                and can_progress_long
+            ):
+                long_session_minutes += 5
+
+        else:
+
+            long_session_minutes = 120
+
+        long_session_minutes = min(
+            long_session_minutes,
+            target_weekly_minutes,
+        )
+
         event_name = self._event_name(context)
 
         if event_name is not None:
@@ -186,7 +221,7 @@ class BuildStrategy(CoachStrategy):
 
             target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=500.0 * volume_factor,
-            long_session_minutes=120,
+            long_session_minutes=long_session_minutes,
 
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),

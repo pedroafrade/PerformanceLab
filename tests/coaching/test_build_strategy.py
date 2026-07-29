@@ -21,6 +21,7 @@ def make_context(
     primary_event=None,
     typical_weekly_minutes: float = 0.0,
     typical_weekly_sessions: float = 0.0,
+    typical_running_long_session_minutes: float = 0.0,
 ):
     """
     Creates the minimum context required by BuildStrategy.
@@ -37,6 +38,9 @@ def make_context(
             ),
             typical_weekly_sessions=(
                 typical_weekly_sessions
+            ),
+            typical_running_long_session_minutes=(
+                typical_running_long_session_minutes
             ),
         ),
     )
@@ -384,6 +388,81 @@ def test_four_weekly_sessions_allow_two_intensity_sessions():
     assert plan.target_sessions == 4
     assert plan.intensity_sessions == 2
 
+def test_build_progresses_recent_long_session_by_five_minutes():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_minutes=270,
+            typical_running_long_session_minutes=97.5,
+        )
+    )
+
+    assert (
+        plan.long_session_minutes
+        == 105
+    )
+
+
+def test_build_rounds_long_session_before_progression():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_minutes=300,
+            typical_running_long_session_minutes=103,
+        )
+    )
+
+    assert (
+        plan.long_session_minutes
+        == 110
+    )
+
+
+def test_fatigue_prevents_long_session_progression():
+
+    plan = BuildStrategy().build(
+        make_context(
+            tsb=-11.0,
+            typical_weekly_minutes=270,
+            typical_running_long_session_minutes=97.5,
+        )
+    )
+
+    assert (
+        plan.long_session_minutes
+        == 100
+    )
+
+
+def test_high_rpe_prevents_long_session_progression():
+
+    plan = BuildStrategy().build(
+        make_context(
+            average_rpe=8.0,
+            typical_weekly_minutes=270,
+            typical_running_long_session_minutes=97.5,
+        )
+    )
+
+    assert (
+        plan.long_session_minutes
+        == 100
+    )
+
+
+def test_long_session_does_not_exceed_weekly_volume():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_minutes=100,
+            typical_running_long_session_minutes=180,
+        )
+    )
+
+    assert (
+        plan.long_session_minutes
+        <= plan.target_weekly_minutes
+    )
 # ======================================================
 # Event preparation
 # ======================================================
