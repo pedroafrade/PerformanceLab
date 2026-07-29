@@ -6,7 +6,8 @@ Event
 Represents a sporting event.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from uuid import uuid4
 from datetime import date
 
 ELEVATION_METRES_PER_EFFORT_KILOMETRE = 100.0
@@ -45,6 +46,10 @@ class Event:
 
     description: str = ""
 
+    event_id: str = field(
+        default_factory=lambda: str(uuid4())
+    )
+    
     # ======================================================
 
     @property

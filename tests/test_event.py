@@ -30,6 +30,48 @@ def test_event_creation():
 
     assert event.elevation_gain == 1200
 
+def test_event_has_stable_identity():
+
+    event = Event(
+        name="Trail Serra da Estrela",
+    )
+
+    assert isinstance(
+        event.event_id,
+        str,
+    )
+
+    assert event.event_id
+
+
+def test_events_have_different_identities():
+
+    first_event = Event(
+        name="First Event",
+    )
+
+    second_event = Event(
+        name="Second Event",
+    )
+
+    assert (
+        first_event.event_id
+        != second_event.event_id
+    )
+
+
+def test_event_accepts_existing_identity():
+
+    event = Event(
+        name="Sealand",
+        event_id="event-sealand-2026",
+    )
+
+    assert (
+        event.event_id
+        == "event-sealand-2026"
+    )
+
 
 def test_event_entry_creation():
 

@@ -174,7 +174,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 2
+    assert data["version"] == 3
 
     assert "id" in data["athlete"]
 
@@ -187,6 +187,11 @@ def test_athlete_to_dict():
     assert len(data["goals"]) == 1
 
     assert len(data["events"]) == 1
+
+    assert (
+        data["events"][0]["event"]["id"]
+        == athlete.events[0].event.event_id
+    )
 
 
 # ======================================================
@@ -263,6 +268,11 @@ def test_athlete_round_trip():
 
     assert loaded.events[0].event.name == (
         "Lisbon Marathon"
+    )
+
+    assert (
+        loaded.events[0].event.event_id
+        == original.events[0].event.event_id
     )
 
     assert loaded.events[0].target_time == (
@@ -409,6 +419,33 @@ def test_load_old_json_without_id():
 
     assert loaded.athlete_id is not None
     assert isinstance(loaded.athlete_id, str)
+
+# ======================================================
+
+def test_load_old_event_without_id():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["events"][0]["event"]["id"]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    event_id = (
+        loaded.events[0].event.event_id
+    )
+
+    assert isinstance(
+        event_id,
+        str,
+    )
+
+    assert event_id
 
 # ======================================================
 

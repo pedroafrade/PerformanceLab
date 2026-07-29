@@ -436,6 +436,8 @@ def _event_to_dict(event):
 
     return {
 
+        "id": event.event_id,
+
         "name": event.name,
 
         "location": event.location,
@@ -472,6 +474,11 @@ def _event_to_dict(event):
 def _event_from_dict(data):
 
     return Event(
+
+        event_id=data.get(
+            "id",
+            str(uuid4()),
+        ),
 
         name=data.get("name", ""),
 
@@ -623,7 +630,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 2,
+        "version": 3,
 
         "athlete": {
 
