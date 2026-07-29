@@ -159,10 +159,12 @@ class Planner:
             constraints=resolved_constraints,
         )
 
-        slots = self._apply_event_to_week(
+        slots = self._apply_events_to_week(
             slots=slots,
             week_start=start_date,
-            next_event=context.next_event,
+            event_entries=(
+                context.competition_block_events
+            ),
         )
 
         print()
@@ -272,6 +274,37 @@ class Planner:
                 )
 
         return training_plan
+
+    # ======================================================
+    
+    @staticmethod
+    def _apply_events_to_week(
+        *,
+        slots: tuple[DraftTrainingSlot, ...],
+        week_start: date,
+        event_entries: tuple[object, ...],
+    ) -> tuple[DraftTrainingSlot, ...]:
+        """
+        Inserts every competition-block event belonging to
+        the requested training week.
+
+        Events outside the requested week leave the training
+        structure unchanged.
+        """
+
+        updated_slots = slots
+
+        for event_entry in event_entries:
+
+            updated_slots = (
+                Planner._apply_event_to_week(
+                    slots=updated_slots,
+                    week_start=week_start,
+                    next_event=event_entry,
+                )
+            )
+
+        return updated_slots
 
     # ======================================================
 

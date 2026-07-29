@@ -476,3 +476,96 @@ def test_returns_none_for_non_positive_target_time() -> None:
         )
         is None
     )
+
+def test_applies_later_competition_block_event():
+
+    week_start = date(
+        2026,
+        9,
+        21,
+    )
+
+    slots = (
+        make_slot(
+            weekday=Weekday.WEDNESDAY,
+            purpose=SessionPurpose.EASY,
+            duration_minutes=45,
+        ),
+        make_slot(
+            weekday=Weekday.SUNDAY,
+            purpose=SessionPurpose.LONG,
+            duration_minutes=150,
+        ),
+    )
+
+    earlier_event = make_event_entry(
+        event_date=date(
+            2026,
+            9,
+            13,
+        ),
+        name="Sealand",
+        target_time=timedelta(
+            minutes=50,
+        ),
+    )
+
+    primary_event = make_event_entry(
+        event_date=date(
+            2026,
+            9,
+            27,
+        ),
+        name="III Trail Pé Firme",
+        target_time=timedelta(
+            hours=3,
+        ),
+    )
+
+    result = Planner._apply_events_to_week(
+        slots=slots,
+        week_start=week_start,
+        event_entries=(
+            earlier_event,
+            primary_event,
+        ),
+    )
+
+    sunday_slot = next(
+        slot
+        for slot in result
+        if slot.weekday is Weekday.SUNDAY
+    )
+
+    assert (
+        sunday_slot.purpose
+        is SessionPurpose.RACE
+    )
+
+    assert (
+        sunday_slot.duration_minutes
+        == 180
+    )
+
+    assert (
+        "III Trail Pé Firme"
+        in sunday_slot.notes
+    )
+
+def test_no_competition_events_preserves_slots():
+
+    slots = (
+        make_slot(
+            weekday=Weekday.MONDAY,
+            purpose=SessionPurpose.EASY,
+            duration_minutes=45,
+        ),
+    )
+
+    result = Planner._apply_events_to_week(
+        slots=slots,
+        week_start=WEEK_START,
+        event_entries=(),
+    )
+
+    assert result == slots
