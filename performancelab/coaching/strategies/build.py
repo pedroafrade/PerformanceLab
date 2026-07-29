@@ -13,6 +13,7 @@ from performancelab.coaching.strategy import (
     StrategyPlan,
 )
 
+
 class BuildStrategy(CoachStrategy):
 
     name = "BuildStrategy"
@@ -51,6 +52,18 @@ class BuildStrategy(CoachStrategy):
         intensity_sessions = 2
         focus = "threshold"
 
+        training_state = getattr(
+            context,
+            "training_state",
+            None,
+        )
+
+        typical_weekly_minutes = getattr(
+            training_state,
+            "typical_weekly_minutes",
+            0.0,
+        )
+
         if context.tsb < -10:
             volume_factor = 1.00
             intensity_sessions = 1
@@ -75,6 +88,19 @@ class BuildStrategy(CoachStrategy):
             warnings.append(
                 "Recent perceived effort is high."
             )
+
+        if typical_weekly_minutes > 0:
+
+            target_weekly_minutes = (
+                self._round_to_five(
+                    typical_weekly_minutes
+                    * volume_factor
+                )
+            )
+
+        else:
+
+            target_weekly_minutes = 420
 
         event_name = self._event_name(context)
 
@@ -113,11 +139,26 @@ class BuildStrategy(CoachStrategy):
 
             race_specificity=0.30,
 
-            target_weekly_minutes=420,
+            target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=500.0 * volume_factor,
             long_session_minutes=120,
 
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _round_to_five(
+        minutes: float,
+    ) -> int:
+        """
+        Rounds a training duration to a practical
+        five-minute increment.
+        """
+
+        return int(
+            round(minutes / 5) * 5
         )

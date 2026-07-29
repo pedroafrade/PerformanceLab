@@ -18,6 +18,7 @@ def make_context(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     next_event=None,
+    typical_weekly_minutes: float = 0.0,
 ):
     """
     Creates the minimum context required by BuildStrategy.
@@ -27,6 +28,11 @@ def make_context(
         tsb=tsb,
         average_rpe=average_rpe,
         next_event=next_event,
+        training_state=SimpleNamespace(
+            typical_weekly_minutes=(
+                typical_weekly_minutes
+            ),
+        ),
     )
 
 
@@ -291,6 +297,39 @@ def test_reduced_build_weekly_load_uses_volume_factor():
     )
 
     assert plan.target_weekly_load == pytest.approx(500.0)
+
+
+# ======================================================
+# Recent training volume
+# ======================================================
+
+
+def test_build_uses_recent_weekly_volume():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_minutes=252,
+        )
+    )
+
+    assert (
+        plan.target_weekly_minutes
+        == 270
+    )
+
+
+def test_build_rounds_weekly_volume_to_five_minutes():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_minutes=253,
+        )
+    )
+
+    assert (
+        plan.target_weekly_minutes
+        == 275
+    )
 
 
 # ======================================================
