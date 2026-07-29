@@ -64,6 +64,25 @@ class BuildStrategy(CoachStrategy):
             0.0,
         )
 
+        typical_weekly_sessions = getattr(
+            training_state,
+            "typical_weekly_sessions",
+            0.0,
+        )
+
+        if typical_weekly_sessions > 0:
+
+            target_sessions = max(
+                1,
+                min(
+                    7,
+                    int(
+                        typical_weekly_sessions
+                        + 0.5
+                    ),
+                ),
+            )
+
         if context.tsb < -10:
             volume_factor = 1.00
             intensity_sessions = 1

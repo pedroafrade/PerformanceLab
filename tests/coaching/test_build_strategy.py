@@ -19,6 +19,7 @@ def make_context(
     average_rpe: float | None = None,
     next_event=None,
     typical_weekly_minutes: float = 0.0,
+    typical_weekly_sessions: float = 0.0,
 ):
     """
     Creates the minimum context required by BuildStrategy.
@@ -31,6 +32,9 @@ def make_context(
         training_state=SimpleNamespace(
             typical_weekly_minutes=(
                 typical_weekly_minutes
+            ),
+            typical_weekly_sessions=(
+                typical_weekly_sessions
             ),
         ),
     )
@@ -330,7 +334,26 @@ def test_build_rounds_weekly_volume_to_five_minutes():
         plan.target_weekly_minutes
         == 275
     )
+def test_build_uses_recent_weekly_frequency():
 
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_sessions=3.6,
+        )
+    )
+
+    assert plan.target_sessions == 4
+
+
+def test_build_keeps_default_frequency_without_history():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_sessions=0.0,
+        )
+    )
+
+    assert plan.target_sessions == 6
 
 # ======================================================
 # Event preparation
