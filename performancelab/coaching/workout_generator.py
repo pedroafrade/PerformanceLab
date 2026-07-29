@@ -254,7 +254,9 @@ class WorkoutGenerator:
                 scheduled_day
             ),
             sport=template.sport,
-            title=template.title,
+            title=self._sport_specific_title(
+                template
+            ),
             duration=(
                 timedelta(
                     minutes=duration_minutes
@@ -387,15 +389,37 @@ class WorkoutGenerator:
         context: CoachContext,
     ) -> str | None:
         """
-        Selects the athlete's primary available sport.
+        Selects the target event sport when available.
 
-        CoachContext currently exposes a tuple of sports without
-        an explicit primary-sport field. Therefore, the first
-        recorded sport is used.
+        The athlete's first recorded sport is retained as a fallback
+        when no future event defines a sport.
         """
 
-        if not context.sports:
+        next_event = getattr(
+            context,
+            "next_event",
+            None,
+        )
 
+        event = getattr(
+            next_event,
+            "event",
+            None,
+        )
+
+        event_sport = getattr(
+            event,
+            "sport",
+            "",
+        )
+
+        if (
+            isinstance(event_sport, str)
+            and event_sport.strip()
+        ):
+            return event_sport.strip()
+
+        if not context.sports:
             return None
 
         return context.sports[0]
@@ -516,6 +540,46 @@ class WorkoutGenerator:
             f"Warm up {warm_up_minutes} min",
             f"{main_label} {main_minutes} min",
             f"Cool down {cool_down_minutes} min",
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _sport_specific_title(
+        cls,
+        template: WorkoutTemplate,
+    ) -> str:
+        """
+        Replaces a generic session title with a sport-specific title.
+        """
+
+        if template.purpose is SessionPurpose.CROSS_TRAINING:
+            return template.title
+
+        normalized_sport = str(
+            template.sport or ""
+        ).strip().lower()
+
+        if cls._is_running(normalized_sport):
+            activity_name = "Run"
+
+        elif cls._is_cycling(normalized_sport):
+            activity_name = "Ride"
+
+        elif "swim" in normalized_sport:
+            activity_name = "Swim"
+
+        else:
+            return template.title
+
+        suffix = " Session"
+
+        if not template.title.endswith(suffix):
+            return template.title
+
+        return (
+            template.title[:-len(suffix)]
+            + f" {activity_name}"
         )
 
     # ======================================================

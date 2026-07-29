@@ -1,5 +1,7 @@
 import pytest
 
+from types import SimpleNamespace
+
 from performancelab.coaching import (
     DEFAULT_WORKOUT_TEMPLATES,
     LONG_TEMPLATE,
@@ -26,6 +28,10 @@ from performancelab.coaching.workout_templates import (
 
 from performancelab.coaching.strategy import StrategyPlan
 from performancelab.coaching.training_focus import TrainingFocus
+
+from performancelab.coaching.workout_generator import (
+    WorkoutGenerator,
+)
 
 
 def test_creates_workout_template() -> None:
@@ -564,3 +570,77 @@ def test_returns_speed_template_for_speed_focus() -> None:
     assert template is SPEED_TEMPLATE
     assert template.title == "Speed Session"
     assert template.intensity == "Very hard"
+
+def test_selects_target_event_sport_before_history_sports() -> None:
+
+    context = SimpleNamespace(
+        next_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Road Running",
+            ),
+        ),
+        sports=(
+            "Cycling",
+            "Running",
+        ),
+    )
+
+    sport = WorkoutGenerator._select_sport(
+        context
+    )
+
+    assert sport == "Road Running"
+
+
+def test_uses_history_sport_without_target_event() -> None:
+
+    context = SimpleNamespace(
+        next_event=None,
+        sports=(
+            "Cycling",
+            "Running",
+        ),
+    )
+
+    sport = WorkoutGenerator._select_sport(
+        context
+    )
+
+    assert sport == "Cycling"
+
+@pytest.mark.parametrize(
+    (
+        "sport",
+        "expected_title",
+    ),
+    (
+        (
+            "Road Running",
+            "Easy Aerobic Run",
+        ),
+        (
+            "Cycling",
+            "Easy Aerobic Ride",
+        ),
+        (
+            "Swimming",
+            "Easy Aerobic Swim",
+        ),
+    ),
+)
+def test_builds_sport_specific_workout_title(
+    sport,
+    expected_title,
+) -> None:
+
+    template = EASY_TEMPLATE.for_sport(
+        sport
+    )
+
+    title = (
+        WorkoutGenerator._sport_specific_title(
+            template
+        )
+    )
+
+    assert title == expected_title
