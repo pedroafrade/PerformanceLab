@@ -11,10 +11,15 @@ from performancelab.training import (
     WeeklySummary,
     MonthlySummary,
 )
+from performancelab.training.planning import (
+    PlannedWorkout,
+)
 from performancelab.training.load import (
     workout_load,
     weekly_load,
     monthly_load,
+    planned_workout_rpe,
+    planned_workout_load,
 )
 
 
@@ -65,6 +70,7 @@ def test_workout_load():
 
     assert workout_load(workout) == 300
 
+
 # ======================================================
 
 def test_workout_load_uses_estimated_rpe():
@@ -78,6 +84,7 @@ def test_workout_load_uses_estimated_rpe():
 
     assert workout_load(workout) == 360
 
+
 # ======================================================
 
 def test_manual_rpe_has_priority_for_workout_load():
@@ -90,6 +97,8 @@ def test_manual_rpe_has_priority_for_workout_load():
     workout.feedback.estimated_rpe = 8
 
     assert workout_load(workout) == 300
+
+
 # ======================================================
 
 def test_workout_without_duration():
@@ -232,3 +241,135 @@ def test_empty_month():
     )
 
     assert monthly_load(month) == 0
+
+
+# ======================================================
+# Planned workouts
+# ======================================================
+
+def test_planned_easy_workout_load():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=timedelta(
+            hours=1,
+        ),
+        intensity="Easy",
+    )
+
+    assert (
+        planned_workout_rpe(workout)
+        == 3.0
+    )
+
+    assert (
+        planned_workout_load(workout)
+        == 180
+    )
+
+
+def test_planned_hard_workout_load():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=timedelta(
+            hours=1,
+        ),
+        intensity="Hard",
+    )
+
+    assert (
+        planned_workout_rpe(workout)
+        == 7.0
+    )
+
+    assert (
+        planned_workout_load(workout)
+        == 420
+    )
+
+
+def test_planned_long_workout_load():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=timedelta(
+            minutes=90,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    assert (
+        planned_workout_load(workout)
+        == 360
+    )
+
+
+def test_planned_load_normalizes_intensity():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=timedelta(
+            minutes=30,
+        ),
+        intensity="  VERY EASY  ",
+    )
+
+    assert (
+        planned_workout_load(workout)
+        == 60
+    )
+
+
+def test_planned_workout_without_duration_has_no_load():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=None,
+        intensity="Easy",
+    )
+
+    assert (
+        planned_workout_load(workout)
+        is None
+    )
+
+
+def test_unknown_planned_intensity_has_no_load():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            7,
+            29,
+        ),
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Unknown",
+    )
+
+    assert (
+        planned_workout_load(workout)
+        is None
+    )
