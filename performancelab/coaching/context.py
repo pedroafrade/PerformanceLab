@@ -17,6 +17,12 @@ from performancelab.analysis.training_state import TrainingState
 
 COMPETITION_CLUSTER_MAX_DAYS = 56
 
+EVENT_PRIORITY_RANK = {
+    "A": 3,
+    "B": 2,
+    "C": 1,
+}
+
 @dataclass(frozen=True)
 class CoachContext:
     """
@@ -567,6 +573,101 @@ class CoachContext:
             )
 
         return tuple(block)
+
+    # ======================================================
+
+    @property
+    def primary_event(
+        self,
+    ) -> object | None:
+        """
+        Selects the primary event from the current competition block.
+
+        Selection order:
+        1. athlete priority;
+        2. running effort distance;
+        3. target duration;
+        4. chronological order.
+        """
+
+        if not self.competition_block_events:
+            return None
+
+        return max(
+            self.competition_block_events,
+            key=self._event_priority_key,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _event_priority_key(
+        event_entry,
+    ) -> tuple[int, float, float, int]:
+        """
+        Builds the comparison key used to select a primary event.
+        """
+
+        priority = str(
+            getattr(
+                event_entry,
+                "priority",
+                "",
+            )
+        ).strip().upper()
+
+        priority_rank = (
+            EVENT_PRIORITY_RANK.get(
+                priority,
+                0,
+            )
+        )
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        effort_distance = getattr(
+            event,
+            "effort_distance",
+            None,
+        )
+
+        if effort_distance is None:
+            effort_distance = 0.0
+
+        target_time = getattr(
+            event_entry,
+            "target_time",
+            None,
+        )
+
+        target_seconds = (
+            target_time.total_seconds()
+            if target_time is not None
+            else 0.0
+        )
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        chronological_priority = (
+            -event_date.toordinal()
+            if event_date is not None
+            else 0
+        )
+
+        return (
+            priority_rank,
+            float(effort_distance),
+            target_seconds,
+            chronological_priority,
+        )
 
     # ======================================================
 

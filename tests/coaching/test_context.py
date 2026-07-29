@@ -733,3 +733,116 @@ def test_context_groups_first_competition_block():
         later_event
         not in context.competition_block_events
     )
+
+def test_context_selects_more_demanding_primary_event():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        29,
+    )
+
+    road_event = EventEntry(
+        event=Event(
+            name="Sealand",
+            date=date(
+                2026,
+                9,
+                13,
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=113,
+        ),
+        priority="A",
+    )
+
+    trail_event = EventEntry(
+        event=Event(
+            name="III Trail Pé Firme",
+            date=date(
+                2026,
+                9,
+                27,
+            ),
+            sport="Trail Running",
+            distance=23,
+            elevation_gain=950,
+        ),
+        priority="A",
+    )
+
+    athlete.events.add(
+        road_event
+    )
+    athlete.events.add(
+        trail_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.next_event is road_event
+    assert context.primary_event is trail_event
+
+
+def test_explicit_priority_precedes_event_demand():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        29,
+    )
+
+    priority_event = EventEntry(
+        event=Event(
+            name="Priority Road Race",
+            date=today + timedelta(
+                days=30,
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=100,
+        ),
+        priority="A",
+    )
+
+    demanding_event = EventEntry(
+        event=Event(
+            name="Secondary Trail",
+            date=today + timedelta(
+                days=44,
+            ),
+            sport="Trail Running",
+            distance=30,
+            elevation_gain=1500,
+        ),
+        priority="B",
+    )
+
+    athlete.events.add(
+        priority_event
+    )
+    athlete.events.add(
+        demanding_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.primary_event
+        is priority_event
+    )
