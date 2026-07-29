@@ -756,3 +756,73 @@ def test_typical_weekly_minutes_uses_latest_28_days():
         .typical_weekly_sessions
         == 1
     )
+
+def test_typical_running_long_session_uses_weekly_longest():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+
+    running_workouts = (
+        (3, 90),
+        (5, 60),
+        (10, 120),
+        (17, 75),
+        (24, 105),
+    )
+
+    for days_ago, minutes in running_workouts:
+
+        athlete.history.add(
+            create_workout(
+                "Running",
+                today - timedelta(
+                    days=days_ago
+                ),
+                10,
+                timedelta(
+                    minutes=minutes
+                ),
+                100,
+                5,
+            )
+        )
+
+    athlete.history.add(
+        create_workout(
+            "Cycling",
+            today - timedelta(days=2),
+            60,
+            timedelta(hours=4),
+            800,
+            5,
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Running",
+            today - timedelta(days=40),
+            25,
+            timedelta(hours=3),
+            500,
+            7,
+        )
+    )
+
+    analytics = athlete.analytics
+
+    assert (
+        analytics
+        .typical_running_long_session_minutes
+        == 97.5
+    )
+
+    assert (
+        analytics
+        .training_state
+        .typical_running_long_session_minutes
+        == 97.5
+    )

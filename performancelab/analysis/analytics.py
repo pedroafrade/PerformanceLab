@@ -376,6 +376,96 @@ class AthleteAnalytics:
         return session_count / 4
 
     @property
+    def typical_running_long_session_minutes(
+        self,
+    ) -> float:
+        """
+        Returns the average longest running session from
+        each active week within the latest rolling 28 days.
+
+        Cycling and other sports do not define running
+        long-session capacity.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        weekly_longest = [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = workout_day.date()
+
+            normalized_sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            is_running = any(
+                token in normalized_sport
+                for token in (
+                    "run",
+                    "running",
+                    "trail",
+                    "jog",
+                )
+            )
+
+            if (
+                not is_running
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or workout.duration is None
+            ):
+                continue
+
+            days_ago = (
+                today - workout_day
+            ).days
+
+            week_index = min(
+                days_ago // 7,
+                3,
+            )
+
+            duration_minutes = (
+                workout.duration.total_seconds()
+                / 60
+            )
+
+            weekly_longest[week_index] = max(
+                weekly_longest[week_index],
+                duration_minutes,
+            )
+
+        active_weeks = [
+            duration
+            for duration in weekly_longest
+            if duration > 0
+        ]
+
+        if not active_weeks:
+            return 0.0
+
+        return (
+            sum(active_weeks)
+            / len(active_weeks)
+        )
+
+    @property
     def training_monotony(self) -> float | None:
 
         loads = self.current_training_loads[-7:]
@@ -526,6 +616,10 @@ class AthleteAnalytics:
                 typical_weekly_minutes=self.typical_weekly_minutes,
 
                 typical_weekly_sessions=self.typical_weekly_sessions,
+
+                typical_running_long_session_minutes=(
+                    self.typical_running_long_session_minutes
+                ),
 
             )
 
