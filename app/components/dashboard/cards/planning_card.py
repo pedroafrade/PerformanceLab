@@ -208,7 +208,7 @@ def _selected_day_description(
 
     if structure:
         return escape(
-            " + ".join(structure)
+            " · ".join(structure)
         )
 
     if not _planned(day):
@@ -379,13 +379,14 @@ def show_planning_card(
 .weekly-plan-next {
     margin-top: 2px;
     padding-top: 4px;
-    overflow: hidden;
+    overflow: visible;
+    overflow-wrap: anywhere;
     border-top: 1px solid rgba(128, 128, 128, 0.30);
     font-size: 0.72rem;
-    line-height: 1.2;
+    line-height: 1.3;
     opacity: 0.72;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-overflow: clip;
+    white-space: normal;
 }
 
 .weekly-plan-arrow-spacer {
