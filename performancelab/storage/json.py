@@ -630,7 +630,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 3,
+        "version": 4,
 
         "athlete": {
 
@@ -690,6 +690,14 @@ def athlete_to_dict(athlete):
 
             "end_date": _serialize_date(
                 athlete.training_plan.end_date
+            ),
+
+            "primary_event_id": (
+                athlete.training_plan.primary_event_id
+            ),
+
+            "competition_event_ids": list(
+                athlete.training_plan.competition_event_ids
             ),
 
             "workouts": [
@@ -802,6 +810,19 @@ def athlete_from_dict(data):
             end_date=_deserialize_date(
                 training_plan_data.get(
                     "end_date"
+                )
+            ),
+
+            primary_event_id=(
+                training_plan_data.get(
+                    "primary_event_id"
+                )
+            ),
+
+            competition_event_ids=tuple(
+                training_plan_data.get(
+                    "competition_event_ids",
+                    [],
                 )
             ),
 

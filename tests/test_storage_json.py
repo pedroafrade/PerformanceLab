@@ -174,7 +174,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 3
+    assert data["version"] == 4
 
     assert "id" in data["athlete"]
 
@@ -526,6 +526,11 @@ def test_training_plan_metadata_round_trip():
         plan_id="plan-sealand-trail",
         start_date=date(2026, 7, 29),
         end_date=date(2026, 9, 27),
+        primary_event_id="trail-pe-firme",
+        competition_event_ids=(
+            "sealand",
+            "trail-pe-firme",
+        ),
     )
 
     athlete.training_plan.add(
@@ -559,6 +564,17 @@ def test_training_plan_metadata_round_trip():
         "end_date"
     ] == "2026-09-27"
 
+    assert data["training_plan"][
+        "primary_event_id"
+    ] == "trail-pe-firme"
+
+    assert data["training_plan"][
+        "competition_event_ids"
+    ] == [
+        "sealand",
+        "trail-pe-firme",
+    ]
+
     assert len(
         data["training_plan"]["workouts"]
     ) == 1
@@ -580,6 +596,19 @@ def test_training_plan_metadata_round_trip():
     assert (
         loaded.training_plan.end_date
         == date(2026, 9, 27)
+    )
+
+    assert (
+        loaded.training_plan.primary_event_id
+        == "trail-pe-firme"
+    )
+
+    assert (
+        loaded.training_plan.competition_event_ids
+        == (
+            "sealand",
+            "trail-pe-firme",
+        )
     )
 
     assert len(

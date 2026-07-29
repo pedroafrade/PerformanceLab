@@ -127,3 +127,55 @@ def test_open_training_plan_remains_backward_compatible():
     assert workout in plan
     assert plan.start_date is None
     assert plan.end_date is None
+
+def test_training_plan_identifies_competition_block():
+
+    plan = TrainingPlan(
+        start_date=date(2026, 7, 29),
+        end_date=date(2026, 9, 27),
+        primary_event_id="trail-pe-firme",
+        competition_event_ids=(
+            "sealand",
+            "trail-pe-firme",
+        ),
+    )
+
+    assert (
+        plan.primary_event_id
+        == "trail-pe-firme"
+    )
+
+    assert plan.competition_event_ids == (
+        "sealand",
+        "trail-pe-firme",
+    )
+
+
+def test_primary_event_must_belong_to_competition_block():
+
+    with pytest.raises(
+        ValueError,
+        match="must belong",
+    ):
+        TrainingPlan(
+            primary_event_id="other-event",
+            competition_event_ids=(
+                "sealand",
+                "trail-pe-firme",
+            ),
+        )
+
+
+def test_competition_event_ids_cannot_repeat():
+
+    with pytest.raises(
+        ValueError,
+        match="duplicates",
+    ):
+        TrainingPlan(
+            primary_event_id="sealand",
+            competition_event_ids=(
+                "sealand",
+                "sealand",
+            ),
+        )

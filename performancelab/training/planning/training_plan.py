@@ -28,6 +28,10 @@ class TrainingPlan(WorkoutCollection):
     start_date: date | None = None
     end_date: date | None = None
 
+    primary_event_id: str | None = None
+
+    competition_event_ids: tuple[str, ...] = ()
+
     workouts: list[PlannedWorkout] = field(
         default_factory=list,
     )
@@ -80,6 +84,49 @@ class TrainingPlan(WorkoutCollection):
             if self.end_date < self.start_date:
                 raise ValueError(
                     "end_date cannot be before start_date."
+                )
+
+        for event_id in self.competition_event_ids:
+
+            if (
+                not isinstance(event_id, str)
+                or not event_id.strip()
+            ):
+                raise ValueError(
+                    "competition_event_ids must contain "
+                    "non-empty strings."
+                )
+
+        if (
+            len(set(self.competition_event_ids))
+            != len(self.competition_event_ids)
+        ):
+            raise ValueError(
+                "competition_event_ids cannot contain "
+                "duplicates."
+            )
+
+        if self.primary_event_id is not None:
+
+            if (
+                not isinstance(
+                    self.primary_event_id,
+                    str,
+                )
+                or not self.primary_event_id.strip()
+            ):
+                raise ValueError(
+                    "primary_event_id must be a "
+                    "non-empty string."
+                )
+
+            if (
+                self.primary_event_id
+                not in self.competition_event_ids
+            ):
+                raise ValueError(
+                    "primary_event_id must belong to "
+                    "competition_event_ids."
                 )
 
         for workout in self.workouts:
