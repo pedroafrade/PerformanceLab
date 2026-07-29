@@ -846,3 +846,107 @@ def test_explicit_priority_precedes_event_demand():
         context.primary_event
         is priority_event
     )
+
+def test_context_exposes_competition_plan_metadata():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        29,
+    )
+
+    road_event = EventEntry(
+        event=Event(
+            event_id="event-sealand",
+            name="Sealand",
+            date=date(
+                2026,
+                9,
+                13,
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=113,
+        ),
+        priority="A",
+    )
+
+    trail_event = EventEntry(
+        event=Event(
+            event_id="event-trail-pe-firme",
+            name="III Trail Pé Firme",
+            date=date(
+                2026,
+                9,
+                27,
+            ),
+            sport="Trail Running",
+            distance=23,
+            elevation_gain=950,
+        ),
+        priority="A",
+    )
+
+    athlete.events.add(
+        road_event
+    )
+
+    athlete.events.add(
+        trail_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.primary_event_id
+        == "event-trail-pe-firme"
+    )
+
+    assert context.competition_event_ids == (
+        "event-sealand",
+        "event-trail-pe-firme",
+    )
+
+    assert (
+        context.planning_end_date
+        == date(
+            2026,
+            9,
+            27,
+        )
+    )
+
+
+def test_context_without_events_has_no_plan_metadata():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date(
+            2026,
+            7,
+            29,
+        ),
+    )
+
+    assert context.primary_event_id is None
+
+    assert (
+        context.competition_event_ids
+        == ()
+    )
+
+    assert (
+        context.planning_end_date
+        is None
+    )

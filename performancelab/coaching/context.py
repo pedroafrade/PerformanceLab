@@ -670,7 +670,116 @@ class CoachContext:
         )
 
     # ======================================================
+    @property
+    def primary_event_id(
+        self,
+    ) -> str | None:
+        """
+        Returns the stable identity of the primary event.
+        """
 
+        event_entry = self.primary_event
+
+        if event_entry is None:
+            return None
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_id = getattr(
+            event,
+            "event_id",
+            None,
+        )
+
+        if (
+            not isinstance(event_id, str)
+            or not event_id.strip()
+        ):
+            return None
+
+        return event_id
+
+    # ======================================================
+
+    @property
+    def competition_event_ids(
+        self,
+    ) -> tuple[str, ...]:
+        """
+        Returns the stable identities of the events in the
+        current competition block.
+        """
+
+        event_ids = []
+
+        for event_entry in (
+            self.competition_block_events
+        ):
+
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            event_id = getattr(
+                event,
+                "event_id",
+                None,
+            )
+
+            if (
+                isinstance(event_id, str)
+                and event_id.strip()
+            ):
+                event_ids.append(
+                    event_id
+                )
+
+        return tuple(event_ids)
+
+    # ======================================================
+
+    @property
+    def planning_end_date(
+        self,
+    ) -> date | None:
+        """
+        Returns the date through which the current training
+        plan should be developed.
+        """
+
+        event_entry = self.primary_event
+
+        if event_entry is None:
+            return None
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        if not isinstance(
+            event_date,
+            date,
+        ):
+            return None
+
+        return event_date
+
+    # ======================================================
+    
     @property
     def days_between_events(
         self,
