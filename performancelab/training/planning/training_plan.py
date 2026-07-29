@@ -12,17 +12,92 @@ from datetime import date, datetime, time, timedelta
 from .planned_workout import PlannedWorkout
 from .workout_collection import WorkoutCollection
 
+from uuid import uuid4
 
 @dataclass
 class TrainingPlan(WorkoutCollection):
     """
     Container for an athlete's planned workouts.
     """
+    plan_id: str = field(
+        default_factory=lambda: str(
+            uuid4()
+        ),
+    )
+
+    start_date: date | None = None
+    end_date: date | None = None
 
     workouts: list[PlannedWorkout] = field(
         default_factory=list,
     )
 
+    # ======================================================
+
+    def __post_init__(self) -> None:
+
+        if (
+            not isinstance(self.plan_id, str)
+            or not self.plan_id.strip()
+        ):
+            raise ValueError(
+                "plan_id must be a non-empty string."
+            )
+
+        has_start = self.start_date is not None
+        has_end = self.end_date is not None
+
+        if has_start != has_end:
+            raise ValueError(
+                "TrainingPlan requires both start_date "
+                "and end_date."
+            )
+
+        if has_start:
+
+            if (
+                not isinstance(self.start_date, date)
+                or isinstance(
+                    self.start_date,
+                    datetime,
+                )
+            ):
+                raise TypeError(
+                    "start_date must be a date."
+                )
+
+            if (
+                not isinstance(self.end_date, date)
+                or isinstance(
+                    self.end_date,
+                    datetime,
+                )
+            ):
+                raise TypeError(
+                    "end_date must be a date."
+                )
+
+            if self.end_date < self.start_date:
+                raise ValueError(
+                    "end_date cannot be before start_date."
+                )
+
+        for workout in self.workouts:
+
+            if not isinstance(
+                workout,
+                PlannedWorkout,
+            ):
+                raise TypeError(
+                    "workouts must contain PlannedWorkout "
+                    "objects."
+                )
+
+            self._validate_workout_horizon(
+                workout
+            )
+
+        self._sort()
     # ======================================================
 
     def schedule(
@@ -72,6 +147,10 @@ class TrainingPlan(WorkoutCollection):
                 "workout must be a PlannedWorkout."
             )
 
+        self._validate_workout_horizon(
+            workout
+        )
+
         self.workouts.append(workout)
 
         self._sort()
@@ -92,7 +171,52 @@ class TrainingPlan(WorkoutCollection):
     def clear(self) -> None:
 
         self.workouts.clear()
+    # ======================================================
 
+    def covers(
+        self,
+        day: date,
+    ) -> bool:
+        """
+        Returns whether a calendar day belongs to the
+        complete training-plan horizon.
+        """
+
+        if (
+            self.start_date is None
+            or self.end_date is None
+        ):
+            return False
+
+        return (
+            self.start_date
+            <= day
+            <= self.end_date
+        )
+
+    # ======================================================
+
+    def _validate_workout_horizon(
+        self,
+        workout: PlannedWorkout,
+    ) -> None:
+
+        if (
+            self.start_date is None
+            or self.end_date is None
+        ):
+            return
+
+        workout_day = workout.day
+
+        if (
+            workout_day is None
+            or not self.covers(workout_day)
+        ):
+            raise ValueError(
+                "Workout date is outside the "
+                "TrainingPlan horizon."
+            )
     # ======================================================
 
     @staticmethod
