@@ -33,6 +33,7 @@ from performancelab.training.config import (
 
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
+from .training_plan import TrainingPlan
 
 if TYPE_CHECKING:
     from performancelab.athlete import Athlete
@@ -193,6 +194,86 @@ class Planner:
         ).week(
             start_date,
         )
+
+    def build_training_plan(
+        self,
+        *,
+        athlete: Athlete,
+        availability: AthleteAvailability | None = None,
+        preferences: AthletePreferences | None = None,
+        constraints: TrainingConstraints | None = None,
+        today: date | None = None,
+    ) -> TrainingPlan:
+        """
+        Creates a complete training-plan container for the
+        athlete's current competition block.
+
+        Weekly generation is initially used to populate the
+        first visible part of the plan. Later weeks can then
+        be added without changing the plan identity or its
+        competition horizon.
+        """
+
+        self._validate_athlete(
+            athlete
+        )
+
+        self._validate_optional_date(
+            today,
+            field="today",
+        )
+
+        reference_day = (
+            today or date.today()
+        )
+
+        context = CoachContext.from_athlete(
+            athlete,
+            today=reference_day,
+        )
+
+        first_week = self.build(
+            athlete=athlete,
+            availability=availability,
+            preferences=preferences,
+            constraints=constraints,
+            week_start=reference_day,
+            today=reference_day,
+        )
+
+        plan_end_date = (
+            context.planning_end_date
+            or first_week.end_date
+        )
+
+        training_plan = TrainingPlan(
+            start_date=reference_day,
+            end_date=plan_end_date,
+            primary_event_id=(
+                context.primary_event_id
+            ),
+            competition_event_ids=(
+                context.competition_event_ids
+            ),
+        )
+
+        for workout in first_week.workouts:
+
+            workout_day = workout.day
+
+            if (
+                workout_day is not None
+                and training_plan.covers(
+                    workout_day
+                )
+            ):
+                training_plan.add(
+                    workout
+                )
+
+        return training_plan
+
+    # ======================================================
 
     @staticmethod
     def _apply_event_to_week(
