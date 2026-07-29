@@ -306,8 +306,8 @@ def show_planning_card(
         """
 <style>
 .weekly-plan-day {
-    min-height: 96px;
-    padding: 4px 2px;
+    min-height: 86px;
+    padding: 2px;
     border: 1px solid transparent;
     border-radius: 8px;
     text-align: center;
@@ -340,12 +340,12 @@ def show_planning_card(
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 29px;
-    height: 29px;
-    margin: 5px auto;
+    width: 25px;
+    height: 25px;
+    margin: 3px auto;
     border-radius: 50%;
     box-sizing: border-box;
-    font-size: 0.90rem;
+    font-size: 0.82rem;
     font-weight: 800;
     line-height: 1;
 }
@@ -389,7 +389,7 @@ def show_planning_card(
 }
 
 .weekly-plan-arrow-spacer {
-    height: 6px;
+    height: 2px;
 }
 
 /*
@@ -397,8 +397,8 @@ The navigation columns contain only these tertiary buttons.
 Their height matches the 29 px day markers.
 */
 div[data-testid="stButton"] > button[kind="tertiary"] {
-    min-height: 29px;
-    height: 29px;
+    min-height: 25px;
+    height: 25px;
     padding: 0;
     border: 0;
     background: transparent;
@@ -413,6 +413,18 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
     border: 0;
     background: transparent;
     box-shadow: none;
+}
+
+div[class*="st-key-weekly_plan_selector_"] {
+    margin-bottom: -6px;
+}
+
+div[class*="st-key-weekly_plan_selector_"] button {
+    min-height: 24px;
+    height: 24px;
+    padding: 0 0.30rem;
+    font-size: 0.68rem;
+    line-height: 1;
 }
 </style>
         """,
@@ -432,28 +444,38 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
         for day in days
     }
 
-    selected_date = st.segmented_control(
-        "Workout details",
-        options=tuple(day_by_date),
-        default=(
-            default_day.day
-            if default_day is not None
-            else None
-        ),
-        required=True,
-        format_func=lambda day: (
-            f"{WEEKDAY_LABELS[day.weekday()]} "
-            f"{day.day}"
-        ),
-        key=(
-            "weekly_plan_selector_"
-            f"{planning.weekly_plan.start_date}"
-            "_"
-            f"{planning.weekly_plan.end_date}"
-        ),
-        label_visibility="collapsed",
-        width="stretch",
+    selector_columns = st.columns(
+        [
+            0.42,
+            7,
+            0.42,
+        ],
+        gap="small",
     )
+
+    with selector_columns[1]:
+
+        selected_date = st.segmented_control(
+            "Workout details",
+            options=tuple(day_by_date),
+            default=(
+                default_day.day
+                if default_day is not None
+                else None
+            ),
+            required=True,
+            format_func=lambda day: str(
+                day.day
+            ),
+            key=(
+                "weekly_plan_selector_"
+                f"{planning.weekly_plan.start_date}"
+                "_"
+                f"{planning.weekly_plan.end_date}"
+            ),
+            label_visibility="collapsed",
+            width="stretch",
+        )
 
     selected_day = day_by_date.get(
         selected_date
