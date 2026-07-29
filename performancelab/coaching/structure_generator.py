@@ -235,25 +235,40 @@ class WeekStructureGenerator:
         availability: AthleteAvailability,
         preferences: AthletePreferences,
         constraints: TrainingConstraints,
-    ) -> tuple[tuple[int, int, int, int], ...]:
+    ):
         """
-        Compares valid day combinations using the existing
-        individual day-priority rules.
+        Prefers combinations with recovery between sessions,
+        followed by the athlete's existing day preferences.
         """
 
-        return tuple(
-            sorted(
-                (
-                    self._training_day_priority(
-                        weekday=weekday,
-                        strategy_plan=strategy_plan,
-                        availability=availability,
-                        preferences=preferences,
-                        constraints=constraints,
-                    )
-                    for weekday in training_days
-                )
+        adjacent_pairs = sum(
+            1
+            for first, second in combinations(
+                training_days,
+                2,
             )
+            if abs(
+                first.value
+                - second.value
+            ) == 1
+        )
+
+        individual_priorities = tuple(
+            sorted(
+                self._training_day_priority(
+                    weekday=weekday,
+                    strategy_plan=strategy_plan,
+                    availability=availability,
+                    preferences=preferences,
+                    constraints=constraints,
+                )
+                for weekday in training_days
+            )
+        )
+
+        return (
+            adjacent_pairs,
+            individual_priorities,
         )
 
     # ======================================================

@@ -4,6 +4,8 @@ Tests for WeekStructureGenerator.
 
 import pytest
 
+from dataclasses import replace
+
 from performancelab.training.config.availability import (
     AthleteAvailability,
     Weekday,
@@ -21,6 +23,7 @@ from performancelab.coaching.strategy import StrategyPlan
 from performancelab.coaching.structure_generator import (
     WeekStructureGenerator,
 )
+
 
 
 def slot_for_day(
@@ -624,3 +627,43 @@ def test_rejects_invalid_availability(
             preferences=default_preferences,
             constraints=default_constraints,
         )
+
+def test_prefers_spaced_training_days(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    three_session_plan = replace(
+        strategy_plan,
+        target_sessions=3,
+    )
+
+    current_week_constraints = replace(
+        default_constraints,
+        blocked_days=(
+            Weekday.MONDAY,
+            Weekday.TUESDAY,
+        ),
+        max_consecutive_training_days=7,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=three_session_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=current_week_constraints,
+    )
+
+    training_days = [
+        slot.weekday
+        for slot in slots
+        if slot.is_training
+    ]
+
+    assert training_days == [
+        Weekday.WEDNESDAY,
+        Weekday.FRIDAY,
+        Weekday.SUNDAY,
+    ]
