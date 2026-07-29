@@ -319,7 +319,59 @@ def test_places_intensity_on_preferred_days(
         is SessionPurpose.LONG
     )
 
+def test_separates_demanding_sessions(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+) -> None:
 
+    preferences = AthletePreferences(
+        preferred_long_day=Weekday.SUNDAY,
+        preferred_intensity_days={
+            Weekday.TUESDAY,
+            Weekday.WEDNESDAY,
+            Weekday.SATURDAY,
+        },
+    )
+
+    constraints = TrainingConstraints(
+        max_weekly_minutes=540,
+        max_session_minutes=120,
+        max_weekday_minutes=90,
+        max_weekend_minutes=120,
+        max_consecutive_training_days=7,
+        max_intensity_sessions=2,
+        max_long_sessions=1,
+        max_sessions_per_day=1,
+        minimum_recovery_days=0,
+        allow_double_sessions=False,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=strategy_plan,
+        availability=full_availability,
+        preferences=preferences,
+        constraints=constraints,
+    )
+
+    demanding_days = [
+        slot.weekday.value
+        for slot in slots
+        if (
+            slot.is_intensity
+            or slot.is_long
+        )
+    ]
+
+    assert len(demanding_days) == 3
+
+    assert all(
+        second - first > 1
+        for first, second in zip(
+            demanding_days,
+            demanding_days[1:],
+        )
+    )
+    
 def test_respects_intensity_session_limit(
     strategy_plan: StrategyPlan,
     full_availability: AthleteAvailability,

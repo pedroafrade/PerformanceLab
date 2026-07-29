@@ -416,7 +416,16 @@ class WeekStructureGenerator:
             weekday
             for weekday in training_days
             if weekday not in excluded_days
-            and constraints.allows_intensity(weekday)
+            and constraints.allows_intensity(
+                weekday
+            )
+            and not any(
+                abs(
+                    weekday.value
+                    - excluded_day.value
+                ) == 1
+                for excluded_day in excluded_days
+            )
         ]
 
         maximum = min(
@@ -444,7 +453,59 @@ class WeekStructureGenerator:
             )
         )
 
-        return tuple(candidates[:maximum])
+        candidate_priority = {
+            weekday: index
+            for index, weekday in enumerate(
+                candidates
+            )
+        }
+
+        for session_count in range(
+            maximum,
+            0,
+            -1,
+        ):
+            valid_combinations = [
+                combination
+                for combination in combinations(
+                    candidates,
+                    session_count,
+                )
+                if all(
+                    abs(
+                        first.value
+                        - second.value
+                    ) > 1
+                    for first, second in combinations(
+                        combination,
+                        2,
+                    )
+                )
+            ]
+
+            if not valid_combinations:
+                continue
+
+            selected = min(
+                valid_combinations,
+                key=lambda combination: tuple(
+                    sorted(
+                        candidate_priority[weekday]
+                        for weekday in combination
+                    )
+                ),
+            )
+
+            return tuple(
+                sorted(
+                    selected,
+                    key=lambda weekday: (
+                        weekday.value
+                    ),
+                )
+            )
+
+        return ()
 
     # ======================================================
     # Duration allocation
