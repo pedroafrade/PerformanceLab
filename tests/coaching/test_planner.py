@@ -7,7 +7,7 @@ Place this file at:
 It reuses the fixtures defined in tests/coaching/conftest.py.
 """
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import Mock
 
 import pytest
@@ -345,3 +345,111 @@ def test_training_plan_without_event_uses_week_horizon(
 
     assert plan.primary_event_id is None
     assert plan.competition_event_ids == ()
+
+def test_training_plan_generates_every_week_until_primary_event(
+    full_availability,
+    default_preferences,
+    default_constraints,
+):
+
+    athlete = Athlete(
+        name="Pedro",
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                event_id="event-primary",
+                name="Primary Trail",
+                date=date(
+                    2026,
+                    9,
+                    27,
+                ),
+                sport="Trail Running",
+                distance=23,
+                elevation_gain=950,
+            ),
+            priority="A",
+        )
+    )
+
+    structure_generator = Mock()
+    workout_generator = Mock()
+
+    structure_generator.generate.return_value = ()
+
+    def generate_week_workout(
+        *,
+        strategy_plan,
+        training_week,
+        coach_context,
+    ):
+
+        workout_day = (
+            training_week.start_date
+            + timedelta(days=2)
+        )
+
+        return (
+            PlannedWorkout(
+                scheduled_at=datetime.combine(
+                    workout_day,
+                    datetime.min.time(),
+                ),
+                sport="Trail Running",
+                title="Weekly Run",
+            ),
+        )
+
+    workout_generator.generate.side_effect = (
+        generate_week_workout
+    )
+
+    planner = Planner(
+        structure_generator=structure_generator,
+        workout_generator=workout_generator,
+    )
+
+    plan = planner.build_training_plan(
+        athlete=athlete,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+        today=date(
+            2026,
+            7,
+            29,
+        ),
+    )
+
+    assert plan.start_date == date(
+        2026,
+        7,
+        29,
+    )
+
+    assert plan.end_date == date(
+        2026,
+        9,
+        27,
+    )
+
+    assert len(plan) == 9
+
+    assert plan.first.day == date(
+        2026,
+        7,
+        29,
+    )
+
+    assert plan.last.day == date(
+        2026,
+        9,
+        23,
+    )
+
+    assert all(
+        plan.covers(workout.day)
+        for workout in plan
+    )

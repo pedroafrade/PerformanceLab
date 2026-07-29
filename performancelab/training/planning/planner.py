@@ -207,13 +207,11 @@ class Planner:
         today: date | None = None,
     ) -> TrainingPlan:
         """
-        Creates a complete training-plan container for the
-        athlete's current competition block.
+        Builds the athlete's training plan from the current
+        day through the primary event.
 
-        Weekly generation is initially used to populate the
-        first visible part of the plan. Later weeks can then
-        be added without changing the plan identity or its
-        competition horizon.
+        Weekly plans are consecutive windows inside the same
+        complete TrainingPlan.
         """
 
         self._validate_athlete(
@@ -234,18 +232,18 @@ class Planner:
             today=reference_day,
         )
 
-        first_week = self.build(
-            athlete=athlete,
-            availability=availability,
-            preferences=preferences,
-            constraints=constraints,
-            week_start=reference_day,
-            today=reference_day,
+        first_week_start = self._week_start(
+            reference_day
+        )
+
+        default_end_date = (
+            first_week_start
+            + timedelta(days=6)
         )
 
         plan_end_date = (
             context.planning_end_date
-            or first_week.end_date
+            or default_end_date
         )
 
         training_plan = TrainingPlan(
@@ -259,24 +257,47 @@ class Planner:
             ),
         )
 
-        for workout in first_week.workouts:
+        week_start = first_week_start
 
-            workout_day = workout.day
+        while week_start <= plan_end_date:
 
-            if (
-                workout_day is not None
-                and training_plan.covers(
-                    workout_day
-                )
-            ):
-                training_plan.add(
-                    workout
-                )
+            planning_day = (
+                reference_day
+                if week_start == first_week_start
+                else week_start
+            )
+
+            weekly_plan = self.build(
+                athlete=athlete,
+                availability=availability,
+                preferences=preferences,
+                constraints=constraints,
+                week_start=week_start,
+                today=planning_day,
+            )
+
+            for workout in weekly_plan.workouts:
+
+                workout_day = workout.day
+
+                if (
+                    workout_day is not None
+                    and training_plan.covers(
+                        workout_day
+                    )
+                ):
+                    training_plan.add(
+                        workout
+                    )
+
+            week_start += timedelta(
+                days=7
+            )
 
         return training_plan
 
     # ======================================================
-    
+
     @staticmethod
     def _apply_events_to_week(
         *,
