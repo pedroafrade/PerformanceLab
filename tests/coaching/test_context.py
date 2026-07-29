@@ -675,3 +675,61 @@ def test_fatigue_regeneration_uses_training_state():
         context.is_fatigue_regeneration
         is True
     )
+
+def test_context_groups_first_competition_block():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        7,
+        29,
+    )
+
+    first_event = make_event_entry(
+        today + timedelta(
+            days=46,
+        )
+    )
+
+    main_event = make_event_entry(
+        today + timedelta(
+            days=60,
+        )
+    )
+
+    later_event = make_event_entry(
+        today + timedelta(
+            days=150,
+        )
+    )
+
+    athlete.events.add(
+        first_event
+    )
+    athlete.events.add(
+        main_event
+    )
+    athlete.events.add(
+        later_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.competition_block_events
+        == (
+            first_event,
+            main_event,
+        )
+    )
+
+    assert (
+        later_event
+        not in context.competition_block_events
+    )

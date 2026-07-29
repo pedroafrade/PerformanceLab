@@ -15,6 +15,7 @@ from performancelab.athlete import Athlete
 from performancelab.analysis.performance_profile import PerformanceProfile
 from performancelab.analysis.training_state import TrainingState
 
+COMPETITION_CLUSTER_MAX_DAYS = 56
 
 @dataclass(frozen=True)
 class CoachContext:
@@ -505,6 +506,71 @@ class CoachContext:
     # ======================================================
 
     @property
+    def competition_block_events(
+        self,
+    ) -> tuple[object, ...]:
+        """
+        Returns the first chronological block of upcoming events.
+
+        Consecutive events belong to the same block when they
+        are no more than eight weeks apart.
+        """
+
+        if not self.upcoming_events:
+            return ()
+
+        block = [
+            self.upcoming_events[0]
+        ]
+
+        for event_entry in self.upcoming_events[1:]:
+
+            previous_date = getattr(
+                getattr(
+                    block[-1],
+                    "event",
+                    None,
+                ),
+                "date",
+                None,
+            )
+
+            event_date = getattr(
+                getattr(
+                    event_entry,
+                    "event",
+                    None,
+                ),
+                "date",
+                None,
+            )
+
+            if (
+                previous_date is None
+                or event_date is None
+            ):
+                break
+
+            gap_days = (
+                event_date
+                - previous_date
+            ).days
+
+            if (
+                gap_days
+                > COMPETITION_CLUSTER_MAX_DAYS
+            ):
+                break
+
+            block.append(
+                event_entry
+            )
+
+        return tuple(block)
+
+    # ======================================================
+
+    @property
     def days_between_events(
         self,
     ) -> int | None:
@@ -592,7 +658,8 @@ class CoachContext:
 
         if (
             days_between_events is not None
-            and days_between_events <= 56
+            and days_between_events
+            <= COMPETITION_CLUSTER_MAX_DAYS
         ):
             return "cluster"
 
