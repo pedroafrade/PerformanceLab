@@ -12,6 +12,10 @@ from unittest.mock import Mock
 
 import pytest
 
+from performancelab.training.load import (
+    planned_weekly_load,
+)
+
 from performancelab.athlete import Athlete
 from performancelab.race import (
     Event,
@@ -21,6 +25,7 @@ from performancelab.race import (
 from performancelab.training.planning import (
     PlannedWorkout,
     TrainingPlan,
+    WeeklyPlan,
 )
 from performancelab.training.planning.planner import Planner
 
@@ -453,3 +458,97 @@ def test_training_plan_generates_every_week_until_primary_event(
         plan.covers(workout.day)
         for workout in plan
     )
+
+def test_limits_planned_weekly_load_growth():
+
+    weekly_plan = WeeklyPlan(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    3,
+                ),
+                title="Monday Quality",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Hard",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    5,
+                ),
+                title="Wednesday Quality",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Hard",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    7,
+                ),
+                title="Easy Aerobic Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    9,
+                ),
+                title="Long Aerobic Run",
+                duration=timedelta(
+                    minutes=90,
+                ),
+                intensity="Easy to moderate",
+            ),
+        ],
+    )
+
+    result = Planner._limit_weekly_load_growth(
+        weekly_plan=weekly_plan,
+        previous_weekly_load=1000,
+    )
+
+    titles = tuple(
+        workout.title
+        for workout in result.workouts
+    )
+
+    assert (
+        "Monday Quality"
+        not in titles
+    )
+
+    assert (
+        "Wednesday Quality"
+        in titles
+    )
+
+    assert (
+        "Long Aerobic Run"
+        in titles
+    )
+
+    assert planned_weekly_load(
+        result.workouts
+    ) <= 1100

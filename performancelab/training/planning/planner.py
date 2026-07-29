@@ -29,7 +29,10 @@ from performancelab.training.config import (
     TrainingConstraints,
     Weekday,
 )
-
+from performancelab.training.load import (
+    planned_workout_load,
+    planned_weekly_load,
+)
 
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
@@ -38,6 +41,7 @@ from .training_plan import TrainingPlan
 if TYPE_CHECKING:
     from performancelab.athlete import Athlete
 
+MAX_PLANNED_WEEKLY_LOAD_GROWTH = 0.10
 
 class Planner:
     """
@@ -258,6 +262,7 @@ class Planner:
         )
 
         week_start = first_week_start
+        previous_weekly_load = None
 
         while week_start <= plan_end_date:
 
@@ -276,26 +281,200 @@ class Planner:
                 today=planning_day,
             )
 
-            for workout in weekly_plan.workouts:
+            if previous_weekly_load is not None:
 
-                workout_day = workout.day
+                weekly_plan = (
+                    self._limit_weekly_load_growth(
+                        weekly_plan=weekly_plan,
+                        previous_weekly_load=(
+                            previous_weekly_load
+                        ),
+                    )
+                )
 
+            visible_workouts = tuple(
+                workout
+                for workout in weekly_plan.workouts
                 if (
-                    workout_day is not None
+                    workout.day is not None
                     and training_plan.covers(
-                        workout_day
+                        workout.day
                     )
-                ):
-                    training_plan.add(
-                        workout
-                    )
+                )
+            )
+
+            current_weekly_load = (
+                planned_weekly_load(
+                    visible_workouts
+                )
+            )
+
+            if current_weekly_load > 0:
+
+                previous_weekly_load = (
+                    current_weekly_load
+                )
+
+            for workout in visible_workouts:
+
+                training_plan.add(
+                    workout
+                )
 
             week_start += timedelta(
                 days=7
             )
 
         return training_plan
+    # ======================================================
 
+    @staticmethod
+    def _limit_weekly_load_growth(
+        *,
+        weekly_plan: WeeklyPlan,
+        previous_weekly_load: float,
+        maximum_growth: float = (
+            MAX_PLANNED_WEEKLY_LOAD_GROWTH
+        ),
+    ) -> WeeklyPlan:
+        """
+        Prevents an excessive increase over the previous
+        planned week's load.
+
+        An additional demanding session is removed first.
+        Other ordinary sessions are considered afterwards.
+        Race and long sessions are preserved.
+        """
+
+        if previous_weekly_load <= 0:
+            return weekly_plan
+
+        maximum_load = (
+            previous_weekly_load
+            * (1 + maximum_growth)
+        )
+
+        workouts = list(
+            weekly_plan.workouts
+        )
+
+        while (
+            planned_weekly_load(workouts)
+            > maximum_load
+        ):
+
+            demanding_workouts = [
+                workout
+                for workout in workouts
+                if Planner._is_demanding_workout(
+                    workout
+                )
+            ]
+
+            if len(demanding_workouts) > 1:
+
+                removable = (
+                    demanding_workouts[:-1]
+                )
+
+            else:
+
+                removable = [
+                    workout
+                    for workout in workouts
+                    if (
+                        not Planner._is_demanding_workout(
+                            workout
+                        )
+                        and not Planner._is_long_workout(
+                            workout
+                        )
+                        and not Planner._is_race_workout(
+                            workout
+                        )
+                    )
+                ]
+
+            if not removable:
+                break
+
+            selected = max(
+                removable,
+                key=lambda workout: (
+                    planned_workout_load(
+                        workout
+                    )
+                    or 0.0
+                ),
+            )
+
+            workouts.remove(
+                selected
+            )
+
+        return WeeklyPlan(
+            start_date=weekly_plan.start_date,
+            end_date=weekly_plan.end_date,
+            workouts=workouts,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _is_demanding_workout(
+        workout,
+    ) -> bool:
+
+        intensity = str(
+            getattr(
+                workout,
+                "intensity",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return intensity in {
+            "moderately hard",
+            "hard",
+            "very hard",
+        }
+
+    # ======================================================
+
+    @staticmethod
+    def _is_long_workout(
+        workout,
+    ) -> bool:
+
+        title = str(
+            getattr(
+                workout,
+                "title",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return "long" in title
+
+    # ======================================================
+
+    @staticmethod
+    def _is_race_workout(
+        workout,
+    ) -> bool:
+
+        intensity = str(
+            getattr(
+                workout,
+                "intensity",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return intensity == "race effort"
     # ======================================================
 
     @staticmethod
