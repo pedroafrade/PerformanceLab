@@ -10,6 +10,9 @@ from performancelab.athlete import Athlete
 from performancelab.coaching.coach import Coach
 from performancelab.training.planning.planner import Planner
 from performancelab.training.planning.weekly_plan import WeeklyPlan
+from performancelab.training.planning.training_plan import (
+    TrainingPlan,
+)
 
 
 def test_plan_delegates_to_injected_planner():
@@ -42,4 +45,46 @@ def test_plan_delegates_to_injected_planner():
         athlete=athlete,
         week_start=date(2026, 7, 20),
         today=date(2026, 7, 23),
+    )
+
+def test_complete_training_plan_delegates_to_planner():
+
+    athlete = Athlete(
+        name="John",
+    )
+
+    training_plan = Mock(
+        spec=TrainingPlan,
+    )
+
+    planner = Mock(
+        spec=Planner,
+    )
+
+    planner.build_training_plan.return_value = (
+        training_plan
+    )
+
+    coach = Coach(
+        planner=planner,
+    )
+
+    result = coach.build_training_plan(
+        athlete=athlete,
+        today=date(
+            2026,
+            7,
+            29,
+        ),
+    )
+
+    assert result is training_plan
+
+    planner.build_training_plan.assert_called_once_with(
+        athlete=athlete,
+        today=date(
+            2026,
+            7,
+            29,
+        ),
     )

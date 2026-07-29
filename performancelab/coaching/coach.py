@@ -14,6 +14,10 @@ from typing import TYPE_CHECKING
 from performancelab.training.planning.planner import Planner
 from performancelab.training.planning.weekly_plan import WeeklyPlan
 
+from performancelab.training.planning.training_plan import (
+    TrainingPlan,
+)
+
 from .analyzer import CoachAnalyzer
 from ..training.config.availability import AthleteAvailability
 from ..training.config.constraints import TrainingConstraints
@@ -86,6 +90,22 @@ class Coach:
         return self.planner.build(
             athlete=athlete,
             week_start=week_start,
+            today=today,
+        )
+
+    def build_training_plan(
+        self,
+        *,
+        athlete: Athlete,
+        today: date | None = None,
+    ) -> TrainingPlan:
+        """
+        Builds the complete training plan through the
+        athlete's primary event.
+        """
+
+        return self.planner.build_training_plan(
+            athlete=athlete,
             today=today,
         )
     
