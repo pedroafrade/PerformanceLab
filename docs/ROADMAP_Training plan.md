@@ -1,3 +1,22 @@
+Corrida como modalidade principal porque a prova é Road Running.
+Sessões-chave, intensidade, longos e treinos fáceis principalmente em corrida.
+Ciclismo e outras modalidades continuam a contar para a carga fisiológica.
+Outra modalidade só aparece no plano quando a sessão for explicitamente de treino complementar.
+Se não existir prova futura, o sistema pode usar a modalidade principal do histórico.
+
+Atualizamos assim a sequência:
+
+1- Usar a modalidade da próxima prova como modalidade principal.
+2- Planear apenas a partir do dia atual.
+3- Contabilizar os treinos já realizados na semana.
+4- Separar longos e sessões intensas.
+5- Calcular o volume a partir do histórico recente.
+6- Adaptar progressivamente o plano até à prova, incluindo taper.
+
+
+
+
+
 
 3 - Plano persistente associado a uma prova, substituindo a geração "por semana" por um plano completo que depois é apenas "recortado" para apresentação.
 4 - Revisão do algoritmo de prescrição (distribuição de intensidade, dias de recuperação, duração mínima, progressão e taper).
