@@ -113,6 +113,7 @@ class WeeklyPlanDayData:
     duration: timedelta | None
     distance: float | None
     intensity: str | None = None
+    structure: Sequence[str] = ()
 
     # presentation state
     is_today: bool = False

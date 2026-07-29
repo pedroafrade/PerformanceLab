@@ -259,6 +259,11 @@ class PlanningPresenter:
                         if workout is not None
                         else None
                     ),
+                    structure=(
+                        workout.structure
+                        if workout is not None
+                        else ()
+                    ),
                     is_today=day == today,
                     is_next_workout=(
                         day == next_workout_day

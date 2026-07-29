@@ -11,6 +11,10 @@ import streamlit as st
 from performancelab import Athlete, Workout
 from performancelab.presentation import DashboardData
 
+from performancelab.presentation.dashboard_models import (
+    WeeklyPlanDayData,
+)
+
 
 # ======================================================
 # Helpers
@@ -309,4 +313,34 @@ def test_next_workout_remains_anchored_to_today():
     assert (
         planning.next_workout.title
         == "Current Workout"
+    )
+def test_weekly_plan_day_carries_workout_structure():
+
+    day = WeeklyPlanDayData(
+        day=date(2026, 7, 29),
+        status="planned",
+        sport="Trail Running",
+        title="Hill Run",
+        duration=timedelta(hours=1),
+        distance=None,
+        intensity="Hard",
+        structure=(
+            "Warm up 15 min",
+            "5×5 min uphill",
+            (
+                "Recover 2 min easy downhill "
+                "between repetitions"
+            ),
+            "Cool down 10 min",
+        ),
+    )
+
+    assert day.structure == (
+        "Warm up 15 min",
+        "5×5 min uphill",
+        (
+            "Recover 2 min easy downhill "
+            "between repetitions"
+        ),
+        "Cool down 10 min",
     )
