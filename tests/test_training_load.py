@@ -20,6 +20,7 @@ from performancelab.training.load import (
     monthly_load,
     planned_workout_rpe,
     planned_workout_load,
+    planned_weekly_load,
 )
 
 
@@ -373,3 +374,70 @@ def test_unknown_planned_intensity_has_no_load():
         planned_workout_load(workout)
         is None
     )
+def test_planned_weekly_load():
+
+    workouts = (
+        PlannedWorkout(
+            scheduled_at=date(
+                2026,
+                7,
+                29,
+            ),
+            duration=timedelta(
+                hours=1,
+            ),
+            intensity="Easy",
+        ),
+        PlannedWorkout(
+            scheduled_at=date(
+                2026,
+                7,
+                31,
+            ),
+            duration=timedelta(
+                minutes=30,
+            ),
+            intensity="Hard",
+        ),
+    )
+
+    assert planned_weekly_load(
+        workouts
+    ) == 390
+
+
+def test_planned_weekly_load_ignores_unknown_load():
+
+    workouts = (
+        PlannedWorkout(
+            scheduled_at=date(
+                2026,
+                7,
+                29,
+            ),
+            duration=timedelta(
+                hours=1,
+            ),
+            intensity="Easy",
+        ),
+        PlannedWorkout(
+            scheduled_at=date(
+                2026,
+                7,
+                31,
+            ),
+            duration=None,
+            intensity="Race effort",
+        ),
+    )
+
+    assert planned_weekly_load(
+        workouts
+    ) == 180
+
+
+def test_empty_planned_week_has_zero_load():
+
+    assert planned_weekly_load(
+        ()
+    ) == 0.0

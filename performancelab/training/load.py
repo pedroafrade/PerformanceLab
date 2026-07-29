@@ -108,6 +108,34 @@ def planned_workout_load(
     )
 
     return minutes * rpe
+
+# ======================================================
+# Planned weekly load
+# ======================================================
+
+def planned_weekly_load(
+    workouts,
+) -> float:
+    """
+    Returns the estimated total load of a collection of
+    planned workouts.
+
+    Workouts without enough information to estimate load
+    are ignored.
+    """
+
+    total = 0.0
+
+    for workout in workouts:
+
+        load = planned_workout_load(
+            workout
+        )
+
+        if load is not None:
+            total += load
+
+    return total
 # ======================================================
 # Weekly load
 # ======================================================
