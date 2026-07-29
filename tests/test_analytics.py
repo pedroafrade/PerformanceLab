@@ -703,3 +703,44 @@ def test_training_state_refreshes_after_history_change():
         refreshed_state.recent_training_load
         == 300
     )
+
+def test_typical_weekly_minutes_uses_latest_28_days():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+
+    for days_ago in (
+        3,
+        10,
+        17,
+        24,
+    ):
+        athlete.history.add(
+            create_workout(
+                "Running",
+                today - timedelta(
+                    days=days_ago
+                ),
+                10,
+                timedelta(hours=1),
+                100,
+                5,
+            )
+        )
+
+    analytics = athlete.analytics
+
+    assert (
+        analytics.typical_weekly_minutes
+        == 60
+    )
+
+    assert (
+        analytics
+        .training_state
+        .typical_weekly_minutes
+        == 60
+    )

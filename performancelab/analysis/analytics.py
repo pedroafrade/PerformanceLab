@@ -6,7 +6,7 @@ AthleteAnalytics
 Public analytics interface for an athlete.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from statistics import pstdev
 
@@ -302,6 +302,45 @@ class AthleteAnalytics:
         )
 
     @property
+    def typical_weekly_minutes(self) -> float:
+        """
+        Returns the average weekly training duration
+        across the latest rolling 28 days.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        total_minutes = 0.0
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = workout_day.date()
+
+            if (
+                workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or workout.duration is None
+            ):
+                continue
+
+            total_minutes += (
+                workout.duration.total_seconds()
+                / 60
+            )
+
+        return total_minutes / 4
+
+    @property
     def training_monotony(self) -> float | None:
 
         loads = self.current_training_loads[-7:]
@@ -448,6 +487,8 @@ class AthleteAnalytics:
                 days_since_last_workout=self.days_since_last_workout,
 
                 recent_training_load=self.recent_training_load,
+
+                typical_weekly_minutes=self.typical_weekly_minutes,
 
             )
 
