@@ -6,6 +6,7 @@ Dashboard Data
 Presentation-ready data for user interfaces.
 """
 
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 from performancelab.race import entry
@@ -831,12 +832,12 @@ class DashboardData:
     @property
     def planning(self):
         """
-        Builds the combined rolling plan, next workout and
-        virtual coach presentation model.
+        Builds the navigable weekly plan while keeping the
+        next workout anchored to the present day.
         """
 
-        from performancelab.training.planning.planner import (
-            WeeklyPlanBuilder,
+        builder = WeeklyPlanBuilder(
+            self.analytics.training_plan,
         )
 
         center_date = st.session_state.get(
@@ -844,16 +845,29 @@ class DashboardData:
             date.today(),
         )
 
-        plan = WeeklyPlanBuilder(
-            self.analytics.training_plan,
-        ).window(
+        visible_plan = builder.window(
             center_day=center_date,
         )
 
-        return PlanningPresenter(
-            plan=plan,
+        current_plan = builder.week(
+            date.today(),
+        )
+
+        visible_data = PlanningPresenter(
+            plan=visible_plan,
             history=self.analytics.history,
         ).build()
+
+        current_data = PlanningPresenter(
+            plan=current_plan,
+            history=self.analytics.history,
+        ).build()
+
+        return replace(
+            visible_data,
+            next_workout=current_data.next_workout,
+            coach=current_data.coach,
+        )
 
     # ======================================================
     # Recovery

@@ -4,7 +4,9 @@ PerformanceLab
 Tests for Dashboard Data.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
+
+import streamlit as st
 
 from performancelab import Athlete, Workout
 from performancelab.presentation import DashboardData
@@ -245,3 +247,66 @@ def test_performance_series_have_same_length():
     }
 
     assert lengths == {5}
+
+def test_next_workout_remains_anchored_to_today():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            today,
+            time.min,
+        ),
+        sport="Running",
+        title="Current Workout",
+        duration=timedelta(
+            minutes=45
+        ),
+    )
+
+    future_day = today + timedelta(
+        days=14
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            future_day,
+            time.min,
+        ),
+        sport="Running",
+        title="Future Workout",
+        duration=timedelta(
+            minutes=45
+        ),
+    )
+
+    st.session_state[
+        "planning_window_center_date"
+    ] = future_day
+
+    try:
+
+        planning = DashboardData(
+            athlete
+        ).planning
+
+    finally:
+
+        st.session_state.pop(
+            "planning_window_center_date",
+            None,
+        )
+
+    assert (
+        planning.weekly_plan.start_date
+        == future_day - timedelta(days=3)
+    )
+
+    assert (
+        planning.next_workout.title
+        == "Current Workout"
+    )
