@@ -744,3 +744,15 @@ def test_typical_weekly_minutes_uses_latest_28_days():
         .typical_weekly_minutes
         == 60
     )
+
+    assert (
+        analytics.typical_weekly_sessions
+        == 1
+    )
+
+    assert (
+        analytics
+        .training_state
+        .typical_weekly_sessions
+        == 1
+    )

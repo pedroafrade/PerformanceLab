@@ -341,6 +341,41 @@ class AthleteAnalytics:
         return total_minutes / 4
 
     @property
+    def typical_weekly_sessions(self) -> float:
+        """
+        Returns the average number of weekly sessions
+        across the latest rolling 28 days.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        session_count = 0
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = workout_day.date()
+
+            if (
+                workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+            ):
+                continue
+
+            session_count += 1
+
+        return session_count / 4
+
+    @property
     def training_monotony(self) -> float | None:
 
         loads = self.current_training_loads[-7:]
@@ -489,6 +524,8 @@ class AthleteAnalytics:
                 recent_training_load=self.recent_training_load,
 
                 typical_weekly_minutes=self.typical_weekly_minutes,
+
+                typical_weekly_sessions=self.typical_weekly_sessions,
 
             )
 

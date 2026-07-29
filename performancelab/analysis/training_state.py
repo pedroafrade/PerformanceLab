@@ -41,6 +41,7 @@ class TrainingState:
     days_since_last_workout: int | None
     recent_training_load: float | None
     typical_weekly_minutes: float = 0.0
+    typical_weekly_sessions: float = 0.0
 
     @property
     def fitness(self) -> float:
