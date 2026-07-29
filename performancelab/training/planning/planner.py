@@ -8,6 +8,7 @@ Orchestrates the generation of a concrete weekly training plan.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
@@ -123,6 +124,14 @@ class Planner:
         reference_day = today or date.today()
         start_date = self._week_start(
             week_start or reference_day
+        )
+
+        resolved_constraints = (
+            self._block_past_weekdays(
+                constraints=resolved_constraints,
+                week_start=start_date,
+                today=reference_day,
+            )
         )
 
         context = CoachContext.from_athlete(
@@ -390,6 +399,45 @@ class Planner:
             )
             for slot in slots
         ]
+
+    @staticmethod
+    def _block_past_weekdays(
+        *,
+        constraints: TrainingConstraints,
+        week_start: date,
+        today: date,
+    ) -> TrainingConstraints:
+        """
+        Prevents the current plan from prescribing workouts
+        on days that have already passed.
+        """
+
+        week_end = week_start + timedelta(
+            days=6
+        )
+
+        if not (
+            week_start
+            <= today
+            <= week_end
+        ):
+            return constraints
+
+        past_days = tuple(
+            Weekday(day_index)
+            for day_index in range(
+                today.weekday()
+            )
+        )
+
+        return replace(
+            constraints,
+            blocked_days=(
+                *constraints.blocked_days,
+                *past_days,
+            ),
+        )
+
 
     @staticmethod
     def _week_start(
