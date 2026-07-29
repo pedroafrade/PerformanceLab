@@ -162,6 +162,64 @@ def _next_workout_description(
         " + ".join(structure)
     )
 
+def _default_plan_day(
+    planning,
+):
+    days = tuple(
+        planning.weekly_plan.days
+    )
+
+    selected_day = next(
+        (
+            day
+            for day in days
+            if day.is_next_workout
+        ),
+        None,
+    )
+
+    if selected_day is None:
+        selected_day = next(
+            (
+                day
+                for day in days
+                if day.is_today
+            ),
+            None,
+        )
+
+    if selected_day is None and days:
+        selected_day = days[0]
+
+    return selected_day
+
+
+def _selected_day_description(
+    day,
+) -> str:
+    if day is None:
+        return ""
+
+    structure = [
+        str(step).strip()
+        for step in day.structure
+        if str(step).strip()
+    ]
+
+    if structure:
+        return escape(
+            " + ".join(structure)
+        )
+
+    if not _planned(day):
+        return "Rest day."
+
+    return escape(
+        day.title
+        or day.sport
+        or "Planned workout"
+    )
+
 def _planning_window_center() -> date:
     """
     Return the date at the centre of the planning viewport.
@@ -260,6 +318,11 @@ def show_planning_card(
     border-color: rgba(128, 128, 128, 0.55);
 }
 
+.weekly-plan-day-selected {
+    border-color: currentColor;
+    border-width: 2px;
+}
+
 .weekly-plan-weekday {
     font-size: 0.74rem;
     font-weight: 700;
@@ -356,6 +419,46 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
         unsafe_allow_html=True,
     )
 
+    days = tuple(
+        planning.weekly_plan.days
+    )
+
+    default_day = _default_plan_day(
+        planning
+    )
+
+    day_by_date = {
+        day.day: day
+        for day in days
+    }
+
+    selected_date = st.segmented_control(
+        "Workout details",
+        options=tuple(day_by_date),
+        default=(
+            default_day.day
+            if default_day is not None
+            else None
+        ),
+        required=True,
+        format_func=lambda day: (
+            f"{WEEKDAY_LABELS[day.weekday()]} "
+            f"{day.day}"
+        ),
+        key=(
+            "weekly_plan_selector_"
+            f"{planning.weekly_plan.start_date}"
+            "_"
+            f"{planning.weekly_plan.end_date}"
+        ),
+        label_visibility="collapsed",
+        width="stretch",
+    )
+
+    selected_day = day_by_date.get(
+        selected_date
+    )
+    
     columns = st.columns(
         [
             0.55,
@@ -389,6 +492,11 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
         if day.is_today:
             classes.append(
                 "weekly-plan-day-today"
+            )
+
+        if day.day == selected_date:
+            classes.append(
+                "weekly-plan-day-selected"
             )
 
         weekday = WEEKDAY_LABELS[
@@ -428,15 +536,17 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
     with next_column:
         _show_next_button()
 
-    next_description = _next_workout_description(
-        planning.next_workout
+    selected_description = (
+        _selected_day_description(
+            selected_day
+        )
     )
 
-    if next_description:
+    if selected_description:
         st.markdown(
             (
                 '<div class="weekly-plan-next">'
-                f"{next_description}"
+                f"{selected_description}"
                 "</div>"
             ),
             unsafe_allow_html=True,
