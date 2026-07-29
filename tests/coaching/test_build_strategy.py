@@ -18,6 +18,7 @@ def make_context(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     next_event=None,
+    primary_event=None,
     typical_weekly_minutes: float = 0.0,
     typical_weekly_sessions: float = 0.0,
 ):
@@ -29,6 +30,7 @@ def make_context(
         tsb=tsb,
         average_rpe=average_rpe,
         next_event=next_event,
+        primary_event=primary_event,
         training_state=SimpleNamespace(
             typical_weekly_minutes=(
                 typical_weekly_minutes
@@ -374,6 +376,28 @@ def test_event_adds_specific_objective():
         in plan.objectives
     )
 
+def test_primary_event_defines_specific_objective():
+
+    plan = BuildStrategy().build(
+        make_context(
+            next_event=make_event(
+                name="Sealand",
+            ),
+            primary_event=make_event(
+                name="III Trail Pé Firme",
+            ),
+        ),
+    )
+
+    assert (
+        "Prepare progressively for III Trail Pé Firme."
+        in plan.objectives
+    )
+
+    assert (
+        "Prepare progressively for Sealand."
+        not in plan.objectives
+    )
 
 def test_missing_event_does_not_add_event_objective():
     plan = BuildStrategy().build(

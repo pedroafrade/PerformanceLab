@@ -591,6 +591,30 @@ def test_selects_target_event_sport_before_history_sports() -> None:
 
     assert sport == "Road Running"
 
+def test_selects_primary_event_sport_before_next_event() -> None:
+
+    context = SimpleNamespace(
+        primary_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Trail Running",
+            ),
+        ),
+        next_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Road Running",
+            ),
+        ),
+        sports=(
+            "Cycling",
+            "Running",
+        ),
+    )
+
+    sport = WorkoutGenerator._select_sport(
+        context
+    )
+
+    assert sport == "Trail Running"
 
 def test_uses_history_sport_without_target_event() -> None:
 

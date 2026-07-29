@@ -420,11 +420,25 @@ class CoachStrategy(ABC):
     def _event_name(
         context: CoachContext,
     ) -> str | None:
-        if context.next_event is None:
+
+        target_event = (
+            getattr(
+                context,
+                "primary_event",
+                None,
+            )
+            or getattr(
+                context,
+                "next_event",
+                None,
+            )
+        )
+
+        if target_event is None:
             return None
 
         event = getattr(
-            context.next_event,
+            target_event,
             "event",
             None,
         )

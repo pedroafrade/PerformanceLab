@@ -389,20 +389,27 @@ class WorkoutGenerator:
         context: CoachContext,
     ) -> str | None:
         """
-        Selects the target event sport when available.
+        Selects the primary competition sport when available.
 
-        The athlete's first recorded sport is retained as a fallback
-        when no future event defines a sport.
+        The next chronological event and the athlete's recorded
+        sports are retained as fallbacks.
         """
 
-        next_event = getattr(
-            context,
-            "next_event",
-            None,
+        target_event = (
+            getattr(
+                context,
+                "primary_event",
+                None,
+            )
+            or getattr(
+                context,
+                "next_event",
+                None,
+            )
         )
 
         event = getattr(
-            next_event,
+            target_event,
             "event",
             None,
         )
