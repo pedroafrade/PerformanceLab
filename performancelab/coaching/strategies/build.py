@@ -108,6 +108,16 @@ class BuildStrategy(CoachStrategy):
                 "Recent perceived effort is high."
             )
 
+        max_intensity_sessions = max(
+            0,
+            target_sessions - 2,
+        )
+
+        intensity_sessions = min(
+            intensity_sessions,
+            max_intensity_sessions,
+        )
+
         if typical_weekly_minutes > 0:
 
             target_weekly_minutes = (

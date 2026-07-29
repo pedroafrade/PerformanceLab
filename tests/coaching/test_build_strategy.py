@@ -357,6 +357,29 @@ def test_build_keeps_default_frequency_without_history():
 
     assert plan.target_sessions == 6
 
+def test_three_weekly_sessions_allow_one_intensity_session():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_sessions=3.0,
+        )
+    )
+
+    assert plan.target_sessions == 3
+    assert plan.intensity_sessions == 1
+
+
+def test_four_weekly_sessions_allow_two_intensity_sessions():
+
+    plan = BuildStrategy().build(
+        make_context(
+            typical_weekly_sessions=4.0,
+        )
+    )
+
+    assert plan.target_sessions == 4
+    assert plan.intensity_sessions == 2
+
 # ======================================================
 # Event preparation
 # ======================================================
