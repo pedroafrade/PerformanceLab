@@ -330,17 +330,14 @@ class WorkoutGenerator:
             )
 
         if purpose is SessionPurpose.LONG:
-            return cls._continuous_structure(
+            return cls._long_structure(
                 duration_minutes=duration_minutes,
-                main_label=cls._sport_label(
-                    template.sport,
-                    running="Long aerobic run",
-                    cycling="Long aerobic ride",
-                    swimming="Long aerobic swim",
-                    fallback="Long aerobic training",
+                sport=template.sport,
+                elevation_demand=getattr(
+                    strategy_plan,
+                    "elevation_demand",
+                    None,
                 ),
-                warm_up_minutes=10,
-                cool_down_minutes=5,
             )
 
         if purpose is SessionPurpose.CROSS_TRAINING:
@@ -558,6 +555,77 @@ class WorkoutGenerator:
             f"Cool down {cool_down_minutes} min",
         )
 
+
+    # ======================================================
+
+    @classmethod
+    def _long_structure(
+        cls,
+        *,
+        duration_minutes: int,
+        sport: str | None,
+        elevation_demand: str | None = None,
+    ) -> tuple[str, ...]:
+        """
+        Builds a long aerobic session appropriate to the
+        elevation demand of the target event.
+        """
+
+        main_label = cls._sport_label(
+            sport,
+            running="Long aerobic run",
+            cycling="Long aerobic ride",
+            swimming="Long aerobic swim",
+            fallback="Long aerobic training",
+        )
+
+        if elevation_demand == "mountainous":
+            main_label += (
+                " on mountainous terrain"
+            )
+
+        elif elevation_demand == "hilly":
+            main_label += (
+                " on hilly terrain"
+            )
+
+        elif elevation_demand == "rolling":
+            main_label += (
+                " on rolling terrain"
+            )
+
+        structure = cls._continuous_structure(
+            duration_minutes=duration_minutes,
+            main_label=main_label,
+            warm_up_minutes=10,
+            cool_down_minutes=5,
+        )
+
+        if elevation_demand == "mountainous":
+            return (
+                *structure[:-1],
+                (
+                    "Keep climbs aerobic and use "
+                    "purposeful hiking on steep gradients"
+                ),
+                (
+                    "Practise controlled downhill "
+                    "technique without racing descents"
+                ),
+                structure[-1],
+            )
+
+        if elevation_demand == "hilly":
+            return (
+                *structure[:-1],
+                (
+                    "Keep sustained climbs aerobic and "
+                    "descend with controlled technique"
+                ),
+                structure[-1],
+            )
+
+        return structure
     # ======================================================
 
     @classmethod

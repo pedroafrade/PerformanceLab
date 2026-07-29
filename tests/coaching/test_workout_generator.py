@@ -731,3 +731,65 @@ def test_mountainous_hill_structure_adapts_to_short_session():
             "between repetitions"
         ),
     )
+
+def test_builds_mountainous_long_run_structure():
+
+    structure = WorkoutGenerator._long_structure(
+        duration_minutes=120,
+        sport="Trail Running",
+        elevation_demand="mountainous",
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        (
+            "Long aerobic run on mountainous "
+            "terrain 105 min"
+        ),
+        (
+            "Keep climbs aerobic and use purposeful "
+            "hiking on steep gradients"
+        ),
+        (
+            "Practise controlled downhill technique "
+            "without racing descents"
+        ),
+        "Cool down 5 min",
+    )
+
+
+def test_builds_hilly_long_run_structure():
+
+    structure = WorkoutGenerator._long_structure(
+        duration_minutes=120,
+        sport="Trail Running",
+        elevation_demand="hilly",
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        (
+            "Long aerobic run on hilly "
+            "terrain 105 min"
+        ),
+        (
+            "Keep sustained climbs aerobic and "
+            "descend with controlled technique"
+        ),
+        "Cool down 5 min",
+    )
+
+
+def test_flat_long_run_keeps_standard_structure():
+
+    structure = WorkoutGenerator._long_structure(
+        duration_minutes=120,
+        sport="Road Running",
+        elevation_demand="flat",
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        "Long aerobic run 105 min",
+        "Cool down 5 min",
+    )
