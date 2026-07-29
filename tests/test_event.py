@@ -107,3 +107,69 @@ def test_non_running_event_has_no_effort_distance():
     )
 
     assert event.effort_distance is None
+
+def test_event_elevation_metres_per_kilometre():
+
+    event = Event(
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    assert (
+        event.elevation_metres_per_kilometre
+        == pytest.approx(950 / 23)
+    )
+
+
+@pytest.mark.parametrize(
+    (
+        "distance",
+        "elevation_gain",
+        "expected_demand",
+    ),
+    (
+        (10, 50, "flat"),
+        (10, 113, "rolling"),
+        (20, 600, "hilly"),
+        (23, 950, "mountainous"),
+    ),
+)
+def test_running_event_elevation_demand(
+    distance,
+    elevation_gain,
+    expected_demand,
+):
+
+    event = Event(
+        sport="Trail Running",
+        distance=distance,
+        elevation_gain=elevation_gain,
+    )
+
+    assert (
+        event.elevation_demand
+        == expected_demand
+    )
+
+
+def test_non_running_event_has_no_elevation_demand():
+
+    event = Event(
+        sport="Cycling",
+        distance=100,
+        elevation_gain=1500,
+    )
+
+    assert event.elevation_demand is None
+
+
+def test_event_without_distance_has_no_elevation_demand():
+
+    event = Event(
+        sport="Trail Running",
+        distance=None,
+        elevation_gain=950,
+    )
+
+    assert event.elevation_demand is None

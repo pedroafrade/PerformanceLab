@@ -11,6 +11,10 @@ from datetime import date
 
 ELEVATION_METRES_PER_EFFORT_KILOMETRE = 100.0
 
+ROLLING_ELEVATION_METRES_PER_KILOMETRE = 10.0
+HILLY_ELEVATION_METRES_PER_KILOMETRE = 25.0
+MOUNTAINOUS_ELEVATION_METRES_PER_KILOMETRE = 40.0
+
 
 @dataclass
 class Event:
@@ -90,6 +94,73 @@ class Event:
                 / ELEVATION_METRES_PER_EFFORT_KILOMETRE
             )
         )
+
+    # ======================================================
+
+    @property
+    def elevation_metres_per_kilometre(
+        self,
+    ) -> float | None:
+        """
+        Returns average elevation gain per kilometre.
+
+        The value is only defined for running events with
+        a positive distance.
+        """
+
+        if (
+            not self.is_running_event
+            or self.distance is None
+            or self.distance <= 0
+        ):
+            return None
+
+        elevation_gain = max(
+            self.elevation_gain or 0.0,
+            0.0,
+        )
+
+        return (
+            elevation_gain
+            / self.distance
+        )
+
+    # ======================================================
+
+    @property
+    def elevation_demand(
+        self,
+    ) -> str | None:
+        """
+        Classifies the climbing demand of a running event.
+        """
+
+        metres_per_kilometre = (
+            self.elevation_metres_per_kilometre
+        )
+
+        if metres_per_kilometre is None:
+            return None
+
+        if (
+            metres_per_kilometre
+            >= MOUNTAINOUS_ELEVATION_METRES_PER_KILOMETRE
+        ):
+            return "mountainous"
+
+        if (
+            metres_per_kilometre
+            >= HILLY_ELEVATION_METRES_PER_KILOMETRE
+        ):
+            return "hilly"
+
+        if (
+            metres_per_kilometre
+            >= ROLLING_ELEVATION_METRES_PER_KILOMETRE
+        ):
+            return "rolling"
+
+        return "flat"
 
     # ======================================================
 
