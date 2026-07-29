@@ -24,3 +24,7 @@ build/
 
 # Colab
 sample_data/
+
+# Local athlete data
+data/athletes/
+data/users/
