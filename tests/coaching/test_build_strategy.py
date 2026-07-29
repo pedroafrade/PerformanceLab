@@ -46,6 +46,7 @@ def make_event(
     *,
     name: str = "City Marathon",
     priority: str = "A",
+    sport: str | None = None,
 ):
     """
     Creates an event wrapper compatible with CoachStrategy helpers.
@@ -54,6 +55,7 @@ def make_event(
     return SimpleNamespace(
         event=SimpleNamespace(
             name=name,
+            sport=sport,
         ),
         priority=priority,
     )
@@ -472,6 +474,49 @@ def test_event_without_name_is_supported():
         for objective in plan.objectives
     )
 
+def test_trail_primary_event_uses_hill_focus():
+
+    plan = BuildStrategy().build(
+        make_context(
+            next_event=make_event(
+                name="Sealand",
+                sport="Road Running",
+            ),
+            primary_event=make_event(
+                name="III Trail Pé Firme",
+                sport="Trail Running",
+            ),
+            typical_weekly_sessions=3.0,
+        ),
+    )
+
+    assert plan.focus == "hills"
+    assert plan.key_session_focus == "hills"
+    assert plan.intensity_sessions == 1
+
+
+def test_fatigue_overrides_trail_hill_focus():
+
+    plan = BuildStrategy().build(
+        make_context(
+            tsb=-11.0,
+            primary_event=make_event(
+                name="III Trail Pé Firme",
+                sport="Trail Running",
+            ),
+            typical_weekly_sessions=3.0,
+        ),
+    )
+
+    assert (
+        plan.focus
+        == "aerobic endurance"
+    )
+
+    assert (
+        plan.key_session_focus
+        == "aerobic endurance"
+    )
 
 # ======================================================
 # Strategy invariants

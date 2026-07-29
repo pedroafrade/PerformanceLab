@@ -52,6 +52,16 @@ class BuildStrategy(CoachStrategy):
         intensity_sessions = 2
         focus = "threshold"
 
+        event_sport = self._event_sport(
+            context
+        )
+
+        if (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        ):
+            focus = "hills"
+
         training_state = getattr(
             context,
             "training_state",

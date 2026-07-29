@@ -453,6 +453,49 @@ class CoachStrategy(ABC):
         )
 
     @staticmethod
+    def _event_sport(
+        context: CoachContext,
+    ) -> str | None:
+
+        target_event = (
+            getattr(
+                context,
+                "primary_event",
+                None,
+            )
+            or getattr(
+                context,
+                "next_event",
+                None,
+            )
+        )
+
+        if target_event is None:
+            return None
+
+        event = getattr(
+            target_event,
+            "event",
+            None,
+        )
+
+        if event is None:
+            return None
+
+        sport = getattr(
+            event,
+            "sport",
+            None,
+        )
+
+        if not isinstance(sport, str):
+            return None
+
+        sport = sport.strip()
+
+        return sport or None
+
+    @staticmethod
     def _event_priority(
         context: CoachContext,
     ) -> str | None:
