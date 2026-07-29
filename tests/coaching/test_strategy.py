@@ -69,6 +69,27 @@ def test_supports_concrete_weekly_targets():
     assert plan.target_weekly_load == 480.0
     assert plan.long_session_minutes == 120
 
+def test_supports_event_elevation_demand():
+
+    plan = make_strategy_plan(
+        elevation_demand="mountainous",
+    )
+
+    assert (
+        plan.elevation_demand
+        == "mountainous"
+    )
+
+
+def test_rejects_invalid_event_elevation_demand():
+
+    with pytest.raises(
+        ValueError,
+        match="elevation_demand",
+    ):
+        make_strategy_plan(
+            elevation_demand="extreme",
+        )
 
 def test_supports_objectives_guidelines_and_warnings():
     plan = make_strategy_plan(

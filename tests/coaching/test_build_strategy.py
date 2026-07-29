@@ -47,6 +47,7 @@ def make_event(
     name: str = "City Marathon",
     priority: str = "A",
     sport: str | None = None,
+    elevation_demand: str | None = None,
 ):
     """
     Creates an event wrapper compatible with CoachStrategy helpers.
@@ -56,6 +57,7 @@ def make_event(
         event=SimpleNamespace(
             name=name,
             sport=sport,
+            elevation_demand=elevation_demand,
         ),
         priority=priority,
     )
@@ -516,6 +518,28 @@ def test_fatigue_overrides_trail_hill_focus():
     assert (
         plan.key_session_focus
         == "aerobic endurance"
+    )
+
+def test_primary_event_elevation_demand_reaches_plan():
+
+    plan = BuildStrategy().build(
+        make_context(
+            next_event=make_event(
+                name="Sealand",
+                sport="Road Running",
+                elevation_demand="rolling",
+            ),
+            primary_event=make_event(
+                name="III Trail Pé Firme",
+                sport="Trail Running",
+                elevation_demand="mountainous",
+            ),
+        ),
+    )
+
+    assert (
+        plan.elevation_demand
+        == "mountainous"
     )
 
 # ======================================================

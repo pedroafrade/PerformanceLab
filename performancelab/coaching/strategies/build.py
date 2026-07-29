@@ -178,6 +178,12 @@ class BuildStrategy(CoachStrategy):
 
             race_specificity=0.30,
 
+            elevation_demand=(
+                self._event_elevation_demand(
+                    context
+                )
+            ),
+
             target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=500.0 * volume_factor,
             long_session_minutes=120,

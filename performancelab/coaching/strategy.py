@@ -40,6 +40,7 @@ class StrategyPlan:
 
     recovery_priority: str = "normal"
     race_specificity: float = 0.0
+    elevation_demand: str | None = None
 
     target_weekly_minutes: int | None = None
     target_weekly_load: float | None = None
@@ -90,6 +91,10 @@ class StrategyPlan:
         self._validate_ratio(
             self.race_specificity,
             field="race_specificity",
+        )
+
+        self._validate_elevation_demand(
+            self.elevation_demand
         )
 
         self._validate_non_negative_number(
@@ -364,6 +369,32 @@ class StrategyPlan:
             )
 
     @staticmethod
+    def _validate_elevation_demand(
+        value: str | None,
+    ) -> None:
+
+        if value is None:
+            return
+
+        if not isinstance(value, str):
+            raise TypeError(
+                "elevation_demand must be a string"
+            )
+
+        allowed = {
+            "flat",
+            "rolling",
+            "hilly",
+            "mountainous",
+        }
+
+        if value not in allowed:
+            raise ValueError(
+                "elevation_demand must be one of: "
+                "flat, rolling, hilly, mountainous"
+            )
+
+    @staticmethod
     def _validate_string_tuple(
         value: tuple[str, ...],
         *,
@@ -494,6 +525,36 @@ class CoachStrategy(ABC):
         sport = sport.strip()
 
         return sport or None
+
+    @staticmethod
+    def _event_elevation_demand(
+        context: CoachContext,
+    ) -> str | None:
+
+        target_event = (
+            getattr(
+                context,
+                "primary_event",
+                None,
+            )
+            or getattr(
+                context,
+                "next_event",
+                None,
+            )
+        )
+
+        event = getattr(
+            target_event,
+            "event",
+            None,
+        )
+
+        return getattr(
+            event,
+            "elevation_demand",
+            None,
+        )
 
     @staticmethod
     def _event_priority(
