@@ -668,3 +668,66 @@ def test_builds_sport_specific_workout_title(
     )
 
     assert title == expected_title
+
+def test_builds_mountainous_hill_structure():
+
+    structure = WorkoutGenerator._hill_steps(
+        35,
+        elevation_demand="mountainous",
+    )
+
+    assert structure == (
+        "5×5 min uphill",
+        (
+            "Recover 2 min easy downhill "
+            "between repetitions"
+        ),
+    )
+
+
+def test_builds_hilly_event_hill_structure():
+
+    structure = WorkoutGenerator._hill_steps(
+        35,
+        elevation_demand="hilly",
+    )
+
+    assert structure == (
+        "6×3 min uphill",
+        (
+            "Recover 2 min easy downhill "
+            "between repetitions"
+        ),
+    )
+
+
+def test_builds_rolling_event_hill_structure():
+
+    structure = WorkoutGenerator._hill_steps(
+        35,
+        elevation_demand="rolling",
+    )
+
+    assert structure == (
+        "10×1 min uphill",
+        (
+            "Recover 1 min easy downhill "
+            "between repetitions"
+        ),
+    )
+
+
+def test_mountainous_hill_structure_adapts_to_short_session():
+
+    structure = WorkoutGenerator._hill_steps(
+        15,
+        elevation_demand="mountainous",
+    )
+
+    assert structure == (
+        "3×3 min uphill",
+        (
+            "Recover 2 min easy downhill "
+            "between repetitions"
+        ),
+    )

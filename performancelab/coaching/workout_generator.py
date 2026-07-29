@@ -154,6 +154,7 @@ class WorkoutGenerator:
             scheduled_day=scheduled_day,
             template=template,
             coach_context=coach_context,
+            strategy_plan=strategy_plan,
         )
 
     # ======================================================
@@ -227,6 +228,7 @@ class WorkoutGenerator:
         scheduled_day: date,
         template: WorkoutTemplate,
         coach_context: CoachContext,
+        strategy_plan: StrategyPlan | None = None,
     ) -> PlannedWorkout:
 
         duration_minutes = slot.duration_minutes
@@ -271,6 +273,7 @@ class WorkoutGenerator:
                 template=template,
                 duration_minutes=duration_minutes,
                 coach_context=coach_context,
+                strategy_plan=strategy_plan,
             ),
             equipment=template.equipment,
         )
@@ -284,6 +287,7 @@ class WorkoutGenerator:
         template: WorkoutTemplate,
         duration_minutes: int | None,
         coach_context: CoachContext,
+        strategy_plan: StrategyPlan | None = None,
     ) -> tuple[str, ...]:
         """
         Builds a concise, quantitative execution structure.
@@ -352,6 +356,11 @@ class WorkoutGenerator:
                 template=template,
                 duration_minutes=duration_minutes,
                 coach_context=coach_context,
+                elevation_demand=getattr(
+                    strategy_plan,
+                    "elevation_demand",
+                    None,
+                ),
             )
 
         if purpose is SessionPurpose.RACE:
@@ -644,6 +653,7 @@ class WorkoutGenerator:
         template: WorkoutTemplate,
         duration_minutes: int,
         coach_context: CoachContext,
+        elevation_demand: str | None = None,
     ) -> tuple[str, ...]:
         """
         Builds an executable intensity session.
@@ -697,7 +707,10 @@ class WorkoutGenerator:
 
         elif "hill" in normalized_title:
             main_steps = cls._hill_steps(
-                available_minutes
+                available_minutes,
+                elevation_demand=(
+                    elevation_demand
+                ),
             )
 
         elif "speed" in normalized_title:
@@ -777,18 +790,83 @@ class WorkoutGenerator:
     @staticmethod
     def _hill_steps(
         available_minutes: int,
+        *,
+        elevation_demand: str | None = None,
     ) -> tuple[str, ...]:
-        repetitions = max(
-            6,
-            min(
-                10,
-                available_minutes // 3,
-            ),
-        )
+        """
+        Builds hill repetitions appropriate to the target event.
+
+        Greater event elevation demand uses longer, controlled
+        climbing efforts rather than only short hill repetitions.
+        """
+
+        if elevation_demand == "mountainous":
+            repetition_minutes = max(
+                3,
+                min(
+                    5,
+                    available_minutes // 6,
+                ),
+            )
+            recovery_minutes = 2
+
+            repetitions = max(
+                3,
+                min(
+                    5,
+                    available_minutes
+                    // (
+                        repetition_minutes
+                        + recovery_minutes
+                    ),
+                ),
+            )
+
+        elif elevation_demand == "hilly":
+            repetition_minutes = 3
+            recovery_minutes = 2
+
+            repetitions = max(
+                3,
+                min(
+                    6,
+                    available_minutes // 5,
+                ),
+            )
+
+        elif elevation_demand == "rolling":
+            repetition_minutes = 1
+            recovery_minutes = 1
+
+            repetitions = max(
+                6,
+                min(
+                    10,
+                    available_minutes // 2,
+                ),
+            )
+
+        else:
+            repetition_minutes = 1
+            recovery_minutes = 2
+
+            repetitions = max(
+                6,
+                min(
+                    10,
+                    available_minutes // 3,
+                ),
+            )
 
         return (
-            f"{repetitions}×1 min uphill",
-            "Recover easy downhill",
+            (
+                f"{repetitions}×"
+                f"{repetition_minutes} min uphill"
+            ),
+            (
+                f"Recover {recovery_minutes} min "
+                "easy downhill between repetitions"
+            ),
         )
 
 
