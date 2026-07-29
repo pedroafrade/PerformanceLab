@@ -567,6 +567,16 @@ class WeekStructureGenerator:
             remaining=remaining,
         )
 
+        for weekday, purpose in purposes.items():
+
+            if (
+                purpose is SessionPurpose.LONG
+                and durations[weekday] > 0
+            ):
+                capacities[weekday] = (
+                    durations[weekday]
+                )
+
         self._distribute_remaining_minutes(
             durations=durations,
             capacities=capacities,

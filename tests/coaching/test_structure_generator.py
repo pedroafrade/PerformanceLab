@@ -667,3 +667,40 @@ def test_prefers_spaced_training_days(
         Weekday.FRIDAY,
         Weekday.SUNDAY,
     ]
+
+def test_long_session_does_not_exceed_requested_duration(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    three_session_plan = replace(
+        strategy_plan,
+        target_sessions=3,
+        target_weekly_minutes=240,
+        long_session_minutes=120,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=three_session_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    long_session = next(
+        slot
+        for slot in slots
+        if slot.is_long
+    )
+
+    assert (
+        long_session.duration_minutes
+        == 120
+    )
+
+    assert sum(
+        slot.duration_minutes or 0
+        for slot in slots
+    ) == 240
