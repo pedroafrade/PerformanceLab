@@ -83,6 +83,7 @@ class Planner:
         constraints: TrainingConstraints | None = None,
         week_start: date | None = None,
         today: date | None = None,
+        previous_planned_long_minutes: int | None = None,
     ) -> WeeklyPlan:
         """
         Builds the athlete's weekly training plan.
@@ -167,6 +168,15 @@ class Planner:
 
         strategy_plan = strategy.build(
             context,
+        )
+
+        strategy_plan = (
+            self._progress_long_session_target(
+                strategy_plan=strategy_plan,
+                previous_long_minutes=(
+                    previous_planned_long_minutes
+                ),
+            )
         )
 
         slots = self.structure_generator.generate(
@@ -293,6 +303,7 @@ class Planner:
         week_start = first_week_start
         previous_weekly_load = None
         previous_planned_workout = None
+        previous_planned_long_minutes = None
 
         while week_start <= plan_end_date:
 
@@ -309,6 +320,9 @@ class Planner:
                 constraints=constraints,
                 week_start=week_start,
                 today=planning_day,
+                previous_planned_long_minutes=(
+                    previous_planned_long_minutes
+                ),
             )
 
             weekly_plan = (
@@ -347,6 +361,25 @@ class Planner:
                 )
             )
 
+            planned_long_workout = next(
+                (
+                    workout
+                    for workout in visible_workouts
+                    if self._is_long_workout(
+                        workout
+                    )
+                    and workout.duration
+                    is not None
+                ),
+                None,
+            )
+
+            if planned_long_workout is not None:
+                previous_planned_long_minutes = int(
+                    planned_long_workout.duration.total_seconds()
+                    // 60
+                )
+
             current_weekly_load = (
                 planned_weekly_load(
                     visible_workouts
@@ -377,6 +410,83 @@ class Planner:
 
         return training_plan
 
+    # ======================================================
+
+    @staticmethod
+    def _progress_long_session_target(
+        *,
+        strategy_plan,
+        previous_long_minutes: int | None,
+    ):
+        """
+        Progresses the planned long session across consecutive
+        Build and Peak weeks.
+
+        Weekly volume remains unchanged because the structure
+        generator redistributes the existing weekly minutes.
+        """
+
+        if previous_long_minutes is None:
+            return strategy_plan
+
+        if (
+            not isinstance(
+                previous_long_minutes,
+                int,
+            )
+            or isinstance(
+                previous_long_minutes,
+                bool,
+            )
+        ):
+            raise TypeError(
+                "previous_long_minutes must be "
+                "an integer or None"
+            )
+
+        if previous_long_minutes <= 0:
+            raise ValueError(
+                "previous_long_minutes must be positive"
+            )
+
+        if strategy_plan.phase not in {
+            "Build",
+            "Peak",
+        }:
+            return strategy_plan
+
+        if strategy_plan.long_sessions <= 0:
+            return strategy_plan
+
+        current_target = (
+            strategy_plan.long_session_minutes
+        )
+
+        if current_target is None:
+            return strategy_plan
+
+        progressed_target = max(
+            current_target,
+            previous_long_minutes + 5,
+        )
+
+        if (
+            strategy_plan.target_weekly_minutes
+            is not None
+        ):
+            progressed_target = min(
+                progressed_target,
+                strategy_plan.target_weekly_minutes,
+            )
+
+        if progressed_target == current_target:
+            return strategy_plan
+
+        return replace(
+            strategy_plan,
+            long_session_minutes=progressed_target,
+        )
+    
     # ======================================================
 
     @staticmethod

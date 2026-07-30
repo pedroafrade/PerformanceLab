@@ -28,6 +28,9 @@ from performancelab.training.planning import (
     TrainingPlan,
     WeeklyPlan,
 )
+from performancelab.coaching.strategy import (
+    StrategyPlan,
+)
 from performancelab.training.planning.planner import Planner
 
 from performancelab.training.config import (
@@ -762,3 +765,81 @@ def test_keeps_load_limit_after_normal_training():
         )
         is True
     )
+
+def test_progresses_long_session_during_build():
+
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=4,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=300,
+        long_session_minutes=105,
+    )
+
+    progressed = (
+        Planner._progress_long_session_target(
+            strategy_plan=strategy_plan,
+            previous_long_minutes=105,
+        )
+    )
+
+    assert (
+        progressed.long_session_minutes
+        == 110
+    )
+
+
+def test_peak_continues_long_session_progression():
+
+    strategy_plan = StrategyPlan(
+        strategy="PeakStrategy",
+        phase="Peak",
+        volume_factor=0.9,
+        target_sessions=4,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=300,
+        long_session_minutes=90,
+    )
+
+    progressed = (
+        Planner._progress_long_session_target(
+            strategy_plan=strategy_plan,
+            previous_long_minutes=115,
+        )
+    )
+
+    assert (
+        progressed.long_session_minutes
+        == 120
+    )
+
+
+def test_taper_does_not_progress_long_session():
+
+    strategy_plan = StrategyPlan(
+        strategy="TaperStrategy",
+        phase="Taper",
+        volume_factor=0.7,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=3,
+        target_weekly_minutes=240,
+        long_session_minutes=80,
+    )
+
+    result = (
+        Planner._progress_long_session_target(
+            strategy_plan=strategy_plan,
+            previous_long_minutes=120,
+        )
+    )
+
+    assert result is strategy_plan
+    assert result.long_session_minutes == 80
