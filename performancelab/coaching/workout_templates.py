@@ -48,6 +48,25 @@ EASY_TEMPLATE = WorkoutTemplate(
     ),
 )
 
+SHAKEOUT_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.SHAKEOUT,
+    title="Shakeout Session",
+    objective=(
+        "Activate the body without creating fatigue "
+        "before competition."
+    ),
+    intensity="Very easy",
+    description=(
+        "Run very easily and finish with a few short, "
+        "relaxed accelerations. The session should leave "
+        "the athlete feeling fresher, not tired."
+    ),
+    structure=(
+        "Easy running 10 min",
+        "4×20 sec relaxed strides with full easy recovery",
+        "Easy running 5 min",
+    ),
+)
 
 INTENSITY_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
@@ -233,6 +252,7 @@ _DEFAULT_TEMPLATES = {
     SessionPurpose.REST: REST_TEMPLATE,
     SessionPurpose.RECOVERY: RECOVERY_TEMPLATE,
     SessionPurpose.EASY: EASY_TEMPLATE,
+    SessionPurpose.SHAKEOUT: SHAKEOUT_TEMPLATE,
     SessionPurpose.INTENSITY: INTENSITY_TEMPLATE,
     SessionPurpose.LONG: LONG_TEMPLATE,
     SessionPurpose.RACE: RACE_TEMPLATE,

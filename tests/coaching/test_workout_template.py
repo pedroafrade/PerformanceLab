@@ -8,6 +8,7 @@ from performancelab.coaching import (
     REST_TEMPLATE,
     WorkoutTemplate,
     CROSS_TRAINING_TEMPLATE,
+    SHAKEOUT_TEMPLATE,
 )
 
 from performancelab.coaching.session_purpose import (
@@ -265,6 +266,10 @@ def test_for_sport_rejects_empty_sport() -> None:
         (
             SessionPurpose.EASY,
             EASY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.SHAKEOUT,
+            SHAKEOUT_TEMPLATE,
         ),
         (
             SessionPurpose.INTENSITY,
@@ -576,3 +581,25 @@ def test_returns_speed_template_for_speed_focus() -> None:
     assert template.title == "Speed Session"
     assert template.intensity == "Very hard"
 
+def test_shakeout_template_is_pre_race_activation():
+
+    template = template_for(
+        SessionPurpose.SHAKEOUT
+    )
+
+    assert (
+        template
+        is SHAKEOUT_TEMPLATE
+    )
+
+    assert (
+        template.intensity
+        == "Very easy"
+    )
+
+    assert (
+        "strides"
+        in " ".join(
+            template.structure
+        ).lower()
+    )

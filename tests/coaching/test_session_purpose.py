@@ -75,3 +75,11 @@ def test_session_purpose_can_be_created_from_string() -> None:
         SessionPurpose("intensity")
         is SessionPurpose.INTENSITY
     )
+    
+def test_shakeout_is_low_intensity_training():
+
+    purpose = SessionPurpose.SHAKEOUT
+
+    assert purpose.is_training is True
+    assert purpose.is_quality is False
+    assert purpose.is_low_intensity is True
