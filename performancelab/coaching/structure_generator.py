@@ -361,7 +361,11 @@ class WeekStructureGenerator:
             for weekday in training_days
         }
         if (
-            strategy_plan.phase == "Regeneration"
+            strategy_plan.phase
+            in {
+                "Regeneration",
+                "Transition",
+            }
             and training_days
         ):
             purposes[

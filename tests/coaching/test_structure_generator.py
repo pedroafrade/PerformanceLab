@@ -808,7 +808,7 @@ def test_post_race_week_progresses_from_recovery_to_easy(
         35,
     )
 
-def test_close_event_recovery_week_remains_easy(
+def test_transition_week_progresses_from_recovery_to_easy(
     strategy_plan: StrategyPlan,
     full_availability: AthleteAvailability,
     default_preferences: AthletePreferences,
@@ -818,7 +818,7 @@ def test_close_event_recovery_week_remains_easy(
     transition_plan = replace(
         strategy_plan,
         strategy="RegenerationStrategy",
-        phase="Regeneration",
+        phase="Transition",
         target_sessions=4,
         intensity_sessions=0,
         long_sessions=0,
