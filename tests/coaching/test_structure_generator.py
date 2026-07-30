@@ -842,6 +842,15 @@ def test_transition_week_progresses_from_recovery_to_easy(
     )
 
     assert tuple(
+        slot.weekday
+        for slot in training_slots
+    ) == (
+        Weekday.MONDAY,
+        Weekday.THURSDAY,
+        Weekday.SATURDAY,
+    )
+
+    assert tuple(
         slot.purpose
         for slot in training_slots
     ) == (

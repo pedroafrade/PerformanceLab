@@ -25,6 +25,11 @@ from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 
 DEFAULT_LONG_DAY = Weekday.SUNDAY
+TRANSITION_TRAINING_DAYS = (
+    Weekday.MONDAY,
+    Weekday.THURSDAY,
+    Weekday.SATURDAY,
+)
 
 class WeekStructureGenerator:
     """
@@ -241,6 +246,12 @@ class WeekStructureGenerator:
         Prefers combinations with recovery between sessions,
         followed by the athlete's existing day preferences.
         """
+        transition_pattern_penalty = (
+            self._transition_pattern_penalty(
+                training_days=training_days,
+                strategy_plan=strategy_plan,
+            )
+        )
 
         adjacent_pairs = sum(
             1
@@ -268,10 +279,60 @@ class WeekStructureGenerator:
         )
 
         return (
+            transition_pattern_penalty,
             adjacent_pairs,
             individual_priorities,
         )
 
+    # ======================================================
+
+    @staticmethod
+    def _transition_pattern_penalty(
+        *,
+        training_days: tuple[
+            Weekday,
+            ...,
+        ],
+        strategy_plan: StrategyPlan,
+    ) -> int:
+        """
+        Prefers a recovery, aerobic and technique rhythm
+        across Monday, Thursday and Saturday.
+
+        When one of those days is unavailable, the nearest
+        valid combination is selected.
+        """
+
+        if (
+            strategy_plan.phase != "Transition"
+            or len(training_days) != 3
+        ):
+            return 0
+
+        selected_days = tuple(
+            sorted(
+                weekday.value
+                for weekday in training_days
+            )
+        )
+
+        preferred_days = tuple(
+            weekday.value
+            for weekday
+            in TRANSITION_TRAINING_DAYS
+        )
+
+        return sum(
+            abs(
+                selected - preferred
+            )
+            for selected, preferred
+            in zip(
+                selected_days,
+                preferred_days,
+            )
+        )
+    
     # ======================================================
 
     @staticmethod
