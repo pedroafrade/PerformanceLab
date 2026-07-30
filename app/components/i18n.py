@@ -26,7 +26,7 @@ _TRANSLATIONS = {
         "nav.settings": "Settings",
         "athlete.edit": "Edit athlete",
         "plan.section": "Training plan",
-        "plan.generate": "Generate weekly plan",
+        "plan.generate": "Generate plan",
         "activity.section": "Import activity",
         "activity.add": "Add activity",
         "activity.source": "Activity source",
