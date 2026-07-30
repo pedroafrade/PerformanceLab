@@ -429,6 +429,48 @@ def test_converts_target_time_to_complete_minutes() -> None:
 
     assert result == 102
 
+def test_uses_estimated_event_duration():
+
+    next_event = make_event_entry(
+        event_date=date(
+            2026,
+            7,
+            26,
+        ),
+        target_time=None,
+    )
+
+    result = Planner._event_duration_minutes(
+        next_event,
+        estimated_duration=timedelta(
+            minutes=67,
+        ),
+    )
+
+    assert result == 67
+
+
+def test_target_time_precedes_estimated_duration():
+
+    next_event = make_event_entry(
+        event_date=date(
+            2026,
+            7,
+            26,
+        ),
+        target_time=timedelta(
+            minutes=50,
+        ),
+    )
+
+    result = Planner._event_duration_minutes(
+        next_event,
+        estimated_duration=timedelta(
+            minutes=67,
+        ),
+    )
+
+    assert result == 50
 
 def test_returns_none_for_missing_target_time() -> None:
     next_event = make_event_entry(

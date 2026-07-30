@@ -206,12 +206,29 @@ class Planner:
             constraints=resolved_constraints,
         )
 
+        event_durations = {
+            event_entry.event.date: (
+                context.event_duration(
+                    event_entry
+                )
+            )
+            for event_entry
+            in context.competition_block_events
+            if getattr(
+                event_entry.event,
+                "date",
+                None,
+            )
+            is not None
+        }
+
         slots = self._apply_events_to_week(
             slots=slots,
             week_start=start_date,
             event_entries=(
                 context.competition_block_events
             ),
+            event_durations=event_durations,
         )
 
         print()
@@ -1179,6 +1196,10 @@ class Planner:
         slots: tuple[DraftTrainingSlot, ...],
         week_start: date,
         event_entries: tuple[object, ...],
+        event_durations: dict[
+            date,
+            timedelta | None,
+        ] | None = None,
     ) -> tuple[DraftTrainingSlot, ...]:
         """
         Inserts every competition-block event belonging to
@@ -1190,6 +1211,10 @@ class Planner:
 
         updated_slots = slots
 
+        resolved_event_durations = (
+            event_durations or {}
+        )
+
         for event_entry in event_entries:
 
             updated_slots = (
@@ -1200,11 +1225,28 @@ class Planner:
                 )
             )
 
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            event_date = getattr(
+                event,
+                "date",
+                None,
+            )
+
             updated_slots = (
                 Planner._apply_event_to_week(
                     slots=updated_slots,
                     week_start=week_start,
                     next_event=event_entry,
+                    estimated_duration=(
+                        resolved_event_durations.get(
+                            event_date
+                        )
+                    ),
                 )
             )
 
@@ -1324,6 +1366,9 @@ class Planner:
         slots: tuple[DraftTrainingSlot, ...],
         week_start: date,
         next_event,
+        estimated_duration: (
+            timedelta | None
+        ) = None,
     ) -> tuple[DraftTrainingSlot, ...]:
         """
         Inserts the athlete's next event into the requested training week.
@@ -1390,7 +1435,10 @@ class Planner:
         ]
 
         race_duration = Planner._event_duration_minutes(
-            next_event
+            next_event,
+            estimated_duration=(
+                estimated_duration
+            ),
         )
 
         if (
@@ -1440,9 +1488,16 @@ class Planner:
     @staticmethod
     def _event_duration_minutes(
         next_event,
+        *,
+        estimated_duration: (
+            timedelta | None
+        ) = None,
     ) -> int | None:
         """
-        Returns the event target time in whole minutes, when available.
+        Returns the event duration in whole minutes.
+
+        An athlete-defined target time takes precedence over
+        the duration estimated from recent performance.
         """
 
         target_time = getattr(
@@ -1451,11 +1506,17 @@ class Planner:
             None,
         )
 
-        if target_time is None:
+        duration = (
+            target_time
+            if target_time is not None
+            else estimated_duration
+        )
+
+        if duration is None:
             return None
 
         minutes = int(
-            target_time.total_seconds()
+            duration.total_seconds()
             // 60
         )
 
@@ -1464,7 +1525,7 @@ class Planner:
 
         return minutes
 
-
+    
     @staticmethod
     def _remove_replaced_training_session(
         *,
