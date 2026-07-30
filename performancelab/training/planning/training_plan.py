@@ -159,6 +159,7 @@ class TrainingPlan(WorkoutCollection):
         objective: str | None = None,
         structure: tuple[str, ...] = (),
         equipment: tuple[str, ...] = (),
+        phase: str | None = None,
     ) -> PlannedWorkout:
 
         workout = PlannedWorkout(
@@ -172,6 +173,7 @@ class TrainingPlan(WorkoutCollection):
             objective=objective,
             structure=structure,
             equipment=equipment,
+            phase=phase,
         )
 
         self.add(workout)
@@ -240,6 +242,93 @@ class TrainingPlan(WorkoutCollection):
             <= day
             <= self.end_date
         )
+
+    # ======================================================
+
+    def phase_on(
+        self,
+        day: date,
+    ) -> str | None:
+        """
+        Returns the training phase assigned to a calendar day.
+
+        Race days are identified explicitly. Rest days inherit
+        the phase assigned to their training week.
+        """
+
+        if (
+            not isinstance(day, date)
+            or isinstance(day, datetime)
+        ):
+            raise TypeError(
+                "day must be a date."
+            )
+
+        if (
+            self.start_date is not None
+            and not self.covers(day)
+        ):
+            return None
+
+        workouts_on_day = tuple(
+            self.for_day(day)
+        )
+
+        race_workout = next(
+            (
+                workout
+                for workout in workouts_on_day
+                if str(
+                    workout.intensity
+                    or ""
+                ).strip().lower()
+                == "race effort"
+            ),
+            None,
+        )
+
+        if race_workout is not None:
+            return "Race"
+
+        direct_phase = next(
+            (
+                workout.phase
+                for workout in workouts_on_day
+                if workout.phase
+            ),
+            None,
+        )
+
+        if direct_phase is not None:
+            return direct_phase
+
+        week_start = (
+            day
+            - timedelta(
+                days=day.weekday()
+            )
+        )
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        weekly_phase = next(
+            (
+                workout.phase
+                for workout in self.workouts
+                if (
+                    workout.phase
+                    and week_start
+                    <= workout.day
+                    <= week_end
+                )
+            ),
+            None,
+        )
+
+        return weekly_phase
 
     # ======================================================
 

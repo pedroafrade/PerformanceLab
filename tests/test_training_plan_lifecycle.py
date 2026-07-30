@@ -179,3 +179,147 @@ def test_competition_event_ids_cannot_repeat():
                 "sealand",
             ),
         )
+
+def test_training_plan_returns_workout_phase():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            13,
+        ),
+    )
+
+    plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                10,
+            ),
+            title="Quality Run",
+            phase="Taper",
+        )
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                10,
+            )
+        )
+        == "Taper"
+    )
+
+
+def test_rest_day_inherits_week_phase():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            13,
+        ),
+    )
+
+    plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                10,
+            ),
+            title="Quality Run",
+            phase="Taper",
+        )
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                11,
+            )
+        )
+        == "Taper"
+    )
+
+
+def test_race_day_uses_race_phase():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            13,
+        ),
+    )
+
+    plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                13,
+            ),
+            title="Race",
+            intensity="Race effort",
+            phase="Taper",
+        )
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                13,
+            )
+        )
+        == "Race"
+    )
+
+
+def test_phase_is_none_outside_plan():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            13,
+        ),
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                14,
+            )
+        )
+        is None
+    )
