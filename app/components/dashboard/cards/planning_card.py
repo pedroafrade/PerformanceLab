@@ -6,6 +6,7 @@ Planning dashboard card.
 
 from datetime import date, timedelta
 from html import escape
+from math import ceil
 
 import streamlit as st
 
@@ -230,6 +231,189 @@ def _selected_day_description(
         or "Planned workout"
     )
 
+def _phase_segments(
+    timeline,
+):
+    """
+    Groups consecutive plan days belonging to the
+    same training phase.
+    """
+
+    if timeline is None:
+        return ()
+
+    segments = []
+
+    for phase_day in timeline.days:
+
+        phase = (
+            str(
+                phase_day.phase
+                or "Unassigned"
+            ).strip()
+        )
+
+        if (
+            segments
+            and segments[-1][0]
+            == phase
+        ):
+            segments[-1][1].append(
+                phase_day.day
+            )
+
+        else:
+            segments.append(
+                (
+                    phase,
+                    [
+                        phase_day.day,
+                    ],
+                )
+            )
+
+    return tuple(
+        (
+            phase,
+            tuple(days),
+        )
+        for phase, days in segments
+    )
+
+
+def _phase_summary(
+    segments,
+    selected_date,
+) -> str:
+    """
+    Describes the phase containing the selected day.
+    """
+
+    for phase, days in segments:
+
+        if selected_date not in days:
+            continue
+
+        if phase.lower() == "race":
+            return (
+                f"Race · "
+                f"{selected_date:%d %b}"
+            )
+
+        week_number = (
+            (
+                selected_date
+                - days[0]
+            ).days
+            // 7
+            + 1
+        )
+
+        total_weeks = max(
+            1,
+            ceil(
+                len(days) / 7
+            ),
+        )
+
+        return (
+            f"{phase} · "
+            f"Week {week_number}/{total_weeks}"
+        )
+
+    return ""
+
+
+def _phase_timeline_html(
+    *,
+    timeline,
+    selected_date,
+    visible_start,
+    visible_end,
+) -> str:
+    """
+    Builds the full-plan phase progression.
+    """
+
+    segments = _phase_segments(
+        timeline
+    )
+
+    if not segments:
+        return ""
+
+    segment_html = []
+
+    for phase, days in segments:
+
+        dots = []
+
+        for day in days:
+
+            classes = [
+                "weekly-phase-dot",
+            ]
+
+            if (
+                visible_start
+                <= day
+                <= visible_end
+            ):
+                classes.append(
+                    "weekly-phase-dot-visible"
+                )
+
+            if day == selected_date:
+                classes.append(
+                    "weekly-phase-dot-selected"
+                )
+
+            if phase.lower() == "race":
+                classes.append(
+                    "weekly-phase-dot-race"
+                )
+
+            dots.append(
+                (
+                    '<span class="'
+                    f'{" ".join(classes)}'
+                    '" title="'
+                    f"{escape(phase)} · "
+                    f"{day:%d %b %Y}"
+                    '"></span>'
+                )
+            )
+
+        segment_html.append(
+            (
+                '<div class="weekly-phase-segment" '
+                f'style="flex:{len(days)}">'
+                '<div class="weekly-phase-label">'
+                f"{escape(phase)}"
+                "</div>"
+                '<div class="weekly-phase-dots">'
+                f'{"".join(dots)}'
+                "</div>"
+                "</div>"
+            )
+        )
+
+    summary = _phase_summary(
+        segments,
+        selected_date,
+    )
+
+    return (
+        '<div class="weekly-phase-timeline">'
+        '<div class="weekly-phase-segments">'
+        f'{"".join(segment_html)}'
+        "</div>"
+        '<div class="weekly-phase-summary">'
+        f"{escape(summary)}"
+        "</div>"
+        "</div>"
+    )
+
 def _planning_window_center() -> date:
     """
     Return the date at the centre of the planning viewport.
@@ -315,6 +499,89 @@ def show_planning_card(
     st.markdown(
         """
 <style>
+
+.weekly-phase-timeline {
+    margin: 0 0 4px 0;
+}
+
+.weekly-phase-segments {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    gap: 3px;
+}
+
+.weekly-phase-segment {
+    min-width: 0;
+    text-align: center;
+}
+
+.weekly-phase-label {
+    margin-bottom: 2px;
+    overflow: hidden;
+    font-size: 0.60rem;
+    font-weight: 600;
+    line-height: 1;
+    opacity: 0.68;
+    text-overflow: ellipsis;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.weekly-phase-dots {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    min-height: 8px;
+    gap: 1px;
+}
+
+.weekly-phase-dot {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 5px;
+    height: 5px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    opacity: 0.22;
+    box-sizing: border-box;
+}
+
+.weekly-phase-dot-visible {
+    opacity: 0.72;
+}
+
+.weekly-phase-dot-selected {
+    width: 7px;
+    height: 7px;
+    border-width: 2px;
+    background: currentColor;
+    opacity: 1;
+}
+
+.weekly-phase-dot-race {
+    width: 7px;
+    height: 7px;
+    border-width: 2px;
+    opacity: 0.85;
+}
+
+.weekly-phase-dot-race.weekly-phase-dot-selected {
+    width: 9px;
+    height: 9px;
+    opacity: 1;
+}
+
+.weekly-phase-summary {
+    min-height: 12px;
+    margin-top: 2px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: right;
+    opacity: 0.70;
+}
+
 .weekly-plan-day {
     min-height: 86px;
     padding: 2px;
@@ -455,6 +722,52 @@ div[class*="st-key-weekly_plan_selector_"] button {
         for day in days
     }
 
+    selector_key = (
+        "weekly_plan_selector_"
+        f"{planning.weekly_plan.start_date}"
+        "_"
+        f"{planning.weekly_plan.end_date}"
+    )
+
+    selected_date = (
+        st.session_state.get(
+            selector_key
+        )
+    )
+
+    if selected_date not in day_by_date:
+
+        selected_date = (
+            default_day.day
+            if default_day is not None
+            else next(
+                iter(day_by_date),
+                None,
+            )
+        )
+
+    timeline_html = (
+        _phase_timeline_html(
+            timeline=(
+                planning.phase_timeline
+            ),
+            selected_date=selected_date,
+            visible_start=(
+                planning.weekly_plan.start_date
+            ),
+            visible_end=(
+                planning.weekly_plan.end_date
+            ),
+        )
+    )
+
+    if timeline_html:
+
+        st.markdown(
+            timeline_html,
+            unsafe_allow_html=True,
+        )
+
     selector_columns = st.columns(
         [
             0.42,
@@ -469,21 +782,12 @@ div[class*="st-key-weekly_plan_selector_"] button {
         selected_date = st.segmented_control(
             "Workout details",
             options=tuple(day_by_date),
-            default=(
-                default_day.day
-                if default_day is not None
-                else None
-            ),
+            default=selected_date,
             required=True,
             format_func=lambda day: str(
                 day.day
             ),
-            key=(
-                "weekly_plan_selector_"
-                f"{planning.weekly_plan.start_date}"
-                "_"
-                f"{planning.weekly_plan.end_date}"
-            ),
+            key=selector_key,
             label_visibility="collapsed",
             width="stretch",
         )
