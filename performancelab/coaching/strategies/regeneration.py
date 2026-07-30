@@ -63,6 +63,20 @@ class RegenerationStrategy(CoachStrategy):
         target_sessions = 4
         recovery_days = 3
 
+        close_follow_up_event = (
+            getattr(
+                context,
+                "competition_block",
+                None,
+            )
+            == "cluster"
+            and context.days_until_event
+            is not None
+            and 0
+            <= context.days_until_event
+            <= 14
+        )
+
         # ==================================================
         # Post-race recovery
         # ==================================================
@@ -77,8 +91,16 @@ class RegenerationStrategy(CoachStrategy):
             if context.days_since_event <= 3:
 
                 volume_factor = 0.30
-                target_sessions = 3
-                recovery_days = 4
+
+                if close_follow_up_event:
+
+                    target_sessions = 4
+                    recovery_days = 3
+
+                else:
+
+                    target_sessions = 3
+                    recovery_days = 4
 
                 guidelines.insert(
                     0,
@@ -172,7 +194,13 @@ class RegenerationStrategy(CoachStrategy):
             race_specificity=0.00,
 
             target_weekly_minutes=(
-                90
+                120
+                if (
+                    context.is_post_race
+                    and context.days_since_event <= 3
+                    and close_follow_up_event
+                )
+                else 90
                 if (
                     context.is_post_race
                     and context.days_since_event <= 3

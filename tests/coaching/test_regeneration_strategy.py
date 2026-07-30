@@ -21,6 +21,7 @@ def make_context(
     average_rpe: float | None = None,
     days_until_event: int | None = None,
     days_since_event: int | None = None,
+    competition_block: str = "single",
 ):
     """
     Creates the minimum context required by
@@ -37,6 +38,7 @@ def make_context(
         average_rpe=average_rpe,
         days_until_event=days_until_event,
         days_since_event=days_since_event,
+        competition_block=competition_block,
         is_post_race=is_post_race,
         is_fatigue_regeneration=(
             tsb < -20
@@ -506,6 +508,38 @@ def test_first_post_race_days_use_deep_recovery(
     assert plan.recovery_days == 4
     assert plan.target_weekly_minutes == 90
 
+def test_close_follow_up_event_bridges_recovery_and_taper():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=1,
+            days_until_event=13,
+            competition_block="cluster",
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(
+        0.30
+    )
+    assert plan.target_sessions == 4
+    assert plan.recovery_days == 3
+    assert plan.target_weekly_minutes == 120
+
+
+def test_distant_follow_up_event_keeps_deeper_recovery():
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=1,
+            days_until_event=90,
+            competition_block="single",
+        )
+    )
+
+    assert plan.volume_factor == pytest.approx(
+        0.30
+    )
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
+    assert plan.target_weekly_minutes == 90
 
 @pytest.mark.parametrize(
     "days_since_event",
