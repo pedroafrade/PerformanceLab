@@ -13,6 +13,8 @@ from unittest.mock import Mock
 
 import pytest
 
+from dataclasses import replace
+
 from performancelab.training.load import (
     planned_weekly_load,
 )
@@ -916,4 +918,55 @@ def test_event_based_long_ceiling_uses_five_minutes():
             )
         )
         == 145
+    )
+
+def test_automatic_planning_limits_consecutive_days(
+    default_constraints,
+):
+
+    permissive_constraints = replace(
+        default_constraints,
+        max_consecutive_training_days=6,
+    )
+
+    result = (
+        Planner
+        ._limit_automatic_consecutive_days(
+            permissive_constraints
+        )
+    )
+
+    assert (
+        result.max_consecutive_training_days
+        == 3
+    )
+
+    assert (
+        permissive_constraints
+        .max_consecutive_training_days
+        == 6
+    )
+
+
+def test_automatic_planning_preserves_stricter_limit(
+    default_constraints,
+):
+
+    strict_constraints = replace(
+        default_constraints,
+        max_consecutive_training_days=2,
+    )
+
+    result = (
+        Planner
+        ._limit_automatic_consecutive_days(
+            strict_constraints
+        )
+    )
+
+    assert result is strict_constraints
+
+    assert (
+        result.max_consecutive_training_days
+        == 2
     )

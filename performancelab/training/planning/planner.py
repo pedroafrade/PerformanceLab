@@ -46,6 +46,7 @@ MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
 POST_PRIMARY_EVENT_RECOVERY_DAYS = 7
 MIN_EVENT_BASED_LONG_SESSION_MINUTES = 90
 MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
+AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS = 3
 
 DEMANDING_EVENT_EFFORT_DISTANCE = 30.0
 DEMANDING_EVENT_COMPLETE_REST_DAYS = 2
@@ -144,6 +145,12 @@ class Planner:
                 constraints=resolved_constraints,
                 week_start=start_date,
                 today=reference_day,
+            )
+        )
+
+        resolved_constraints = (
+            self._limit_automatic_consecutive_days(
+                resolved_constraints
             )
         )
 
@@ -1382,6 +1389,35 @@ class Planner:
                     )
                 )
             ),
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _limit_automatic_consecutive_days(
+        constraints: TrainingConstraints,
+    ) -> TrainingConstraints:
+        """
+        Applies a conservative consecutive-day limit to
+        automatically generated training.
+
+        Stricter athlete-defined limits remain unchanged.
+        """
+
+        maximum = min(
+            constraints.max_consecutive_training_days,
+            AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS,
+        )
+
+        if (
+            maximum
+            == constraints.max_consecutive_training_days
+        ):
+            return constraints
+
+        return replace(
+            constraints,
+            max_consecutive_training_days=maximum,
         )
 
     # ======================================================
