@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
 MAX_PLANNED_WEEKLY_LOAD_GROWTH = 0.10
 MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
+POST_PRIMARY_EVENT_RECOVERY_DAYS = 7
 
 class Planner:
     """
@@ -213,7 +214,8 @@ class Planner:
     ) -> TrainingPlan:
         """
         Builds the athlete's training plan from the current
-        day through the primary event.
+        day through the primary event and its following
+        recovery period.
 
         Weekly plans are consecutive windows inside the same
         complete TrainingPlan.
@@ -246,10 +248,20 @@ class Planner:
             + timedelta(days=6)
         )
 
-        plan_end_date = (
-            context.planning_end_date
-            or default_end_date
-        )
+        if context.planning_end_date is not None:
+
+            plan_end_date = (
+                context.planning_end_date
+                + timedelta(
+                    days=(
+                        POST_PRIMARY_EVENT_RECOVERY_DAYS
+                    )
+                )
+            )
+
+        else:
+
+            plan_end_date = default_end_date
 
         training_plan = TrainingPlan(
             start_date=reference_day,

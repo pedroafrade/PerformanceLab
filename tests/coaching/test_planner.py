@@ -289,8 +289,8 @@ def test_builds_training_plan_for_competition_block(
 
     assert plan.end_date == date(
         2026,
-        9,
-        27,
+        10,
+        4,
     )
 
     assert (
@@ -351,7 +351,7 @@ def test_training_plan_without_event_uses_week_horizon(
     assert plan.primary_event_id is None
     assert plan.competition_event_ids == ()
 
-def test_training_plan_generates_every_week_until_primary_event(
+def test_training_plan_includes_post_event_recovery_week(
     full_availability,
     default_preferences,
     default_constraints,
@@ -436,11 +436,11 @@ def test_training_plan_generates_every_week_until_primary_event(
 
     assert plan.end_date == date(
         2026,
-        9,
-        27,
+        10,
+        4,
     )
 
-    assert len(plan) == 9
+    assert len(plan) == 10
 
     assert plan.first.day == date(
         2026,
@@ -451,7 +451,7 @@ def test_training_plan_generates_every_week_until_primary_event(
     assert plan.last.day == date(
         2026,
         9,
-        23,
+        30,
     )
 
     assert all(
