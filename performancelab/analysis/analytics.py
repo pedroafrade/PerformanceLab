@@ -644,6 +644,14 @@ class AthleteAnalytics:
 
                 vo2max=None,
 
+                threshold_power=(
+                    self.athlete.ftp
+                ),
+
+                threshold_hr=None,
+
+                threshold_pace=None,
+
                 max_hr=self.athlete.max_hr,
 
                 resting_hr=self.athlete.resting_hr,

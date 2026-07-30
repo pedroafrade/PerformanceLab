@@ -14,6 +14,9 @@ from performancelab.workout import Workout
 
 import performancelab.analysis.time as t
 
+from performancelab.analysis.performance_profile import (
+    PerformanceProfile,
+)
 print(t.__file__)
 print(hasattr(t, "training_days"))
 print(dir(t))
@@ -826,3 +829,29 @@ def test_typical_running_long_session_uses_weekly_longest():
         .typical_running_long_session_minutes
         == 97.5
     )
+
+def test_builds_performance_profile():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.ftp = 220
+    athlete.max_hr = 190
+    athlete.resting_hr = 50
+
+    profile = (
+        athlete.analytics.performance_profile
+    )
+
+    assert isinstance(
+        profile,
+        PerformanceProfile,
+    )
+
+    assert profile.ftp == 220
+    assert profile.threshold_power == 220
+    assert profile.max_hr == 190
+    assert profile.resting_hr == 50
+    assert profile.threshold_hr is None
+    assert profile.threshold_pace is None
