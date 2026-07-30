@@ -623,6 +623,33 @@ class AthleteAnalytics:
     # Planning
     # ======================================================
 
+    def estimated_event_duration(
+        self,
+        event,
+    ) -> timedelta | None:
+        """
+        Estimates a running event's duration from the
+        athlete's recent running pace.
+
+        The event remains responsible for translating its
+        distance and elevation into effort distance.
+        """
+
+        estimator = getattr(
+            event,
+            "estimated_duration_at_pace",
+            None,
+        )
+
+        if not callable(estimator):
+            return None
+
+        return estimator(
+            self.typical_running_pace
+        )
+
+    # ======================================================
+
     @property
     def next_goal(self):
 

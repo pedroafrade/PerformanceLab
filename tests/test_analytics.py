@@ -17,6 +17,8 @@ import performancelab.analysis.time as t
 from performancelab.analysis.performance_profile import (
     PerformanceProfile,
 )
+from performancelab.race import Event
+
 print(t.__file__)
 print(hasattr(t, "training_days"))
 print(dir(t))
@@ -933,5 +935,62 @@ def test_typical_running_pace_without_running_data():
 
     assert (
         athlete.analytics.typical_running_pace
+        is None
+    )
+
+def test_estimates_event_duration_from_recent_running_pace():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Running",
+            date.today(),
+            10,
+            timedelta(minutes=60),
+            100,
+            6,
+        )
+    )
+
+    event = Event(
+        name="III Trail Pé Firme",
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    duration = (
+        athlete.analytics
+        .estimated_event_duration(
+            event
+        )
+    )
+
+    assert duration == timedelta(
+        hours=3,
+        minutes=15,
+    )
+
+
+def test_event_duration_without_running_history_is_unknown():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    event = Event(
+        sport="Road Running",
+        distance=10,
+        elevation_gain=100,
+    )
+
+    assert (
+        athlete.analytics
+        .estimated_event_duration(
+            event
+        )
         is None
     )
