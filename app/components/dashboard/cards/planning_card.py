@@ -671,24 +671,16 @@ div[class*="st-key-weekly_plan_selector_"] button {
 
     if animation_name is not None:
 
-        start_position = (
-            "14px"
-            if animation_direction == "previous"
-            else "-14px"
-        )
-
         st.markdown(
             f"""
 <style>
 @keyframes {animation_name} {{
     from {{
-        opacity: 0.55;
-        transform: translateX({start_position});
+        opacity: 0.20;
     }}
 
     to {{
         opacity: 1;
-        transform: translateX(0);
     }}
 }}
 
@@ -697,7 +689,12 @@ div[class*="st-key-weekly_plan_selector_"] button {
 .weekly-plan-next,
 div[class*="st-key-weekly_plan_selector_"] {{
     animation: {animation_name}
-        180ms ease-out both;
+        380ms cubic-bezier(
+            0.22,
+            1,
+            0.36,
+            1
+        ) both;
 }}
 </style>
             """,
