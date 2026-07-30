@@ -385,6 +385,14 @@ def _move_planning_window(days: int) -> None:
     """
 
     st.session_state[
+        "planning_window_animation_direction"
+    ] = (
+        "next"
+        if days > 0
+        else "previous"
+    )
+
+    st.session_state[
         "planning_window_center_date"
     ] = (
         _planning_window_center()
@@ -442,6 +450,20 @@ def show_planning_card(
     if planning is None:
         st.info("No planning available.")
         return
+
+    animation_direction = (
+        st.session_state.pop(
+            "planning_window_animation_direction",
+            None,
+        )
+    )
+
+    animation_name = {
+        "next": "weekly-plan-slide-left",
+        "previous": "weekly-plan-slide-right",
+    }.get(
+        animation_direction
+    )
 
     st.markdown(
         """
@@ -645,6 +667,45 @@ div[class*="st-key-weekly_plan_selector_"] button {
 </style>
         """,
         unsafe_allow_html=True,
+    )
+
+    if animation_name is not None:
+
+        start_position = (
+            "14px"
+            if animation_direction == "previous"
+            else "-14px"
+        )
+
+        st.markdown(
+            f"""
+<style>
+@keyframes {animation_name} {{
+    from {{
+        opacity: 0.55;
+        transform: translateX({start_position});
+    }}
+
+    to {{
+        opacity: 1;
+        transform: translateX(0);
+    }}
+}}
+
+.weekly-phase-timeline,
+.weekly-plan-day,
+.weekly-plan-next,
+div[class*="st-key-weekly_plan_selector_"] {{
+    animation: {animation_name}
+        180ms ease-out both;
+}}
+</style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    days = tuple(
+        planning.weekly_plan.days
     )
 
     days = tuple(
