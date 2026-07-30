@@ -215,3 +215,65 @@ def test_event_without_distance_has_no_elevation_demand():
     )
 
     assert event.elevation_demand is None
+
+def test_estimates_running_event_duration_at_pace():
+
+    event = Event(
+        name="III Trail Pé Firme",
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    duration = (
+        event.estimated_duration_at_pace(
+            0.1,
+        )
+    )
+
+    assert duration == timedelta(
+        hours=3,
+        minutes=15,
+    )
+
+
+@pytest.mark.parametrize(
+    "pace",
+    (
+        None,
+        0,
+        -0.1,
+    ),
+)
+def test_event_duration_requires_valid_pace(
+    pace,
+):
+
+    event = Event(
+        sport="Road Running",
+        distance=10,
+        elevation_gain=100,
+    )
+
+    assert (
+        event.estimated_duration_at_pace(
+            pace
+        )
+        is None
+    )
+
+
+def test_non_running_event_has_no_estimated_duration():
+
+    event = Event(
+        sport="Cycling",
+        distance=100,
+        elevation_gain=1000,
+    )
+
+    assert (
+        event.estimated_duration_at_pace(
+            0.05
+        )
+        is None
+    )

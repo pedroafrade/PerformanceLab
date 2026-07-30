@@ -8,7 +8,7 @@ Represents a sporting event.
 
 from dataclasses import dataclass, field
 from uuid import uuid4
-from datetime import date
+from datetime import date, timedelta
 
 ELEVATION_METRES_PER_EFFORT_KILOMETRE = 100.0
 
@@ -100,6 +100,35 @@ class Event:
             )
         )
 
+    # ======================================================
+
+    def estimated_duration_at_pace(
+        self,
+        pace_hours_per_kilometre: float | None,
+    ) -> timedelta | None:
+        """
+        Estimates the event duration from an athlete's
+        running pace and the event effort distance.
+
+        Pace is expressed in hours per kilometre.
+        """
+
+        effort_distance = self.effort_distance
+
+        if (
+            effort_distance is None
+            or pace_hours_per_kilometre is None
+            or pace_hours_per_kilometre <= 0
+        ):
+            return None
+
+        return timedelta(
+            hours=(
+                effort_distance
+                * pace_hours_per_kilometre
+            )
+        )
+    
     # ======================================================
 
     @property
