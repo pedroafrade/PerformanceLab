@@ -44,6 +44,8 @@ if TYPE_CHECKING:
 MAX_PLANNED_WEEKLY_LOAD_GROWTH = 0.10
 MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
 POST_PRIMARY_EVENT_RECOVERY_DAYS = 7
+MIN_EVENT_BASED_LONG_SESSION_MINUTES = 90
+MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
 
 DEMANDING_EVENT_EFFORT_DISTANCE = 30.0
 DEMANDING_EVENT_COMPLETE_REST_DAYS = 2
@@ -175,6 +177,9 @@ class Planner:
                 strategy_plan=strategy_plan,
                 previous_long_minutes=(
                     previous_planned_long_minutes
+                ),
+                event_duration=(
+                    context.primary_event_duration
                 ),
             )
         )
@@ -417,6 +422,7 @@ class Planner:
         *,
         strategy_plan,
         previous_long_minutes: int | None,
+        event_duration: timedelta | None = None,
     ):
         """
         Progresses the planned long session across consecutive
@@ -470,6 +476,22 @@ class Planner:
             previous_long_minutes + 5,
         )
 
+        event_ceiling = (
+            Planner
+            ._event_based_long_session_ceiling(
+                event_duration
+            )
+        )
+
+        if event_ceiling is not None:
+            progressed_target = min(
+                progressed_target,
+                max(
+                    current_target,
+                    event_ceiling,
+                ),
+            )
+
         if (
             strategy_plan.target_weekly_minutes
             is not None
@@ -485,6 +507,46 @@ class Planner:
         return replace(
             strategy_plan,
             long_session_minutes=progressed_target,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _event_based_long_session_ceiling(
+        event_duration: timedelta | None,
+    ) -> int | None:
+        """
+        Returns a practical upper limit for long-session
+        duration based on the primary event duration.
+        """
+
+        if (
+            event_duration is None
+            or event_duration.total_seconds()
+            <= 0
+        ):
+            return None
+
+        event_minutes = (
+            event_duration.total_seconds()
+            / 60
+        )
+
+        estimated_ceiling = (
+            event_minutes
+            * MAX_LONG_SESSION_EVENT_DURATION_RATIO
+        )
+
+        rounded_ceiling = int(
+            round(
+                estimated_ceiling / 5
+            )
+            * 5
+        )
+
+        return max(
+            MIN_EVENT_BASED_LONG_SESSION_MINUTES,
+            rounded_ceiling,
         )
     
     # ======================================================

@@ -843,3 +843,77 @@ def test_taper_does_not_progress_long_session():
 
     assert result is strategy_plan
     assert result.long_session_minutes == 80
+
+def test_event_duration_caps_long_progression():
+
+    strategy_plan = StrategyPlan(
+        strategy="PeakStrategy",
+        phase="Peak",
+        volume_factor=0.9,
+        target_sessions=4,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=300,
+        long_session_minutes=120,
+    )
+
+    result = (
+        Planner._progress_long_session_target(
+            strategy_plan=strategy_plan,
+            previous_long_minutes=145,
+            event_duration=timedelta(
+                hours=3,
+                minutes=15,
+            ),
+        )
+    )
+
+    assert (
+        result.long_session_minutes
+        == 145
+    )
+
+
+def test_short_event_does_not_reduce_existing_long():
+
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=4,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=300,
+        long_session_minutes=105,
+    )
+
+    result = (
+        Planner._progress_long_session_target(
+            strategy_plan=strategy_plan,
+            previous_long_minutes=105,
+            event_duration=timedelta(
+                minutes=60,
+            ),
+        )
+    )
+
+    assert (
+        result.long_session_minutes
+        == 105
+    )
+
+
+def test_event_based_long_ceiling_uses_five_minutes():
+
+    assert (
+        Planner
+        ._event_based_long_session_ceiling(
+            timedelta(
+                hours=3,
+                minutes=15,
+            )
+        )
+        == 145
+    )
