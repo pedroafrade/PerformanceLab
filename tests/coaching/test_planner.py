@@ -938,7 +938,7 @@ def test_automatic_planning_limits_consecutive_days(
 
     assert (
         result.max_consecutive_training_days
-        == 3
+        == 2
     )
 
     assert (
@@ -954,7 +954,7 @@ def test_automatic_planning_preserves_stricter_limit(
 
     strict_constraints = replace(
         default_constraints,
-        max_consecutive_training_days=2,
+        max_consecutive_training_days=1,
     )
 
     result = (
@@ -968,5 +968,5 @@ def test_automatic_planning_preserves_stricter_limit(
 
     assert (
         result.max_consecutive_training_days
-        == 2
+        == 1
     )
