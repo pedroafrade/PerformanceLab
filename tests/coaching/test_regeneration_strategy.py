@@ -644,3 +644,28 @@ def test_event_older_than_seven_days_uses_normal_regeneration():
     assert plan.volume_factor == pytest.approx(0.60)
     assert plan.target_sessions == 4
     assert plan.recovery_days == 3
+
+def test_close_events_use_transition_phase():
+
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=1,
+            days_until_event=13,
+            competition_block="cluster",
+        ),
+    )
+
+    assert plan.phase == "Transition"
+
+
+def test_final_event_recovery_uses_regeneration_phase():
+
+    plan = RegenerationStrategy().build(
+        make_context(
+            days_since_event=1,
+            days_until_event=None,
+            competition_block="single",
+        ),
+    )
+
+    assert plan.phase == "Regeneration"

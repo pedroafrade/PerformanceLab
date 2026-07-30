@@ -76,6 +76,13 @@ class RegenerationStrategy(CoachStrategy):
             <= context.days_until_event
             <= 14
         )
+        phase = self.phase
+
+        if (
+            context.is_post_race
+            and close_follow_up_event
+        ):
+            phase = "Transition"
 
         # ==================================================
         # Post-race recovery
@@ -175,7 +182,7 @@ class RegenerationStrategy(CoachStrategy):
 
         return StrategyPlan(
             strategy=self.name,
-            phase=self.phase,
+            phase=phase,
             volume_factor=volume_factor,
             target_sessions=target_sessions,
             intensity_sessions=0,

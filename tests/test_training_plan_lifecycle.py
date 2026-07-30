@@ -323,3 +323,77 @@ def test_phase_is_none_outside_plan():
         )
         is None
     )
+
+def test_only_race_day_uses_race_phase():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            13,
+        ),
+    )
+
+    plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                12,
+            ),
+            title="Shakeout Run",
+            intensity="Very easy",
+            phase="Race",
+        )
+    )
+
+    plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                13,
+            ),
+            title="Race",
+            intensity="Race effort",
+            phase="Race",
+        )
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                11,
+            )
+        )
+        == "Taper"
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                12,
+            )
+        )
+        == "Taper"
+    )
+
+    assert (
+        plan.phase_on(
+            date(
+                2026,
+                9,
+                13,
+            )
+        )
+        == "Race"
+    )

@@ -300,6 +300,15 @@ class TrainingPlan(WorkoutCollection):
         )
 
         if direct_phase is not None:
+
+            if (
+                str(
+                    direct_phase
+                ).strip().lower()
+                == "race"
+            ):
+                return "Taper"
+
             return direct_phase
 
         week_start = (
@@ -327,6 +336,15 @@ class TrainingPlan(WorkoutCollection):
             ),
             None,
         )
+
+        if (
+            weekly_phase is not None
+            and str(
+                weekly_phase
+            ).strip().lower()
+            == "race"
+        ):
+            return "Taper"
 
         return weekly_phase
 
