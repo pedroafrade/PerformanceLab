@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from performancelab.coaching import (
     DEFAULT_WORKOUT_TEMPLATES,
+    PRE_RACE_TEMPLATE,
     LONG_TEMPLATE,
     RACE_TEMPLATE,
     RECOVERY_TEMPLATE,
@@ -271,6 +272,10 @@ def test_for_sport_rejects_empty_sport() -> None:
         (
             SessionPurpose.EASY,
             EASY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.PRE_RACE,
+            PRE_RACE_TEMPLATE,
         ),
         (
             SessionPurpose.INTENSITY,
@@ -793,3 +798,17 @@ def test_flat_long_run_keeps_standard_structure():
         "Long aerobic run 105 min",
         "Cool down 5 min",
     )
+
+def test_builds_pre_race_running_title() -> None:
+
+    template = PRE_RACE_TEMPLATE.for_sport(
+        "Trail Running"
+    )
+
+    title = (
+        WorkoutGenerator._sport_specific_title(
+            template
+        )
+    )
+
+    assert title == "Pre-Race Easy Run"
