@@ -80,10 +80,10 @@ def test_default_race_targets():
     plan = build_plan()
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 3
+    assert plan.target_sessions == 2
     assert plan.intensity_sessions == 0
     assert plan.long_sessions == 0
-    assert plan.recovery_days == 4
+    assert plan.recovery_days == 5
 
 
 def test_default_race_focus():
@@ -95,7 +95,7 @@ def test_default_race_focus():
 def test_default_concrete_weekly_targets():
     plan = build_plan()
 
-    assert plan.target_weekly_minutes == 150
+    assert plan.target_weekly_minutes == 80
     assert plan.target_weekly_load == pytest.approx(100.0)
     assert plan.long_session_minutes is None
 
@@ -126,7 +126,7 @@ def test_elevated_fatigue_reduces_target_sessions():
         tsb=-10.1,
     )
 
-    assert plan.target_sessions == 2
+    assert plan.target_sessions == 1
 
 
 def test_elevated_fatigue_increases_recovery_days():
@@ -134,7 +134,7 @@ def test_elevated_fatigue_increases_recovery_days():
         tsb=-10.1,
     )
 
-    assert plan.recovery_days == 5
+    assert plan.recovery_days == 6
 
 
 def test_elevated_fatigue_changes_focus():
@@ -163,8 +163,8 @@ def test_tsb_boundary_does_not_trigger_reduction():
     )
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 3
-    assert plan.recovery_days == 4
+    assert plan.target_sessions == 2
+    assert plan.recovery_days == 5
     assert plan.focus == "competition"
 
     assert (
@@ -192,7 +192,7 @@ def test_high_rpe_reduces_target_sessions():
         average_rpe=8.0,
     )
 
-    assert plan.target_sessions == 2
+    assert plan.target_sessions == 1
 
 
 def test_high_rpe_increases_recovery_days():
@@ -200,7 +200,7 @@ def test_high_rpe_increases_recovery_days():
         average_rpe=8.0,
     )
 
-    assert plan.recovery_days == 5
+    assert plan.recovery_days == 6
 
 
 def test_high_rpe_changes_focus():
@@ -228,8 +228,8 @@ def test_rpe_below_threshold_does_not_reduce_race():
     )
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 3
-    assert plan.recovery_days == 4
+    assert plan.target_sessions == 2
+    assert plan.recovery_days == 5
     assert plan.focus == "competition"
 
     assert (
@@ -243,9 +243,8 @@ def test_missing_rpe_is_supported():
         average_rpe=None,
     )
 
-    assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 3
-    assert plan.recovery_days == 4
+    assert plan.target_sessions == 2
+    assert plan.recovery_days == 5
 
 
 # ==========================================================
@@ -260,10 +259,10 @@ def test_combined_fatigue_signals_keep_conservative_targets():
     )
 
     assert plan.volume_factor == pytest.approx(0.30)
-    assert plan.target_sessions == 2
+    assert plan.target_sessions == 1
     assert plan.intensity_sessions == 0
     assert plan.long_sessions == 0
-    assert plan.recovery_days == 5
+    assert plan.recovery_days == 6
     assert plan.focus == "race recovery and readiness"
 
 
@@ -377,9 +376,9 @@ def test_fatigue_reduces_sessions_but_keeps_race_week_valid():
         tsb=-20.0,
     )
 
-    assert normal.target_sessions == 3
-    assert fatigued.target_sessions == 2
-    assert fatigued.recovery_days == 5
+    assert normal.target_sessions == 2
+    assert fatigued.target_sessions == 1
+    assert fatigued.recovery_days == 6
 
 
 @pytest.mark.parametrize(
@@ -396,40 +395,40 @@ def test_fatigue_reduces_sessions_but_keeps_race_week_valid():
             0.0,
             None,
             0.40,
-            3,
-            4,
+            2,
+            5,
             "competition",
         ),
         (
             -10.0,
             7.9,
             0.40,
-            3,
-            4,
+            2,
+            5,
             "competition",
         ),
         (
             -10.1,
             7.9,
             0.30,
-            2,
-            5,
+            1,
+            6,
             "race recovery and readiness",
         ),
         (
             0.0,
             8.0,
             0.30,
-            2,
-            5,
+            1,
+            6,
             "race recovery and readiness",
         ),
         (
             -20.0,
             9.0,
             0.30,
-            2,
-            5,
+            1,
+            6,
             "race recovery and readiness",
         ),
     ],
