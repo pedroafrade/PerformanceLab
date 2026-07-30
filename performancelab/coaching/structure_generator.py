@@ -380,6 +380,14 @@ class WeekStructureGenerator:
                     weekday
                 ] = SessionPurpose.PRE_RACE
 
+        if (
+            strategy_plan.phase == "Transition"
+            and len(training_days) >= 2
+        ):
+            purposes[
+                training_days[-1]
+            ] = SessionPurpose.PRE_RACE
+
         long_days = self._select_long_days(
             training_days=training_days,
             strategy_plan=strategy_plan,

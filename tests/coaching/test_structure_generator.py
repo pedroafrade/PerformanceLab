@@ -848,7 +848,7 @@ def test_transition_week_progresses_from_recovery_to_easy(
         SessionPurpose.RECOVERY,
         SessionPurpose.EASY,
         SessionPurpose.EASY,
-        SessionPurpose.EASY,
+        SessionPurpose.PRE_RACE,
     )
 
     assert tuple(
