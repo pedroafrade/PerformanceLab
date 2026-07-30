@@ -502,9 +502,9 @@ def test_first_post_race_days_use_deep_recovery(
     )
 
     assert plan.volume_factor == pytest.approx(0.30)
-    assert plan.target_sessions == 2
-    assert plan.recovery_days == 5
-    assert plan.target_weekly_minutes == 120
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
+    assert plan.target_weekly_minutes == 90
 
 
 @pytest.mark.parametrize(
@@ -579,8 +579,8 @@ def test_post_race_recovery_takes_priority_over_low_tsb():
     )
 
     assert plan.volume_factor == pytest.approx(0.30)
-    assert plan.target_sessions == 2
-    assert plan.recovery_days == 5
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
 
 
 def test_event_warning_is_not_added_during_post_race_recovery():

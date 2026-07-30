@@ -77,8 +77,8 @@ class RegenerationStrategy(CoachStrategy):
             if context.days_since_event <= 3:
 
                 volume_factor = 0.30
-                target_sessions = 2
-                recovery_days = 5
+                target_sessions = 3
+                recovery_days = 4
 
                 guidelines.insert(
                     0,
@@ -172,8 +172,11 @@ class RegenerationStrategy(CoachStrategy):
             race_specificity=0.00,
 
             target_weekly_minutes=(
-                120
-                if volume_factor <= 0.30
+                90
+                if (
+                    context.is_post_race
+                    and context.days_since_event <= 3
+                )
                 else 180
                 if volume_factor <= 0.40
                 else 240

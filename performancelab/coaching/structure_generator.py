@@ -360,6 +360,13 @@ class WeekStructureGenerator:
             weekday: SessionPurpose.EASY
             for weekday in training_days
         }
+        if (
+            strategy_plan.phase == "Regeneration"
+            and training_days
+        ):
+            purposes[
+                training_days[0]
+            ] = SessionPurpose.RECOVERY
 
         long_days = self._select_long_days(
             training_days=training_days,
@@ -583,6 +590,15 @@ class WeekStructureGenerator:
             remaining=remaining,
         )
 
+        remaining = (
+            self._allocate_recovery_session_minutes(
+                durations=durations,
+                capacities=capacities,
+                purposes=purposes,
+                remaining=remaining,
+            )
+        )
+
         for weekday, purpose in purposes.items():
 
             if (
@@ -632,6 +648,52 @@ class WeekStructureGenerator:
 
     # ======================================================
 
+    @staticmethod
+    def _allocate_recovery_session_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+        remaining: int,
+    ) -> int:
+        """
+        Keeps explicitly prescribed recovery sessions
+        short and leaves the remaining volume for the
+        week's easy aerobic sessions.
+        """
+
+        recovery_days = [
+            weekday
+            for weekday, purpose
+            in purposes.items()
+            if (
+                purpose
+                is SessionPurpose.RECOVERY
+            )
+        ]
+
+        for weekday in recovery_days:
+
+            if remaining <= 0:
+                break
+
+            duration = min(
+                20,
+                capacities[weekday],
+                remaining,
+            )
+
+            durations[weekday] = duration
+            capacities[weekday] = duration
+            remaining -= duration
+
+        return remaining
+
+    # ======================================================
+    
     @staticmethod
     def _allocate_long_session_minutes(
         *,

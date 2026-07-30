@@ -757,3 +757,53 @@ def test_long_session_does_not_exceed_requested_duration(
         slot.duration_minutes or 0
         for slot in slots
     ) == 240
+
+def test_post_race_week_progresses_from_recovery_to_easy(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    regeneration_plan = replace(
+        strategy_plan,
+        strategy="RegenerationStrategy",
+        phase="Regeneration",
+        target_sessions=3,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=4,
+        target_weekly_minutes=90,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=regeneration_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    training_slots = tuple(
+        slot
+        for slot in slots
+        if slot.is_training
+    )
+
+    assert tuple(
+        slot.purpose
+        for slot in training_slots
+    ) == (
+        SessionPurpose.RECOVERY,
+        SessionPurpose.EASY,
+        SessionPurpose.EASY,
+    )
+
+    assert tuple(
+        slot.duration_minutes
+        for slot in training_slots
+    ) == (
+        20,
+        35,
+        35,
+    )
