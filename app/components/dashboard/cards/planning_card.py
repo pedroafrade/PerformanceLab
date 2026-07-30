@@ -6,7 +6,6 @@ Planning dashboard card.
 
 from datetime import date, timedelta
 from html import escape
-from math import ceil
 
 import streamlit as st
 
@@ -280,54 +279,10 @@ def _phase_segments(
         for phase, days in segments
     )
 
-
-def _phase_summary(
-    segments,
-    selected_date,
-) -> str:
-    """
-    Describes the phase containing the selected day.
-    """
-
-    for phase, days in segments:
-
-        if selected_date not in days:
-            continue
-
-        if phase.lower() == "race":
-            return (
-                f"Race · "
-                f"{selected_date:%d %b}"
-            )
-
-        week_number = (
-            (
-                selected_date
-                - days[0]
-            ).days
-            // 7
-            + 1
-        )
-
-        total_weeks = max(
-            1,
-            ceil(
-                len(days) / 7
-            ),
-        )
-
-        return (
-            f"{phase} · "
-            f"Week {week_number}/{total_weeks}"
-        )
-
-    return ""
-
-
 def _phase_timeline_html(
     *,
     timeline,
-    selected_date,
+    current_date,
     visible_start,
     visible_end,
 ) -> str:
@@ -363,9 +318,9 @@ def _phase_timeline_html(
                     "weekly-phase-dot-visible"
                 )
 
-            if day == selected_date:
+            if day == current_date:
                 classes.append(
-                    "weekly-phase-dot-selected"
+                    "weekly-phase-dot-current"
                 )
 
             if phase.lower() == "race":
@@ -398,18 +353,10 @@ def _phase_timeline_html(
             )
         )
 
-    summary = _phase_summary(
-        segments,
-        selected_date,
-    )
-
     return (
         '<div class="weekly-phase-timeline">'
         '<div class="weekly-phase-segments">'
         f'{"".join(segment_html)}'
-        "</div>"
-        '<div class="weekly-phase-summary">'
-        f"{escape(summary)}"
         "</div>"
         "</div>"
     )
@@ -501,7 +448,7 @@ def show_planning_card(
 <style>
 
 .weekly-phase-timeline {
-    margin: -2px 0 1px 0;
+    margin: -7px 0 8px 0;
 }
 
 .weekly-phase-segments {
@@ -552,7 +499,7 @@ def show_planning_card(
     opacity: 0.72;
 }
 
-.weekly-phase-dot-selected {
+.weekly-phase-dot-current {
     width: 7px;
     height: 7px;
     border-width: 2px;
@@ -567,20 +514,10 @@ def show_planning_card(
     opacity: 0.85;
 }
 
-.weekly-phase-dot-race.weekly-phase-dot-selected {
+.weekly-phase-dot-race.weekly-phase-dot-current {
     width: 9px;
     height: 9px;
     opacity: 1;
-}
-
-.weekly-phase-summary {
-    min-height: 11px;
-    margin-top: 1px;
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1;
-    text-align: center;
-    opacity: 0.70;
 }
 
 .weekly-plan-day {
@@ -752,7 +689,7 @@ div[class*="st-key-weekly_plan_selector_"] button {
             timeline=(
                 planning.phase_timeline
             ),
-            selected_date=selected_date,
+            current_date=date.today(),
             visible_start=(
                 planning.weekly_plan.start_date
             ),
