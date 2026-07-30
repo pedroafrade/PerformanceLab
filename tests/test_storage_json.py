@@ -545,6 +545,7 @@ def test_training_plan_metadata_round_trip():
             duration=timedelta(
                 hours=2,
             ),
+            phase="Build",
         )
     )
 
@@ -578,6 +579,13 @@ def test_training_plan_metadata_round_trip():
     assert len(
         data["training_plan"]["workouts"]
     ) == 1
+
+    assert (
+        data["training_plan"]["workouts"][0][
+            "phase"
+        ]
+        == "Build"
+    )
 
     loaded = athlete_from_dict(
         data
@@ -618,6 +626,11 @@ def test_training_plan_metadata_round_trip():
     assert (
         loaded.training_plan[0].title
         == "Long Aerobic Run"
+    )
+
+    assert (
+        loaded.training_plan[0].phase
+        == "Build"
     )
 
 
@@ -671,4 +684,36 @@ def test_loads_legacy_training_plan_list():
     assert (
         loaded.training_plan[0].title
         == "Legacy Long Run"
+    )
+def test_loads_planned_workout_without_phase():
+
+    athlete = create_athlete()
+
+    athlete.training_plan.add(
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                8,
+                2,
+            ),
+            sport="Running",
+            title="Legacy Run",
+        )
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["training_plan"]["workouts"][0][
+        "phase"
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan[0].phase
+        is None
     )

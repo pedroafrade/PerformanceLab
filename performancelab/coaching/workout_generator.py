@@ -276,6 +276,11 @@ class WorkoutGenerator:
                 strategy_plan=strategy_plan,
             ),
             equipment=template.equipment,
+            phase=(
+                strategy_plan.phase
+                if strategy_plan is not None
+                else None
+            ),
         )
 
     # ======================================================

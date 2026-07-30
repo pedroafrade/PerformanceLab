@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from types import SimpleNamespace
@@ -812,3 +814,28 @@ def test_builds_pre_race_running_title() -> None:
     )
 
     assert title == "Pre-Race Easy Run"
+
+def test_copies_strategy_phase_to_planned_workout():
+
+    strategy_plan = make_strategy_plan(
+        phase="Peak",
+    )
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.EASY,
+            duration_minutes=45,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            20,
+        ),
+        template=EASY_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(),
+        strategy_plan=strategy_plan,
+    )
+
+    assert workout.phase == "Peak"

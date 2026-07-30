@@ -31,6 +31,8 @@ class PlannedWorkout:
     structure: tuple[str, ...] = ()
     equipment: tuple[str, ...] = ()
 
+    phase: str | None = None
+    
     # ======================================================
 
     @property

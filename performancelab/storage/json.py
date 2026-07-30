@@ -330,7 +330,7 @@ def _planned_workout_to_dict(workout):
         "equipment": list(
             workout.equipment
         ),
-
+        "phase": workout.phase,
     }
 
 
@@ -372,6 +372,10 @@ def _planned_workout_from_dict(data):
                 "equipment",
                 [],
             )
+        ),
+        
+        phase=data.get(
+            "phase"
         ),
 
     )
