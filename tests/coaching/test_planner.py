@@ -8,6 +8,7 @@ It reuses the fixtures defined in tests/coaching/conftest.py.
 """
 
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -650,4 +651,114 @@ def test_moves_intensity_away_from_previous_long_run():
         2026,
         8,
         3,
+    )
+
+def test_blocks_running_after_demanding_event(
+    default_constraints,
+):
+
+    context = SimpleNamespace(
+        is_post_race=True,
+        days_since_event=1,
+        today=date(
+            2026,
+            9,
+            28,
+        ),
+        previous_event=SimpleNamespace(
+            event=SimpleNamespace(
+                effort_distance=32.5,
+            ),
+        ),
+    )
+
+    result = (
+        Planner._block_demanding_event_recovery_days(
+            constraints=default_constraints,
+            context=context,
+            week_start=date(
+                2026,
+                9,
+                28,
+            ),
+        )
+    )
+
+    assert result.is_blocked(
+        Weekday.MONDAY
+    )
+    assert result.is_blocked(
+        Weekday.TUESDAY
+    )
+    assert not result.is_blocked(
+        Weekday.WEDNESDAY
+    )
+def test_keeps_active_recovery_after_short_event(
+    default_constraints,
+):
+
+    context = SimpleNamespace(
+        is_post_race=True,
+        days_since_event=1,
+        today=date(
+            2026,
+            9,
+            14,
+        ),
+        previous_event=SimpleNamespace(
+            event=SimpleNamespace(
+                effort_distance=11.1,
+            ),
+        ),
+    )
+
+    result = (
+        Planner._block_demanding_event_recovery_days(
+            constraints=default_constraints,
+            context=context,
+            week_start=date(
+                2026,
+                9,
+                14,
+            ),
+        )
+    )
+
+    assert result == default_constraints
+
+def test_does_not_limit_recovery_week_after_race():
+
+    race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+        ),
+        title="Race",
+        intensity="Race effort",
+    )
+
+    assert (
+        Planner._should_limit_weekly_load(
+            race
+        )
+        is False
+    )
+def test_keeps_load_limit_after_normal_training():
+
+    easy_run = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            20,
+        ),
+        title="Easy Aerobic Run",
+        intensity="Easy",
+    )
+
+    assert (
+        Planner._should_limit_weekly_load(
+            easy_run
+        )
+        is True
     )

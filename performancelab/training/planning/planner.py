@@ -45,6 +45,9 @@ MAX_PLANNED_WEEKLY_LOAD_GROWTH = 0.10
 MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
 POST_PRIMARY_EVENT_RECOVERY_DAYS = 7
 
+DEMANDING_EVENT_EFFORT_DISTANCE = 30.0
+DEMANDING_EVENT_COMPLETE_REST_DAYS = 2
+
 class Planner:
     """
     Builds a concrete weekly training plan for an athlete.
@@ -144,6 +147,14 @@ class Planner:
         context = CoachContext.from_athlete(
             athlete,
             today=reference_day,
+        )
+
+        resolved_constraints = (
+            self._block_demanding_event_recovery_days(
+                constraints=resolved_constraints,
+                context=context,
+                week_start=start_date,
+            )
         )
 
         analysis = CoachAnalyzer(
@@ -304,7 +315,12 @@ class Planner:
                 )
             )
 
-            if previous_weekly_load is not None:
+            if (
+                previous_weekly_load is not None
+                and self._should_limit_weekly_load(
+                    previous_planned_workout
+                )
+            ):
 
                 weekly_plan = (
                     self._limit_weekly_load_growth(
@@ -474,6 +490,24 @@ class Planner:
             start_date=weekly_plan.start_date,
             end_date=weekly_plan.end_date,
             workouts=workouts,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _should_limit_weekly_load(
+        previous_workout,
+    ) -> bool:
+        """
+        Avoids comparing a recovery week with a race
+        week whose competition load may be incomplete.
+        """
+
+        if previous_workout is None:
+            return True
+
+        return not Planner._is_race_workout(
+            previous_workout
         )
 
     # ======================================================
@@ -1001,6 +1035,88 @@ class Planner:
             )
             for slot in slots
         ]
+
+    # ======================================================
+
+    @staticmethod
+    def _block_demanding_event_recovery_days(
+        *,
+        constraints: TrainingConstraints,
+        context: CoachContext,
+        week_start: date,
+    ) -> TrainingConstraints:
+        """
+        Protects the first 48 hours after a demanding
+        competition from planned running.
+        """
+
+        if (
+            not context.is_post_race
+            or context.days_since_event != 1
+        ):
+            return constraints
+
+        previous_entry = context.previous_event
+
+        event = getattr(
+            previous_entry,
+            "event",
+            None,
+        )
+
+        effort_distance = getattr(
+            event,
+            "effort_distance",
+            None,
+        )
+
+        if (
+            effort_distance is None
+            or effort_distance
+            < DEMANDING_EVENT_EFFORT_DISTANCE
+        ):
+            return constraints
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        protected_days = []
+
+        for day_offset in range(
+            DEMANDING_EVENT_COMPLETE_REST_DAYS
+        ):
+
+            protected_date = (
+                context.today
+                + timedelta(days=day_offset)
+            )
+
+            if (
+                week_start
+                <= protected_date
+                <= week_end
+            ):
+                protected_days.append(
+                    Weekday(
+                        protected_date.weekday()
+                    )
+                )
+
+        return replace(
+            constraints,
+            blocked_days=tuple(
+                dict.fromkeys(
+                    (
+                        *constraints.blocked_days,
+                        *protected_days,
+                    )
+                )
+            ),
+        )
+
+    # ======================================================
 
     @staticmethod
     def _block_past_weekdays(
