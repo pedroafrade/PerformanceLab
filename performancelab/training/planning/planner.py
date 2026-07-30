@@ -202,7 +202,12 @@ class Planner:
             training_week=training_week,
             coach_context=context,
         )
-
+        workouts = self._apply_event_sports(
+            workouts=workouts,
+            event_entries=(
+                context.competition_block_events
+            ),
+        )
         self._print_diagnostics(
             strategy_plan=strategy_plan,
             workouts=workouts,
@@ -679,7 +684,98 @@ class Planner:
         ).strip().lower()
 
         return "shakeout" in title
-    
+
+    # ======================================================
+
+    @staticmethod
+    def _apply_event_sports(
+        *,
+        workouts,
+        event_entries,
+    ):
+        """
+        Preserves the registered event sport on races
+        and their preceding shakeout sessions.
+        """
+
+        event_sports = {}
+
+        for event_entry in event_entries:
+
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            event_date = getattr(
+                event,
+                "date",
+                None,
+            )
+
+            event_sport = str(
+                getattr(
+                    event,
+                    "sport",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if (
+                event_date is not None
+                and event_sport
+            ):
+                event_sports[
+                    event_date
+                ] = event_sport
+
+        if not event_sports:
+            return workouts
+
+        updated_workouts = []
+
+        for workout in workouts:
+
+            event_sport = None
+
+            if Planner._is_race_workout(
+                workout
+            ):
+                event_sport = (
+                    event_sports.get(
+                        workout.day
+                    )
+                )
+
+            elif Planner._is_shakeout_workout(
+                workout
+            ):
+                event_sport = (
+                    event_sports.get(
+                        workout.day
+                        + timedelta(days=1)
+                    )
+                )
+
+            if event_sport is None:
+                updated_workouts.append(
+                    workout
+                )
+
+            else:
+                updated_workouts.append(
+                    replace(
+                        workout,
+                        sport=event_sport,
+                    )
+                )
+
+        return tuple(
+            updated_workouts
+        )
+
     # ======================================================
 
     @staticmethod

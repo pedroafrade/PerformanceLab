@@ -5,7 +5,7 @@ Place this file at:
     tests/training/planning/test_planner_events.py
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 from performancelab.coaching import (
@@ -13,6 +13,9 @@ from performancelab.coaching import (
     SessionPurpose,
 )
 from performancelab.training.config import Weekday
+from performancelab.training.planning import (
+    PlannedWorkout,
+)
 from performancelab.training.planning.planner import Planner
 
 
@@ -27,6 +30,7 @@ def make_event_entry(
     *,
     event_date: date,
     name: str = "Test Race",
+    sport: str = "Road Running",
     target_time: timedelta | None = None,
 ):
     """
@@ -39,6 +43,7 @@ def make_event_entry(
     event = SimpleNamespace(
         date=event_date,
         name=name,
+        sport=sport,
     )
 
     return SimpleNamespace(
@@ -683,4 +688,68 @@ def test_places_shakeout_in_week_before_monday_race():
     assert (
         sunday.duration_minutes
         == 20
+    )
+
+def test_preserves_event_sport_on_race_and_shakeout():
+
+    event_entry = make_event_entry(
+        event_date=date(
+            2026,
+            9,
+            13,
+        ),
+        name="Sealand",
+        sport="Road Running",
+    )
+
+    workouts = (
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                10,
+            ),
+            sport="Trail Running",
+            title="Quality Run",
+            intensity="Hard",
+        ),
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                12,
+            ),
+            sport="Trail Running",
+            title="Shakeout Run",
+            intensity="Very easy",
+        ),
+        PlannedWorkout(
+            scheduled_at=datetime(
+                2026,
+                9,
+                13,
+            ),
+            sport="Trail Running",
+            title="Race",
+            intensity="Race effort",
+        ),
+    )
+
+    result = Planner._apply_event_sports(
+        workouts=workouts,
+        event_entries=(
+            event_entry,
+        ),
+    )
+
+    assert result[0].sport == (
+        "Trail Running"
+    )
+
+    assert result[1].sport == (
+        "Road Running"
+    )
+
+    assert result[2].sport == (
+        "Road Running"
     )
