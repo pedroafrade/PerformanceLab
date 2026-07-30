@@ -1080,6 +1080,37 @@ def test_removes_boundary_intensity_without_safe_day():
     assert friday_easy in result.workouts
     assert sunday_long in result.workouts
 
+def test_detects_partial_week():
+
+    assert Planner._is_partial_week(
+        week_start=date(
+            2026,
+            7,
+            27,
+        ),
+        today=date(
+            2026,
+            7,
+            30,
+        ),
+    )
+
+
+def test_full_week_is_not_partial():
+
+    assert not Planner._is_partial_week(
+        week_start=date(
+            2026,
+            8,
+            3,
+        ),
+        today=date(
+            2026,
+            8,
+            3,
+        ),
+    )
+
 def test_adapts_strategy_to_remaining_week():
 
     strategy_plan = StrategyPlan(

@@ -333,6 +333,13 @@ class Planner:
                 else week_start
             )
 
+            is_partial_week = (
+                self._is_partial_week(
+                    week_start=week_start,
+                    today=planning_day,
+                )
+            )
+
             weekly_plan = self.build(
                 athlete=athlete,
                 availability=availability,
@@ -406,7 +413,10 @@ class Planner:
                 )
             )
 
-            if current_weekly_load > 0:
+            if (
+                current_weekly_load > 0
+                and not is_partial_week
+            ):
 
                 previous_weekly_load = (
                     current_weekly_load
@@ -433,6 +443,28 @@ class Planner:
     # ======================================================
 
     @staticmethod
+    def _is_partial_week(
+        *,
+        week_start: date,
+        today: date,
+    ) -> bool:
+        """
+        Indicates whether planning starts after the beginning
+        of the visible week.
+        """
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        return (
+            week_start < today <= week_end
+        )
+
+    # ======================================================
+
+    @staticmethod
     def _adapt_strategy_to_remaining_week(
         *,
         strategy_plan,
@@ -452,9 +484,9 @@ class Planner:
             + timedelta(days=6)
         )
 
-        if (
-            today <= week_start
-            or today > week_end
+        if not Planner._is_partial_week(
+            week_start=week_start,
+            today=today,
         ):
             return strategy_plan
 
