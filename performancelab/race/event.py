@@ -104,28 +104,28 @@ class Event:
 
     def estimated_duration_at_pace(
         self,
-        pace_hours_per_kilometre: float | None,
+        pace_minutes_per_kilometre: float | None,
     ) -> timedelta | None:
         """
         Estimates the event duration from an athlete's
         running pace and the event effort distance.
 
-        Pace is expressed in hours per kilometre.
+        Pace is expressed in minutes per kilometre.
         """
 
         effort_distance = self.effort_distance
 
         if (
             effort_distance is None
-            or pace_hours_per_kilometre is None
-            or pace_hours_per_kilometre <= 0
+            or pace_minutes_per_kilometre is None
+            or pace_minutes_per_kilometre <= 0
         ):
             return None
 
         return timedelta(
-            hours=(
+            minutes=(
                 effort_distance
-                * pace_hours_per_kilometre
+                * pace_minutes_per_kilometre
             )
         )
     

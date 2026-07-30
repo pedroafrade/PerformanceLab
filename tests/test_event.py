@@ -227,7 +227,7 @@ def test_estimates_running_event_duration_at_pace():
 
     duration = (
         event.estimated_duration_at_pace(
-            0.1,
+            6.0,
         )
     )
 
@@ -242,7 +242,7 @@ def test_estimates_running_event_duration_at_pace():
     (
         None,
         0,
-        -0.1,
+        -1.0,
     ),
 )
 def test_event_duration_requires_valid_pace(
@@ -273,7 +273,7 @@ def test_non_running_event_has_no_estimated_duration():
 
     assert (
         event.estimated_duration_at_pace(
-            0.05
+            5.0
         )
         is None
     )
