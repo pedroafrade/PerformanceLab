@@ -599,6 +599,36 @@ def test_selects_target_event_sport_before_history_sports() -> None:
 
     assert sport == "Road Running"
 
+def test_selects_phase_event_sport_before_primary_event() -> None:
+
+    context = SimpleNamespace(
+        phase_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Road Running",
+            ),
+        ),
+        primary_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Trail Running",
+            ),
+        ),
+        next_event=SimpleNamespace(
+            event=SimpleNamespace(
+                sport="Road Running",
+            ),
+        ),
+        sports=(
+            "Cycling",
+            "Running",
+        ),
+    )
+
+    sport = WorkoutGenerator._select_sport(
+        context
+    )
+
+    assert sport == "Road Running"
+
 def test_selects_primary_event_sport_before_next_event() -> None:
 
     context = SimpleNamespace(
