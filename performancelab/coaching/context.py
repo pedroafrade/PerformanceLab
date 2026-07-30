@@ -652,20 +652,17 @@ class CoachContext:
         )
 
     # ======================================================
-
-    @property
-    def primary_event_duration(
+    def event_duration(
         self,
+        event_entry,
     ) -> timedelta | None:
         """
-        Returns the expected duration of the primary event.
+        Returns the expected duration of a registered event.
 
         An athlete-defined target time takes precedence.
-        Otherwise, duration is estimated from recent running
-        performance.
+        Otherwise, duration is estimated from the athlete's
+        recent running performance.
         """
-
-        event_entry = self.primary_event
 
         if event_entry is None:
             return None
@@ -704,6 +701,20 @@ class CoachContext:
             return None
 
         return estimator(event)
+
+    # ======================================================
+
+    @property
+    def primary_event_duration(
+        self,
+    ) -> timedelta | None:
+        """
+        Returns the expected duration of the primary event.
+        """
+
+        return self.event_duration(
+            self.primary_event
+        )
     # ======================================================
 
     @staticmethod

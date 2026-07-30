@@ -1082,6 +1082,77 @@ def test_primary_event_guides_phase_outside_taper_window():
     assert context.primary_event is trail
     assert context.phase_event is trail
 
+def test_context_estimates_non_primary_event_duration():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date.today()
+
+    workout = Workout()
+
+    workout.info.sport = "Running"
+    workout.info.date = today
+    workout.info.distance = 10
+    workout.info.duration = timedelta(
+        minutes=60,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    road_event = EventEntry(
+        event=Event(
+            name="Sealand",
+            date=(
+                today
+                + timedelta(days=45)
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=0,
+        ),
+        priority="A",
+    )
+
+    trail_event = EventEntry(
+        event=Event(
+            name="III Trail Pé Firme",
+            date=(
+                today
+                + timedelta(days=60)
+            ),
+            sport="Trail Running",
+            distance=23,
+            elevation_gain=950,
+        ),
+        priority="A",
+    )
+
+    athlete.events.add(
+        road_event
+    )
+
+    athlete.events.add(
+        trail_event
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.primary_event is trail_event
+
+    assert (
+        context.event_duration(
+            road_event
+        )
+        == timedelta(minutes=60)
+    )
+
 def test_context_estimates_primary_event_duration():
 
     athlete = Athlete(
