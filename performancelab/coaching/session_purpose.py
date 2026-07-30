@@ -24,6 +24,8 @@ class SessionPurpose(str, Enum):
 
     EASY = "easy"
 
+    TECHNIQUE = "technique"
+
     PRE_RACE = "pre_race"
 
     SHAKEOUT = "shakeout"
@@ -73,6 +75,7 @@ class SessionPurpose(str, Enum):
         return self in {
             SessionPurpose.RECOVERY,
             SessionPurpose.EASY,
+            SessionPurpose.TECHNIQUE,
             SessionPurpose.PRE_RACE,
             SessionPurpose.SHAKEOUT,
         }

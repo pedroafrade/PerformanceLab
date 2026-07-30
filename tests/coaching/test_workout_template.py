@@ -9,6 +9,7 @@ from performancelab.coaching import (
     WorkoutTemplate,
     CROSS_TRAINING_TEMPLATE,
     SHAKEOUT_TEMPLATE,
+    TECHNIQUE_TEMPLATE,
 )
 
 from performancelab.coaching.session_purpose import (
@@ -266,6 +267,10 @@ def test_for_sport_rejects_empty_sport() -> None:
         (
             SessionPurpose.EASY,
             EASY_TEMPLATE,
+        ),
+        (
+            SessionPurpose.TECHNIQUE,
+            TECHNIQUE_TEMPLATE,
         ),
         (
             SessionPurpose.SHAKEOUT,

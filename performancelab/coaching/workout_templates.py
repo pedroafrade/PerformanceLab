@@ -48,6 +48,26 @@ EASY_TEMPLATE = WorkoutTemplate(
     ),
 )
 
+TECHNIQUE_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.TECHNIQUE,
+    title="Technique Session",
+    objective=(
+        "Develop efficient movement and confidence "
+        "on event-specific terrain."
+    ),
+    intensity="Easy to moderate",
+    description=(
+        "Keep the overall effort aerobic while practising "
+        "controlled climbing and relaxed descending technique."
+    ),
+    structure=(
+        "Easy aerobic warm-up",
+        "Controlled climbing technique",
+        "Relaxed downhill technique",
+        "Easy cool-down",
+    ),
+)
+
 PRE_RACE_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.PRE_RACE,
     title="Pre-Race Easy Session",
@@ -276,6 +296,7 @@ _DEFAULT_TEMPLATES = {
     SessionPurpose.REST: REST_TEMPLATE,
     SessionPurpose.RECOVERY: RECOVERY_TEMPLATE,
     SessionPurpose.EASY: EASY_TEMPLATE,
+    SessionPurpose.TECHNIQUE: TECHNIQUE_TEMPLATE,
     SessionPurpose.PRE_RACE: PRE_RACE_TEMPLATE,
     SessionPurpose.SHAKEOUT: SHAKEOUT_TEMPLATE,
     SessionPurpose.INTENSITY: INTENSITY_TEMPLATE,
