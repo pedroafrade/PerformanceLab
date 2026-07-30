@@ -24,6 +24,7 @@ from .draft_slot import DraftTrainingSlot
 from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 
+DEFAULT_LONG_DAY = Weekday.SUNDAY
 
 class WeekStructureGenerator:
     """
@@ -312,6 +313,16 @@ class WeekStructureGenerator:
             and preferences.preferred_long_day == weekday
         )
 
+        resolved_long_day = (
+            preferences.preferred_long_day
+            or DEFAULT_LONG_DAY
+        )
+
+        preferred_long = (
+            strategy_plan.long_sessions > 0
+            and resolved_long_day == weekday
+        )
+
         preferred_intensity = (
             strategy_plan.intensity_sessions > 0
             and weekday
@@ -395,13 +406,18 @@ class WeekStructureGenerator:
         if maximum <= 0:
             return ()
 
+        resolved_long_day = (
+            preferences.preferred_long_day
+            or DEFAULT_LONG_DAY
+        )
+
         candidates = sorted(
             training_days,
             key=lambda weekday: (
                 (
                     0
                     if weekday
-                    == preferences.preferred_long_day
+                    == resolved_long_day
                     else 1
                 ),
                 -self._usable_minutes(

@@ -192,6 +192,59 @@ def test_places_long_session_on_preferred_day(
         for slot in slots
     ) == 1
 
+def test_places_long_session_on_sunday_by_default(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    preferences = AthletePreferences()
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=strategy_plan,
+        availability=full_availability,
+        preferences=preferences,
+        constraints=default_constraints,
+    )
+
+    sunday = slot_for_day(
+        slots,
+        Weekday.SUNDAY,
+    )
+
+    assert (
+        sunday.purpose
+        is SessionPurpose.LONG
+    )
+
+def test_explicit_long_day_overrides_default_sunday(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    preferences = AthletePreferences(
+        preferred_long_day=(
+            Weekday.SATURDAY
+        ),
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=strategy_plan,
+        availability=full_availability,
+        preferences=preferences,
+        constraints=default_constraints,
+    )
+
+    saturday = slot_for_day(
+        slots,
+        Weekday.SATURDAY,
+    )
+
+    assert (
+        saturday.purpose
+        is SessionPurpose.LONG
+    )
 
 def test_does_not_place_long_session_on_unavailable_preferred_day(
     strategy_plan: StrategyPlan,
