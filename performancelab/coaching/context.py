@@ -777,7 +777,43 @@ class CoachContext:
             return None
 
         return event_date
+    # ======================================================
 
+    @property
+    def days_until_primary_event(
+        self,
+    ) -> int | None:
+        """
+        Returns the number of days until the primary event
+        in the current competition block.
+        """
+
+        event_entry = self.primary_event
+
+        if event_entry is None:
+            return None
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        if not isinstance(
+            event_date,
+            date,
+        ):
+            return None
+
+        return (
+            event_date - self.today
+        ).days
     # ======================================================
     
     @property

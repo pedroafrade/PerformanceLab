@@ -557,3 +557,73 @@ def test_no_previous_event_uses_normal_event_cycle():
 
     assert analysis.phase == "Peak"
     assert analysis.strategy == "PeakStrategy"
+
+def test_phase_uses_primary_event_in_competition_block():
+
+    today = date(
+        2026,
+        3,
+        10,
+    )
+
+    next_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Preparation Race",
+            date=date(
+                2026,
+                3,
+                20,
+            ),
+            effort_distance=10.0,
+        ),
+        priority="A",
+        target_time=None,
+    )
+
+    primary_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            date=date(
+                2026,
+                4,
+                3,
+            ),
+            effort_distance=32.5,
+        ),
+        priority="A",
+        target_time=None,
+    )
+
+    context = make_context(
+        next_event=next_event,
+        days_until_event=10,
+        upcoming_events=(
+            next_event,
+            primary_event,
+        ),
+    )
+
+    analysis = CoachAnalyzer(
+        context
+    ).analyze()
+
+    assert (
+        context.primary_event
+        is primary_event
+    )
+
+    assert (
+        context.days_until_primary_event
+        == 24
+    )
+
+    assert analysis.phase == "Peak"
+
+    assert (
+        analysis.strategy
+        == "PeakStrategy"
+    )
+
+    assert analysis.summary == (
+        "Peak phase for Primary Trail."
+    )

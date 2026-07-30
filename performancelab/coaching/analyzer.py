@@ -85,14 +85,22 @@ class CoachAnalyzer:
         A race completed during the previous seven days takes
         priority over the next event cycle. Once that recovery
         window ends, the next upcoming event determines the
-        normal competitive phase. Without an upcoming event,
-        the athlete enters maintenance.
+        primary event determines the normal competitive phase.
+        Without an upcoming event, the athlete enters maintenance.
         """
 
         if self.context.is_post_race:
             return "Regeneration"
 
-        days = self.context.days_until_event
+        days = getattr(
+            self.context,
+            "days_until_primary_event",
+            None,
+        )
+
+        if days is None:
+
+            days = self.context.days_until_event
 
         if days is None:
             return "Maintenance"
@@ -134,7 +142,14 @@ class CoachAnalyzer:
         phase: str,
     ):
 
-        event = self.context.next_event
+        event = (
+            getattr(
+                self.context,
+                "primary_event",
+                None,
+            )
+            or self.context.next_event
+        )
 
         if event is None:
 

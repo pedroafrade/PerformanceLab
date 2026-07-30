@@ -922,6 +922,10 @@ def test_context_exposes_competition_plan_metadata():
             27,
         )
     )
+    assert (
+        context.days_until_primary_event
+        == 60
+    )
 
 
 def test_context_without_events_has_no_plan_metadata():
@@ -948,5 +952,10 @@ def test_context_without_events_has_no_plan_metadata():
 
     assert (
         context.planning_end_date
+        is None
+    )
+
+    assert (
+        context.days_until_primary_event
         is None
     )
