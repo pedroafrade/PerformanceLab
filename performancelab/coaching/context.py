@@ -653,6 +653,59 @@ class CoachContext:
 
     # ======================================================
 
+    @property
+    def primary_event_duration(
+        self,
+    ) -> timedelta | None:
+        """
+        Returns the expected duration of the primary event.
+
+        An athlete-defined target time takes precedence.
+        Otherwise, duration is estimated from recent running
+        performance.
+        """
+
+        event_entry = self.primary_event
+
+        if event_entry is None:
+            return None
+
+        target_time = getattr(
+            event_entry,
+            "target_time",
+            None,
+        )
+
+        if target_time is not None:
+            return target_time
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        if event is None:
+            return None
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        estimator = getattr(
+            analytics,
+            "estimated_event_duration",
+            None,
+        )
+
+        if not callable(estimator):
+            return None
+
+        return estimator(event)
+    # ======================================================
+
     @staticmethod
     def _event_priority_key(
         event_entry,

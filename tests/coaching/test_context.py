@@ -16,6 +16,8 @@ from performancelab.race import (
     EventEntry,
 )
 
+from performancelab.workout import Workout
+
 
 def make_athlete(
     *,
@@ -1079,3 +1081,108 @@ def test_primary_event_guides_phase_outside_taper_window():
 
     assert context.primary_event is trail
     assert context.phase_event is trail
+
+def test_context_estimates_primary_event_duration():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date.today()
+
+    workout = Workout()
+
+    workout.info.sport = "Running"
+    workout.info.date = today
+    workout.info.distance = 10
+    workout.info.duration = timedelta(
+        minutes=60,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="III Trail Pé Firme",
+                date=(
+                    today
+                    + timedelta(days=60)
+                ),
+                sport="Trail Running",
+                distance=23,
+                elevation_gain=950,
+            ),
+            priority="A",
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.primary_event_duration
+        == timedelta(
+            hours=3,
+            minutes=15,
+        )
+    )
+
+
+def test_target_time_precedes_estimated_duration():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date.today()
+
+    workout = Workout()
+
+    workout.info.sport = "Running"
+    workout.info.date = today
+    workout.info.distance = 10
+    workout.info.duration = timedelta(
+        minutes=60,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="III Trail Pé Firme",
+                date=(
+                    today
+                    + timedelta(days=60)
+                ),
+                sport="Trail Running",
+                distance=23,
+                elevation_gain=950,
+            ),
+            priority="A",
+            target_time=timedelta(
+                hours=2,
+                minutes=45,
+            ),
+        )
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert (
+        context.primary_event_duration
+        == timedelta(
+            hours=2,
+            minutes=45,
+        )
+    )
