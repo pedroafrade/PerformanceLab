@@ -816,6 +816,33 @@ def test_builds_pre_race_running_title() -> None:
 
     assert title == "Pre-Race Easy Run"
 
+def test_builds_duration_aware_pre_race_structure():
+
+    template = (
+        PRE_RACE_TEMPLATE.for_sport(
+            "Trail Running"
+        )
+    )
+
+    structure = (
+        WorkoutGenerator._prescribed_structure(
+            template=template,
+            duration_minutes=40,
+            coach_context=SimpleNamespace(),
+            strategy_plan=SimpleNamespace(),
+        )
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        "Easy aerobic run 20 min",
+        (
+            "4×20 sec relaxed strides with "
+            "full easy recovery (5 min block)"
+        ),
+        "Cool down 5 min",
+    )
+
 def test_copies_strategy_phase_to_planned_workout():
 
     strategy_plan = make_strategy_plan(

@@ -365,6 +365,12 @@ class WorkoutGenerator:
                 cool_down_minutes=5,
             )
 
+        if purpose is SessionPurpose.PRE_RACE:
+            return cls._pre_race_structure(
+                duration_minutes=duration_minutes,
+                sport=template.sport,
+            )
+
         if purpose is SessionPurpose.TECHNIQUE:
             return cls._technique_structure(
                 duration_minutes=duration_minutes,
@@ -594,6 +600,79 @@ class WorkoutGenerator:
         return (
             f"Warm up {warm_up_minutes} min",
             f"{main_label} {main_minutes} min",
+            f"Cool down {cool_down_minutes} min",
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _pre_race_structure(
+        cls,
+        *,
+        duration_minutes: int,
+        sport: str | None,
+    ) -> tuple[str, ...]:
+        """
+        Builds a pre-race session whose prescribed steps
+        match its total duration.
+        """
+
+        if duration_minutes <= 20:
+            return (
+                f"Easy pre-race training {duration_minutes} min",
+            )
+
+        warm_up_minutes = (
+            10
+            if duration_minutes >= 30
+            else 5
+        )
+        cool_down_minutes = 5
+        activation_minutes = 5
+
+        aerobic_minutes = max(
+            1,
+            duration_minutes
+            - warm_up_minutes
+            - activation_minutes
+            - cool_down_minutes,
+        )
+
+        aerobic_label = cls._sport_label(
+            sport,
+            running="Easy aerobic run",
+            cycling="Easy aerobic ride",
+            swimming="Easy aerobic swim",
+            fallback="Easy aerobic training",
+        )
+
+        activation_label = cls._sport_label(
+            sport,
+            running=(
+                "4×20 sec relaxed strides with "
+                "full easy recovery"
+            ),
+            cycling=(
+                "4×20 sec relaxed high-cadence "
+                "accelerations with easy recovery"
+            ),
+            swimming=(
+                "4×20 sec relaxed pickups with "
+                "easy recovery"
+            ),
+            fallback=(
+                "4×20 sec relaxed accelerations "
+                "with easy recovery"
+            ),
+        )
+
+        return (
+            f"Warm up {warm_up_minutes} min",
+            f"{aerobic_label} {aerobic_minutes} min",
+            (
+                f"{activation_label} "
+                f"({activation_minutes} min block)"
+            ),
             f"Cool down {cool_down_minutes} min",
         )
 
