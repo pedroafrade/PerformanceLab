@@ -970,3 +970,112 @@ def test_automatic_planning_preserves_stricter_limit(
         result.max_consecutive_training_days
         == 1
     )
+
+def test_removes_boundary_intensity_without_safe_day():
+
+    previous_long = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            2,
+        ),
+        title="Long Aerobic Run",
+        duration=timedelta(
+            minutes=105,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    monday_hills = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            3,
+        ),
+        title="Hill Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Hard",
+    )
+
+    wednesday_hills = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            5,
+        ),
+        title="Hill Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Hard",
+    )
+
+    friday_easy = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            7,
+        ),
+        title="Easy Aerobic Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Easy",
+    )
+
+    sunday_long = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+        ),
+        title="Long Aerobic Run",
+        duration=timedelta(
+            minutes=110,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    weekly_plan = WeeklyPlan(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        workouts=[
+            monday_hills,
+            wednesday_hills,
+            friday_easy,
+            sunday_long,
+        ],
+    )
+
+    result = Planner._protect_week_boundary(
+        weekly_plan=weekly_plan,
+        previous_workout=previous_long,
+    )
+
+    hill_days = [
+        workout.day
+        for workout in result.workouts
+        if workout.title == "Hill Run"
+    ]
+
+    assert hill_days == [
+        date(
+            2026,
+            8,
+            5,
+        )
+    ]
+
+    assert monday_hills not in result.workouts
+    assert friday_easy in result.workouts
+    assert sunday_long in result.workouts

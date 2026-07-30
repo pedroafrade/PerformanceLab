@@ -571,6 +571,9 @@ class Planner:
 
         The demanding workout is moved to the first free
         day that provides sufficient recovery.
+
+        If no safe day exists, the additional demanding
+        workout is removed.
         """
 
         if previous_workout is None:
@@ -626,6 +629,25 @@ class Planner:
             if workout is not demanding_workout
         }
 
+        protected_days = {
+            workout.day
+            for workout in weekly_plan.workouts
+            if (
+                workout is not demanding_workout
+                and (
+                    Planner._is_demanding_workout(
+                        workout
+                    )
+                    or Planner._is_long_workout(
+                        workout
+                    )
+                    or Planner._is_race_workout(
+                        workout
+                    )
+                )
+            )
+        }
+
         replacement_day = (
             earliest_safe_day
         )
@@ -633,8 +655,21 @@ class Planner:
         while (
             replacement_day
             <= weekly_plan.end_date
-            and replacement_day
-            in occupied_days
+            and (
+                replacement_day
+                in occupied_days
+                or any(
+                    abs(
+                        (
+                            replacement_day
+                            - protected_day
+                        ).days
+                    )
+                    < MIN_DAYS_BETWEEN_LONG_AND_INTENSITY
+                    for protected_day
+                    in protected_days
+                )
+            )
         ):
             replacement_day += timedelta(
                 days=1
@@ -644,7 +679,23 @@ class Planner:
             replacement_day
             > weekly_plan.end_date
         ):
-            return weekly_plan
+            return WeeklyPlan(
+                start_date=(
+                    weekly_plan.start_date
+                ),
+                end_date=(
+                    weekly_plan.end_date
+                ),
+                workouts=[
+                    workout
+                    for workout
+                    in weekly_plan.workouts
+                    if (
+                        workout
+                        is not demanding_workout
+                    )
+                ],
+            )
 
         day_shift = (
             replacement_day
