@@ -200,15 +200,26 @@ def _selected_day_description(
     if day is None:
         return ""
 
+    details = []
+
+    if day.sport:
+        details.append(
+            str(day.sport).strip()
+        )
+
     structure = [
         str(step).strip()
         for step in day.structure
         if str(step).strip()
     ]
 
-    if structure:
+    details.extend(
+        structure
+    )
+
+    if details:
         return escape(
-            " · ".join(structure)
+            " · ".join(details)
         )
 
     if not _planned(day):
@@ -216,7 +227,6 @@ def _selected_day_description(
 
     return escape(
         day.title
-        or day.sport
         or "Planned workout"
     )
 
