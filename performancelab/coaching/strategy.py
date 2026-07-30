@@ -455,6 +455,11 @@ class CoachStrategy(ABC):
         target_event = (
             getattr(
                 context,
+                "phase_event",
+                None,
+            )
+            or getattr(
+                context,
                 "primary_event",
                 None,
             )
@@ -490,6 +495,11 @@ class CoachStrategy(ABC):
 
         target_event = (
             getattr(
+                context,
+                "phase_event",
+                None,
+            )
+            or getattr(
                 context,
                 "primary_event",
                 None,
@@ -533,6 +543,11 @@ class CoachStrategy(ABC):
 
         target_event = (
             getattr(
+                context,
+                "phase_event",
+                None,
+            )
+            or getattr(
                 context,
                 "primary_event",
                 None,

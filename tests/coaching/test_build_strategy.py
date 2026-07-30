@@ -18,6 +18,7 @@ def make_context(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     next_event=None,
+    phase_event=None,
     primary_event=None,
     typical_weekly_minutes: float = 0.0,
     typical_weekly_sessions: float = 0.0,
@@ -31,6 +32,7 @@ def make_context(
         tsb=tsb,
         average_rpe=average_rpe,
         next_event=next_event,
+        phase_event=phase_event,
         primary_event=primary_event,
         training_state=SimpleNamespace(
             typical_weekly_minutes=(
@@ -44,7 +46,6 @@ def make_context(
             ),
         ),
     )
-
 
 def make_event(
     *,
@@ -480,6 +481,45 @@ def test_event_adds_specific_objective():
     assert (
         "Prepare progressively for Coastal Ultra."
         in plan.objectives
+    )
+
+def test_phase_event_defines_specific_objective():
+
+    plan = BuildStrategy().build(
+        make_context(
+            next_event=make_event(
+                name="Sealand",
+                sport="Road Running",
+                elevation_demand="rolling",
+            ),
+            phase_event=make_event(
+                name="Sealand",
+                sport="Road Running",
+                elevation_demand="rolling",
+            ),
+            primary_event=make_event(
+                name="III Trail Pé Firme",
+                sport="Trail Running",
+                elevation_demand="mountainous",
+            ),
+        ),
+    )
+
+    assert (
+        "Prepare progressively for Sealand."
+        in plan.objectives
+    )
+
+    assert (
+        "Prepare progressively for III Trail Pé Firme."
+        not in plan.objectives
+    )
+
+    assert plan.focus == "threshold"
+
+    assert (
+        plan.elevation_demand
+        == "rolling"
     )
 
 def test_primary_event_defines_specific_objective():
