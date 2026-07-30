@@ -569,3 +569,118 @@ def test_no_competition_events_preserves_slots():
     )
 
     assert result == slots
+
+def test_places_shakeout_before_sunday_race():
+
+    week_start = date(
+        2026,
+        9,
+        7,
+    )
+
+    slots = tuple(
+        DraftTrainingSlot.rest(
+            weekday
+        )
+        for weekday in Weekday
+    )
+
+    event_entry = make_event_entry(
+        event_date=date(
+            2026,
+            9,
+            13,
+        ),
+        name="Sealand",
+    )
+
+    result = Planner._apply_events_to_week(
+        slots=slots,
+        week_start=week_start,
+        event_entries=(
+            event_entry,
+        ),
+    )
+
+    saturday = next(
+        slot
+        for slot in result
+        if (
+            slot.weekday
+            is Weekday.SATURDAY
+        )
+    )
+
+    sunday = next(
+        slot
+        for slot in result
+        if (
+            slot.weekday
+            is Weekday.SUNDAY
+        )
+    )
+
+    assert (
+        saturday.purpose
+        is SessionPurpose.SHAKEOUT
+    )
+
+    assert (
+        saturday.duration_minutes
+        == 20
+    )
+
+    assert (
+        sunday.purpose
+        is SessionPurpose.RACE
+    )
+def test_places_shakeout_in_week_before_monday_race():
+
+    week_start = date(
+        2026,
+        9,
+        7,
+    )
+
+    slots = tuple(
+        DraftTrainingSlot.rest(
+            weekday
+        )
+        for weekday in Weekday
+    )
+
+    monday_event = make_event_entry(
+        event_date=date(
+            2026,
+            9,
+            14,
+        ),
+        name="Monday Race",
+    )
+
+    result = Planner._apply_events_to_week(
+        slots=slots,
+        week_start=week_start,
+        event_entries=(
+            monday_event,
+        ),
+    )
+
+    sunday = next(
+        slot
+        for slot in result
+        if (
+            slot.weekday
+            is Weekday.SUNDAY
+        )
+    )
+
+    assert (
+        sunday.purpose
+        is SessionPurpose.SHAKEOUT
+    )
+
+    assert (
+        sunday.duration_minutes
+        == 20
+    )

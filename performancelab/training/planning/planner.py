@@ -530,6 +530,9 @@ class Planner:
                         and not Planner._is_race_workout(
                             workout
                         )
+                        and not Planner._is_shakeout_workout(
+                            workout
+                        )
                     )
                 ]
 
@@ -616,6 +619,24 @@ class Planner:
     # ======================================================
 
     @staticmethod
+    def _is_shakeout_workout(
+        workout,
+    ) -> bool:
+
+        title = str(
+            getattr(
+                workout,
+                "title",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return "shakeout" in title
+    
+    # ======================================================
+
+    @staticmethod
     def _apply_events_to_week(
         *,
         slots: tuple[DraftTrainingSlot, ...],
@@ -635,6 +656,14 @@ class Planner:
         for event_entry in event_entries:
 
             updated_slots = (
+                Planner._apply_shakeout_to_week(
+                    slots=updated_slots,
+                    week_start=week_start,
+                    event_entry=event_entry,
+                )
+            )
+
+            updated_slots = (
                 Planner._apply_event_to_week(
                     slots=updated_slots,
                     week_start=week_start,
@@ -643,6 +672,112 @@ class Planner:
             )
 
         return updated_slots
+    
+    # ======================================================
+
+    @staticmethod
+    def _apply_shakeout_to_week(
+        *,
+        slots: tuple[DraftTrainingSlot, ...],
+        week_start: date,
+        event_entry,
+    ) -> tuple[DraftTrainingSlot, ...]:
+        """
+        Places a short activation session on the day before
+        a registered competition.
+
+        The shakeout replaces any previously planned session
+        on that day.
+        """
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        if event_date is None:
+            return slots
+
+        shakeout_date = (
+            event_date
+            - timedelta(days=1)
+        )
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        if not (
+            week_start
+            <= shakeout_date
+            <= week_end
+        ):
+            return slots
+
+        shakeout_weekday = Weekday(
+            shakeout_date.weekday()
+        )
+
+        updated_slots = list(
+            slots
+        )
+
+        shakeout_index = next(
+            (
+                index
+                for index, slot in enumerate(
+                    updated_slots
+                )
+                if (
+                    slot.weekday
+                    == shakeout_weekday
+                )
+            ),
+            None,
+        )
+
+        if shakeout_index is None:
+            return slots
+
+        event_name = str(
+            getattr(
+                event,
+                "name",
+                "",
+            )
+            or "competition"
+        ).strip()
+
+        updated_slots[shakeout_index] = (
+            DraftTrainingSlot(
+                weekday=shakeout_weekday,
+                purpose=(
+                    SessionPurpose.SHAKEOUT
+                ),
+                duration_minutes=20,
+                notes=(
+                    "Pre-race activation for "
+                    f"{event_name}."
+                ),
+            )
+        )
+
+        return tuple(
+            sorted(
+                updated_slots,
+                key=lambda slot: (
+                    slot.weekday.value
+                ),
+            )
+        )
 
     # ======================================================
 
@@ -819,7 +954,10 @@ class Planner:
             for slot in slots
             if slot.weekday != race_weekday
             and slot.is_training
-            and slot.purpose is not SessionPurpose.RACE
+            and slot.purpose
+            is not SessionPurpose.RACE
+            and slot.purpose
+            is not SessionPurpose.SHAKEOUT
         ]
 
         if not candidates:
