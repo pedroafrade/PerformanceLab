@@ -1079,3 +1079,87 @@ def test_removes_boundary_intensity_without_safe_day():
     assert monday_hills not in result.workouts
     assert friday_easy in result.workouts
     assert sunday_long in result.workouts
+
+def test_adapts_strategy_to_remaining_week():
+
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=4,
+        intensity_sessions=2,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=260,
+        target_weekly_load=400.0,
+        long_session_minutes=105,
+    )
+
+    result = (
+        Planner
+        ._adapt_strategy_to_remaining_week(
+            strategy_plan=strategy_plan,
+            week_start=date(
+                2026,
+                7,
+                27,
+            ),
+            today=date(
+                2026,
+                7,
+                30,
+            ),
+        )
+    )
+
+    assert result.target_sessions == 2
+    assert result.intensity_sessions == 1
+    assert result.long_sessions == 1
+    assert result.recovery_days == 5
+
+    assert (
+        result.target_weekly_minutes
+        == 150
+    )
+
+    assert (
+        result.target_weekly_load
+        == pytest.approx(
+            400 * 4 / 7
+        )
+    )
+
+
+def test_full_week_keeps_strategy_unchanged():
+
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=4,
+        intensity_sessions=2,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=260,
+        target_weekly_load=400.0,
+        long_session_minutes=105,
+    )
+
+    result = (
+        Planner
+        ._adapt_strategy_to_remaining_week(
+            strategy_plan=strategy_plan,
+            week_start=date(
+                2026,
+                8,
+                3,
+            ),
+            today=date(
+                2026,
+                8,
+                3,
+            ),
+        )
+    )
+
+    assert result is strategy_plan

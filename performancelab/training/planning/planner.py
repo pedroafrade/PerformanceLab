@@ -191,6 +191,14 @@ class Planner:
             )
         )
 
+        strategy_plan = (
+            self._adapt_strategy_to_remaining_week(
+                strategy_plan=strategy_plan,
+                week_start=start_date,
+                today=reference_day,
+            )
+        )
+
         slots = self.structure_generator.generate(
             strategy_plan=strategy_plan,
             availability=resolved_availability,
@@ -421,6 +429,131 @@ class Planner:
             )
 
         return training_plan
+
+    # ======================================================
+
+    @staticmethod
+    def _adapt_strategy_to_remaining_week(
+        *,
+        strategy_plan,
+        week_start: date,
+        today: date,
+    ):
+        """
+        Reduces sessions and volume when planning begins
+        partway through a week.
+
+        Missed volume is not compressed into the remaining
+        days.
+        """
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        if (
+            today <= week_start
+            or today > week_end
+        ):
+            return strategy_plan
+
+        days_remaining = (
+            week_end - today
+        ).days + 1
+
+        if days_remaining >= 7:
+            return strategy_plan
+
+        target_sessions = (
+            strategy_plan.target_sessions
+        )
+
+        if target_sessions <= 0:
+            return strategy_plan
+
+        adjusted_sessions = max(
+            1,
+            int(
+                target_sessions
+                * days_remaining
+                / 7
+            ),
+        )
+
+        adjusted_long_sessions = min(
+            strategy_plan.long_sessions,
+            adjusted_sessions,
+        )
+
+        adjusted_intensity_sessions = min(
+            strategy_plan.intensity_sessions,
+            max(
+                adjusted_sessions
+                - adjusted_long_sessions,
+                0,
+            ),
+        )
+
+        adjusted_weekly_minutes = (
+            strategy_plan.target_weekly_minutes
+        )
+
+        if adjusted_weekly_minutes is not None:
+
+            adjusted_weekly_minutes = int(
+                round(
+                    (
+                        adjusted_weekly_minutes
+                        * days_remaining
+                        / 7
+                    )
+                    / 5
+                )
+                * 5
+            )
+
+            if (
+                strategy_plan.long_session_minutes
+                is not None
+            ):
+                adjusted_weekly_minutes = max(
+                    adjusted_weekly_minutes,
+                    strategy_plan
+                    .long_session_minutes,
+                )
+
+        adjusted_weekly_load = (
+            strategy_plan.target_weekly_load
+        )
+
+        if adjusted_weekly_load is not None:
+            adjusted_weekly_load = (
+                adjusted_weekly_load
+                * days_remaining
+                / 7
+            )
+
+        return replace(
+            strategy_plan,
+            target_sessions=adjusted_sessions,
+            intensity_sessions=(
+                adjusted_intensity_sessions
+            ),
+            long_sessions=(
+                adjusted_long_sessions
+            ),
+            recovery_days=max(
+                strategy_plan.recovery_days,
+                7 - adjusted_sessions,
+            ),
+            target_weekly_minutes=(
+                adjusted_weekly_minutes
+            ),
+            target_weekly_load=(
+                adjusted_weekly_load
+            ),
+        )
 
     # ======================================================
 
