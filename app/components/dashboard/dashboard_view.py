@@ -50,7 +50,7 @@ from ..route_map import (
 )
 
 
-FIRST_ROW_HEIGHT = 275
+FIRST_ROW_HEIGHT = 277
 
 
 def show_dashboard(
