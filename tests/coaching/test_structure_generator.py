@@ -807,3 +807,56 @@ def test_post_race_week_progresses_from_recovery_to_easy(
         35,
         35,
     )
+
+def test_close_event_week_ends_with_pre_race_session(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    transition_plan = replace(
+        strategy_plan,
+        strategy="RegenerationStrategy",
+        phase="Regeneration",
+        target_sessions=4,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=3,
+        target_weekly_minutes=120,
+        long_session_minutes=None,
+        secondary_focus="pre-race taper",
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=transition_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    training_slots = tuple(
+        slot
+        for slot in slots
+        if slot.is_training
+    )
+
+    assert tuple(
+        slot.purpose
+        for slot in training_slots
+    ) == (
+        SessionPurpose.RECOVERY,
+        SessionPurpose.EASY,
+        SessionPurpose.EASY,
+        SessionPurpose.PRE_RACE,
+    )
+
+    assert tuple(
+        slot.duration_minutes
+        for slot in training_slots
+    ) == (
+        20,
+        35,
+        35,
+        30,
+    )

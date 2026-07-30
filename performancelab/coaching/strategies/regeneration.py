@@ -63,6 +63,8 @@ class RegenerationStrategy(CoachStrategy):
         target_sessions = 4
         recovery_days = 3
 
+        secondary_focus = "easy aerobic"
+
         close_follow_up_event = (
             getattr(
                 context,
@@ -96,6 +98,9 @@ class RegenerationStrategy(CoachStrategy):
 
                     target_sessions = 4
                     recovery_days = 3
+                    secondary_focus = (
+                        "pre-race taper"
+                    )
 
                 else:
 
@@ -187,7 +192,7 @@ class RegenerationStrategy(CoachStrategy):
             focus="recovery",
 
             key_session_focus="recovery",
-            secondary_focus="easy aerobic",
+            secondary_focus=secondary_focus,
 
             recovery_priority="high",
 

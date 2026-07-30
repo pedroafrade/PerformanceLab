@@ -368,6 +368,15 @@ class WeekStructureGenerator:
                 training_days[0]
             ] = SessionPurpose.RECOVERY
 
+        if (
+            strategy_plan.secondary_focus
+            == "pre-race taper"
+            and len(training_days) > 1
+        ):
+            purposes[
+                training_days[-1]
+            ] = SessionPurpose.PRE_RACE
+
         long_days = self._select_long_days(
             training_days=training_days,
             strategy_plan=strategy_plan,
@@ -799,10 +808,11 @@ class WeekStructureGenerator:
         priorities = {
             SessionPurpose.INTENSITY: 0,
             SessionPurpose.EASY: 1,
-            SessionPurpose.CROSS_TRAINING: 2,
-            SessionPurpose.RECOVERY: 3,
-            SessionPurpose.LONG: 4,
-            SessionPurpose.RACE: 5,
+            SessionPurpose.PRE_RACE: 2,
+            SessionPurpose.CROSS_TRAINING: 3,
+            SessionPurpose.RECOVERY: 4,
+            SessionPurpose.LONG: 5,
+            SessionPurpose.RACE: 6,
         }
 
         return priorities.get(
@@ -879,6 +889,12 @@ class WeekStructureGenerator:
         notes = {
             SessionPurpose.EASY:
                 "Easy session assigned from the strategy plan.",
+                
+            SessionPurpose.PRE_RACE:
+                (
+                    "Pre-race easy session assigned to "
+                    "bridge recovery and taper."
+                ),
 
             SessionPurpose.INTENSITY:
                 "Intensity session assigned from the strategy plan.",
