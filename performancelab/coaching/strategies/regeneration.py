@@ -99,15 +99,8 @@ class RegenerationStrategy(CoachStrategy):
 
                 volume_factor = 0.30
 
-                if close_follow_up_event:
-
-                    target_sessions = 4
-                    recovery_days = 3
-
-                else:
-
-                    target_sessions = 3
-                    recovery_days = 4
+                target_sessions = 3
+                recovery_days = 4
 
                 guidelines.insert(
                     0,

@@ -210,6 +210,7 @@ class WorkoutGenerator:
         if purpose in {
             SessionPurpose.LONG,
             SessionPurpose.EASY,
+            SessionPurpose.TECHNIQUE,
             SessionPurpose.CROSS_TRAINING,
         }:
             return (
@@ -362,6 +363,12 @@ class WorkoutGenerator:
                 ),
                 warm_up_minutes=10,
                 cool_down_minutes=5,
+            )
+
+        if purpose is SessionPurpose.TECHNIQUE:
+            return cls._technique_structure(
+                duration_minutes=duration_minutes,
+                sport=template.sport,
             )
 
         if purpose is SessionPurpose.LONG:
@@ -590,7 +597,75 @@ class WorkoutGenerator:
             f"Cool down {cool_down_minutes} min",
         )
 
+    # ======================================================
 
+    @classmethod
+    def _technique_structure(
+        cls,
+        *,
+        duration_minutes: int,
+        sport: str | None,
+    ) -> tuple[str, ...]:
+        """
+        Builds a low-intensity technique session whose
+        prescribed steps match its total duration.
+        """
+
+        if duration_minutes <= 20:
+            return (
+                f"Easy technique training {duration_minutes} min",
+            )
+
+        warm_up_minutes = (
+            10
+            if duration_minutes >= 30
+            else 5
+        )
+        cool_down_minutes = 5
+        technique_minutes = min(
+            10,
+            max(
+                5,
+                duration_minutes // 4,
+            ),
+        )
+        aerobic_minutes = max(
+            1,
+            duration_minutes
+            - warm_up_minutes
+            - technique_minutes
+            - cool_down_minutes,
+        )
+
+        aerobic_label = cls._sport_label(
+            sport,
+            running="Easy aerobic run on varied terrain",
+            cycling="Easy aerobic ride",
+            swimming="Easy aerobic swim",
+            fallback="Easy aerobic training",
+        )
+
+        technique_label = cls._sport_label(
+            sport,
+            running=(
+                "Controlled climbing and relaxed "
+                "descending technique"
+            ),
+            cycling=(
+                "Controlled cadence and cornering "
+                "technique"
+            ),
+            swimming="Relaxed swimming technique",
+            fallback="Controlled movement technique",
+        )
+
+        return (
+            f"Warm up {warm_up_minutes} min",
+            f"{aerobic_label} {aerobic_minutes} min",
+            f"{technique_label} {technique_minutes} min",
+            f"Cool down {cool_down_minutes} min",
+        )
+    
     # ======================================================
 
     @classmethod

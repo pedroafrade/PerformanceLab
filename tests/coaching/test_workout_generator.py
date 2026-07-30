@@ -20,6 +20,7 @@ from performancelab.coaching.session_purpose import (
 )
 from performancelab.coaching.workout_templates import (
     EASY_TEMPLATE,
+    TECHNIQUE_TEMPLATE,
     INTENSITY_TEMPLATE,
     THRESHOLD_TEMPLATE,
     VO2MAX_TEMPLATE,
@@ -858,3 +859,35 @@ def test_competition_session_keeps_race_phase():
     )
 
     assert phase == "Race"
+
+def test_builds_duration_aware_technique_structure():
+
+    template = (
+        TECHNIQUE_TEMPLATE.for_sport(
+            "Trail Running"
+        )
+    )
+
+    structure = (
+        WorkoutGenerator._prescribed_structure(
+            template=template,
+            duration_minutes=40,
+            coach_context=SimpleNamespace(),
+            strategy_plan=SimpleNamespace(
+                elevation_demand="mountainous",
+            ),
+        )
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        (
+            "Easy aerobic run on varied "
+            "terrain 15 min"
+        ),
+        (
+            "Controlled climbing and relaxed "
+            "descending technique 10 min"
+        ),
+        "Cool down 5 min",
+    )

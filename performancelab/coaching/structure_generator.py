@@ -386,7 +386,7 @@ class WeekStructureGenerator:
         ):
             purposes[
                 training_days[-1]
-            ] = SessionPurpose.PRE_RACE
+            ] = SessionPurpose.TECHNIQUE
 
         long_days = self._select_long_days(
             training_days=training_days,
@@ -619,6 +619,15 @@ class WeekStructureGenerator:
             )
         )
 
+        remaining = (
+            self._allocate_technique_session_minutes(
+                durations=durations,
+                capacities=capacities,
+                purposes=purposes,
+                remaining=remaining,
+            )
+        )
+
         for weekday, purpose in purposes.items():
 
             if (
@@ -702,6 +711,48 @@ class WeekStructureGenerator:
 
             duration = min(
                 20,
+                capacities[weekday],
+                remaining,
+            )
+
+            durations[weekday] = duration
+            capacities[weekday] = duration
+            remaining -= duration
+
+        return remaining
+
+    # ======================================================
+
+    @staticmethod
+    def _allocate_technique_session_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+        remaining: int,
+    ) -> int:
+        """
+        Keeps technique sessions controlled while leaving
+        sufficient volume for the week's aerobic session.
+        """
+
+        technique_days = [
+            weekday
+            for weekday, purpose
+            in purposes.items()
+            if purpose is SessionPurpose.TECHNIQUE
+        ]
+
+        for weekday in technique_days:
+
+            if remaining <= 0:
+                break
+
+            duration = min(
+                40,
                 capacities[weekday],
                 remaining,
             )
@@ -819,6 +870,7 @@ class WeekStructureGenerator:
         priorities = {
             SessionPurpose.INTENSITY: 0,
             SessionPurpose.EASY: 1,
+            SessionPurpose.TECHNIQUE: 2,
             SessionPurpose.PRE_RACE: 2,
             SessionPurpose.CROSS_TRAINING: 3,
             SessionPurpose.RECOVERY: 4,
@@ -900,6 +952,12 @@ class WeekStructureGenerator:
         notes = {
             SessionPurpose.EASY:
                 "Easy session assigned from the strategy plan.",
+
+            SessionPurpose.TECHNIQUE:
+                (
+                    "Low-intensity technique session assigned "
+                    "to prepare for event-specific terrain."
+                ),
                 
             SessionPurpose.PRE_RACE:
                 (

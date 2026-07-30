@@ -520,8 +520,8 @@ def test_close_follow_up_event_bridges_recovery_and_taper():
     assert plan.volume_factor == pytest.approx(
         0.30
     )
-    assert plan.target_sessions == 4
-    assert plan.recovery_days == 3
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
     assert plan.target_weekly_minutes == 120
 
 def test_distant_follow_up_event_keeps_deeper_recovery():

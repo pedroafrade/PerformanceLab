@@ -819,10 +819,10 @@ def test_transition_week_progresses_from_recovery_to_easy(
         strategy_plan,
         strategy="RegenerationStrategy",
         phase="Transition",
-        target_sessions=4,
+        target_sessions=3,
         intensity_sessions=0,
         long_sessions=0,
-        recovery_days=3,
+        recovery_days=4,
         target_weekly_minutes=120,
         long_session_minutes=None,
         secondary_focus="easy aerobic",
@@ -847,8 +847,7 @@ def test_transition_week_progresses_from_recovery_to_easy(
     ) == (
         SessionPurpose.RECOVERY,
         SessionPurpose.EASY,
-        SessionPurpose.EASY,
-        SessionPurpose.PRE_RACE,
+        SessionPurpose.TECHNIQUE,
     )
 
     assert tuple(
@@ -856,9 +855,8 @@ def test_transition_week_progresses_from_recovery_to_easy(
         for slot in training_slots
     ) == (
         20,
-        35,
-        35,
-        30,
+        60,
+        40,
     )
 
 def test_race_week_uses_pre_race_sessions(
