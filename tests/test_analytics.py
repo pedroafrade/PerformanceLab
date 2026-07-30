@@ -855,3 +855,83 @@ def test_builds_performance_profile():
     assert profile.resting_hr == 50
     assert profile.threshold_hr is None
     assert profile.threshold_pace is None
+
+def test_typical_running_pace_uses_recent_running_workouts():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+
+    athlete.history.add(
+        create_workout(
+            "Running",
+            today - timedelta(days=3),
+            10,
+            timedelta(minutes=60),
+            100,
+            5,
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Trail Running",
+            today - timedelta(days=10),
+            5,
+            timedelta(minutes=30),
+            200,
+            6,
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Cycling",
+            today - timedelta(days=2),
+            50,
+            timedelta(hours=2),
+            500,
+            5,
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Running",
+            today - timedelta(days=40),
+            10,
+            timedelta(minutes=40),
+            100,
+            7,
+        )
+    )
+
+    assert (
+        athlete.analytics.typical_running_pace
+        == 6.0
+    )
+
+
+def test_typical_running_pace_without_running_data():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.history.add(
+        create_workout(
+            "Cycling",
+            date.today(),
+            50,
+            timedelta(hours=2),
+            500,
+            5,
+        )
+    )
+
+    assert (
+        athlete.analytics.typical_running_pace
+        is None
+    )

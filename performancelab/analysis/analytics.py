@@ -375,6 +375,86 @@ class AthleteAnalytics:
 
         return session_count / 4
 
+  # ======================================================
+    @property
+    def typical_running_pace(
+        self,
+    ) -> float | None:
+        """
+        Returns the distance-weighted average running pace
+        across the latest rolling 28 days.
+
+        Pace is expressed in minutes per kilometre.
+        Cycling, walking and workouts without valid distance
+        or duration are ignored.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        total_distance = 0.0
+        total_minutes = 0.0
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            normalized_sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            is_running = any(
+                token in normalized_sport
+                for token in (
+                    "run",
+                    "running",
+                    "trail",
+                    "jog",
+                )
+            )
+
+            if (
+                not is_running
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or workout.distance is None
+                or workout.distance <= 0
+                or workout.duration is None
+                or workout.duration.total_seconds()
+                <= 0
+            ):
+                continue
+
+            total_distance += (
+                workout.distance
+            )
+
+            total_minutes += (
+                workout.duration.total_seconds()
+                / 60
+            )
+
+        if total_distance <= 0:
+            return None
+
+        return (
+            total_minutes
+            / total_distance
+        )
+
+    # ======================================================
+
     @property
     def typical_running_long_session_minutes(
         self,
