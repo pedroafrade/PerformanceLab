@@ -552,3 +552,102 @@ def test_limits_planned_weekly_load_growth():
     assert planned_weekly_load(
         result.workouts
     ) <= 1100
+
+def test_moves_intensity_away_from_previous_long_run():
+
+    previous_long = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            2,
+        ),
+        sport="Trail Running",
+        title="Long Aerobic Run",
+        duration=timedelta(
+            minutes=105,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    monday_hills = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            3,
+        ),
+        sport="Trail Running",
+        title="Hill Run",
+        duration=timedelta(
+            minutes=70,
+        ),
+        intensity="Hard",
+    )
+
+    wednesday_easy = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            5,
+        ),
+        sport="Trail Running",
+        title="Easy Aerobic Run",
+        duration=timedelta(
+            minutes=65,
+        ),
+        intensity="Easy",
+    )
+
+    friday_long = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            7,
+        ),
+        sport="Trail Running",
+        title="Long Aerobic Run",
+        duration=timedelta(
+            minutes=105,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    weekly_plan = WeeklyPlan(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        workouts=[
+            monday_hills,
+            wednesday_easy,
+            friday_long,
+        ],
+    )
+
+    result = Planner._protect_week_boundary(
+        weekly_plan=weekly_plan,
+        previous_workout=previous_long,
+    )
+
+    shifted_hills = next(
+        workout
+        for workout in result.workouts
+        if workout.title == "Hill Run"
+    )
+
+    assert shifted_hills.day == date(
+        2026,
+        8,
+        4,
+    )
+
+    assert monday_hills.day == date(
+        2026,
+        8,
+        3,
+    )

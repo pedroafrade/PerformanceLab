@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from performancelab.athlete import Athlete
 
 MAX_PLANNED_WEEKLY_LOAD_GROWTH = 0.10
+MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
 
 class Planner:
     """
@@ -263,6 +264,7 @@ class Planner:
 
         week_start = first_week_start
         previous_weekly_load = None
+        previous_planned_workout = None
 
         while week_start <= plan_end_date:
 
@@ -279,6 +281,15 @@ class Planner:
                 constraints=constraints,
                 week_start=week_start,
                 today=planning_day,
+            )
+
+            weekly_plan = (
+                self._protect_week_boundary(
+                    weekly_plan=weekly_plan,
+                    previous_workout=(
+                        previous_planned_workout
+                    ),
+                )
             )
 
             if previous_weekly_load is not None:
@@ -321,11 +332,138 @@ class Planner:
                     workout
                 )
 
+            if visible_workouts:
+
+                previous_planned_workout = (
+                    visible_workouts[-1]
+                )
+
             week_start += timedelta(
                 days=7
             )
 
         return training_plan
+
+    # ======================================================
+
+    @staticmethod
+    def _protect_week_boundary(
+        *,
+        weekly_plan: WeeklyPlan,
+        previous_workout,
+    ) -> WeeklyPlan:
+        """
+        Prevents a demanding session from being scheduled
+        immediately after a long workout or race belonging
+        to the previous week.
+
+        The demanding workout is moved to the first free
+        day that provides sufficient recovery.
+        """
+
+        if previous_workout is None:
+            return weekly_plan
+
+        if not (
+            Planner._is_long_workout(
+                previous_workout
+            )
+            or Planner._is_race_workout(
+                previous_workout
+            )
+        ):
+            return weekly_plan
+
+        demanding_workout = next(
+            (
+                workout
+                for workout in weekly_plan.workouts
+                if Planner._is_demanding_workout(
+                    workout
+                )
+            ),
+            None,
+        )
+
+        if demanding_workout is None:
+            return weekly_plan
+
+        days_since_previous = (
+            demanding_workout.day
+            - previous_workout.day
+        ).days
+
+        if (
+            days_since_previous
+            >= MIN_DAYS_BETWEEN_LONG_AND_INTENSITY
+        ):
+            return weekly_plan
+
+        earliest_safe_day = (
+            previous_workout.day
+            + timedelta(
+                days=(
+                    MIN_DAYS_BETWEEN_LONG_AND_INTENSITY
+                )
+            )
+        )
+
+        occupied_days = {
+            workout.day
+            for workout in weekly_plan.workouts
+            if workout is not demanding_workout
+        }
+
+        replacement_day = (
+            earliest_safe_day
+        )
+
+        while (
+            replacement_day
+            <= weekly_plan.end_date
+            and replacement_day
+            in occupied_days
+        ):
+            replacement_day += timedelta(
+                days=1
+            )
+
+        if (
+            replacement_day
+            > weekly_plan.end_date
+        ):
+            return weekly_plan
+
+        day_shift = (
+            replacement_day
+            - demanding_workout.day
+        ).days
+
+        shifted_workout = replace(
+            demanding_workout,
+            scheduled_at=(
+                demanding_workout.scheduled_at
+                + timedelta(
+                    days=day_shift
+                )
+            ),
+        )
+
+        workouts = [
+            (
+                shifted_workout
+                if workout is demanding_workout
+                else workout
+            )
+            for workout in weekly_plan.workouts
+        ]
+
+        return WeeklyPlan(
+            start_date=weekly_plan.start_date,
+            end_date=weekly_plan.end_date,
+            workouts=workouts,
+        )
+
     # ======================================================
 
     @staticmethod
