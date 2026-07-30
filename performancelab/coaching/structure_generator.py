@@ -368,14 +368,13 @@ class WeekStructureGenerator:
                 training_days[0]
             ] = SessionPurpose.RECOVERY
 
-        if (
-            strategy_plan.secondary_focus
-            == "pre-race taper"
-            and len(training_days) > 1
-        ):
-            purposes[
-                training_days[-1]
-            ] = SessionPurpose.PRE_RACE
+        if strategy_plan.phase == "Race":
+
+            for weekday in training_days:
+
+                purposes[
+                    weekday
+                ] = SessionPurpose.PRE_RACE
 
         long_days = self._select_long_days(
             training_days=training_days,

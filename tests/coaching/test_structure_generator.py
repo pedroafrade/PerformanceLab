@@ -808,7 +808,7 @@ def test_post_race_week_progresses_from_recovery_to_easy(
         35,
     )
 
-def test_close_event_week_ends_with_pre_race_session(
+def test_close_event_recovery_week_remains_easy(
     strategy_plan: StrategyPlan,
     full_availability: AthleteAvailability,
     default_preferences: AthletePreferences,
@@ -825,7 +825,7 @@ def test_close_event_week_ends_with_pre_race_session(
         recovery_days=3,
         target_weekly_minutes=120,
         long_session_minutes=None,
-        secondary_focus="pre-race taper",
+        secondary_focus="easy aerobic",
     )
 
     slots = WeekStructureGenerator().generate(
@@ -848,7 +848,7 @@ def test_close_event_week_ends_with_pre_race_session(
         SessionPurpose.RECOVERY,
         SessionPurpose.EASY,
         SessionPurpose.EASY,
-        SessionPurpose.PRE_RACE,
+        SessionPurpose.EASY,
     )
 
     assert tuple(
@@ -859,4 +859,52 @@ def test_close_event_week_ends_with_pre_race_session(
         35,
         35,
         30,
+    )
+
+def test_race_week_uses_pre_race_sessions(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    race_plan = replace(
+        strategy_plan,
+        strategy="RaceStrategy",
+        phase="Race",
+        target_sessions=2,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=5,
+        target_weekly_minutes=80,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=race_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    training_slots = tuple(
+        slot
+        for slot in slots
+        if slot.is_training
+    )
+
+    assert len(training_slots) == 2
+
+    assert all(
+        slot.purpose
+        is SessionPurpose.PRE_RACE
+        for slot in training_slots
+    )
+
+    assert tuple(
+        slot.duration_minutes
+        for slot in training_slots
+    ) == (
+        40,
+        40,
     )
