@@ -501,18 +501,19 @@ def show_planning_card(
 <style>
 
 .weekly-phase-timeline {
-    margin: 0 0 4px 0;
+    margin: -2px 0 1px 0;
 }
 
 .weekly-phase-segments {
     display: flex;
     align-items: flex-end;
     width: 100%;
-    gap: 3px;
+    gap: 8px;
 }
 
 .weekly-phase-segment {
     min-width: 0;
+    padding: 0 2px;
     text-align: center;
 }
 
@@ -573,18 +574,18 @@ def show_planning_card(
 }
 
 .weekly-phase-summary {
-    min-height: 12px;
-    margin-top: 2px;
+    min-height: 11px;
+    margin-top: 1px;
     font-size: 0.62rem;
     font-weight: 600;
     line-height: 1;
-    text-align: right;
+    text-align: center;
     opacity: 0.70;
 }
 
 .weekly-plan-day {
-    min-height: 86px;
-    padding: 2px;
+    min-height: 78px;
+    padding: 1px 2px;
     border: 1px solid transparent;
     border-radius: 8px;
     text-align: center;
@@ -619,7 +620,7 @@ def show_planning_card(
     justify-content: center;
     width: 25px;
     height: 25px;
-    margin: 3px auto;
+    margin: 2px auto;
     border-radius: 50%;
     box-sizing: border-box;
     font-size: 0.82rem;
@@ -654,13 +655,13 @@ def show_planning_card(
 }
 
 .weekly-plan-next {
-    margin-top: 2px;
-    padding-top: 4px;
+    margin-top: 0;
+    padding-top: 3px;
     overflow: visible;
     overflow-wrap: anywhere;
     border-top: 1px solid rgba(128, 128, 128, 0.30);
-    font-size: 0.72rem;
-    line-height: 1.3;
+    font-size: 0.68rem;
+    line-height: 1.18;
     opacity: 0.72;
     text-overflow: clip;
     white-space: normal;
@@ -694,7 +695,7 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
 }
 
 div[class*="st-key-weekly_plan_selector_"] {
-    margin-bottom: -6px;
+    margin-bottom: -8px;
 }
 
 div[class*="st-key-weekly_plan_selector_"] button {
@@ -763,10 +764,21 @@ div[class*="st-key-weekly_plan_selector_"] button {
 
     if timeline_html:
 
-        st.markdown(
-            timeline_html,
-            unsafe_allow_html=True,
+        timeline_columns = st.columns(
+            [
+                0.42,
+                7,
+                0.42,
+            ],
+            gap="small",
         )
+
+        with timeline_columns[1]:
+
+            st.markdown(
+                timeline_html,
+                unsafe_allow_html=True,
+            )
 
     selector_columns = st.columns(
         [

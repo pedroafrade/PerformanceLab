@@ -80,6 +80,7 @@ def dashboard_widget(
     title: str | None = None,
     icon: str | None = None,
     subtitle: str | None = None,
+    center_text: str | None = None,
     action: DashboardAction | None = None,
     divider: bool = True,
     height: int | str | None = None,
@@ -101,10 +102,25 @@ def dashboard_widget(
 
         if title:
 
-            title_col, action_col = st.columns(
-                [12, 1],
-                vertical_alignment="center",
-            )
+            if center_text:
+
+                (
+                    title_col,
+                    center_col,
+                    action_col,
+                ) = st.columns(
+                    [1, 1, 1],
+                    vertical_alignment="center",
+                )
+
+            else:
+
+                title_col, action_col = st.columns(
+                    [12, 1],
+                    vertical_alignment="center",
+                )
+
+                center_col = None
 
             with title_col:
 
@@ -128,6 +144,24 @@ def dashboard_widget(
                         unsafe_allow_html=True,
                     )
 
+            if center_col is not None:
+
+                with center_col:
+
+                    st.markdown(
+                        (
+                            "<div style='"
+                            "text-align:center;"
+                            "font-size:0.76rem;"
+                            "color:#8b949e;"
+                            "white-space:nowrap;"
+                            "'>"
+                            f"{center_text}"
+                            "</div>"
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                    
             with action_col:
 
                 if action is None:

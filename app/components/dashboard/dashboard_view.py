@@ -97,7 +97,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Weekly Plan",
-            subtitle=(
+            center_text=(
                 f"{planning.weekly_plan.start_date:%d %b} – "
                 f"{planning.weekly_plan.end_date:%d %b}"
             ),
