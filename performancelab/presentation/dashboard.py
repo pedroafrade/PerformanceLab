@@ -856,11 +856,17 @@ class DashboardData:
         visible_data = PlanningPresenter(
             plan=visible_plan,
             history=self.analytics.history,
+            training_plan=(
+                self.analytics.training_plan
+            ),
         ).build()
 
         current_data = PlanningPresenter(
             plan=current_plan,
             history=self.analytics.history,
+            training_plan=(
+                self.analytics.training_plan
+            ),
         ).build()
 
         return replace(

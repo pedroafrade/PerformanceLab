@@ -14,10 +14,15 @@ from performancelab.presentation.dashboard_models import (
     CoachRecommendationData,
     NextWorkoutData,
     PlanningCardData,
+    TrainingPhaseDayData,
+    TrainingPhaseTimelineData,
     WeeklyPlanData,
     WeeklyPlanDayData,
 )
-from performancelab.training.planning.planner import WeeklyPlan
+from performancelab.training.planning import (
+    TrainingPlan,
+    WeeklyPlan,
+)
 
 
 class PlanningPresenter:
@@ -29,6 +34,7 @@ class PlanningPresenter:
         plan: WeeklyPlan,
         history: History | None = None,
         reference: datetime | None = None,
+        training_plan: TrainingPlan | None = None,
     ):
 
         if not isinstance(plan, WeeklyPlan):
@@ -46,9 +52,22 @@ class PlanningPresenter:
                 "history must be a History or None."
             )
 
+        if (
+            training_plan is not None
+            and not isinstance(
+                training_plan,
+                TrainingPlan,
+            )
+        ):
+            raise TypeError(
+                "training_plan must be a "
+                "TrainingPlan or None."
+            )
+
         self.plan = plan
         self.history = history
         self.reference = reference or datetime.now()
+        self.training_plan = training_plan
 
     # ======================================================
 
@@ -295,6 +314,59 @@ class PlanningPresenter:
 
     # ======================================================
 
+    def _phase_timeline(
+        self,
+    ) -> TrainingPhaseTimelineData | None:
+
+        training_plan = self.training_plan
+
+        if (
+            training_plan is None
+            or training_plan.start_date is None
+            or training_plan.end_date is None
+        ):
+            return None
+
+        phase_days = []
+
+        current_day = (
+            training_plan.start_date
+        )
+
+        while (
+            current_day
+            <= training_plan.end_date
+        ):
+
+            phase_days.append(
+                TrainingPhaseDayData(
+                    day=current_day,
+                    phase=(
+                        training_plan.phase_on(
+                            current_day
+                        )
+                    ),
+                )
+            )
+
+            current_day += timedelta(
+                days=1
+            )
+
+        return TrainingPhaseTimelineData(
+            start_date=(
+                training_plan.start_date
+            ),
+            end_date=(
+                training_plan.end_date
+            ),
+            days=tuple(
+                phase_days
+            ),
+        )
+
+    # ======================================================
+
     def _next_workout(self):
 
         workout = self.plan.next_workout(
@@ -366,6 +438,9 @@ class PlanningPresenter:
             weekly_plan=self._weekly_plan(),
             next_workout=self._next_workout(),
             coach=self._coach_recommendation(),
+            phase_timeline=(
+                self._phase_timeline()
+            ),
         )
 
     # ======================================================

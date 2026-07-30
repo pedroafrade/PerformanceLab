@@ -166,6 +166,25 @@ class CoachRecommendationData:
     warnings: Sequence[str] = ()
     source: str = "rules"
 
+@dataclass(frozen=True)
+class TrainingPhaseDayData:
+    """
+    Presentation-ready training phase for one plan day.
+    """
+
+    day: date
+    phase: str | None
+
+
+@dataclass(frozen=True)
+class TrainingPhaseTimelineData:
+    """
+    Presentation-ready progression across the full plan.
+    """
+
+    start_date: date
+    end_date: date
+    days: Sequence[TrainingPhaseDayData]
 
 @dataclass(frozen=True)
 class PlanningCardData:
@@ -176,6 +195,9 @@ class PlanningCardData:
     weekly_plan: WeeklyPlanData
     next_workout: NextWorkoutData | None
     coach: CoachRecommendationData
+    phase_timeline: (
+        TrainingPhaseTimelineData | None
+    ) = None
 
 
 # ======================================================
