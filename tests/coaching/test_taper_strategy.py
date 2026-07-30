@@ -27,10 +27,16 @@ def make_context(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
+    typical_weekly_minutes: float = 0.0,
 ):
     return SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
+        training_state=SimpleNamespace(
+            typical_weekly_minutes=(
+                typical_weekly_minutes
+            ),
+        ),
     )
 
 
@@ -39,6 +45,7 @@ def build_plan(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     event_name: str | None = None,
+    typical_weekly_minutes: float = 0.0,
 ):
     strategy = StubTaperStrategy(
         event_name=event_name,
@@ -48,6 +55,9 @@ def build_plan(
         make_context(
             tsb=tsb,
             average_rpe=average_rpe,
+            typical_weekly_minutes=(
+                typical_weekly_minutes
+            ),
         ),
     )
 
@@ -99,7 +109,30 @@ def test_default_concrete_weekly_targets():
     assert plan.target_weekly_load == pytest.approx(227.5)
     assert plan.long_session_minutes is None
 
+def test_taper_uses_typical_weekly_volume():
 
+    plan = build_plan(
+        typical_weekly_minutes=260,
+    )
+
+    assert (
+        plan.target_weekly_minutes
+        == 170
+    )
+
+
+def test_fatigued_taper_uses_reduced_volume_factor():
+
+    plan = build_plan(
+        tsb=-10.1,
+        typical_weekly_minutes=260,
+    )
+
+    assert (
+        plan.target_weekly_minutes
+        == 130
+    )
+    
 def test_weekly_load_is_derived_from_volume_factor():
     plan = build_plan()
 

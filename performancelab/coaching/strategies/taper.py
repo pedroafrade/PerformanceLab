@@ -78,6 +78,31 @@ class TaperStrategy(CoachStrategy):
                 "Recent perceived effort is high."
             )
 
+        training_state = getattr(
+            context,
+            "training_state",
+            None,
+        )
+
+        typical_weekly_minutes = getattr(
+            training_state,
+            "typical_weekly_minutes",
+            0.0,
+        )
+
+        if typical_weekly_minutes > 0:
+
+            target_weekly_minutes = (
+                self._round_to_five(
+                    typical_weekly_minutes
+                    * volume_factor
+                )
+            )
+
+        else:
+
+            target_weekly_minutes = 240
+
         event_name = self._event_name(context)
 
         if event_name is not None:
@@ -105,11 +130,28 @@ class TaperStrategy(CoachStrategy):
 
             race_specificity=0.95,
 
-            target_weekly_minutes=240,
+            target_weekly_minutes=(
+                target_weekly_minutes
+            ),
             target_weekly_load=350.0 * volume_factor,
             long_session_minutes=None,
 
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _round_to_five(
+        minutes: float,
+    ) -> int:
+        """
+        Rounds taper volume to a practical five-minute
+        increment.
+        """
+
+        return int(
+            round(minutes / 5) * 5
         )
