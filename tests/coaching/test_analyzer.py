@@ -558,13 +558,7 @@ def test_no_previous_event_uses_normal_event_cycle():
     assert analysis.phase == "Peak"
     assert analysis.strategy == "PeakStrategy"
 
-def test_phase_uses_primary_event_in_competition_block():
-
-    today = date(
-        2026,
-        3,
-        10,
-    )
+def test_near_event_determines_phase_inside_taper_window():
 
     next_event = SimpleNamespace(
         event=SimpleNamespace(
@@ -617,13 +611,72 @@ def test_phase_uses_primary_event_in_competition_block():
         == 24
     )
 
-    assert analysis.phase == "Peak"
+    assert (
+        context.phase_event
+        is next_event
+    )
+
+    assert (
+        context.days_until_phase_event
+        == 10
+    )
+
+    assert analysis.phase == "Taper"
 
     assert (
         analysis.strategy
-        == "PeakStrategy"
+        == "TaperStrategy"
     )
 
     assert analysis.summary == (
-        "Peak phase for Primary Trail."
+        "Taper phase for Preparation Race."
+    )
+
+def test_near_intermediate_event_uses_race_phase():
+
+    near_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Sealand",
+            date=date(
+                2026,
+                3,
+                16,
+            ),
+            effort_distance=11.13,
+        ),
+        priority="A",
+        target_time=None,
+    )
+
+    primary_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            date=date(
+                2026,
+                3,
+                30,
+            ),
+            effort_distance=32.5,
+        ),
+        priority="A",
+        target_time=None,
+    )
+
+    context = make_context(
+        next_event=near_event,
+        days_until_event=6,
+        upcoming_events=(
+            near_event,
+            primary_event,
+        ),
+    )
+
+    analysis = CoachAnalyzer(
+        context
+    ).analyze()
+
+    assert analysis.phase == "Race"
+
+    assert analysis.summary == (
+        "Race phase for Sealand."
     )

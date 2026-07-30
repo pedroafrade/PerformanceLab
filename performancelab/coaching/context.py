@@ -577,6 +577,59 @@ class CoachContext:
     # ======================================================
 
     @property
+    def phase_event(
+        self,
+    ) -> object | None:
+        """
+        Returns the event that currently determines the
+        training phase.
+
+        The primary event guides the general cycle. A nearer
+        event takes precedence inside its taper window.
+        """
+
+        if (
+            self.next_event is not None
+            and self.days_until_event
+            is not None
+            and 0
+            <= self.days_until_event
+            <= 14
+        ):
+            return self.next_event
+
+        return (
+            self.primary_event
+            or self.next_event
+        )
+
+    # ======================================================
+
+    @property
+    def days_until_phase_event(
+        self,
+    ) -> int | None:
+        """
+        Returns the days until the event currently
+        determining the training phase.
+        """
+
+        phase_event = self.phase_event
+
+        if phase_event is None:
+            return None
+
+        if phase_event is self.next_event:
+            return self.days_until_event
+
+        return self._days_until_event(
+            event_entry=phase_event,
+            today=self.today,
+        )
+
+    # ======================================================
+
+    @property
     def primary_event(
         self,
     ) -> object | None:

@@ -839,3 +839,22 @@ def test_copies_strategy_phase_to_planned_workout():
     )
 
     assert workout.phase == "Peak"
+
+def test_race_week_easy_session_is_taper():
+
+    phase = WorkoutGenerator._phase_for_slot(
+        phase="Race",
+        purpose=SessionPurpose.EASY,
+    )
+
+    assert phase == "Taper"
+
+
+def test_competition_session_keeps_race_phase():
+
+    phase = WorkoutGenerator._phase_for_slot(
+        phase="Race",
+        purpose=SessionPurpose.RACE,
+    )
+
+    assert phase == "Race"

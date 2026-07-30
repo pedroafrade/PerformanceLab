@@ -160,6 +160,31 @@ class WorkoutGenerator:
     # ======================================================
 
     @staticmethod
+    def _phase_for_slot(
+        *,
+        phase: str,
+        purpose: SessionPurpose,
+    ) -> str:
+        """
+        Keeps Race exclusively for the competition itself.
+
+        Other sessions produced during race week belong to
+        the taper that precedes the event.
+        """
+
+        if (
+            phase.strip().lower()
+            == "race"
+            and purpose
+            is not SessionPurpose.RACE
+        ):
+            return "Taper"
+
+        return phase
+
+    # ======================================================
+
+    @staticmethod
     def _focus_for_slot(
         *,
         purpose: SessionPurpose,
@@ -277,7 +302,12 @@ class WorkoutGenerator:
             ),
             equipment=template.equipment,
             phase=(
-                strategy_plan.phase
+                self._phase_for_slot(
+                    phase=(
+                        strategy_plan.phase
+                    ),
+                    purpose=slot.purpose,
+                )
                 if strategy_plan is not None
                 else None
             ),

@@ -94,7 +94,7 @@ class CoachAnalyzer:
 
         days = getattr(
             self.context,
-            "days_until_primary_event",
+            "days_until_phase_event",
             None,
         )
 
@@ -145,7 +145,7 @@ class CoachAnalyzer:
         event = (
             getattr(
                 self.context,
-                "primary_event",
+                "phase_event",
                 None,
             )
             or self.context.next_event

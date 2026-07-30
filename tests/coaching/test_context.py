@@ -959,3 +959,123 @@ def test_context_without_events_has_no_plan_metadata():
         context.days_until_primary_event
         is None
     )
+
+def test_near_event_temporarily_determines_phase():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        9,
+        7,
+    )
+
+    sealand = EventEntry(
+        event=Event(
+            name="Sealand",
+            date=date(
+                2026,
+                9,
+                13,
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=113,
+        ),
+        priority="A",
+    )
+
+    trail = EventEntry(
+        event=Event(
+            name="III Trail Pé Firme",
+            date=date(
+                2026,
+                9,
+                27,
+            ),
+            sport="Trail Running",
+            distance=23,
+            elevation_gain=950,
+        ),
+        priority="A",
+    )
+
+    athlete.events.add(
+        sealand
+    )
+    athlete.events.add(
+        trail
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.primary_event is trail
+    assert context.phase_event is sealand
+
+    assert (
+        context.days_until_phase_event
+        == 6
+    )
+
+
+def test_primary_event_guides_phase_outside_taper_window():
+
+    athlete = Athlete(
+        name="Test Athlete",
+    )
+
+    today = date(
+        2026,
+        8,
+        20,
+    )
+
+    sealand = EventEntry(
+        event=Event(
+            name="Sealand",
+            date=date(
+                2026,
+                9,
+                13,
+            ),
+            sport="Road Running",
+            distance=10,
+            elevation_gain=113,
+        ),
+        priority="A",
+    )
+
+    trail = EventEntry(
+        event=Event(
+            name="III Trail Pé Firme",
+            date=date(
+                2026,
+                9,
+                27,
+            ),
+            sport="Trail Running",
+            distance=23,
+            elevation_gain=950,
+        ),
+        priority="A",
+    )
+
+    athlete.events.add(
+        sealand
+    )
+    athlete.events.add(
+        trail
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=today,
+    )
+
+    assert context.primary_event is trail
+    assert context.phase_event is trail
