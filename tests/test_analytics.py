@@ -1044,6 +1044,69 @@ def test_road_10k_performance_pace_requires_high_effort():
         is None
     )
 
+def test_estimates_road_10k_from_performance_pace():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=200,
+    )
+
+    performance_workout = create_workout(
+        "Running",
+        date.today(),
+        10.16,
+        timedelta(minutes=50.3),
+        89,
+        9.8,
+    )
+
+    performance_workout.info.title = (
+        "S. Silvestre 2025"
+    )
+
+    performance_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 180},
+            {"value": 189},
+            {"value": 197},
+        ],
+    )
+
+    athlete.history.add(
+        performance_workout
+    )
+
+    event = Event(
+        name="Sealand",
+        sport="Road Running",
+        distance=10,
+        elevation_gain=113,
+    )
+
+    performance_pace = (
+        50.3
+        / (
+            10.16
+            + 0.89
+        )
+    )
+
+    expected_duration = (
+        event.estimated_duration_at_pace(
+            performance_pace
+        )
+    )
+
+    duration = (
+        athlete.analytics
+        .estimated_event_duration(
+            event
+        )
+    )
+
+    assert duration == expected_duration
+
 def test_estimates_event_duration_from_recent_running_pace():
 
     athlete = Athlete(

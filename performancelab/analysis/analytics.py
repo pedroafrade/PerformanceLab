@@ -886,10 +886,11 @@ class AthleteAnalytics:
     ) -> timedelta | None:
         """
         Estimates a running event's duration from the
-        athlete's recent running pace.
+        athlete's recent running performance.
 
-        The event remains responsible for translating its
-        distance and elevation into effort distance.
+        Road events comparable to 10 km use the athlete's
+        high-effort road-running pace when available.
+        Other events retain the recent typical running pace.
         """
 
         estimator = getattr(
@@ -901,8 +902,49 @@ class AthleteAnalytics:
         if not callable(estimator):
             return None
 
+        sport = str(
+            getattr(
+                event,
+                "sport",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        distance = getattr(
+            event,
+            "distance",
+            None,
+        )
+
+        is_road_10k_event = (
+            sport == "road running"
+            and isinstance(
+                distance,
+                (int, float),
+            )
+            and not isinstance(
+                distance,
+                bool,
+            )
+            and 8 <= distance <= 12
+        )
+
+        performance_pace = None
+
+        if is_road_10k_event:
+            performance_pace = (
+                self.road_10k_performance_pace
+            )
+
+        reference_pace = (
+            performance_pace
+            if performance_pace is not None
+            else self.typical_running_pace
+        )
+
         return estimator(
-            self.typical_running_pace
+            reference_pace
         )
 
     # ======================================================
