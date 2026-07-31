@@ -26,6 +26,7 @@ _FORM_KEYS = (
     "athlete_edit_ftp",
     "athlete_edit_max_hr",
     "athlete_edit_resting_hr",
+    "athlete_edit_threshold_hr",
     "athlete_edit_train_any_day",
 )
 
@@ -98,6 +99,12 @@ def _start_editing(
         "athlete_edit_resting_hr"
     ] = int(
         athlete.resting_hr or 0
+    )
+
+    st.session_state[
+        "athlete_edit_threshold_hr"
+    ] = int(
+        athlete.threshold_hr or 0
     )
 
     st.session_state[
@@ -228,6 +235,11 @@ def _show_athlete_summary(
     st.write(
         "**Resting heart rate:** "
         f"{_display_value(athlete.resting_hr, ' bpm')}"
+    )
+
+    st.write(
+        "**Threshold heart rate:** "
+        f"{_display_value(athlete.threshold_hr, ' bpm')}"
     )
 
     if st.button(
@@ -362,6 +374,19 @@ def _show_athlete_form(
             key="athlete_edit_resting_hr",
         )
 
+        threshold_hr = st.number_input(
+            "Threshold heart rate",
+            min_value=0,
+            max_value=250,
+            step=1,
+            key="athlete_edit_threshold_hr",
+            help=(
+                "Heart rate that can be sustained "
+                "around lactate threshold intensity. "
+                "Use 0 when it is not known."
+            ),
+        )
+
         if not train_any_day:
 
             st.caption(
@@ -478,6 +503,32 @@ def _show_athlete_form(
 
             return athlete
 
+        if (
+            threshold_hr > 0
+            and resting_hr > 0
+            and threshold_hr <= resting_hr
+        ):
+
+            st.error(
+                "Threshold heart rate must be higher "
+                "than resting heart rate."
+            )
+
+            return athlete
+
+        if (
+            threshold_hr > 0
+            and max_hr > 0
+            and threshold_hr >= max_hr
+        ):
+
+            st.error(
+                "Threshold heart rate must be lower "
+                "than maximum heart rate."
+            )
+
+            return athlete
+
         athlete.name = cleaned_name
 
         athlete.birth_date = birth_date
@@ -503,6 +554,12 @@ def _show_athlete_form(
         athlete.resting_hr = _optional_int(
             resting_hr
         )
+
+        athlete.threshold_hr = _optional_int(
+            threshold_hr
+        )
+
+        athlete.analytics.invalidate_performance_profile()
 
         athlete.train_any_day = train_any_day
 
