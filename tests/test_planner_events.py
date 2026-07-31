@@ -858,3 +858,79 @@ def test_adds_duration_source_to_race_workout():
             "high-effort road runs"
         ),
     )
+
+def test_attaches_road_10k_execution_plan():
+
+    event_date = date(
+        2026,
+        9,
+        13,
+    )
+
+    event_entry = make_event_entry(
+        event_date=event_date,
+        name="Sealand",
+        sport="Road Running",
+    )
+
+    event_entry.event.distance = 10
+
+    race_workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+        ),
+        sport="Road Running",
+        title="Race",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        structure=(
+            "Warm up 8 min",
+            "Race effort 50 min",
+            "Cool down 5 min",
+        ),
+    )
+
+    context = SimpleNamespace(
+        event_duration=(
+            lambda entry: timedelta(
+                minutes=50,
+            )
+        ),
+    )
+
+    result = (
+        Planner._apply_race_execution_plans(
+            workouts=(
+                race_workout,
+            ),
+            event_entries=(
+                event_entry,
+            ),
+            context=context,
+        )
+    )
+
+    assert any(
+        step.startswith(
+            "Pacing: "
+        )
+        for step in result[0].structure
+    )
+
+    assert any(
+        step.startswith(
+            "Hydration: "
+        )
+        for step in result[0].structure
+    )
+
+    assert any(
+        step.startswith(
+            "Nutrition: "
+        )
+        for step in result[0].structure
+    )

@@ -22,6 +22,9 @@ from performancelab.coaching.training_week import TrainingWeek
 from performancelab.coaching.workout_generator import WorkoutGenerator
 from performancelab.coaching.draft_slot import DraftTrainingSlot
 from performancelab.coaching.session_purpose import SessionPurpose
+from performancelab.coaching.race_execution import (
+    build_race_execution_plan,
+)
 
 from performancelab.training.config import (
     AthleteAvailability,
@@ -269,6 +272,16 @@ class Planner:
 
         workouts = (
             self._apply_event_duration_sources(
+                workouts=workouts,
+                event_entries=(
+                    context.competition_block_events
+                ),
+                context=context,
+            )
+        )
+
+        workouts = (
+            self._apply_race_execution_plans(
                 workouts=workouts,
                 event_entries=(
                     context.competition_block_events
@@ -1305,7 +1318,125 @@ class Planner:
         )
 
     # ======================================================
-    
+
+    @staticmethod
+    def _apply_race_execution_plans(
+        *,
+        workouts,
+        event_entries,
+        context: CoachContext,
+    ):
+        """
+        Attaches event-specific race guidance to registered
+        competition workouts.
+        """
+
+        entries_by_date = {}
+
+        for event_entry in event_entries:
+
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            event_date = getattr(
+                event,
+                "date",
+                None,
+            )
+
+            if event_date is not None:
+                entries_by_date[
+                    event_date
+                ] = event_entry
+
+        updated_workouts = []
+
+        for workout in workouts:
+
+            if not Planner._is_race_workout(
+                workout
+            ):
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            event_entry = entries_by_date.get(
+                workout.day
+            )
+
+            if event_entry is None:
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            execution_plan = (
+                build_race_execution_plan(
+                    event=event_entry.event,
+                    expected_duration=(
+                        context.event_duration(
+                            event_entry
+                        )
+                    ),
+                )
+            )
+
+            if execution_plan is None:
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            guidance = (
+                *(
+                    f"Pacing: {step}"
+                    for step
+                    in execution_plan.pacing
+                ),
+                *(
+                    f"Hydration: {step}"
+                    for step
+                    in execution_plan.hydration
+                ),
+                *(
+                    f"Nutrition: {step}"
+                    for step
+                    in execution_plan.nutrition
+                ),
+            )
+
+            existing_structure = tuple(
+                step
+                for step in workout.structure
+                if not str(step).startswith(
+                    (
+                        "Pacing: ",
+                        "Hydration: ",
+                        "Nutrition: ",
+                    )
+                )
+            )
+
+            updated_workouts.append(
+                replace(
+                    workout,
+                    structure=(
+                        *existing_structure,
+                        *guidance,
+                    ),
+                )
+            )
+
+        return tuple(
+            updated_workouts
+        )
+
+    # ======================================================
+
     @staticmethod
     def _apply_events_to_week(
         *,

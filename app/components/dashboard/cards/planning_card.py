@@ -79,7 +79,7 @@ def _day_title(day) -> str:
     return (
         day.title
         or day.sport
-        or "Descanso"
+        or "Rest"
     )
 
 
@@ -207,10 +207,21 @@ def _selected_day_description(
             str(day.sport).strip()
         )
 
+    guidance_prefixes = (
+        "Pacing: ",
+        "Hydration: ",
+        "Nutrition: ",
+    )
+
     structure = [
         str(step).strip()
         for step in day.structure
-        if str(step).strip()
+        if (
+            str(step).strip()
+            and not str(step).strip().startswith(
+                guidance_prefixes
+            )
+        )
     ]
 
     details.extend(
@@ -228,6 +239,46 @@ def _selected_day_description(
     return escape(
         day.title
         or "Planned workout"
+    )
+
+def _race_guidance(
+    day,
+) -> tuple[tuple[str, str], ...]:
+    """
+    Extracts domain-provided race guidance from the
+    selected planned day.
+    """
+
+    if day is None:
+        return ()
+
+    guidance = []
+
+    for step in day.structure:
+
+        text = str(
+            step
+        ).strip()
+
+        for category in (
+            "Pacing",
+            "Hydration",
+            "Nutrition",
+        ):
+
+            prefix = f"{category}: "
+
+            if text.startswith(prefix):
+                guidance.append(
+                    (
+                        category,
+                        text[len(prefix):],
+                    )
+                )
+                break
+
+    return tuple(
+        guidance
     )
 
 def _phase_segments(
@@ -886,7 +937,68 @@ div[class*="st-key-weekly_plan_selector_"] {{
         )
     )
 
-    if selected_description:
+    race_guidance = _race_guidance(
+        selected_day
+    )
+
+    if (
+        selected_description
+        and race_guidance
+    ):
+
+        description_column, strategy_column = (
+            st.columns(
+                [
+                    6,
+                    1.35,
+                ],
+                gap="small",
+                vertical_alignment="center",
+            )
+        )
+
+        with description_column:
+
+            st.markdown(
+                (
+                    '<div class="weekly-plan-next">'
+                    f"{selected_description}"
+                    "</div>"
+                ),
+                unsafe_allow_html=True,
+            )
+
+        with strategy_column:
+
+            with st.popover(
+                "Race strategy",
+                width="stretch",
+            ):
+
+                current_category = None
+
+                for category, guidance in (
+                    race_guidance
+                ):
+
+                    if (
+                        category
+                        != current_category
+                    ):
+                        st.markdown(
+                            f"**{category}**"
+                        )
+
+                        current_category = (
+                            category
+                        )
+
+                    st.caption(
+                        guidance
+                    )
+
+    elif selected_description:
+
         st.markdown(
             (
                 '<div class="weekly-plan-next">'
