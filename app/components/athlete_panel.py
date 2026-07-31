@@ -242,6 +242,52 @@ def _show_athlete_summary(
         f"{_display_value(athlete.threshold_hr, ' bpm')}"
     )
 
+    heart_rate_profile = (
+        athlete.analytics
+        .heart_rate_profile
+    )
+
+    st.write(
+        "**Heart-rate training zones:**"
+    )
+
+    if heart_rate_profile is None:
+
+        st.caption(
+            "Set maximum and resting heart rate "
+            "to calculate training zones."
+        )
+
+    else:
+
+        source = (
+            "Manually configured"
+            if (
+                heart_rate_profile
+                .uses_manual_zones
+            )
+            else "Automatically calculated using Karvonen"
+        )
+
+        st.caption(source)
+
+        st.table(
+            [
+                {
+                    "Zone": zone.name,
+                    "From": (
+                        f"{zone.lower_bpm} bpm"
+                    ),
+                    "To": (
+                        f"{zone.upper_bpm} bpm"
+                    ),
+                }
+                for zone in (
+                    heart_rate_profile.zones
+                )
+            ]
+        )
+
     if st.button(
         "Edit athlete",
         key="edit_athlete_button",
