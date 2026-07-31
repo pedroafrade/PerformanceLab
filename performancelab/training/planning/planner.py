@@ -1402,6 +1402,13 @@ class Planner:
                             event_entry
                         )
                     ),
+                    heart_rate_profile=(
+                        getattr(
+                            context,
+                            "heart_rate_profile",
+                            None,
+                        )
+                    ),
                 )
             )
 
