@@ -4,6 +4,8 @@ PerformanceLab
 Tests for AthleteAnalytics.
 """
 
+import pytest
+
 from datetime import date
 from datetime import timedelta
 
@@ -935,6 +937,110 @@ def test_typical_running_pace_without_running_data():
 
     assert (
         athlete.analytics.typical_running_pace
+        is None
+    )
+
+def test_road_10k_performance_pace_uses_hard_high_hr_run():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=200,
+    )
+
+    race_workout = create_workout(
+        "Running",
+        date.today(),
+        10.16,
+        timedelta(minutes=50.3),
+        89,
+        9.8,
+    )
+
+    race_workout.info.title = (
+        "S. Silvestre 2025"
+    )
+
+    race_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 180},
+            {"value": 189},
+            {"value": 197},
+        ],
+    )
+
+    easy_workout = create_workout(
+        "Running",
+        date.today(),
+        10.0,
+        timedelta(minutes=60),
+        50,
+        5.5,
+    )
+
+    easy_workout.info.title = "Easy Run"
+
+    easy_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 145},
+            {"value": 150},
+            {"value": 155},
+        ],
+    )
+
+    athlete.history.add(
+        race_workout
+    )
+
+    athlete.history.add(
+        easy_workout
+    )
+
+    assert (
+        athlete.analytics
+        .road_10k_performance_pace
+        == pytest.approx(
+            50.3
+            / (
+                10.16
+                + 0.89
+            )
+        )
+    )
+
+
+def test_road_10k_performance_pace_requires_high_effort():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=200,
+    )
+
+    easy_workout = create_workout(
+        "Running",
+        date.today(),
+        10.0,
+        timedelta(minutes=55),
+        50,
+        5.0,
+    )
+
+    easy_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 145},
+            {"value": 150},
+        ],
+    )
+
+    athlete.history.add(
+        easy_workout
+    )
+
+    assert (
+        athlete.analytics
+        .road_10k_performance_pace
         is None
     )
 

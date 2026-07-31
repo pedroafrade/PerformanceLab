@@ -27,6 +27,13 @@ from . import consistency
 from . import time
 from . import volume
 
+ROAD_10K_LOOKBACK_DAYS = 365
+ROAD_10K_MIN_DISTANCE = 8.0
+ROAD_10K_MAX_DISTANCE = 12.0
+ROAD_10K_MIN_RPE = 7.5
+ROAD_10K_MIN_HEART_RATE_RATIO = 0.85
+ROAD_10K_MAX_ELEVATION_PER_KILOMETRE = 25.0
+EFFORT_ELEVATION_METRES_PER_KILOMETRE = 100.0
 
 class AthleteAnalytics:
 
@@ -375,7 +382,99 @@ class AthleteAnalytics:
 
         return session_count / 4
 
-  # ======================================================
+    # ======================================================
+    
+    @staticmethod
+    def _heart_rate_values(
+        workout,
+    ) -> tuple[float, ...]:
+        """
+        Returns valid heart-rate samples recorded during
+        a workout.
+        """
+
+        heart_rate = workout.sensors.get(
+            "heart_rate"
+        )
+
+        if not isinstance(
+            heart_rate,
+            (list, tuple),
+        ):
+            return ()
+
+        values = []
+
+        for sample in heart_rate:
+
+            value = (
+                sample.get("value")
+                if isinstance(sample, dict)
+                else sample
+            )
+
+            if (
+                isinstance(
+                    value,
+                    (int, float),
+                )
+                and not isinstance(value, bool)
+                and value > 0
+            ):
+                values.append(
+                    float(value)
+                )
+
+        return tuple(values)
+
+    # ======================================================
+
+    @property
+    def observed_max_heart_rate(
+        self,
+    ) -> float | None:
+        """
+        Returns the highest configured or observed
+        heart rate.
+        """
+
+        candidates = []
+
+        configured_max = getattr(
+            self.athlete,
+            "max_hr",
+            None,
+        )
+
+        if (
+            isinstance(
+                configured_max,
+                (int, float),
+            )
+            and configured_max > 0
+        ):
+            candidates.append(
+                float(configured_max)
+            )
+
+        for workout in self.history:
+
+            values = self._heart_rate_values(
+                workout
+            )
+
+            if values:
+                candidates.append(
+                    max(values)
+                )
+
+        if not candidates:
+            return None
+
+        return max(candidates)
+
+    # ======================================================
+
     @property
     def typical_running_pace(
         self,
@@ -454,7 +553,165 @@ class AthleteAnalytics:
         )
 
     # ======================================================
+    @property
+    def road_10k_performance_pace(
+        self,
+    ) -> float | None:
+        """
+        Returns the best effort-adjusted pace from recent,
+        physiologically demanding road-running workouts
+        comparable to a 10 km event.
 
+        Pace is expressed in minutes per effort kilometre.
+        """
+
+        maximum_heart_rate = (
+            self.observed_max_heart_rate
+        )
+
+        if maximum_heart_rate is None:
+            return None
+
+        today = date.today()
+
+        start_date = (
+            today
+            - timedelta(
+                days=(
+                    ROAD_10K_LOOKBACK_DAYS
+                    - 1
+                )
+            )
+        )
+
+        minimum_average_heart_rate = (
+            maximum_heart_rate
+            * ROAD_10K_MIN_HEART_RATE_RATIO
+        )
+
+        candidate_paces = []
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            title = str(
+                workout.info.title or ""
+            ).strip().lower()
+
+            excluded_text = (
+                f"{sport} {title}"
+            )
+
+            distance = workout.distance
+            duration = workout.duration
+
+            if (
+                "run" not in sport
+                or any(
+                    token in excluded_text
+                    for token in (
+                        "trail",
+                        "hill",
+                        "sky",
+                    )
+                )
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or distance is None
+                or not (
+                    ROAD_10K_MIN_DISTANCE
+                    <= distance
+                    <= ROAD_10K_MAX_DISTANCE
+                )
+                or duration is None
+                or duration.total_seconds() <= 0
+            ):
+                continue
+
+            elevation_gain = max(
+                workout.elevation_gain or 0.0,
+                0.0,
+            )
+
+            elevation_per_kilometre = (
+                elevation_gain / distance
+            )
+
+            if (
+                elevation_per_kilometre
+                >= ROAD_10K_MAX_ELEVATION_PER_KILOMETRE
+            ):
+                continue
+
+            rpe = (
+                workout.feedback.effective_rpe
+            )
+
+            if (
+                rpe is None
+                or rpe < ROAD_10K_MIN_RPE
+            ):
+                continue
+
+            heart_rate_values = (
+                self._heart_rate_values(
+                    workout
+                )
+            )
+
+            if not heart_rate_values:
+                continue
+
+            average_heart_rate = (
+                sum(heart_rate_values)
+                / len(heart_rate_values)
+            )
+
+            if (
+                average_heart_rate
+                < minimum_average_heart_rate
+            ):
+                continue
+
+            effort_distance = (
+                distance
+                + (
+                    elevation_gain
+                    / EFFORT_ELEVATION_METRES_PER_KILOMETRE
+                )
+            )
+
+            duration_minutes = (
+                duration.total_seconds()
+                / 60
+            )
+
+            candidate_paces.append(
+                duration_minutes
+                / effort_distance
+            )
+
+        if not candidate_paces:
+            return None
+
+        return min(candidate_paces)
+
+    # ======================================================
+    
     @property
     def typical_running_long_session_minutes(
         self,
