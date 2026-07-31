@@ -9,6 +9,10 @@ Public interface for the athlete coaching engine.
 from .analyzer import CoachAnalysis, CoachAnalyzer
 from .context import CoachContext
 from .recommendation import CoachRecommendation
+from .race_execution import (
+    RaceExecutionPlan,
+    build_race_execution_plan,
+)
 from .strategy import CoachStrategy, StrategyPlan
 
 from .strategies import (
@@ -53,6 +57,8 @@ __all__ = [
     "CoachAnalysis",
     "CoachAnalyzer",
     "CoachRecommendation",
+    "RaceExecutionPlan",
+    "build_race_execution_plan",
     "CoachStrategy",
     "StrategyPlan",
     "StrategySelector",
