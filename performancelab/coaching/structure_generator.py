@@ -689,6 +689,16 @@ class WeekStructureGenerator:
             )
         )
 
+        remaining = (
+            self._allocate_taper_session_minutes(
+                durations=durations,
+                capacities=capacities,
+                purposes=purposes,
+                strategy_plan=strategy_plan,
+                remaining=remaining,
+            )
+        )
+
         for weekday, purpose in purposes.items():
 
             if (
@@ -825,7 +835,81 @@ class WeekStructureGenerator:
         return remaining
 
     # ======================================================
-    
+
+    @staticmethod
+    def _allocate_taper_session_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+        strategy_plan: StrategyPlan,
+        remaining: int,
+    ) -> int:
+        """
+        Consolidates the normal taper into one brief
+        sharpening session and two aerobic sessions.
+
+        The first easy session receives a useful continuous
+        duration instead of splitting the volume across
+        several short runs.
+        """
+
+        if strategy_plan.phase != "Taper":
+            return remaining
+
+        intensity_days = [
+            weekday
+            for weekday, purpose
+            in purposes.items()
+            if purpose is SessionPurpose.INTENSITY
+        ]
+
+        easy_days = [
+            weekday
+            for weekday, purpose
+            in purposes.items()
+            if purpose is SessionPurpose.EASY
+        ]
+
+        if (
+            len(intensity_days) != 1
+            or len(easy_days) != 2
+        ):
+            return remaining
+
+        priority_allocations = (
+            (
+                intensity_days[0],
+                40,
+            ),
+            (
+                easy_days[0],
+                60,
+            ),
+        )
+
+        for weekday, target in priority_allocations:
+
+            if remaining <= 0:
+                break
+
+            duration = min(
+                target,
+                capacities[weekday],
+                remaining,
+            )
+
+            durations[weekday] = duration
+            capacities[weekday] = duration
+            remaining -= duration
+
+        return remaining
+
+    # ======================================================
+
     @staticmethod
     def _allocate_long_session_minutes(
         *,

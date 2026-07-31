@@ -915,3 +915,48 @@ def test_race_week_uses_pre_race_sessions(
         40,
         40,
     )
+
+def test_consolidates_normal_taper_sessions(
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+):
+
+    strategy_plan = StrategyPlan(
+        strategy="TaperStrategy",
+        phase="Taper",
+        volume_factor=0.65,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=0,
+        recovery_days=4,
+        focus="race readiness",
+        key_session_focus="threshold",
+        secondary_focus="race readiness",
+        target_weekly_minutes=145,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=strategy_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    training_slots = [
+        slot
+        for slot in slots
+        if slot.is_training
+    ]
+
+    durations = sorted(
+        slot.duration_minutes
+        for slot in training_slots
+    )
+
+    assert len(training_slots) == 3
+    assert durations == [
+        40,
+        45,
+        60,
+    ]

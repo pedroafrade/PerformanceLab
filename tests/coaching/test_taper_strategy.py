@@ -95,10 +95,10 @@ def test_default_taper_targets():
     plan = build_plan()
 
     assert plan.volume_factor == pytest.approx(0.65)
-    assert plan.target_sessions == 4
+    assert plan.target_sessions == 3
     assert plan.intensity_sessions == 1
     assert plan.long_sessions == 0
-    assert plan.recovery_days == 3
+    assert plan.recovery_days == 4
 
 
 def test_default_taper_focus():
@@ -238,7 +238,7 @@ def test_tsb_boundary_does_not_trigger_reduction():
 
     assert plan.volume_factor == pytest.approx(0.65)
     assert plan.intensity_sessions == 1
-    assert plan.recovery_days == 3
+    assert plan.recovery_days == 4
     assert plan.focus == "race readiness"
 
     assert (
@@ -303,7 +303,7 @@ def test_rpe_below_threshold_does_not_reduce_taper():
 
     assert plan.volume_factor == pytest.approx(0.65)
     assert plan.intensity_sessions == 1
-    assert plan.recovery_days == 3
+    assert plan.recovery_days == 4
     assert plan.focus == "race readiness"
 
     assert (
@@ -319,7 +319,7 @@ def test_missing_rpe_is_supported():
 
     assert plan.volume_factor == pytest.approx(0.65)
     assert plan.intensity_sessions == 1
-    assert plan.recovery_days == 3
+    assert plan.recovery_days == 4
 
 
 # ==========================================================
@@ -462,7 +462,7 @@ def test_intensity_removed_only_when_required():
             None,
             0.65,
             1,
-            3,
+            4,
             "race readiness",
         ),
         (
@@ -470,7 +470,7 @@ def test_intensity_removed_only_when_required():
             7.9,
             0.65,
             1,
-            3,
+            4,
             "race readiness",
         ),
         (

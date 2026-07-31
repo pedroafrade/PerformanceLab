@@ -42,10 +42,10 @@ class TaperStrategy(CoachStrategy):
         warnings: list[str] = []
 
         volume_factor = 0.65
-        target_sessions = 4
+        target_sessions = 3
         intensity_sessions = 1
         long_sessions = 0
-        recovery_days = 3
+        recovery_days = 4
         focus = "race readiness"
         event_sport = self._event_sport(
             context
