@@ -47,12 +47,23 @@ class PeakStrategy(CoachStrategy):
         long_sessions = 1
         recovery_days = 2
         focus = "race-specific intensity"
+        event_sport = self._event_sport(
+            context
+        )
+
+        key_session_focus = (
+            self._key_session_focus(
+                context=context,
+                event_sport=event_sport,
+            )
+        )
 
         if context.tsb < -10:
             volume_factor = 0.80
             intensity_sessions = 1
             recovery_days = 3
             focus = "race-specific endurance"
+            key_session_focus = "tempo"
 
             warnings.append(
                 "Fatigue is elevated; reduce training stress "
@@ -73,6 +84,7 @@ class PeakStrategy(CoachStrategy):
                 3,
             )
             focus = "race-specific endurance"
+            key_session_focus = "tempo"
 
             warnings.append(
                 "Recent perceived effort is high."
@@ -98,7 +110,9 @@ class PeakStrategy(CoachStrategy):
 
             focus=focus,
 
-            key_session_focus=focus,
+            key_session_focus=(
+                key_session_focus
+            ),
             secondary_focus="race pace",
 
             recovery_priority=(
@@ -123,3 +137,64 @@ class PeakStrategy(CoachStrategy):
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
         )
+
+    # ======================================================
+
+    @staticmethod
+    def _key_session_focus(
+        *,
+        context: CoachContext,
+        event_sport: str | None,
+    ) -> str:
+        """
+        Selects a concrete race-specific session for the
+        current Peak week.
+
+        VO2max is used less frequently than threshold and
+        tempo work. Trail plans retain climbing specificity.
+        """
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        is_trail = (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        )
+
+        if days_until_event is None:
+
+            return (
+                "hills"
+                if is_trail
+                else "threshold"
+            )
+
+        weeks_until_event = max(
+            0,
+            days_until_event // 7,
+        )
+
+        if is_trail:
+
+            rotation = (
+                "hills",
+                "threshold",
+            )
+
+        else:
+
+            rotation = (
+                "threshold",
+                "tempo",
+                "vo2max",
+                "threshold",
+            )
+
+        return rotation[
+            weeks_until_event
+            % len(rotation)
+        ]

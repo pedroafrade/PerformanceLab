@@ -27,18 +27,29 @@ def make_context(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
+    phase_event=None,
+    primary_event=None,
+    days_until_phase_event: int | None = None,
 ):
     return SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
+        next_event=phase_event,
+        phase_event=phase_event,
+        primary_event=primary_event,
+        days_until_phase_event=(
+            days_until_phase_event
+        ),
     )
-
 
 def build_plan(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
     event_name: str | None = None,
+    phase_event=None,
+    primary_event=None,
+    days_until_phase_event: int | None = None,
 ):
     strategy = StubPeakStrategy(
         event_name=event_name,
@@ -48,6 +59,11 @@ def build_plan(
         make_context(
             tsb=tsb,
             average_rpe=average_rpe,
+            phase_event=phase_event,
+            primary_event=primary_event,
+            days_until_phase_event=(
+                days_until_phase_event
+            ),
         ),
     )
 
@@ -91,6 +107,79 @@ def test_default_peak_focus():
 
     assert plan.focus == "race-specific intensity"
 
+def test_default_peak_uses_concrete_key_session():
+
+    plan = build_plan()
+
+    assert (
+        plan.key_session_focus
+        == "threshold"
+    )
+
+
+def test_trail_peak_rotates_hills_and_threshold():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+        ),
+    )
+
+    focuses = tuple(
+        build_plan(
+            phase_event=event,
+            days_until_phase_event=days,
+        ).key_session_focus
+        for days in (
+            28,
+            35,
+        )
+    )
+
+    assert set(focuses) == {
+        "hills",
+        "threshold",
+    }
+
+
+def test_road_peak_uses_vo2max_sparingly():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Road Race",
+            sport="Road Running",
+        ),
+    )
+
+    focuses = tuple(
+        build_plan(
+            phase_event=event,
+            days_until_phase_event=days,
+        ).key_session_focus
+        for days in (
+            21,
+            28,
+            35,
+            42,
+        )
+    )
+
+    assert focuses.count(
+        "vo2max"
+    ) == 1
+
+
+def test_fatigue_uses_controlled_tempo_focus():
+
+    plan = build_plan(
+        tsb=-10.1,
+    )
+
+    assert (
+        plan.key_session_focus
+        == "tempo"
+    )
 
 def test_default_concrete_weekly_targets():
     plan = build_plan()
