@@ -1261,3 +1261,76 @@ def test_full_week_keeps_strategy_unchanged():
     )
 
     assert result is strategy_plan
+
+def test_weekly_load_limit_preserves_pre_race_workout():
+
+    weekly_plan = WeeklyPlan(
+        start_date=date(
+            2026,
+            9,
+            21,
+        ),
+        end_date=date(
+            2026,
+            9,
+            27,
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    9,
+                    23,
+                ),
+                title=(
+                    "Pre-Race Easy Run"
+                ),
+                duration=timedelta(
+                    minutes=40,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    9,
+                    26,
+                ),
+                title="Shakeout Run",
+                duration=timedelta(
+                    minutes=20,
+                ),
+                intensity="Very easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    9,
+                    27,
+                ),
+                title="Race",
+                duration=timedelta(
+                    minutes=201,
+                ),
+                intensity="Race effort",
+            ),
+        ],
+    )
+
+    result = (
+        Planner._limit_weekly_load_growth(
+            weekly_plan=weekly_plan,
+            previous_weekly_load=100.0,
+        )
+    )
+
+    titles = tuple(
+        workout.title
+        for workout in result.workouts
+    )
+
+    assert titles == (
+        "Pre-Race Easy Run",
+        "Shakeout Run",
+        "Race",
+    )

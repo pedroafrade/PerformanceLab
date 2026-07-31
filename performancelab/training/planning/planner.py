@@ -1034,6 +1034,9 @@ class Planner:
                         and not Planner._is_shakeout_workout(
                             workout
                         )
+                        and not Planner._is_pre_race_workout(
+                            workout
+                        )
                     )
                 ]
 
@@ -1134,7 +1137,24 @@ class Planner:
         ).strip().lower()
 
         return "shakeout" in title
+    # ======================================================
 
+    @staticmethod
+    def _is_pre_race_workout(
+        workout,
+    ) -> bool:
+
+        title = str(
+            getattr(
+                workout,
+                "title",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return "pre-race" in title
+    
     # ======================================================
 
     @staticmethod
