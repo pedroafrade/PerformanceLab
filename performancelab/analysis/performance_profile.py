@@ -15,6 +15,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .heart_rate_profile import (
+    HeartRateProfile,
+)
 
 @dataclass(frozen=True, slots=True)
 class PerformanceProfile:
@@ -49,6 +52,10 @@ class PerformanceProfile:
 
     running_economy: float | None
 
+    heart_rate_profile: (
+        HeartRateProfile | None
+    ) = None
+
     @property
     def has_power_profile(self) -> bool:
         """Returns whether power-based metrics are available."""
@@ -58,6 +65,13 @@ class PerformanceProfile:
     @property
     def has_heart_rate_profile(self) -> bool:
         """Returns whether heart-rate metrics are available."""
+
+        if self.heart_rate_profile is not None:
+
+            return (
+                self.heart_rate_profile
+                .has_zones
+            )
 
         return (
             self.max_hr is not None

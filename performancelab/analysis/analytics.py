@@ -21,6 +21,10 @@ from performancelab.physiology import (
 from performancelab.training import DailyLoadBuilder
 
 from .performance_profile import PerformanceProfile
+from .heart_rate_profile import (
+    HeartRateProfile,
+    build_heart_rate_profile,
+)
 from .training_state import TrainingState
 
 from . import consistency
@@ -47,6 +51,8 @@ class AthleteAnalytics:
 
         self._performance_profile = None
 
+        self._heart_rate_profile = None
+
     def invalidate_training_state(
         self,
     ) -> None:
@@ -55,6 +61,19 @@ class AthleteAnalytics:
         """
 
         self._training_state = None
+
+    # ======================================================
+
+    def invalidate_performance_profile(
+        self,
+    ) -> None:
+        """
+        Discards cached physiological profile data after
+        the athlete's settings change.
+        """
+
+        self._heart_rate_profile = None
+        self._performance_profile = None
 
     # ======================================================
     # Shortcuts
@@ -1032,6 +1051,44 @@ class AthleteAnalytics:
         return self._training_state
 
     @property
+    def heart_rate_profile(
+        self,
+    ) -> HeartRateProfile | None:
+        """
+        Returns the athlete's heart-rate profile.
+
+        Manually configured zones take precedence over
+        automatically calculated Karvonen zones.
+        """
+
+        if self._heart_rate_profile is None:
+
+            self._heart_rate_profile = (
+                build_heart_rate_profile(
+
+                    max_hr=self.athlete.max_hr,
+
+                    resting_hr=(
+                        self.athlete.resting_hr
+                    ),
+
+                    threshold_hr=(
+                        self.athlete.threshold_hr
+                    ),
+
+                    manual_zones=(
+                        self.athlete
+                        .manual_heart_rate_zones
+                    ),
+
+                )
+            )
+
+        return self._heart_rate_profile
+
+    # ======================================================
+
+    @property
     def performance_profile(self) -> PerformanceProfile:
 
         if self._performance_profile is None:
@@ -1054,7 +1111,9 @@ class AthleteAnalytics:
                     self.athlete.ftp
                 ),
 
-                threshold_hr=None,
+                threshold_hr=(
+                    self.athlete.threshold_hr
+                ),
 
                 threshold_pace=None,
 
@@ -1063,6 +1122,10 @@ class AthleteAnalytics:
                 resting_hr=self.athlete.resting_hr,
 
                 running_economy=None,
+
+                heart_rate_profile=(
+                    self.heart_rate_profile
+                ),
 
             )
 

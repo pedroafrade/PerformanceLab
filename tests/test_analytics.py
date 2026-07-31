@@ -19,6 +19,10 @@ import performancelab.analysis.time as t
 from performancelab.analysis.performance_profile import (
     PerformanceProfile,
 )
+from performancelab.analysis import (
+    HeartRateProfile,
+    HeartRateZone,
+)
 from performancelab.race import Event
 
 print(t.__file__)
@@ -843,6 +847,41 @@ def test_builds_performance_profile():
     athlete.ftp = 220
     athlete.max_hr = 190
     athlete.resting_hr = 50
+    athlete.threshold_hr = 180
+
+    athlete.manual_heart_rate_zones = (
+
+        HeartRateZone(
+            name="Z1",
+            lower_bpm=120,
+            upper_bpm=139,
+        ),
+
+        HeartRateZone(
+            name="Z2",
+            lower_bpm=140,
+            upper_bpm=154,
+        ),
+
+        HeartRateZone(
+            name="Z3",
+            lower_bpm=155,
+            upper_bpm=169,
+        ),
+
+        HeartRateZone(
+            name="Z4",
+            lower_bpm=170,
+            upper_bpm=184,
+        ),
+
+        HeartRateZone(
+            name="Z5",
+            lower_bpm=185,
+            upper_bpm=190,
+        ),
+
+    )
 
     profile = (
         athlete.analytics.performance_profile
@@ -857,8 +896,27 @@ def test_builds_performance_profile():
     assert profile.threshold_power == 220
     assert profile.max_hr == 190
     assert profile.resting_hr == 50
-    assert profile.threshold_hr is None
+    assert profile.threshold_hr == 180
     assert profile.threshold_pace is None
+
+    assert isinstance(
+        profile.heart_rate_profile,
+        HeartRateProfile,
+    )
+
+    assert (
+        profile.heart_rate_profile.source
+        == "manual"
+    )
+
+    assert (
+        profile.heart_rate_profile
+        .zone("Z4")
+        .lower_bpm
+        == 170
+    )
+
+    assert profile.has_heart_rate_profile
 
 def test_typical_running_pace_uses_recent_running_workouts():
 
@@ -1162,4 +1220,61 @@ def test_event_duration_without_running_history_is_unknown():
             event
         )
         is None
+    )
+
+# ======================================================
+
+def test_analytics_calculates_heart_rate_zones():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=190,
+        resting_hr=50,
+    )
+
+    profile = (
+        athlete.analytics
+        .heart_rate_profile
+    )
+
+    assert isinstance(
+        profile,
+        HeartRateProfile,
+    )
+
+    assert profile.source == "karvonen"
+    assert profile.has_zones
+    assert profile.zone("Z4") is not None
+
+
+# ======================================================
+
+def test_manual_heart_rate_zones_take_precedence():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=190,
+        resting_hr=50,
+        manual_heart_rate_zones=(
+
+            HeartRateZone(
+                name="Z4",
+                lower_bpm=168,
+                upper_bpm=182,
+            ),
+
+        ),
+    )
+
+    profile = (
+        athlete.analytics
+        .heart_rate_profile
+    )
+
+    assert profile is not None
+    assert profile.source == "manual"
+
+    assert (
+        profile.zone("Z4").lower_bpm
+        == 168
     )
