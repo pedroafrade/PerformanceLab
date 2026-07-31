@@ -1157,6 +1157,14 @@ class WorkoutGenerator:
         *,
         duration_minutes: int,
     ) -> tuple[str, ...]:
+        """
+        Builds the race-day structure.
+
+        ``duration_minutes`` represents the estimated
+        competition time. Warm-up and cool-down are
+        additional preparation and recovery activities.
+        """
+
         if duration_minutes <= 15:
             return (
                 f"Race effort {duration_minutes} min",
@@ -1178,16 +1186,9 @@ class WorkoutGenerator:
             ),
         )
 
-        race_minutes = max(
-            1,
-            duration_minutes
-            - warm_up_minutes
-            - cool_down_minutes,
-        )
-
         return (
             f"Warm up {warm_up_minutes} min",
-            f"Race effort {race_minutes} min",
+            f"Race effort {duration_minutes} min",
             f"Cool down {cool_down_minutes} min",
         )
 

@@ -948,3 +948,17 @@ def test_builds_duration_aware_technique_structure():
         ),
         "Cool down 5 min",
     )
+
+def test_race_structure_keeps_full_event_duration():
+
+    structure = (
+        WorkoutGenerator._race_structure(
+            duration_minutes=50,
+        )
+    )
+
+    assert structure == (
+        "Warm up 8 min",
+        "Race effort 50 min",
+        "Cool down 5 min",
+    )
