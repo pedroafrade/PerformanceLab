@@ -269,25 +269,19 @@ def _show_athlete_summary(
             else "Automatically calculated using Karvonen"
         )
 
-        st.caption(source)
-
-        st.table(
-            [
-                {
-                    "Zone": zone.name,
-                    "From": (
-                        f"{zone.lower_bpm} bpm"
-                    ),
-                    "To": (
-                        f"{zone.upper_bpm} bpm"
-                    ),
-                }
-                for zone in (
-                    heart_rate_profile.zones
-                )
-            ]
+        st.write(
+            "**Zone source:** "
+            f"{source}"
         )
 
+        for zone in heart_rate_profile.zones:
+
+            st.write(
+                f"**{zone.name}:** "
+                f"{zone.lower_bpm}–"
+                f"{zone.upper_bpm} bpm"
+            )
+            
     if st.button(
         "Edit athlete",
         key="edit_athlete_button",
