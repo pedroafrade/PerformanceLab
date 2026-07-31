@@ -108,6 +108,11 @@ def test_road_10k_uses_athlete_heart_rate_zones():
         threshold_hr=177,
         zones=(
             HeartRateZone(
+                "Z3",
+                157,
+                176,
+            ),
+            HeartRateZone(
                 "Z4",
                 177,
                 186,
@@ -131,10 +136,19 @@ def test_road_10k_uses_athlete_heart_rate_zones():
 
     assert plan is not None
 
-    assert "177–186 bpm" in plan.pacing[0]
-    assert "181–186 bpm" in plan.pacing[1]
-    assert "187–192 bpm" in plan.pacing[2]
-    assert "from 187 bpm" in plan.pacing[3]
+    assert "First 10 min" in plan.pacing[0]
+    assert "157–176 bpm" in plan.pacing[0]
+    assert "164 bpm" in plan.pacing[0]
+
+    assert "Minutes 10–35" in plan.pacing[1]
+    assert "LT2 (177 bpm)" in plan.pacing[1]
+
+    assert "Minutes 35–45" in plan.pacing[2]
+    assert "184 bpm" in plan.pacing[2]
+    assert "from 187 bpm" in plan.pacing[2]
+
+    assert "Final 5 min" in plan.pacing[3]
+    assert "observed, not chased" in plan.pacing[3]
 
 
 def test_road_10k_without_zones_keeps_pace_guidance():
@@ -159,3 +173,24 @@ def test_road_10k_without_zones_keeps_pace_guidance():
         in step
         for step in plan.pacing
     )
+
+def test_road_10k_segments_follow_expected_duration():
+
+    event = SimpleNamespace(
+        sport="Road Running",
+        distance=10,
+    )
+
+    plan = build_race_execution_plan(
+        event=event,
+        expected_duration=timedelta(
+            minutes=45,
+        ),
+    )
+
+    assert plan is not None
+
+    assert "First 9 min" in plan.pacing[0]
+    assert "Minutes 9–32" in plan.pacing[1]
+    assert "Minutes 32–41" in plan.pacing[2]
+    assert "Final 4 min" in plan.pacing[3]
