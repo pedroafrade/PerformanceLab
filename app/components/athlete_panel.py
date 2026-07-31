@@ -8,6 +8,10 @@ from datetime import date
 
 import streamlit as st
 
+from performancelab.analysis import (
+    HeartRateZone,
+)
+
 from performancelab.training.config import AthleteAvailability
 
 
@@ -27,6 +31,17 @@ _FORM_KEYS = (
     "athlete_edit_max_hr",
     "athlete_edit_resting_hr",
     "athlete_edit_threshold_hr",
+    "athlete_edit_manual_hr_zones",
+    "athlete_edit_z1_lower",
+    "athlete_edit_z1_upper",
+    "athlete_edit_z2_lower",
+    "athlete_edit_z2_upper",
+    "athlete_edit_z3_lower",
+    "athlete_edit_z3_upper",
+    "athlete_edit_z4_lower",
+    "athlete_edit_z4_upper",
+    "athlete_edit_z5_lower",
+    "athlete_edit_z5_upper",
     "athlete_edit_train_any_day",
 )
 
@@ -106,6 +121,70 @@ def _start_editing(
     ] = int(
         athlete.threshold_hr or 0
     )
+
+    manual_zones = (
+        athlete.manual_heart_rate_zones
+    )
+
+    heart_rate_profile = (
+        athlete.analytics
+        .heart_rate_profile
+    )
+
+    available_zones = (
+        manual_zones
+        if manual_zones
+        else (
+            heart_rate_profile.zones
+            if heart_rate_profile is not None
+            else ()
+        )
+    )
+
+    zones_by_name = {
+        zone.name: zone
+        for zone in available_zones
+    }
+
+    st.session_state[
+        "athlete_edit_manual_hr_zones"
+    ] = bool(manual_zones)
+
+    for zone_name in (
+        "Z1",
+        "Z2",
+        "Z3",
+        "Z4",
+        "Z5",
+    ):
+
+        zone = zones_by_name.get(
+            zone_name
+        )
+
+        lower_value = (
+            zone.lower_bpm
+            if zone is not None
+            else 1
+        )
+
+        upper_value = (
+            zone.upper_bpm
+            if zone is not None
+            else 1
+        )
+
+        normalized_name = (
+            zone_name.lower()
+        )
+
+        st.session_state[
+            f"athlete_edit_{normalized_name}_lower"
+        ] = int(lower_value)
+
+        st.session_state[
+            f"athlete_edit_{normalized_name}_upper"
+        ] = int(upper_value)
 
     st.session_state[
         "athlete_edit_train_any_day"
@@ -247,8 +326,8 @@ def _show_athlete_summary(
         .heart_rate_profile
     )
 
-    st.write(
-        "**Heart-rate training zones:**"
+    st.caption(
+        "Heart-rate training zones:"
     )
 
     if heart_rate_profile is None:
@@ -261,17 +340,15 @@ def _show_athlete_summary(
     else:
 
         source = (
-            "Manually configured"
+            "manually configured"
             if (
                 heart_rate_profile
                 .uses_manual_zones
             )
-            else "Automatically calculated using Karvonen"
-        )
-
-        st.write(
-            "**Zone source:** "
-            f"{source}"
+            else (
+                "automatically calculated "
+                "using Karvonen"
+            )
         )
 
         for zone in heart_rate_profile.zones:
@@ -281,7 +358,11 @@ def _show_athlete_summary(
                 f"{zone.lower_bpm}–"
                 f"{zone.upper_bpm} bpm"
             )
-            
+
+        st.caption(
+            f"Zone source: {source}"
+        )
+
     if st.button(
         "Edit athlete",
         key="edit_athlete_button",
@@ -332,6 +413,20 @@ def _show_athlete_form(
             1,
             current_gender,
         )
+
+    st.subheader(
+        "Heart-rate zones"
+    )
+
+    use_manual_hr_zones = st.checkbox(
+        "Configure heart-rate zones manually",
+        key="athlete_edit_manual_hr_zones",
+        help=(
+            "When disabled, the zones are "
+            "calculated automatically from maximum "
+            "and resting heart rate."
+        ),
+    )
 
     st.divider()
 
@@ -426,6 +521,72 @@ def _show_athlete_form(
                 "Use 0 when it is not known."
             ),
         )
+
+        manual_zone_values = {}
+
+        if use_manual_hr_zones:
+
+            st.caption(
+                "Enter the lower and upper heart-rate "
+                "limits for each zone."
+            )
+
+            for zone_name in (
+                "Z1",
+                "Z2",
+                "Z3",
+                "Z4",
+                "Z5",
+            ):
+
+                normalized_name = (
+                    zone_name.lower()
+                )
+
+                zone_column, lower_column, upper_column = (
+                    st.columns(
+                        [1, 2, 2]
+                    )
+                )
+
+                with zone_column:
+
+                    st.write(
+                        f"**{zone_name}**"
+                    )
+
+                with lower_column:
+
+                    lower_bpm = st.number_input(
+                        f"{zone_name} from",
+                        min_value=1,
+                        max_value=250,
+                        step=1,
+                        key=(
+                            "athlete_edit_"
+                            f"{normalized_name}_lower"
+                        ),
+                    )
+
+                with upper_column:
+
+                    upper_bpm = st.number_input(
+                        f"{zone_name} to",
+                        min_value=1,
+                        max_value=250,
+                        step=1,
+                        key=(
+                            "athlete_edit_"
+                            f"{normalized_name}_upper"
+                        ),
+                    )
+
+                manual_zone_values[
+                    zone_name
+                ] = (
+                    int(lower_bpm),
+                    int(upper_bpm),
+                )
 
         if not train_any_day:
 
@@ -569,6 +730,77 @@ def _show_athlete_form(
 
             return athlete
 
+        manual_heart_rate_zones = ()
+
+        if use_manual_hr_zones:
+
+            built_zones = []
+            previous_upper = None
+
+            for zone_name in (
+                "Z1",
+                "Z2",
+                "Z3",
+                "Z4",
+                "Z5",
+            ):
+
+                lower_bpm, upper_bpm = (
+                    manual_zone_values[
+                        zone_name
+                    ]
+                )
+
+                if lower_bpm > upper_bpm:
+
+                    st.error(
+                        f"{zone_name} lower limit "
+                        "cannot be higher than its "
+                        "upper limit."
+                    )
+
+                    return athlete
+
+                if (
+                    previous_upper is not None
+                    and lower_bpm < previous_upper
+                ):
+
+                    st.error(
+                        f"{zone_name} overlaps the "
+                        "previous heart-rate zone."
+                    )
+
+                    return athlete
+
+                if (
+                    max_hr > 0
+                    and upper_bpm > max_hr
+                ):
+
+                    st.error(
+                        f"{zone_name} cannot exceed "
+                        "maximum heart rate."
+                    )
+
+                    return athlete
+
+                built_zones.append(
+                    HeartRateZone(
+                        name=zone_name,
+                        lower_bpm=lower_bpm,
+                        upper_bpm=upper_bpm,
+                    )
+                )
+
+                previous_upper = (
+                    upper_bpm
+                )
+
+            manual_heart_rate_zones = tuple(
+                built_zones
+            )
+
         athlete.name = cleaned_name
 
         athlete.birth_date = birth_date
@@ -597,6 +829,10 @@ def _show_athlete_form(
 
         athlete.threshold_hr = _optional_int(
             threshold_hr
+        )
+
+        athlete.manual_heart_rate_zones = (
+            manual_heart_rate_zones
         )
 
         athlete.analytics.invalidate_performance_profile()
