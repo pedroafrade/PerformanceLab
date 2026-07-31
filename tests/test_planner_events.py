@@ -795,3 +795,66 @@ def test_preserves_event_sport_on_race_and_shakeout():
     assert result[2].sport == (
         "Road Running"
     )
+
+def test_adds_duration_source_to_race_workout():
+
+    event_date = date(
+        2026,
+        9,
+        13,
+    )
+
+    event_entry = make_event_entry(
+        event_date=event_date,
+        name="Sealand",
+    )
+
+    race_workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+        ),
+        sport="Road Running",
+        title="Race",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        structure=(
+            "Warm up 8 min",
+            "Race effort 50 min",
+            "Cool down 5 min",
+        ),
+    )
+
+    context = SimpleNamespace(
+        event_duration_source=(
+            lambda entry: (
+                "comparable high-effort "
+                "road runs"
+            )
+        ),
+    )
+
+    result = (
+        Planner._apply_event_duration_sources(
+            workouts=(
+                race_workout,
+            ),
+            event_entries=(
+                event_entry,
+            ),
+            context=context,
+        )
+    )
+
+    assert result[0].structure == (
+        "Warm up 8 min",
+        "Race effort 50 min",
+        "Cool down 5 min",
+        (
+            "Estimate based on comparable "
+            "high-effort road runs"
+        ),
+    )

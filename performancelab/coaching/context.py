@@ -703,7 +703,98 @@ class CoachContext:
         return estimator(event)
 
     # ======================================================
+    def event_duration_source(
+        self,
+        event_entry,
+    ) -> str | None:
+        """
+        Explains which athlete information determined
+        the expected event duration.
+        """
 
+        if event_entry is None:
+            return None
+
+        target_time = getattr(
+            event_entry,
+            "target_time",
+            None,
+        )
+
+        if target_time is not None:
+            return "athlete-defined target time"
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        if event is None:
+            return None
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        if analytics is None:
+            return None
+
+        sport = str(
+            getattr(
+                event,
+                "sport",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        distance = getattr(
+            event,
+            "distance",
+            None,
+        )
+
+        is_road_10k_event = (
+            sport == "road running"
+            and isinstance(
+                distance,
+                (int, float),
+            )
+            and not isinstance(
+                distance,
+                bool,
+            )
+            and 8 <= distance <= 12
+        )
+
+        if (
+            is_road_10k_event
+            and getattr(
+                analytics,
+                "road_10k_performance_pace",
+                None,
+            )
+            is not None
+        ):
+            return (
+                "comparable high-effort road runs"
+            )
+
+        if (
+            self.event_duration(
+                event_entry
+            )
+            is not None
+        ):
+            return "recent running history"
+
+        return None
+
+    # ======================================================
+    
     @property
     def primary_event_duration(
         self,

@@ -266,6 +266,17 @@ class Planner:
                 context.competition_block_events
             ),
         )
+
+        workouts = (
+            self._apply_event_duration_sources(
+                workouts=workouts,
+                event_entries=(
+                    context.competition_block_events
+                ),
+                context=context,
+            )
+        )
+
         self._print_diagnostics(
             strategy_plan=strategy_plan,
             workouts=workouts,
@@ -1203,7 +1214,98 @@ class Planner:
         )
 
     # ======================================================
+    @staticmethod
+    def _apply_event_duration_sources(
+        *,
+        workouts,
+        event_entries,
+        context: CoachContext,
+    ):
+        """
+        Adds the duration-estimate source to registered
+        race workouts.
 
+        The Weekly Plan only presents this domain-provided
+        information.
+        """
+
+        entries_by_date = {}
+
+        for event_entry in event_entries:
+
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            event_date = getattr(
+                event,
+                "date",
+                None,
+            )
+
+            if event_date is not None:
+                entries_by_date[
+                    event_date
+                ] = event_entry
+
+        updated_workouts = []
+
+        for workout in workouts:
+
+            if not Planner._is_race_workout(
+                workout
+            ):
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            event_entry = entries_by_date.get(
+                workout.day
+            )
+
+            source = (
+                context.event_duration_source(
+                    event_entry
+                )
+                if event_entry is not None
+                else None
+            )
+
+            if source is None:
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            source_step = (
+                f"Estimate based on {source}"
+            )
+
+            if source_step in workout.structure:
+                updated_workouts.append(
+                    workout
+                )
+                continue
+
+            updated_workouts.append(
+                replace(
+                    workout,
+                    structure=(
+                        *workout.structure,
+                        source_step,
+                    ),
+                )
+            )
+
+        return tuple(
+            updated_workouts
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _apply_events_to_week(
         *,
