@@ -10,6 +10,7 @@ import streamlit as st
 
 from performancelab.analysis import (
     HeartRateZone,
+    NutritionProfile,
 )
 
 from performancelab.training.config import AthleteAvailability
@@ -42,6 +43,14 @@ _FORM_KEYS = (
     "athlete_edit_z4_upper",
     "athlete_edit_z5_lower",
     "athlete_edit_z5_upper",
+    "athlete_edit_carbohydrate_per_hour",
+    "athlete_edit_fluid_lower",
+    "athlete_edit_fluid_upper",
+    "athlete_edit_sodium_lower",
+    "athlete_edit_sodium_upper",
+    "athlete_edit_gel_carbohydrate",
+    "athlete_edit_pre_race_carbohydrate_lower",
+    "athlete_edit_pre_race_carbohydrate_upper",
     "athlete_edit_train_any_day",
 )
 
@@ -185,6 +194,42 @@ def _start_editing(
         st.session_state[
             f"athlete_edit_{normalized_name}_upper"
         ] = int(upper_value)
+
+    nutrition_profile = (
+        athlete.nutrition_profile
+    )
+
+    st.session_state[
+        "athlete_edit_carbohydrate_per_hour"
+    ] = nutrition_profile.carbohydrate_per_hour
+
+    st.session_state[
+        "athlete_edit_fluid_lower"
+    ] = nutrition_profile.fluid_lower_ml_per_hour
+
+    st.session_state[
+        "athlete_edit_fluid_upper"
+    ] = nutrition_profile.fluid_upper_ml_per_hour
+
+    st.session_state[
+        "athlete_edit_sodium_lower"
+    ] = nutrition_profile.sodium_lower_mg_per_hour
+
+    st.session_state[
+        "athlete_edit_sodium_upper"
+    ] = nutrition_profile.sodium_upper_mg_per_hour
+
+    st.session_state[
+        "athlete_edit_gel_carbohydrate"
+    ] = nutrition_profile.gel_carbohydrate_grams
+
+    st.session_state[
+        "athlete_edit_pre_race_carbohydrate_lower"
+    ] = nutrition_profile.pre_race_carbohydrate_lower
+
+    st.session_state[
+        "athlete_edit_pre_race_carbohydrate_upper"
+    ] = nutrition_profile.pre_race_carbohydrate_upper
 
     st.session_state[
         "athlete_edit_train_any_day"
@@ -362,6 +407,53 @@ def _show_athlete_summary(
         st.caption(
             f"Zone source: {source}"
         )
+
+    nutrition_profile = (
+        athlete.nutrition_profile
+    )
+
+    st.caption(
+        "Endurance nutrition profile:"
+    )
+
+    st.write(
+        "**Carbohydrate during long exercise:** "
+        f"{nutrition_profile.carbohydrate_per_hour} g/h"
+    )
+
+    st.write(
+        "**Fluid:** "
+        f"{nutrition_profile.fluid_lower_ml_per_hour}–"
+        f"{nutrition_profile.fluid_upper_ml_per_hour} ml/h"
+    )
+
+    st.write(
+        "**Sodium:** "
+        f"{nutrition_profile.sodium_lower_mg_per_hour}–"
+        f"{nutrition_profile.sodium_upper_mg_per_hour} mg/h"
+    )
+
+    st.write(
+        "**Carbohydrate per gel:** "
+        f"{nutrition_profile.gel_carbohydrate_grams} g"
+    )
+
+    st.write(
+        "**Pre-race carbohydrate:** "
+        f"{nutrition_profile.pre_race_carbohydrate_lower}–"
+        f"{nutrition_profile.pre_race_carbohydrate_upper} g"
+    )
+
+    source = (
+        "athlete tested"
+        if nutrition_profile.source
+        == "athlete-tested"
+        else "default reference"
+    )
+
+    st.caption(
+        f"Nutrition source: {source}"
+    )
 
     if st.button(
         "Edit athlete",
@@ -581,6 +673,113 @@ def _show_athlete_form(
             ),
         )
 
+        st.caption(
+            "Endurance nutrition profile:"
+        )
+
+        st.write(
+            "Use values that have already been tested "
+            "during long training sessions or races."
+        )
+
+        carbohydrate_per_hour = st.number_input(
+            "Carbohydrate during long exercise (g/h)",
+            min_value=1,
+            max_value=150,
+            step=5,
+            key=(
+                "athlete_edit_"
+                "carbohydrate_per_hour"
+            ),
+        )
+
+        fluid_lower_column, fluid_upper_column = (
+            st.columns(2)
+        )
+
+        with fluid_lower_column:
+
+            fluid_lower = st.number_input(
+                "Fluid from (ml/h)",
+                min_value=1,
+                max_value=2000,
+                step=50,
+                key="athlete_edit_fluid_lower",
+            )
+
+        with fluid_upper_column:
+
+            fluid_upper = st.number_input(
+                "Fluid to (ml/h)",
+                min_value=1,
+                max_value=2000,
+                step=50,
+                key="athlete_edit_fluid_upper",
+            )
+
+        sodium_lower_column, sodium_upper_column = (
+            st.columns(2)
+        )
+
+        with sodium_lower_column:
+
+            sodium_lower = st.number_input(
+                "Sodium from (mg/h)",
+                min_value=1,
+                max_value=3000,
+                step=50,
+                key="athlete_edit_sodium_lower",
+            )
+
+        with sodium_upper_column:
+
+            sodium_upper = st.number_input(
+                "Sodium to (mg/h)",
+                min_value=1,
+                max_value=3000,
+                step=50,
+                key="athlete_edit_sodium_upper",
+            )
+
+        gel_carbohydrate = st.number_input(
+            "Carbohydrate per gel (g)",
+            min_value=1,
+            max_value=100,
+            step=5,
+            key="athlete_edit_gel_carbohydrate",
+        )
+
+        (
+            pre_race_lower_column,
+            pre_race_upper_column,
+        ) = st.columns(2)
+
+        with pre_race_lower_column:
+
+            pre_race_lower = st.number_input(
+                "Pre-race carbohydrate from (g)",
+                min_value=1,
+                max_value=300,
+                step=5,
+                key=(
+                    "athlete_edit_"
+                    "pre_race_carbohydrate_lower"
+                ),
+            )
+
+        with pre_race_upper_column:
+
+            pre_race_upper = st.number_input(
+                "Pre-race carbohydrate to (g)",
+                min_value=1,
+                max_value=300,
+                step=5,
+                key=(
+                    "athlete_edit_"
+                    "pre_race_carbohydrate_upper"
+                ),
+            )
+
         if not train_any_day:
 
             st.caption(
@@ -723,6 +922,33 @@ def _show_athlete_form(
 
             return athlete
 
+        if fluid_lower > fluid_upper:
+
+            st.error(
+                "The lower fluid value cannot be "
+                "higher than the upper value."
+            )
+
+            return athlete
+
+        if sodium_lower > sodium_upper:
+
+            st.error(
+                "The lower sodium value cannot be "
+                "higher than the upper value."
+            )
+
+            return athlete
+
+        if pre_race_lower > pre_race_upper:
+
+            st.error(
+                "The lower pre-race carbohydrate value "
+                "cannot be higher than the upper value."
+            )
+
+            return athlete
+
         manual_heart_rate_zones = ()
 
         if use_manual_hr_zones:
@@ -826,6 +1052,36 @@ def _show_athlete_form(
 
         athlete.manual_heart_rate_zones = (
             manual_heart_rate_zones
+        )
+
+        athlete.nutrition_profile = (
+            NutritionProfile(
+                carbohydrate_per_hour=int(
+                    carbohydrate_per_hour
+                ),
+                fluid_lower_ml_per_hour=int(
+                    fluid_lower
+                ),
+                fluid_upper_ml_per_hour=int(
+                    fluid_upper
+                ),
+                sodium_lower_mg_per_hour=int(
+                    sodium_lower
+                ),
+                sodium_upper_mg_per_hour=int(
+                    sodium_upper
+                ),
+                gel_carbohydrate_grams=int(
+                    gel_carbohydrate
+                ),
+                pre_race_carbohydrate_lower=int(
+                    pre_race_lower
+                ),
+                pre_race_carbohydrate_upper=int(
+                    pre_race_upper
+                ),
+                source="athlete-tested",
+            )
         )
 
         athlete.analytics.invalidate_performance_profile()
