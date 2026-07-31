@@ -185,6 +185,32 @@ class CoachContext:
 
     # ======================================================
 
+    @property
+    def heart_rate_profile(self):
+        """
+        Returns the athlete's heart-rate training profile.
+
+        Lightweight test doubles and legacy athletes that do
+        not expose this profile continue to return None.
+        """
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        if analytics is None:
+            return None
+
+        return getattr(
+            analytics,
+            "heart_rate_profile",
+            None,
+        )
+    
+    # ======================================================
+
     @classmethod
     def from_athlete(
         cls,

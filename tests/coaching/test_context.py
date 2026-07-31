@@ -9,6 +9,11 @@ from performancelab.athlete import Athlete
 
 from performancelab.analysis.training_state import TrainingState
 
+from performancelab.analysis import (
+    HeartRateProfile,
+    HeartRateZone,
+)
+
 from performancelab.coaching import CoachContext
 
 from performancelab.race import (
@@ -1256,4 +1261,95 @@ def test_target_time_precedes_estimated_duration():
             hours=2,
             minutes=45,
         )
+    )
+
+# ======================================================
+
+def test_context_exposes_heart_rate_profile():
+
+    athlete = Athlete(
+        name="Test Athlete",
+        max_hr=205,
+        resting_hr=65,
+        threshold_hr=177,
+        manual_heart_rate_zones=(
+
+            HeartRateZone(
+                name="Z1",
+                lower_bpm=1,
+                upper_bpm=120,
+            ),
+
+            HeartRateZone(
+                name="Z2",
+                lower_bpm=121,
+                upper_bpm=156,
+            ),
+
+            HeartRateZone(
+                name="Z3",
+                lower_bpm=157,
+                upper_bpm=176,
+            ),
+
+            HeartRateZone(
+                name="Z4",
+                lower_bpm=177,
+                upper_bpm=186,
+            ),
+
+            HeartRateZone(
+                name="Z5",
+                lower_bpm=187,
+                upper_bpm=205,
+            ),
+
+        ),
+    )
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date(
+            2026,
+            7,
+            31,
+        ),
+    )
+
+    assert isinstance(
+        context.heart_rate_profile,
+        HeartRateProfile,
+    )
+
+    assert (
+        context.heart_rate_profile.source
+        == "manual"
+    )
+
+    assert (
+        context.heart_rate_profile
+        .zone("Z4")
+        .lower_bpm
+        == 177
+    )
+
+
+# ======================================================
+
+def test_context_without_heart_rate_profile():
+
+    athlete = make_athlete()
+
+    context = CoachContext.from_athlete(
+        athlete,
+        today=date(
+            2026,
+            7,
+            31,
+        ),
+    )
+
+    assert (
+        context.heart_rate_profile
+        is None
     )
