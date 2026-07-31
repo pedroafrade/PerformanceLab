@@ -581,7 +581,7 @@ def _show_athlete_form(
 
         _clear_form_state()
 
-        st.success(
+        st.session_state.notice = (
             "Athlete data saved."
         )
 
