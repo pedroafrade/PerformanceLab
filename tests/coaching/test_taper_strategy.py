@@ -28,10 +28,14 @@ def make_context(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     typical_weekly_minutes: float = 0.0,
+    phase_event=None,
 ):
     return SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
+        next_event=phase_event,
+        phase_event=phase_event,
+        primary_event=phase_event,
         training_state=SimpleNamespace(
             typical_weekly_minutes=(
                 typical_weekly_minutes
@@ -39,13 +43,13 @@ def make_context(
         ),
     )
 
-
 def build_plan(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
     event_name: str | None = None,
     typical_weekly_minutes: float = 0.0,
+    phase_event=None,
 ):
     strategy = StubTaperStrategy(
         event_name=event_name,
@@ -58,6 +62,7 @@ def build_plan(
             typical_weekly_minutes=(
                 typical_weekly_minutes
             ),
+            phase_event=phase_event,
         ),
     )
 
@@ -101,6 +106,42 @@ def test_default_taper_focus():
 
     assert plan.focus == "race readiness"
 
+def test_road_taper_uses_threshold_focus():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Road Race",
+            sport="Road Running",
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+    )
+
+    assert (
+        plan.key_session_focus
+        == "threshold"
+    )
+
+
+def test_trail_taper_uses_tempo_focus():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+    )
+
+    assert (
+        plan.key_session_focus
+        == "tempo"
+    )
 
 def test_default_concrete_weekly_targets():
     plan = build_plan()

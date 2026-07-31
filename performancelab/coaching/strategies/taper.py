@@ -47,6 +47,15 @@ class TaperStrategy(CoachStrategy):
         long_sessions = 0
         recovery_days = 3
         focus = "race readiness"
+        event_sport = self._event_sport(
+            context
+        )
+
+        key_session_focus = (
+            self._key_session_focus(
+                event_sport=event_sport,
+            )
+        )
 
         if context.tsb < -10:
             volume_factor = 0.50
@@ -123,7 +132,9 @@ class TaperStrategy(CoachStrategy):
 
             focus=focus,
 
-            key_session_focus=focus,
+            key_session_focus=(
+                key_session_focus
+            ),
             secondary_focus="race readiness",
 
             recovery_priority="high",
@@ -142,7 +153,29 @@ class TaperStrategy(CoachStrategy):
         )
 
     # ======================================================
+    @staticmethod
+    def _key_session_focus(
+        *,
+        event_sport: str | None,
+    ) -> str:
+        """
+        Selects a brief, controlled sharpening session
+        appropriate to the event modality.
+        """
 
+        is_trail = (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        )
+
+        return (
+            "tempo"
+            if is_trail
+            else "threshold"
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _round_to_five(
         minutes: float,
