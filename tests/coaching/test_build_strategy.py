@@ -23,6 +23,7 @@ def make_context(
     typical_weekly_minutes: float = 0.0,
     typical_weekly_sessions: float = 0.0,
     typical_running_long_session_minutes: float = 0.0,
+    days_until_phase_event: int | None = None,
 ):
     """
     Creates the minimum context required by BuildStrategy.
@@ -34,6 +35,9 @@ def make_context(
         next_event=next_event,
         phase_event=phase_event,
         primary_event=primary_event,
+        days_until_phase_event=(
+            days_until_phase_event
+        ),
         training_state=SimpleNamespace(
             typical_weekly_minutes=(
                 typical_weekly_minutes
@@ -117,6 +121,81 @@ def test_default_build_concrete_weekly_targets():
     assert plan.target_weekly_load == pytest.approx(540.0)
     assert plan.long_session_minutes == 120
 
+def test_trail_build_rotates_key_session_focus():
+
+    event = make_event(
+        sport="Trail Running",
+    )
+
+    focuses = tuple(
+        BuildStrategy().build(
+            make_context(
+                phase_event=event,
+                days_until_phase_event=days,
+            )
+        ).key_session_focus
+        for days in (
+            42,
+            49,
+            56,
+        )
+    )
+
+    assert set(focuses) == {
+        "hills",
+        "threshold",
+        "tempo",
+    }
+
+
+def test_road_build_uses_vo2max_sparingly():
+
+    event = make_event(
+        sport="Road Running",
+    )
+
+    focuses = tuple(
+        BuildStrategy().build(
+            make_context(
+                phase_event=event,
+                days_until_phase_event=days,
+            )
+        ).key_session_focus
+        for days in (
+            42,
+            49,
+            56,
+            63,
+        )
+    )
+
+    assert focuses.count(
+        "vo2max"
+    ) == 1
+
+    assert focuses.count(
+        "threshold"
+    ) == 2
+
+
+def test_fatigue_overrides_rotating_focus():
+
+    event = make_event(
+        sport="Trail Running",
+    )
+
+    plan = BuildStrategy().build(
+        make_context(
+            tsb=-11.0,
+            phase_event=event,
+            days_until_phase_event=56,
+        )
+    )
+
+    assert (
+        plan.key_session_focus
+        == "aerobic endurance"
+    )   
 
 def test_default_build_objectives():
     plan = BuildStrategy().build(

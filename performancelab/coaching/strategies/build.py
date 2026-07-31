@@ -50,17 +50,14 @@ class BuildStrategy(CoachStrategy):
         volume_factor = 1.08
         target_sessions = 6
         intensity_sessions = 2
-        focus = "threshold"
-
         event_sport = self._event_sport(
             context
         )
 
-        if (
-            event_sport is not None
-            and "trail" in event_sport.lower()
-        ):
-            focus = "hills"
+        focus = self._key_session_focus(
+            context=context,
+            event_sport=event_sport,
+        )
 
         training_state = getattr(
             context,
@@ -229,7 +226,68 @@ class BuildStrategy(CoachStrategy):
         )
 
     # ======================================================
+    @staticmethod
+    def _key_session_focus(
+        *,
+        context: CoachContext,
+        event_sport: str | None,
+    ) -> str:
+        """
+        Rotates the demanding-session focus between training
+        weeks while preserving event specificity.
 
+        VO2max work is used less frequently than threshold
+        and tempo work.
+        """
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        is_trail = (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        )
+
+        if days_until_event is None:
+
+            return (
+                "hills"
+                if is_trail
+                else "threshold"
+            )
+
+        weeks_until_event = max(
+            0,
+            days_until_event // 7,
+        )
+
+        if is_trail:
+
+            rotation = (
+                "hills",
+                "threshold",
+                "tempo",
+            )
+
+        else:
+
+            rotation = (
+                "threshold",
+                "tempo",
+                "vo2max",
+                "threshold",
+            )
+
+        return rotation[
+            weeks_until_event
+            % len(rotation)
+        ]
+
+    # ======================================================
+    
     @staticmethod
     def _round_to_five(
         minutes: float,
