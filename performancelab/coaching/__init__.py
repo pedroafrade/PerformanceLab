@@ -8,6 +8,10 @@ Public interface for the athlete coaching engine.
 
 from .analyzer import CoachAnalysis, CoachAnalyzer
 from .context import CoachContext
+from .heart_rate_target import (
+    HeartRateTarget,
+    heart_rate_target_for,
+)
 from .recommendation import CoachRecommendation
 from .race_execution import (
     RaceExecutionPlan,
@@ -54,6 +58,8 @@ __all__ = [
     # Existing coaching API
     "Coach",
     "CoachContext",
+    "HeartRateTarget",
+    "heart_rate_target_for",
     "CoachAnalysis",
     "CoachAnalyzer",
     "CoachRecommendation",
