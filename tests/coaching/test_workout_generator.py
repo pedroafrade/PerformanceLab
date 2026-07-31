@@ -1077,3 +1077,52 @@ def test_race_has_no_generic_heart_rate_target():
     )
 
     assert guidance is None
+
+def test_tempo_uses_threshold_heart_rate_range():
+
+    guidance = (
+        WorkoutGenerator
+        ._heart_rate_guidance(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=make_strategy_plan(
+                focus="tempo",
+            ),
+            coach_context=SimpleNamespace(
+                heart_rate_profile=(
+                    SimpleNamespace(
+                        threshold_hr=177,
+                    )
+                ),
+            ),
+        )
+    )
+
+    assert guidance == (
+        "Heart rate target: "
+        "Z3–Z4 · 168–175 bpm"
+    )
+
+
+def test_threshold_uses_threshold_heart_rate_range():
+
+    guidance = (
+        WorkoutGenerator
+        ._heart_rate_guidance(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=make_strategy_plan(
+                focus="threshold",
+            ),
+            coach_context=SimpleNamespace(
+                heart_rate_profile=(
+                    SimpleNamespace(
+                        threshold_hr=177,
+                    )
+                ),
+            ),
+        )
+    )
+
+    assert guidance == (
+        "Heart rate target: "
+        "Z4 · 177–181 bpm"
+    )

@@ -79,11 +79,11 @@ def test_returns_target_for_session_purpose(
         ),
         (
             "hills",
-            ("Z4", "Z5"),
+            ("Z4",),
         ),
         (
             "speed",
-            ("Z4", "Z5"),
+            ("Z4",),
         ),
         (
             "vo2max",
@@ -123,6 +123,34 @@ def test_normalizes_intensity_focus():
     assert target is not None
     assert target.zone_names == ("Z4",)
 
+def test_tempo_uses_narrow_threshold_range():
+
+    target = heart_rate_target_for(
+        SessionPurpose.INTENSITY,
+        focus="tempo",
+    )
+
+    assert target is not None
+
+    assert target.threshold_range == (
+        0.95,
+        0.99,
+    )
+
+
+def test_threshold_uses_narrow_threshold_range():
+
+    target = heart_rate_target_for(
+        SessionPurpose.INTENSITY,
+        focus="threshold",
+    )
+
+    assert target is not None
+
+    assert target.threshold_range == (
+        1.00,
+        1.02,
+    )
 
 @pytest.mark.parametrize(
     "purpose",

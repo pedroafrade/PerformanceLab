@@ -379,6 +379,38 @@ class WorkoutGenerator:
                 f"{target.label}"
             )
 
+        threshold_hr = getattr(
+            profile,
+            "threshold_hr",
+            None,
+        )
+
+        if (
+            target.threshold_range
+            is not None
+            and threshold_hr is not None
+        ):
+
+            lower_ratio, upper_ratio = (
+                target.threshold_range
+            )
+
+            lower_bpm = round(
+                threshold_hr
+                * lower_ratio
+            )
+
+            upper_bpm = round(
+                threshold_hr
+                * upper_ratio
+            )
+
+            return (
+                "Heart rate target: "
+                f"{target.label} · "
+                f"{lower_bpm}–{upper_bpm} bpm"
+            )
+
         resolved_zones = []
 
         for zone_name in target.zone_names:

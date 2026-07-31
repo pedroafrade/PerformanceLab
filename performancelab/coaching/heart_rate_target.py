@@ -25,6 +25,10 @@ class HeartRateTarget:
 
     zone_names: tuple[str, ...]
 
+    threshold_range: (
+        tuple[float, float] | None
+    ) = None
+
     def __post_init__(self) -> None:
 
         normalized_names = tuple(
@@ -64,6 +68,53 @@ class HeartRateTarget:
             "zone_names",
             normalized_names,
         )
+
+        if self.threshold_range is not None:
+
+            if (
+                not isinstance(
+                    self.threshold_range,
+                    tuple,
+                )
+                or len(
+                    self.threshold_range
+                ) != 2
+            ):
+
+                raise TypeError(
+                    "threshold_range must be a "
+                    "two-value tuple or None."
+                )
+
+            lower_ratio, upper_ratio = (
+                self.threshold_range
+            )
+
+            if (
+                not isinstance(
+                    lower_ratio,
+                    (int, float),
+                )
+                or not isinstance(
+                    upper_ratio,
+                    (int, float),
+                )
+            ):
+
+                raise TypeError(
+                    "threshold_range values must "
+                    "be numeric."
+                )
+
+            if (
+                lower_ratio <= 0
+                or upper_ratio < lower_ratio
+            ):
+
+                raise ValueError(
+                    "Invalid threshold heart-rate "
+                    "range."
+                )
 
     # ======================================================
 
@@ -154,13 +205,26 @@ def heart_rate_target_for(
         if normalized_focus == "tempo":
 
             return HeartRateTarget(
-                ("Z3", "Z4")
+                zone_names=(
+                    "Z3",
+                    "Z4",
+                ),
+                threshold_range=(
+                    0.95,
+                    0.99,
+                ),
             )
 
         if normalized_focus == "threshold":
 
             return HeartRateTarget(
-                ("Z4",)
+                zone_names=(
+                    "Z4",
+                ),
+                threshold_range=(
+                    1.00,
+                    1.02,
+                ),
             )
 
         if normalized_focus in {
@@ -169,7 +233,7 @@ def heart_rate_target_for(
         }:
 
             return HeartRateTarget(
-                ("Z4", "Z5")
+                ("Z4",)
             )
 
         if normalized_focus == "vo2max":
