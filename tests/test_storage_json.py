@@ -18,6 +18,10 @@ from performancelab import (
     Workout,
 )
 
+from performancelab.analysis import (
+    HeartRateZone,
+)
+
 from performancelab.storage import (
     athlete_from_dict,
     athlete_to_dict,
@@ -55,6 +59,42 @@ def create_athlete():
         max_hr=190,
 
         resting_hr=50,
+
+        threshold_hr=180,
+
+        manual_heart_rate_zones=(
+
+            HeartRateZone(
+                name="Z1",
+                lower_bpm=120,
+                upper_bpm=139,
+            ),
+
+            HeartRateZone(
+                name="Z2",
+                lower_bpm=140,
+                upper_bpm=154,
+            ),
+
+            HeartRateZone(
+                name="Z3",
+                lower_bpm=155,
+                upper_bpm=169,
+            ),
+
+            HeartRateZone(
+                name="Z4",
+                lower_bpm=170,
+                upper_bpm=184,
+            ),
+
+            HeartRateZone(
+                name="Z5",
+                lower_bpm=185,
+                upper_bpm=190,
+            ),
+
+        ),
 
     )
 
@@ -215,6 +255,28 @@ def test_athlete_round_trip():
     assert loaded.weight == original.weight
 
     assert loaded.ftp == original.ftp
+
+    assert loaded.threshold_hr == 180
+
+    assert (
+        loaded.manual_heart_rate_zones
+        == original.manual_heart_rate_zones
+    )
+
+    assert (
+        loaded.manual_heart_rate_zones[3].name
+        == "Z4"
+    )
+
+    assert (
+        loaded.manual_heart_rate_zones[3].lower_bpm
+        == 170
+    )
+
+    assert (
+        loaded.manual_heart_rate_zones[3].upper_bpm
+        == 184
+    )
 
     assert len(loaded.history) == 1
 
@@ -716,4 +778,28 @@ def test_loads_planned_workout_without_phase():
     assert (
         loaded.training_plan[0].phase
         is None
+    )
+
+# ======================================================
+
+def test_load_old_json_without_heart_rate_profile():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["athlete"]["threshold_hr"]
+    del data["athlete"]["heart_rate_zones"]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert loaded.threshold_hr is None
+
+    assert (
+        loaded.manual_heart_rate_zones
+        == ()
     )

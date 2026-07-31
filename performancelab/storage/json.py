@@ -19,6 +19,10 @@ from performancelab import (
     Workout,
 )
 
+from performancelab.analysis import (
+    HeartRateZone,
+)
+
 from performancelab.training.planning.planned_workout import (
     PlannedWorkout,
 )
@@ -80,6 +84,39 @@ def _deserialize_duration(value):
 
     return timedelta(seconds=value)
 
+# ======================================================
+# Heart-rate zones
+# ======================================================
+
+def _heart_rate_zone_to_dict(
+    zone,
+):
+
+    return {
+        "name": zone.name,
+        "lower_bpm": zone.lower_bpm,
+        "upper_bpm": zone.upper_bpm,
+    }
+
+
+# ======================================================
+
+def _heart_rate_zone_from_dict(
+    data,
+):
+
+    return HeartRateZone(
+        name=data.get(
+            "name",
+            "",
+        ),
+        lower_bpm=int(
+            data.get("lower_bpm")
+        ),
+        upper_bpm=int(
+            data.get("upper_bpm")
+        ),
+    )
 
 # ======================================================
 # Workout
@@ -658,6 +695,23 @@ def athlete_to_dict(athlete):
 
             "resting_hr": athlete.resting_hr,
 
+            "threshold_hr": (
+                athlete.threshold_hr
+            ),
+
+            "heart_rate_zones": [
+
+                _heart_rate_zone_to_dict(
+                    zone
+                )
+
+                for zone in (
+                    athlete
+                    .manual_heart_rate_zones
+                )
+
+            ],
+
         },
 
         "workouts": [
@@ -763,6 +817,23 @@ def athlete_from_dict(data):
 
         resting_hr=athlete_data.get(
             "resting_hr"
+        ),
+
+        threshold_hr=athlete_data.get(
+            "threshold_hr"
+        ),
+
+        manual_heart_rate_zones=tuple(
+
+            _heart_rate_zone_from_dict(
+                zone_data
+            )
+
+            for zone_data in athlete_data.get(
+                "heart_rate_zones",
+                [],
+            )
+
         ),
 
     )

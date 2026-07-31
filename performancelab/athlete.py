@@ -11,7 +11,10 @@ from datetime import date
 from uuid import uuid4
 
 
-from .analysis import AthleteAnalytics
+from .analysis import (
+    AthleteAnalytics,
+    HeartRateZone,
+)
 from .goals.goalbook import GoalBook
 from .history import History
 from .race.eventbook import EventBook
@@ -37,6 +40,12 @@ class Athlete:
     ftp: float | None = None
     max_hr: int | None = None
     resting_hr: int | None = None
+    threshold_hr: int | None = None
+
+    manual_heart_rate_zones: tuple[
+        HeartRateZone,
+        ...,
+    ] = ()
     train_any_day: bool = True
 
     history: History = field(default_factory=History)
