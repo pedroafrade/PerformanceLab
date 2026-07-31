@@ -14,6 +14,7 @@ from uuid import uuid4
 from .analysis import (
     AthleteAnalytics,
     HeartRateZone,
+    NutritionProfile,
 )
 from .goals.goalbook import GoalBook
 from .history import History
@@ -46,6 +47,11 @@ class Athlete:
         HeartRateZone,
         ...,
     ] = ()
+
+    nutrition_profile: NutritionProfile = field(
+        default_factory=NutritionProfile,
+    )
+    
     train_any_day: bool = True
 
     history: History = field(default_factory=History)

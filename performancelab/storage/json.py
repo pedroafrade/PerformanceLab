@@ -21,6 +21,7 @@ from performancelab import (
 
 from performancelab.analysis import (
     HeartRateZone,
+    NutritionProfile,
 )
 
 from performancelab.training.planning.planned_workout import (
@@ -117,7 +118,89 @@ def _heart_rate_zone_from_dict(
             data.get("upper_bpm")
         ),
     )
+# ======================================================
+# Nutrition profile
+# ======================================================
 
+def _nutrition_profile_to_dict(
+    profile,
+):
+
+    return {
+        "carbohydrate_per_hour": (
+            profile.carbohydrate_per_hour
+        ),
+        "fluid_lower_ml_per_hour": (
+            profile.fluid_lower_ml_per_hour
+        ),
+        "fluid_upper_ml_per_hour": (
+            profile.fluid_upper_ml_per_hour
+        ),
+        "sodium_lower_mg_per_hour": (
+            profile.sodium_lower_mg_per_hour
+        ),
+        "sodium_upper_mg_per_hour": (
+            profile.sodium_upper_mg_per_hour
+        ),
+        "gel_carbohydrate_grams": (
+            profile.gel_carbohydrate_grams
+        ),
+        "pre_race_carbohydrate_lower": (
+            profile.pre_race_carbohydrate_lower
+        ),
+        "pre_race_carbohydrate_upper": (
+            profile.pre_race_carbohydrate_upper
+        ),
+        "source": profile.source,
+    }
+
+
+# ======================================================
+
+def _nutrition_profile_from_dict(
+    data,
+):
+
+    data = data or {}
+
+    return NutritionProfile(
+        carbohydrate_per_hour=data.get(
+            "carbohydrate_per_hour",
+            80,
+        ),
+        fluid_lower_ml_per_hour=data.get(
+            "fluid_lower_ml_per_hour",
+            450,
+        ),
+        fluid_upper_ml_per_hour=data.get(
+            "fluid_upper_ml_per_hour",
+            600,
+        ),
+        sodium_lower_mg_per_hour=data.get(
+            "sodium_lower_mg_per_hour",
+            400,
+        ),
+        sodium_upper_mg_per_hour=data.get(
+            "sodium_upper_mg_per_hour",
+            600,
+        ),
+        gel_carbohydrate_grams=data.get(
+            "gel_carbohydrate_grams",
+            25,
+        ),
+        pre_race_carbohydrate_lower=data.get(
+            "pre_race_carbohydrate_lower",
+            60,
+        ),
+        pre_race_carbohydrate_upper=data.get(
+            "pre_race_carbohydrate_upper",
+            80,
+        ),
+        source=data.get(
+            "source",
+            "default",
+        ),
+    )
 # ======================================================
 # Workout
 # ======================================================
@@ -712,6 +795,12 @@ def athlete_to_dict(athlete):
 
             ],
 
+            "nutrition_profile": (
+                _nutrition_profile_to_dict(
+                    athlete.nutrition_profile
+                )
+            ),
+
         },
 
         "workouts": [
@@ -834,6 +923,14 @@ def athlete_from_dict(data):
                 [],
             )
 
+        ),
+
+        nutrition_profile=(
+            _nutrition_profile_from_dict(
+                athlete_data.get(
+                    "nutrition_profile"
+                )
+            )
         ),
 
     )

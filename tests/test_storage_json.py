@@ -20,6 +20,7 @@ from performancelab import (
 
 from performancelab.analysis import (
     HeartRateZone,
+    NutritionProfile,
 )
 
 from performancelab.storage import (
@@ -94,6 +95,18 @@ def create_athlete():
                 upper_bpm=190,
             ),
 
+        ),
+
+        nutrition_profile=NutritionProfile(
+            carbohydrate_per_hour=75,
+            fluid_lower_ml_per_hour=500,
+            fluid_upper_ml_per_hour=650,
+            sodium_lower_mg_per_hour=450,
+            sodium_upper_mg_per_hour=650,
+            gel_carbohydrate_grams=25,
+            pre_race_carbohydrate_lower=70,
+            pre_race_carbohydrate_upper=90,
+            source="athlete-tested",
         ),
 
     )
@@ -276,6 +289,29 @@ def test_athlete_round_trip():
     assert (
         loaded.manual_heart_rate_zones[3].upper_bpm
         == 184
+    )
+
+    assert (
+        loaded.nutrition_profile
+        == original.nutrition_profile
+    )
+
+    assert (
+        loaded.nutrition_profile
+        .carbohydrate_per_hour
+        == 75
+    )
+
+    assert (
+        loaded.nutrition_profile
+        .fluid_lower_ml_per_hour
+        == 500
+    )
+
+    assert (
+        loaded.nutrition_profile
+        .source
+        == "athlete-tested"
     )
 
     assert len(loaded.history) == 1
@@ -532,6 +568,29 @@ def test_load_old_json_without_estimated_rpe():
     assert workout.feedback.rpe == 6
     assert workout.feedback.estimated_rpe is None
     assert workout.feedback.effective_rpe == 6
+# ======================================================
+
+def test_load_old_json_without_nutrition_profile():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["athlete"][
+        "nutrition_profile"
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert loaded.nutrition_profile == (
+        NutritionProfile()
+    )
+
+# ======================================================
 
 def test_failed_save_preserves_existing_file(
     tmp_path,
