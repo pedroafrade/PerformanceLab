@@ -414,20 +414,6 @@ def _show_athlete_form(
             current_gender,
         )
 
-    st.subheader(
-        "Heart-rate zones"
-    )
-
-    use_manual_hr_zones = st.checkbox(
-        "Configure heart-rate zones manually",
-        key="athlete_edit_manual_hr_zones",
-        help=(
-            "When disabled, the zones are "
-            "calculated automatically from maximum "
-            "and resting heart rate."
-        ),
-    )
-
     st.divider()
 
     st.subheader("Training availability")
@@ -522,71 +508,78 @@ def _show_athlete_form(
             ),
         )
 
+        st.caption(
+            "Heart-rate training zones:"
+        )
+
         manual_zone_values = {}
 
-        if use_manual_hr_zones:
+        for zone_name in (
+            "Z1",
+            "Z2",
+            "Z3",
+            "Z4",
+            "Z5",
+        ):
 
-            st.caption(
-                "Enter the lower and upper heart-rate "
-                "limits for each zone."
+            normalized_name = (
+                zone_name.lower()
             )
 
-            for zone_name in (
-                "Z1",
-                "Z2",
-                "Z3",
-                "Z4",
-                "Z5",
-            ):
+            zone_column, lower_column, upper_column = (
+                st.columns(
+                    [1, 2, 2]
+                )
+            )
 
-                normalized_name = (
-                    zone_name.lower()
+            with zone_column:
+
+                st.write(
+                    f"**{zone_name}**"
                 )
 
-                zone_column, lower_column, upper_column = (
-                    st.columns(
-                        [1, 2, 2]
-                    )
+            with lower_column:
+
+                lower_bpm = st.number_input(
+                    f"{zone_name} from",
+                    min_value=1,
+                    max_value=250,
+                    step=1,
+                    key=(
+                        "athlete_edit_"
+                        f"{normalized_name}_lower"
+                    ),
                 )
 
-                with zone_column:
+            with upper_column:
 
-                    st.write(
-                        f"**{zone_name}**"
-                    )
-
-                with lower_column:
-
-                    lower_bpm = st.number_input(
-                        f"{zone_name} from",
-                        min_value=1,
-                        max_value=250,
-                        step=1,
-                        key=(
-                            "athlete_edit_"
-                            f"{normalized_name}_lower"
-                        ),
-                    )
-
-                with upper_column:
-
-                    upper_bpm = st.number_input(
-                        f"{zone_name} to",
-                        min_value=1,
-                        max_value=250,
-                        step=1,
-                        key=(
-                            "athlete_edit_"
-                            f"{normalized_name}_upper"
-                        ),
-                    )
-
-                manual_zone_values[
-                    zone_name
-                ] = (
-                    int(lower_bpm),
-                    int(upper_bpm),
+                upper_bpm = st.number_input(
+                    f"{zone_name} to",
+                    min_value=1,
+                    max_value=250,
+                    step=1,
+                    key=(
+                        "athlete_edit_"
+                        f"{normalized_name}_upper"
+                    ),
                 )
+
+            manual_zone_values[
+                zone_name
+            ] = (
+                int(lower_bpm),
+                int(upper_bpm),
+            )
+
+        use_manual_hr_zones = st.checkbox(
+            "Use manually configured heart-rate zones",
+            key="athlete_edit_manual_hr_zones",
+            help=(
+                "When disabled, these values are ignored "
+                "and the zones are calculated automatically "
+                "from maximum and resting heart rate."
+            ),
+        )
 
         if not train_any_day:
 
