@@ -4,6 +4,11 @@ import pytest
 
 from types import SimpleNamespace
 
+from performancelab.analysis import (
+    HeartRateProfile,
+    HeartRateZone,
+)
+
 from performancelab.coaching import (
     DEFAULT_WORKOUT_TEMPLATES,
     PRE_RACE_TEMPLATE,
@@ -962,3 +967,113 @@ def test_race_structure_keeps_full_event_duration():
         "Race effort 50 min",
         "Cool down 5 min",
     )
+
+def test_easy_workout_uses_athlete_z2():
+
+    heart_rate_profile = HeartRateProfile(
+        max_hr=205,
+        resting_hr=65,
+        threshold_hr=177,
+        zones=(
+
+            HeartRateZone(
+                name="Z1",
+                lower_bpm=1,
+                upper_bpm=120,
+            ),
+
+            HeartRateZone(
+                name="Z2",
+                lower_bpm=121,
+                upper_bpm=156,
+            ),
+
+            HeartRateZone(
+                name="Z3",
+                lower_bpm=157,
+                upper_bpm=176,
+            ),
+
+            HeartRateZone(
+                name="Z4",
+                lower_bpm=177,
+                upper_bpm=186,
+            ),
+
+            HeartRateZone(
+                name="Z5",
+                lower_bpm=187,
+                upper_bpm=205,
+            ),
+
+        ),
+        source="manual",
+    )
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.EASY,
+            duration_minutes=50,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            5,
+        ),
+        template=EASY_TEMPLATE.for_sport(
+            "Road Running"
+        ),
+        coach_context=SimpleNamespace(
+            heart_rate_profile=(
+                heart_rate_profile
+            ),
+        ),
+        strategy_plan=make_strategy_plan(),
+    )
+
+    assert (
+        workout.structure[-1]
+        == (
+            "Heart rate target: "
+            "Z2 · 121–156 bpm"
+        )
+    )
+
+
+def test_workout_keeps_semantic_zone_without_profile():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.RECOVERY,
+            duration_minutes=20,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            5,
+        ),
+        template=RECOVERY_TEMPLATE.for_sport(
+            "Road Running"
+        ),
+        coach_context=SimpleNamespace(),
+        strategy_plan=make_strategy_plan(),
+    )
+
+    assert (
+        workout.structure[-1]
+        == "Heart rate target: Z1"
+    )
+
+
+def test_race_has_no_generic_heart_rate_target():
+
+    guidance = (
+        WorkoutGenerator
+        ._heart_rate_guidance(
+            purpose=SessionPurpose.RACE,
+            strategy_plan=make_strategy_plan(),
+            coach_context=SimpleNamespace(),
+        )
+    )
+
+    assert guidance is None

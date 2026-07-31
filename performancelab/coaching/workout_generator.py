@@ -14,6 +14,9 @@ from performancelab.physiology.thresholds import lthr
 
 from .context import CoachContext
 from .draft_slot import DraftTrainingSlot
+from .heart_rate_target import (
+    heart_rate_target_for,
+)
 from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 from .training_week import TrainingWeek
@@ -277,6 +280,28 @@ class WorkoutGenerator:
                 "training slots must have a positive duration"
             )
 
+        structure = self._prescribed_structure(
+            template=template,
+            duration_minutes=duration_minutes,
+            coach_context=coach_context,
+            strategy_plan=strategy_plan,
+        )
+
+        heart_rate_guidance = (
+            self._heart_rate_guidance(
+                purpose=slot.purpose,
+                strategy_plan=strategy_plan,
+                coach_context=coach_context,
+            )
+        )
+
+        if heart_rate_guidance is not None:
+
+            structure = (
+                *structure,
+                heart_rate_guidance,
+            )
+
         return PlannedWorkout(
             scheduled_at=self._scheduled_at(
                 scheduled_day
@@ -295,12 +320,7 @@ class WorkoutGenerator:
             description=template.description,
             intensity=template.intensity,
             objective=template.objective,
-            structure=self._prescribed_structure(
-                template=template,
-                duration_minutes=duration_minutes,
-                coach_context=coach_context,
-                strategy_plan=strategy_plan,
-            ),
+            structure=structure,
             equipment=template.equipment,
             phase=(
                 self._phase_for_slot(
@@ -312,6 +332,86 @@ class WorkoutGenerator:
                 if strategy_plan is not None
                 else None
             ),
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _heart_rate_guidance(
+        cls,
+        *,
+        purpose: SessionPurpose,
+        strategy_plan: StrategyPlan | None,
+        coach_context: CoachContext,
+    ) -> str | None:
+        """
+        Resolves a semantic session target against the
+        athlete's current heart-rate profile.
+        """
+
+        focus = None
+
+        if strategy_plan is not None:
+
+            focus = cls._focus_for_slot(
+                purpose=purpose,
+                strategy_plan=strategy_plan,
+            )
+
+        target = heart_rate_target_for(
+            purpose,
+            focus=focus,
+        )
+
+        if target is None:
+            return None
+
+        profile = getattr(
+            coach_context,
+            "heart_rate_profile",
+            None,
+        )
+
+        if profile is None:
+
+            return (
+                "Heart rate target: "
+                f"{target.label}"
+            )
+
+        resolved_zones = []
+
+        for zone_name in target.zone_names:
+
+            zone = profile.zone(
+                zone_name
+            )
+
+            if zone is None:
+
+                return (
+                    "Heart rate target: "
+                    f"{target.label}"
+                )
+
+            resolved_zones.append(
+                zone
+            )
+
+        lower_bpm = min(
+            zone.lower_bpm
+            for zone in resolved_zones
+        )
+
+        upper_bpm = max(
+            zone.upper_bpm
+            for zone in resolved_zones
+        )
+
+        return (
+            "Heart rate target: "
+            f"{target.label} · "
+            f"{lower_bpm}–{upper_bpm} bpm"
         )
 
     # ======================================================
