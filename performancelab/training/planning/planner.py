@@ -1409,6 +1409,13 @@ class Planner:
                             None,
                         )
                     ),
+                    nutrition_profile=(
+                        getattr(
+                            context,
+                            "nutrition_profile",
+                            None,
+                        )
+                    ),
                 )
             )
 

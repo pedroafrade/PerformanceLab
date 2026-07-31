@@ -10,6 +10,10 @@ a registered competition.
 from dataclasses import dataclass
 from datetime import timedelta
 
+from performancelab.analysis import (
+    NutritionProfile,
+)
+
 
 @dataclass(frozen=True)
 class RaceExecutionPlan:
@@ -47,6 +51,7 @@ def build_race_execution_plan(
     event,
     expected_duration: timedelta | None,
     heart_rate_profile=None,
+    nutrition_profile=None,
 ) -> RaceExecutionPlan | None:
     """
     Builds an event-specific race execution plan.
@@ -111,6 +116,9 @@ def build_race_execution_plan(
             expected_duration=expected_duration,
             heart_rate_profile=(
                 heart_rate_profile
+            ),
+            nutrition_profile=(
+                nutrition_profile
             ),
         )
 
@@ -370,6 +378,7 @@ def _build_long_trail_execution_plan(
     event,
     expected_duration: timedelta,
     heart_rate_profile,
+    nutrition_profile,
 ) -> RaceExecutionPlan:
     """
     Builds a duration-based execution strategy for a
@@ -441,46 +450,59 @@ def _build_long_trail_execution_plan(
         ),
     )
 
-    duration_hours = (
-        expected_duration.total_seconds()
-        / 3600
+    resolved_nutrition_profile = (
+        nutrition_profile
+        if isinstance(
+            nutrition_profile,
+            NutritionProfile,
+        )
+        else NutritionProfile()
     )
 
-    fluid_lower_litres = round(
-        duration_hours * 0.45,
-        1,
+    fluid_lower_ml, fluid_upper_ml = (
+        resolved_nutrition_profile.fluid_for(
+            expected_duration
+        )
     )
 
-    fluid_upper_litres = round(
-        duration_hours * 0.60,
-        1,
+    fluid_lower_litres = (
+        fluid_lower_ml / 1000
     )
 
-    sodium_lower = round(
-        duration_hours * 400
-        / 50
-    ) * 50
+    fluid_upper_litres = (
+        fluid_upper_ml / 1000
+    )
 
-    sodium_upper = round(
-        duration_hours * 600
-        / 50
-    ) * 50
+    sodium_lower, sodium_upper = (
+        resolved_nutrition_profile.sodium_for(
+            expected_duration
+        )
+    )
 
-    carbohydrate_per_hour = 80
+    carbohydrate_per_hour = (
+        resolved_nutrition_profile
+        .carbohydrate_per_hour
+    )
 
-    total_carbohydrate = round(
-        duration_hours
-        * carbohydrate_per_hour
-        / 5
-    ) * 5
+    total_carbohydrate = (
+        resolved_nutrition_profile
+        .carbohydrate_for(
+            expected_duration
+        )
+    )
 
     gel_count = max(
         1,
         total_minutes // 30,
     )
 
+    gel_size = (
+        resolved_nutrition_profile
+        .gel_carbohydrate_grams
+    )
+
     gel_carbohydrate = (
-        gel_count * 25
+        gel_count * gel_size
     )
 
     remaining_carbohydrate = max(
@@ -499,14 +521,19 @@ def _build_long_trail_execution_plan(
             "and available aid stations."
         ),
         (
-            "Use approximately 450–600 ml/h as an initial "
+            "Use approximately "
+            f"{resolved_nutrition_profile.fluid_lower_ml_per_hour}–"
+            f"{resolved_nutrition_profile.fluid_upper_ml_per_hour} "
+            "ml/h as an initial "
             "range. Avoid both forced overdrinking and "
             "waiting until substantial thirst develops."
         ),
         (
             f"Use approximately {sodium_lower}–"
             f"{sodium_upper} mg of sodium across the race "
-            "(400–600 mg/h) as a provisional range. Test "
+            f"({resolved_nutrition_profile.sodium_lower_mg_per_hour}–"
+            f"{resolved_nutrition_profile.sodium_upper_mg_per_hour} "
+            "mg/h) as a provisional range. Test "
             "the products and quantities during long runs."
         ),
     )
@@ -514,7 +541,9 @@ def _build_long_trail_execution_plan(
     nutrition = (
         (
             "Use a familiar pre-race meal. Approximately "
-            "60–80 g of carbohydrate in the final hour "
+            f"{resolved_nutrition_profile.pre_race_carbohydrate_lower}–"
+            f"{resolved_nutrition_profile.pre_race_carbohydrate_upper} "
+            "g of carbohydrate in the final hour "
             "may be used only if already well tolerated."
         ),
         (
@@ -525,7 +554,7 @@ def _build_long_trail_execution_plan(
         ),
         (
             f"One practical option is {gel_count} gels of "
-            f"25 g, approximately every 30 minutes, "
+            f"{gel_size} g, approximately every 30 minutes, "
             f"providing {gel_carbohydrate} g. Obtain the "
             f"remaining approximately "
             f"{remaining_carbohydrate} g from a tested "

@@ -10,6 +10,9 @@ from performancelab.analysis.heart_rate_profile import (
     HeartRateProfile,
     HeartRateZone,
 )
+from performancelab.analysis import (
+    NutritionProfile,
+)
 
 def test_builds_road_10k_execution_plan():
 
@@ -262,6 +265,82 @@ def test_builds_long_trail_execution_plan():
 
     assert any(
         "6 gels"
+        in step
+        for step in plan.nutrition
+    )
+def test_long_trail_uses_athlete_nutrition_profile():
+
+    event = SimpleNamespace(
+        sport="Trail Running",
+        distance=23,
+    )
+
+    nutrition_profile = NutritionProfile(
+        carbohydrate_per_hour=70,
+        fluid_lower_ml_per_hour=500,
+        fluid_upper_ml_per_hour=700,
+        sodium_lower_mg_per_hour=600,
+        sodium_upper_mg_per_hour=800,
+        gel_carbohydrate_grams=20,
+        pre_race_carbohydrate_lower=70,
+        pre_race_carbohydrate_upper=90,
+        source="athlete-tested",
+    )
+
+    plan = build_race_execution_plan(
+        event=event,
+        expected_duration=timedelta(
+            hours=2,
+        ),
+        nutrition_profile=nutrition_profile,
+    )
+
+    assert plan is not None
+
+    assert any(
+        "1.0–1.4 L"
+        in step
+        for step in plan.hydration
+    )
+
+    assert any(
+        "500–700 ml/h"
+        in step
+        for step in plan.hydration
+    )
+
+    assert any(
+        "1200–1600 mg"
+        in step
+        for step in plan.hydration
+    )
+
+    assert any(
+        "600–800 mg/h"
+        in step
+        for step in plan.hydration
+    )
+
+    assert any(
+        "70–90 g"
+        in step
+        for step in plan.nutrition
+    )
+
+    assert any(
+        "70 g of carbohydrate per hour"
+        in step
+        for step in plan.nutrition
+    )
+
+    assert any(
+        "about 140 g"
+        in step
+        for step in plan.nutrition
+    )
+
+    assert any(
+        "4 gels of 20 g"
         in step
         for step in plan.nutrition
     )

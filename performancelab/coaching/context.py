@@ -208,6 +208,22 @@ class CoachContext:
             "heart_rate_profile",
             None,
         )
+    # ======================================================
+
+    @property
+    def nutrition_profile(self):
+        """
+        Returns the athlete's tested nutrition profile.
+
+        Legacy athletes and lightweight test doubles that do
+        not expose this profile continue to return None.
+        """
+
+        return getattr(
+            self.athlete,
+            "nutrition_profile",
+            None,
+        )
     
     # ======================================================
 
