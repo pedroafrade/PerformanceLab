@@ -198,6 +198,73 @@ def test_blocks_weekdays_before_today(
     assert not used_constraints.is_blocked(
         Weekday.WEDNESDAY
     )
+
+def test_blocks_monday_after_previous_sunday_long(
+    athlete,
+    full_availability,
+    default_preferences,
+    default_constraints,
+):
+    structure_generator = Mock()
+    workout_generator = Mock()
+
+    structure_generator.generate.return_value = ()
+    workout_generator.generate.return_value = ()
+
+    previous_long = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+        ),
+        sport="Trail Running",
+        title="Long Aerobic Run",
+        duration=timedelta(
+            minutes=110,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    planner = Planner(
+        structure_generator=structure_generator,
+        workout_generator=workout_generator,
+    )
+
+    planner.build(
+        athlete=athlete,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+        week_start=date(
+            2026,
+            8,
+            10,
+        ),
+        today=date(
+            2026,
+            8,
+            10,
+        ),
+        previous_planned_workout=(
+            previous_long
+        ),
+    )
+
+    used_constraints = (
+        structure_generator
+        .generate
+        .call_args
+        .kwargs["constraints"]
+    )
+
+    assert used_constraints.is_blocked(
+        Weekday.MONDAY
+    )
+
+    assert not used_constraints.is_blocked(
+        Weekday.TUESDAY
+    )
+
 def test_builds_training_plan_for_competition_block(
     full_availability,
     default_preferences,

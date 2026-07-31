@@ -87,6 +87,7 @@ class Planner:
         week_start: date | None = None,
         today: date | None = None,
         previous_planned_long_minutes: int | None = None,
+        previous_planned_workout=None,
     ) -> WeeklyPlan:
         """
         Builds the athlete's weekly training plan.
@@ -145,6 +146,16 @@ class Planner:
                 constraints=resolved_constraints,
                 week_start=start_date,
                 today=reference_day,
+            )
+        )
+
+        resolved_constraints = (
+            self._block_week_boundary_recovery_days(
+                constraints=resolved_constraints,
+                week_start=start_date,
+                previous_workout=(
+                    previous_planned_workout
+                ),
             )
         )
 
@@ -366,6 +377,9 @@ class Planner:
                 today=planning_day,
                 previous_planned_long_minutes=(
                     previous_planned_long_minutes
+                ),
+                previous_planned_workout=(
+                    previous_planned_workout
                 ),
             )
 
@@ -1698,7 +1712,95 @@ class Planner:
         )
 
     # ======================================================
+    @staticmethod
+    def _block_week_boundary_recovery_days(
+        *,
+        constraints: TrainingConstraints,
+        week_start: date,
+        previous_workout,
+    ) -> TrainingConstraints:
+        """
+        Protects the beginning of a week after a long
+        workout or race in the preceding week.
 
+        The protected days are applied before the weekly
+        structure is generated, allowing the remaining
+        sessions to be distributed coherently.
+        """
+
+        if previous_workout is None:
+            return constraints
+
+        if not (
+            Planner._is_long_workout(
+                previous_workout
+            )
+            or Planner._is_race_workout(
+                previous_workout
+            )
+        ):
+            return constraints
+
+        previous_day = getattr(
+            previous_workout,
+            "day",
+            None,
+        )
+
+        if previous_day is None:
+            return constraints
+
+        earliest_training_day = (
+            previous_day
+            + timedelta(
+                days=(
+                    MIN_DAYS_BETWEEN_LONG_AND_INTENSITY
+                )
+            )
+        )
+
+        week_end = (
+            week_start
+            + timedelta(days=6)
+        )
+
+        protected_days = []
+
+        candidate_date = week_start
+
+        while (
+            candidate_date <= week_end
+            and candidate_date
+            < earliest_training_day
+        ):
+
+            protected_days.append(
+                Weekday(
+                    candidate_date.weekday()
+                )
+            )
+
+            candidate_date += timedelta(
+                days=1
+            )
+
+        if not protected_days:
+            return constraints
+
+        return replace(
+            constraints,
+            blocked_days=tuple(
+                dict.fromkeys(
+                    (
+                        *constraints.blocked_days,
+                        *protected_days,
+                    )
+                )
+            ),
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _block_past_weekdays(
         *,
