@@ -1029,6 +1029,182 @@ def test_typical_running_pace_without_running_data():
         is None
     )
 
+def test_typical_easy_running_pace_uses_low_rpe_and_hr():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=205,
+        resting_hr=65,
+        threshold_hr=177,
+        manual_heart_rate_zones=(
+
+            HeartRateZone(
+                name="Z1",
+                lower_bpm=1,
+                upper_bpm=120,
+            ),
+
+            HeartRateZone(
+                name="Z2",
+                lower_bpm=121,
+                upper_bpm=156,
+            ),
+
+            HeartRateZone(
+                name="Z3",
+                lower_bpm=157,
+                upper_bpm=176,
+            ),
+
+            HeartRateZone(
+                name="Z4",
+                lower_bpm=177,
+                upper_bpm=186,
+            ),
+
+            HeartRateZone(
+                name="Z5",
+                lower_bpm=187,
+                upper_bpm=205,
+            ),
+
+        ),
+    )
+
+    zone_2_workout = create_workout(
+        "Running",
+        date.today(),
+        10,
+        timedelta(minutes=60),
+        100,
+        5.5,
+    )
+
+    zone_2_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 145},
+            {"value": 150},
+            {"value": 155},
+        ],
+    )
+
+    low_zone_3_workout = create_workout(
+        "Trail Running",
+        date.today() - timedelta(days=7),
+        8,
+        timedelta(minutes=50),
+        200,
+        6.0,
+    )
+
+    low_zone_3_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 158},
+            {"value": 160},
+            {"value": 162},
+        ],
+    )
+
+    hard_workout = create_workout(
+        "Running",
+        date.today() - timedelta(days=3),
+        10,
+        timedelta(minutes=50),
+        50,
+        8.0,
+    )
+
+    hard_workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 175},
+            {"value": 180},
+        ],
+    )
+
+    athlete.history.add(
+        zone_2_workout
+    )
+
+    athlete.history.add(
+        low_zone_3_workout
+    )
+
+    athlete.history.add(
+        hard_workout
+    )
+
+    expected_pace = (
+        110
+        / (
+            10
+            + 1
+            + 8
+            + 2
+        )
+    )
+
+    assert (
+        athlete.analytics
+        .typical_easy_running_pace
+        == pytest.approx(
+            expected_pace
+        )
+    )
+
+    assert (
+        athlete.analytics
+        .training_state
+        .typical_easy_running_pace
+        == pytest.approx(
+            expected_pace
+        )
+    )
+
+def test_typical_easy_running_pace_requires_easy_data():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=205,
+        resting_hr=65,
+    )
+
+    workout = create_workout(
+        "Running",
+        date.today(),
+        10,
+        timedelta(minutes=50),
+        50,
+        8.0,
+    )
+
+    workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 180},
+            {"value": 185},
+        ],
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    assert (
+        athlete.analytics
+        .typical_easy_running_pace
+        is None
+    )
+
+    assert (
+        athlete.analytics
+        .training_state
+        .typical_easy_running_pace
+        == 0.0
+    )
+
 def test_road_10k_performance_pace_uses_hard_high_hr_run():
 
     athlete = Athlete(

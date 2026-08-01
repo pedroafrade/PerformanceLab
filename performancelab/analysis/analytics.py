@@ -37,6 +37,11 @@ ROAD_10K_MAX_DISTANCE = 12.0
 ROAD_10K_MIN_RPE = 7.5
 ROAD_10K_MIN_HEART_RATE_RATIO = 0.85
 ROAD_10K_MAX_ELEVATION_PER_KILOMETRE = 25.0
+
+EASY_RUNNING_LOOKBACK_DAYS = 90
+EASY_RUNNING_MAX_RPE = 6.0
+EASY_RUNNING_LOW_Z3_FRACTION = 0.25
+
 EFFORT_ELEVATION_METRES_PER_KILOMETRE = 100.0
 
 class AthleteAnalytics:
@@ -570,7 +575,165 @@ class AthleteAnalytics:
             total_minutes
             / total_distance
         )
+    # ======================================================
 
+    @property
+    def typical_easy_running_pace(
+        self,
+    ) -> float | None:
+        """
+        Returns the distance-weighted effort pace of recent
+        physiologically easy running workouts.
+
+        Eligible workouts must have a low RPE and an average
+        heart rate between Z2 and the lower part of Z3.
+
+        Pace is expressed in minutes per effort kilometre.
+        """
+
+        profile = self.heart_rate_profile
+
+        if profile is None:
+            return None
+
+        zone_2 = profile.zone("Z2")
+        zone_3 = profile.zone("Z3")
+
+        if (
+            zone_2 is None
+            or zone_3 is None
+        ):
+            return None
+
+        low_z3_upper = round(
+            zone_3.lower_bpm
+            + (
+                zone_3.upper_bpm
+                - zone_3.lower_bpm
+            )
+            * EASY_RUNNING_LOW_Z3_FRACTION
+        )
+
+        today = date.today()
+
+        start_date = (
+            today
+            - timedelta(
+                days=(
+                    EASY_RUNNING_LOOKBACK_DAYS
+                    - 1
+                )
+            )
+        )
+
+        total_minutes = 0.0
+        total_effort_distance = 0.0
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            normalized_sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            is_running = any(
+                token in normalized_sport
+                for token in (
+                    "run",
+                    "running",
+                    "trail",
+                    "jog",
+                )
+            )
+
+            distance = workout.distance
+            duration = workout.duration
+
+            if (
+                not is_running
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or distance is None
+                or distance <= 0
+                or duration is None
+                or duration.total_seconds() <= 0
+            ):
+                continue
+
+            rpe = (
+                workout.feedback.effective_rpe
+            )
+
+            if (
+                rpe is None
+                or rpe > EASY_RUNNING_MAX_RPE
+            ):
+                continue
+
+            heart_rate_values = (
+                self._heart_rate_values(
+                    workout
+                )
+            )
+
+            if not heart_rate_values:
+                continue
+
+            average_heart_rate = (
+                sum(heart_rate_values)
+                / len(heart_rate_values)
+            )
+
+            if not (
+                zone_2.lower_bpm
+                <= average_heart_rate
+                <= low_z3_upper
+            ):
+                continue
+
+            elevation_gain = max(
+                workout.elevation_gain or 0.0,
+                0.0,
+            )
+
+            effort_distance = (
+                distance
+                + (
+                    elevation_gain
+                    / EFFORT_ELEVATION_METRES_PER_KILOMETRE
+                )
+            )
+
+            if effort_distance <= 0:
+                continue
+
+            total_minutes += (
+                duration.total_seconds()
+                / 60
+            )
+
+            total_effort_distance += (
+                effort_distance
+            )
+
+        if total_effort_distance <= 0:
+            return None
+
+        return (
+            total_minutes
+            / total_effort_distance
+        )
+    
     # ======================================================
     @property
     def road_10k_performance_pace(
@@ -1291,6 +1454,11 @@ class AthleteAnalytics:
                 typical_weekly_minutes=self.typical_weekly_minutes,
 
                 typical_weekly_sessions=self.typical_weekly_sessions,
+
+                typical_easy_running_pace=(
+                    self.typical_easy_running_pace
+                    or 0.0
+                ),
 
                 typical_running_long_session_minutes=(
                     self.typical_running_long_session_minutes
