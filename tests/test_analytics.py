@@ -777,14 +777,18 @@ def test_typical_running_long_session_uses_weekly_longest():
     today = date.today()
 
     running_workouts = (
-        (3, 90),
-        (5, 60),
-        (10, 120),
-        (17, 75),
-        (24, 105),
+        (3, 90, 300),
+        (5, 60, 500),
+        (10, 120, 400),
+        (17, 75, 200),
+        (24, 105, 350),
     )
 
-    for days_ago, minutes in running_workouts:
+    for (
+        days_ago,
+        minutes,
+        elevation_gain,
+    ) in running_workouts:
 
         athlete.history.add(
             create_workout(
@@ -796,7 +800,7 @@ def test_typical_running_long_session_uses_weekly_longest():
                 timedelta(
                     minutes=minutes
                 ),
-                100,
+                elevation_gain,
                 5,
             )
         )
@@ -830,7 +834,18 @@ def test_typical_running_long_session_uses_weekly_longest():
         .typical_running_long_session_minutes
         == 97.5
     )
+    assert (
+        analytics
+        .typical_running_long_session_elevation_gain
+        == 312.5
+    )
 
+    assert (
+        analytics
+        .training_state
+        .typical_running_long_session_elevation_gain
+        == 312.5
+    )
     assert (
         analytics
         .training_state

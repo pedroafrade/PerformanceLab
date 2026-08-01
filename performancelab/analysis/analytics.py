@@ -822,6 +822,119 @@ class AthleteAnalytics:
         )
 
     @property
+    def typical_running_long_session_elevation_gain(
+        self,
+    ) -> float:
+        """
+        Returns the average elevation gain of the longest
+        running session from each active week within the
+        latest rolling 28 days.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        weekly_longest = [
+            (0.0, 0.0),
+            (0.0, 0.0),
+            (0.0, 0.0),
+            (0.0, 0.0),
+        ]
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            normalized_sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            is_running = any(
+                token in normalized_sport
+                for token in (
+                    "run",
+                    "running",
+                    "trail",
+                    "jog",
+                )
+            )
+
+            if (
+                not is_running
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or workout.duration is None
+            ):
+                continue
+
+            days_ago = (
+                today - workout_day
+            ).days
+
+            week_index = min(
+                days_ago // 7,
+                3,
+            )
+
+            duration_minutes = (
+                workout.duration.total_seconds()
+                / 60
+            )
+
+            previous_duration, _ = (
+                weekly_longest[
+                    week_index
+                ]
+            )
+
+            if (
+                duration_minutes
+                <= previous_duration
+            ):
+                continue
+
+            elevation_gain = max(
+                workout.elevation_gain
+                or 0.0,
+                0.0,
+            )
+
+            weekly_longest[
+                week_index
+            ] = (
+                duration_minutes,
+                elevation_gain,
+            )
+
+        active_elevations = [
+            elevation_gain
+            for (
+                duration_minutes,
+                elevation_gain,
+            ) in weekly_longest
+            if duration_minutes > 0
+        ]
+
+        if not active_elevations:
+            return 0.0
+
+        return (
+            sum(active_elevations)
+            / len(active_elevations)
+        )
+
+    @property
     def training_monotony(self) -> float | None:
 
         loads = self.current_training_loads[-7:]
@@ -1045,7 +1158,10 @@ class AthleteAnalytics:
                 typical_running_long_session_minutes=(
                     self.typical_running_long_session_minutes
                 ),
-
+                typical_running_long_session_elevation_gain=(
+                    self
+                    .typical_running_long_session_elevation_gain
+                ),
             )
 
         return self._training_state

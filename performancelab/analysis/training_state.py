@@ -43,6 +43,7 @@ class TrainingState:
     typical_weekly_minutes: float = 0.0
     typical_weekly_sessions: float = 0.0
     typical_running_long_session_minutes: float = 0.0
+    typical_running_long_session_elevation_gain: float = 0.0
 
     @property
     def fitness(self) -> float:
