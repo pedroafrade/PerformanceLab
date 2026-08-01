@@ -193,8 +193,8 @@ def test_trail_peak_progresses_long_elevation():
             ),
         ).long_session_elevation_gain
         for days in (
-            35,
-            28,
+            36,
+            29,
         )
     )
 

@@ -167,9 +167,9 @@ def test_build_progresses_long_elevation_towards_event():
             )
         ).long_session_elevation_gain
         for days in (
-            56,
-            49,
-            42,
+            57,
+            50,
+            43,
         )
     )
 

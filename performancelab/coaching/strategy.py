@@ -743,10 +743,7 @@ class CoachStrategy(ABC):
 
         weeks_until_event = max(
             0,
-            (
-                days_until_event + 6
-            )
-            // 7,
+            days_until_event // 7,
         )
 
         completed_weeks = max(
