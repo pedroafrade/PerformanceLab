@@ -437,6 +437,10 @@ def _planned_workout_to_dict(workout):
 
         "distance": workout.distance,
 
+        "elevation_gain": (
+            workout.elevation_gain
+        ),
+
         "description": workout.description,
 
         "intensity": workout.intensity,
@@ -473,6 +477,10 @@ def _planned_workout_from_dict(data):
         ),
 
         distance=data.get("distance"),
+
+        elevation_gain=data.get(
+            "elevation_gain"
+        ),
 
         description=data.get("description"),
 

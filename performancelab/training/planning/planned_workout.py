@@ -23,6 +23,7 @@ class PlannedWorkout:
 
     duration: timedelta | None = None
     distance: float | None = None
+    elevation_gain: float | None = None
 
     description: str | None = None
     intensity: str | None = None

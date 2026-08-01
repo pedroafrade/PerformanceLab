@@ -666,6 +666,7 @@ def test_training_plan_metadata_round_trip():
             duration=timedelta(
                 hours=2,
             ),
+            elevation_gain=450,
             phase="Build",
         )
     )
@@ -706,6 +707,12 @@ def test_training_plan_metadata_round_trip():
             "phase"
         ]
         == "Build"
+    )
+    assert (
+        data["training_plan"]["workouts"][0][
+            "elevation_gain"
+        ]
+        == 450
     )
 
     loaded = athlete_from_dict(
@@ -752,6 +759,11 @@ def test_training_plan_metadata_round_trip():
     assert (
         loaded.training_plan[0].phase
         == "Build"
+    )
+
+    assert (
+        loaded.training_plan[0].elevation_gain
+        == 450
     )
 
 
@@ -806,6 +818,11 @@ def test_loads_legacy_training_plan_list():
         loaded.training_plan[0].title
         == "Legacy Long Run"
     )
+    assert (
+        loaded.training_plan[0].elevation_gain
+        is None
+    )
+    
 def test_loads_planned_workout_without_phase():
 
     athlete = create_athlete()
