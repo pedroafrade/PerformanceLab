@@ -712,6 +712,35 @@ def test_builds_sport_specific_workout_title(
 
     assert title == expected_title
 
+def test_threshold_workout_structure_matches_duration():
+
+    structure = (
+        WorkoutGenerator._intensity_structure(
+            template=(
+                THRESHOLD_TEMPLATE.for_sport(
+                    "Trail Running"
+                )
+            ),
+            duration_minutes=70,
+            coach_context=SimpleNamespace(
+                athlete=SimpleNamespace(
+                    threshold_hr=177,
+                ),
+            ),
+        )
+    )
+
+    assert structure == (
+        "Warm up 15 min",
+        "3×13 min at threshold (177 bpm)",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+        "Easy aerobic run 2 min",
+        "Cool down 10 min",
+    )
+
 def test_builds_mountainous_hill_structure():
 
     structure = WorkoutGenerator._hill_steps(

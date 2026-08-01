@@ -1137,6 +1137,11 @@ class WorkoutGenerator:
         sport: str | None,
         coach_context: CoachContext,
     ) -> tuple[str, ...]:
+        """
+        Builds threshold repetitions whose prescribed
+        duration matches the available session time.
+        """
+
         repetitions = 3
         recovery_minutes = 2
 
@@ -1144,9 +1149,22 @@ class WorkoutGenerator:
             4,
             (
                 available_minutes
-                - recovery_minutes * (repetitions - 1)
+                - recovery_minutes
+                * (repetitions - 1)
             )
             // repetitions,
+        )
+
+        prescribed_minutes = (
+            repetitions * work_minutes
+            + recovery_minutes
+            * (repetitions - 1)
+        )
+
+        easy_minutes = max(
+            0,
+            available_minutes
+            - prescribed_minutes,
         )
 
         threshold_target = cls._threshold_target(
@@ -1154,7 +1172,7 @@ class WorkoutGenerator:
             coach_context=coach_context,
         )
 
-        return (
+        steps = [
             (
                 f"{repetitions}×{work_minutes} min "
                 f"at threshold ({threshold_target})"
@@ -1163,7 +1181,25 @@ class WorkoutGenerator:
                 f"Recover {recovery_minutes} min easy "
                 "between repetitions"
             ),
-        )
+        ]
+
+        if easy_minutes > 0:
+
+            easy_label = cls._sport_label(
+                sport,
+                running="Easy aerobic run",
+                cycling="Easy aerobic ride",
+                swimming="Easy aerobic swim",
+                fallback="Easy aerobic training",
+            )
+
+            steps.append(
+                f"{easy_label} {easy_minutes} min"
+            )
+
+        return tuple(steps)
+
+    # ======================================================
 
     @staticmethod
     def _vo2max_steps(
