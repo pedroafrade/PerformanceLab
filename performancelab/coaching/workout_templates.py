@@ -34,7 +34,7 @@ RECOVERY_TEMPLATE = WorkoutTemplate(
 
 EASY_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.EASY,
-    title="Easy Aerobic Session",
+    title="Easy Session",
     objective="Develop aerobic endurance.",
     intensity="Easy",
     description=(
@@ -228,7 +228,7 @@ SPEED_TEMPLATE = WorkoutTemplate(
 
 LONG_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.LONG,
-    title="Long Aerobic Session",
+    title="Long Session",
     objective=(
         "Develop endurance and resistance to prolonged effort."
     ),

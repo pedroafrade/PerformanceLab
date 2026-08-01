@@ -695,18 +695,19 @@ def test_uses_history_sport_without_target_event() -> None:
     (
         (
             "Road Running",
-            "Easy Aerobic Run",
+            "Easy Run",
         ),
         (
             "Cycling",
-            "Easy Aerobic Ride",
+            "Easy Ride",
         ),
         (
             "Swimming",
-            "Easy Aerobic Swim",
+            "Easy Swim",
         ),
     ),
 )
+
 def test_builds_sport_specific_workout_title(
     sport,
     expected_title,
@@ -723,6 +724,21 @@ def test_builds_sport_specific_workout_title(
     )
 
     assert title == expected_title
+
+def test_builds_sport_specific_long_title():
+
+    template = LONG_TEMPLATE.for_sport(
+        "Trail Running"
+    )
+
+    title = (
+        WorkoutGenerator._sport_specific_title(
+            template
+        )
+    )
+
+    assert title == "Long Run"
+
 
 def test_threshold_workout_structure_matches_duration():
 
