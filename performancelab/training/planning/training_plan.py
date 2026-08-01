@@ -35,6 +35,8 @@ class TrainingPlan(WorkoutCollection):
     start_date: date | None = None
     end_date: date | None = None
 
+    reconciled_through: date | None = None
+
     primary_event_id: str | None = None
 
     competition_event_ids: tuple[str, ...] = ()
@@ -92,6 +94,23 @@ class TrainingPlan(WorkoutCollection):
                 raise ValueError(
                     "end_date cannot be before start_date."
                 )
+        if (
+            self.reconciled_through is not None
+            and (
+                not isinstance(
+                    self.reconciled_through,
+                    date,
+                )
+                or isinstance(
+                    self.reconciled_through,
+                    datetime,
+                )
+            )
+        ):
+            raise TypeError(
+                "reconciled_through must be a date "
+                "or None."
+            )
 
         for event_id in self.competition_event_ids:
 

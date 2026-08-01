@@ -115,6 +115,9 @@ class TrainingPlanAdapter:
             plan_id=plan.plan_id,
             start_date=plan.start_date,
             end_date=plan.end_date,
+            reconciled_through=(
+                plan.reconciled_through
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),

@@ -227,7 +227,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 4
+    assert data["version"] == 5
 
     assert "id" in data["athlete"]
 
@@ -891,4 +891,66 @@ def test_load_old_json_without_heart_rate_profile():
     assert (
         loaded.manual_heart_rate_zones
         == ()
+    )
+def test_training_plan_reconciliation_date_round_trip():
+
+    athlete = create_athlete()
+
+    athlete.training_plan = TrainingPlan(
+        reconciled_through=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    assert (
+        data["version"]
+        == 5
+    )
+
+    assert (
+        data["training_plan"][
+            "reconciled_through"
+        ]
+        == "2026-08-05"
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.reconciled_through
+        == date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+
+def test_loads_plan_without_reconciliation_date():
+
+    athlete = create_athlete()
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    del data["training_plan"][
+        "reconciled_through"
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.reconciled_through
+        is None
     )

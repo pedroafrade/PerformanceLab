@@ -770,7 +770,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 4,
+        "version": 5,
 
         "athlete": {
 
@@ -853,6 +853,10 @@ def athlete_to_dict(athlete):
 
             "end_date": _serialize_date(
                 athlete.training_plan.end_date
+            ),
+
+            "reconciled_through": _serialize_date(
+                athlete.training_plan.reconciled_through
             ),
 
             "primary_event_id": (
@@ -998,6 +1002,12 @@ def athlete_from_dict(data):
             end_date=_deserialize_date(
                 training_plan_data.get(
                     "end_date"
+                )
+            ),
+
+            reconciled_through=_deserialize_date(
+                training_plan_data.get(
+                    "reconciled_through"
                 )
             ),
 

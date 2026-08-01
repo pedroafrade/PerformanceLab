@@ -397,3 +397,39 @@ def test_only_race_day_uses_race_phase():
         )
         == "Race"
     )
+
+def test_training_plan_tracks_reconciliation_date():
+
+    plan = TrainingPlan(
+        reconciled_through=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        plan.reconciled_through
+        == date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+
+def test_reconciliation_date_rejects_datetime():
+
+    with pytest.raises(
+        TypeError,
+        match="reconciled_through",
+    ):
+        TrainingPlan(
+            reconciled_through=datetime(
+                2026,
+                8,
+                5,
+                12,
+                0,
+            ),
+        )
