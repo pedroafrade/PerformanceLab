@@ -84,6 +84,21 @@ def make_plan() -> TrainingPlan:
                 ),
                 intensity="Tempo",
             ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    8,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
         ],
     )
 
@@ -334,8 +349,7 @@ def test_overload_preserves_taper_workout():
         == timedelta(minutes=50)
     )
 
-
-def test_missed_adaptation_fails_explicitly():
+def test_missed_workout_increases_next_easy_session():
 
     plan = make_plan()
 
@@ -348,27 +362,31 @@ def test_missed_adaptation_fails_explicitly():
         completed_load=None,
     )
 
-    with pytest.raises(
-        NotImplementedError,
-        match="missed",
-    ):
-        TrainingPlanAdapter().adapt(
-            plan=plan,
-            outcomes=(
-                outcome,
-            ),
-            training_state=(
-                make_training_state()
-            ),
-            reference_day=date(
-                2026,
-                8,
-                5,
-            ),
-        )
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        plan.workouts[2].duration
+        == timedelta(minutes=60)
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=63)
+    )
 
 
-def test_lower_load_adaptation_fails_explicitly():
+def test_lower_load_increases_next_easy_session():
 
     plan = make_plan()
 
@@ -381,21 +399,99 @@ def test_lower_load_adaptation_fails_explicitly():
         completed_load=90.0,
     )
 
-    with pytest.raises(
-        NotImplementedError,
-        match="lower load",
-    ):
-        TrainingPlanAdapter().adapt(
-            plan=plan,
-            outcomes=(
-                outcome,
-            ),
-            training_state=(
-                make_training_state()
-            ),
-            reference_day=date(
-                2026,
-                8,
-                5,
-            ),
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=50)
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=63)
+    )
+
+
+def test_underload_preserves_plan_during_fatigue():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert adapted.workouts == plan.workouts
+
+
+def test_underload_does_not_move_missed_workout():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[0]
+        == plan.workouts[0]
+    )
+
+    assert (
+        adapted.workouts[0].day
+        == date(
+            2026,
+            8,
+            4,
         )
+    )

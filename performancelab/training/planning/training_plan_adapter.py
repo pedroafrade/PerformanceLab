@@ -22,6 +22,7 @@ from .workout_outcome import (
 
 
 OVERLOAD_DURATION_REDUCTION = 0.20
+UNDERLOAD_DURATION_INCREASE = 0.05
 
 
 class TrainingPlanAdapter:
@@ -57,10 +58,7 @@ class TrainingPlanAdapter:
                 outcome
                 for outcome in outcomes
                 if outcome.status
-                in {
-                    WorkoutOutcomeStatus.MISSED,
-                    WorkoutOutcomeStatus.SUBSTITUTE,
-                }
+                is WorkoutOutcomeStatus.SUBSTITUTE
             ),
             None,
         )
@@ -68,31 +66,7 @@ class TrainingPlanAdapter:
         if unsupported_outcome is not None:
             raise NotImplementedError(
                 "Adaptive rules are not yet implemented "
-                f"for {unsupported_outcome.status.value} "
-                "workouts."
-            )
-
-        lower_load_outcome = next(
-            (
-                outcome
-                for outcome in outcomes
-                if (
-                    outcome.status
-                    is WorkoutOutcomeStatus.MODIFIED
-                    and (
-                        outcome.load_difference
-                        is None
-                        or outcome.load_difference <= 0
-                    )
-                )
-            ),
-            None,
-        )
-
-        if lower_load_outcome is not None:
-            raise NotImplementedError(
-                "Adaptive rules are not yet implemented "
-                "for modified workouts with lower load."
+                "for substitute workouts."
             )
 
         workouts = list(
@@ -115,6 +89,33 @@ class TrainingPlanAdapter:
         ):
             workouts = (
                 self._reduce_next_demanding_workout(
+                    workouts=workouts,
+                    reference_day=reference_day,
+                )
+            )
+
+        has_underload = any(
+            (
+                outcome.status
+                is WorkoutOutcomeStatus.MISSED
+                or (
+                    outcome.status
+                    is WorkoutOutcomeStatus.MODIFIED
+                    and (
+                        outcome.load_difference is None
+                        or outcome.load_difference < 0
+                    )
+                )
+            )
+            for outcome in outcomes
+        )
+
+        if (
+            has_underload
+            and training_state.can_absorb_more_volume
+        ):
+            workouts = (
+                self._increase_next_easy_workout(
                     workouts=workouts,
                     reference_day=reference_day,
                 )
@@ -195,6 +196,92 @@ class TrainingPlanAdapter:
     # ======================================================
 
     @staticmethod
+    def _increase_next_easy_workout(
+        *,
+        workouts: list[PlannedWorkout],
+        reference_day: date,
+    ) -> list[PlannedWorkout]:
+        """
+        Adds a small fraction of missing load to the next
+        unprotected easy workout.
+
+        The missed workout is never moved to another day.
+        """
+
+        updated = list(
+            workouts
+        )
+
+        candidate_index = next(
+            (
+                index
+                for index, workout
+                in enumerate(updated)
+                if (
+                    workout.day
+                    > reference_day
+                    and workout.duration is not None
+                    and workout.duration.total_seconds()
+                    > 0
+                    and TrainingPlanAdapter._is_easy(
+                        workout
+                    )
+                    and not TrainingPlanAdapter._is_protected(
+                        workout
+                    )
+                )
+            ),
+            None,
+        )
+
+        if candidate_index is None:
+            return updated
+
+        candidate = updated[
+            candidate_index
+        ]
+
+        updated[candidate_index] = replace(
+            candidate,
+            duration=(
+                candidate.duration
+                * (
+                    1.0
+                    + UNDERLOAD_DURATION_INCREASE
+                )
+            ),
+        )
+
+        return updated
+
+    # ======================================================
+
+    @staticmethod
+    def _is_easy(
+        workout: PlannedWorkout,
+    ) -> bool:
+        """
+        Returns whether a workout can safely receive a
+        small duration increase.
+        """
+
+        description = (
+            TrainingPlanAdapter._description(
+                workout
+            )
+        )
+
+        return any(
+            token in description
+            for token in (
+                "easy",
+                "recovery",
+            )
+        )
+
+    # ======================================================
+
+    @staticmethod
     def _is_demanding(
         workout: PlannedWorkout,
     ) -> bool:
@@ -203,14 +290,11 @@ class TrainingPlanAdapter:
         training session.
         """
 
-        description = " ".join(
-            str(value or "")
-            for value in (
-                workout.title,
-                workout.intensity,
-                workout.objective,
+        description = (
+            TrainingPlanAdapter._description(
+                workout
             )
-        ).strip().lower()
+        )
 
         return any(
             token in description
@@ -246,14 +330,11 @@ class TrainingPlanAdapter:
         }:
             return True
 
-        description = " ".join(
-            str(value or "")
-            for value in (
-                workout.title,
-                workout.intensity,
-                workout.objective,
+        description = (
+            TrainingPlanAdapter._description(
+                workout
             )
-        ).strip().lower()
+        )
 
         return any(
             token in description
@@ -264,6 +345,25 @@ class TrainingPlanAdapter:
                 "pre race",
             )
         )
+
+    # ======================================================
+
+    @staticmethod
+    def _description(
+        workout: PlannedWorkout,
+    ) -> str:
+        """
+        Returns normalized semantic workout information.
+        """
+
+        return " ".join(
+            str(value or "")
+            for value in (
+                workout.title,
+                workout.intensity,
+                workout.objective,
+            )
+        ).strip().lower()
 
     # ======================================================
 
