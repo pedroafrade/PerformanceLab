@@ -168,6 +168,37 @@ class PlanningPresenter:
         return completed
 
     # ======================================================
+    def _outcomes_by_day(
+        self,
+    ) -> dict[date, str]:
+        """
+        Returns domain-assessed workout outcomes indexed
+        by planned calendar day.
+        """
+
+        if (
+            self.training_plan is None
+            or self.history is None
+        ):
+            return {}
+
+        outcomes = (
+            self.training_plan.assess_outcomes(
+                history=self.history,
+                reference_day=(
+                    self.reference.date()
+                ),
+            )
+        )
+
+        return {
+            outcome.planned_workout.day: (
+                outcome.status.value
+            )
+            for outcome in outcomes
+        }
+
+    # ======================================================
 
     def _day_status(
         self,
@@ -198,6 +229,10 @@ class PlanningPresenter:
 
         completed_workouts = (
             self._completed_workouts()
+        )
+
+        outcomes_by_day = (
+            self._outcomes_by_day()
         )
 
         next_workout = self.plan.next_workout(
@@ -312,6 +347,11 @@ class PlanningPresenter:
                         if completed_title
                         is not None
                         else None
+                    ),
+                    outcome_status=(
+                        outcomes_by_day.get(
+                            day
+                        )
                     ),
                 )
             )

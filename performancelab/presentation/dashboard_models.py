@@ -127,6 +127,7 @@ class WeeklyPlanDayData:
     completed: bool = False
     completed_sport: str | None = None
     completed_title: str | None = None
+    outcome_status: str | None = None
 
 
 @dataclass(frozen=True)

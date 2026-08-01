@@ -92,6 +92,27 @@ def _day_title(day) -> str:
         or "Rest"
     )
 
+_OUTCOME_LABELS = {
+    "missed": "Missed",
+    "equivalent": "Equivalent",
+    "modified": "Modified",
+    "substitute": "Substitute",
+}
+
+
+def _outcome_label(
+    day,
+) -> str | None:
+
+    status = getattr(
+        day,
+        "outcome_status",
+        None,
+    )
+
+    return _OUTCOME_LABELS.get(
+        status
+    )
 
 def _day_details(day) -> str:
     completed_title = day.completed_title
@@ -100,6 +121,12 @@ def _day_details(day) -> str:
     actual_title = completed_title or completed_sport
     planned_title = day.title or day.sport
 
+    outcome_label = (
+        _outcome_label(
+            day
+        )
+    )
+
     if (
         _completed(day)
         and actual_title
@@ -107,7 +134,19 @@ def _day_details(day) -> str:
         and actual_title.lower()
         != planned_title.lower()
     ):
-        return f"Feito: {actual_title}"
+        details = [
+            f"Feito: {actual_title}"
+        ]
+
+        if outcome_label:
+            details.insert(
+                0,
+                outcome_label,
+            )
+
+        return " · ".join(
+            details
+        )
 
     prescription_summary = getattr(
         day,
@@ -116,9 +155,21 @@ def _day_details(day) -> str:
     )
 
     if prescription_summary:
+
+        if outcome_label:
+            return (
+                f"{outcome_label} · "
+                f"{prescription_summary}"
+            )
+
         return prescription_summary
 
     details = []
+
+    if outcome_label:
+        details.append(
+            outcome_label
+        )
 
     distance = _format_distance(
         day.distance
@@ -144,9 +195,13 @@ def _day_details(day) -> str:
             )
         )
 
-        return (
+        details.append(
             f"{rounded_distance} · "
             f"{elevation_gain}"
+        )
+
+        return " · ".join(
+            details
         )
 
     if distance:
@@ -159,7 +214,6 @@ def _day_details(day) -> str:
         details.append(day.intensity)
 
     return " · ".join(details)
-
 
 def _marker_html(
     *,
