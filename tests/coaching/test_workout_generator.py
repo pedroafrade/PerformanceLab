@@ -1027,11 +1027,19 @@ def test_copies_long_elevation_target_to_planned_workout():
         template=LONG_TEMPLATE.for_sport(
             "Trail Running"
         ),
-        coach_context=SimpleNamespace(),
+        coach_context=SimpleNamespace(
+            training_state=SimpleNamespace(
+                typical_running_long_session_effort_pace=(
+                    7.5
+                ),
+            ),
+        ),
         strategy_plan=strategy_plan,
     )
 
     assert workout.elevation_gain == 450
+
+    assert workout.distance == 12
 
     assert (
         "Target elevation gain: 450 m D+"

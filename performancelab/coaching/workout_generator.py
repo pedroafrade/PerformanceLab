@@ -428,8 +428,7 @@ class WorkoutGenerator:
             return None
 
         return round(
-            planned_distance,
-            1,
+            planned_distance
         )
 
     # ======================================================

@@ -129,8 +129,14 @@ def _day_details(day) -> str:
         distance
         and elevation_gain
     ):
+        rounded_distance = (
+            _format_distance(
+                round(day.distance)
+            )
+        )
+
         return (
-            f"{distance} · "
+            f"{rounded_distance} · "
             f"{elevation_gain}"
         )
 

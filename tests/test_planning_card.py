@@ -24,5 +24,5 @@ def test_long_run_displays_distance_and_elevation():
 
     assert (
         _day_details(day)
-        == "11.5 km · 450 m D+"
+        == "12 km · 450 m D+"
     )
