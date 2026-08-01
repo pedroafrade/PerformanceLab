@@ -9,6 +9,9 @@ from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
 )
+from .training_plan_reconciler import (
+    TrainingPlanReconciler,
+)
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
 from .workout_collection import WorkoutCollection
@@ -23,6 +26,7 @@ __all__ = [
     "PlannedWorkout",
     "TrainingPlan",
     "TrainingPlanAdapter",
+    "TrainingPlanReconciler",
     "WeeklyPlan",
     "WeeklyPlanBuilder",
     "WorkoutCollection",
