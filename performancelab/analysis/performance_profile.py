@@ -15,9 +15,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from performancelab.physiology import (
+    round_pace,
+)
+
 from .heart_rate_profile import (
     HeartRateProfile,
 )
+
+TEMPO_PACE_FACTOR = 1.03
 
 @dataclass(frozen=True, slots=True)
 class PerformanceProfile:
@@ -55,6 +61,27 @@ class PerformanceProfile:
     heart_rate_profile: (
         HeartRateProfile | None
     ) = None
+
+    @property
+    def tempo_pace(self) -> float | None:
+        """
+        Returns a practical Tempo training pace derived
+        from the athlete's LT2 pace.
+
+        Pace is expressed in minutes per kilometre and
+        rounded to the nearest five seconds.
+        """
+
+        if (
+            self.threshold_pace is None
+            or self.threshold_pace <= 0
+        ):
+            return None
+
+        return round_pace(
+            self.threshold_pace
+            * TEMPO_PACE_FACTOR
+        )
 
     @property
     def has_power_profile(self) -> bool:

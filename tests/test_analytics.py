@@ -1306,7 +1306,19 @@ def test_road_10k_performance_pace_uses_hard_high_hr_run():
             expected_lt2_pace
         )
     )
+    expected_tempo_pace = (
+        5
+        + 15 / 60
+    )
 
+    assert (
+        athlete.analytics
+        .performance_profile
+        .tempo_pace
+        == pytest.approx(
+            expected_tempo_pace
+        )
+    )
 
 def test_road_10k_performance_pace_requires_high_effort():
 
