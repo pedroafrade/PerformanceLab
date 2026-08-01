@@ -50,6 +50,7 @@ from .pace import (
     fastest,
     pace,
     pace_from_speed,
+    round_pace,
     slowest,
     speed,
     speed_from_pace,
@@ -135,6 +136,7 @@ __all__ = [
     # Pace
     "speed",
     "pace",
+    "round_pace",
     "duration",
     "pace_from_speed",
     "speed_from_pace",

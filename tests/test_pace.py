@@ -6,11 +6,11 @@ from performancelab.physiology.pace import (
     fastest,
     pace,
     pace_from_speed,
+    round_pace,
     slowest,
     speed,
     speed_from_pace,
 )
-
 
 # ======================================================
 
@@ -37,7 +37,49 @@ def test_pace():
 
     ) == 5
 
+# ======================================================
 
+def test_round_pace_to_five_seconds():
+
+    assert round_pace(
+        5 + 12 / 60
+    ) == 5 + 10 / 60
+
+    assert round_pace(
+        5 + 13 / 60
+    ) == 5 + 15 / 60
+
+    assert round_pace(
+        4 + 57 / 60
+    ) == 4 + 55 / 60
+
+    assert round_pace(
+        4 + 58 / 60
+    ) == 5
+
+
+# ======================================================
+
+def test_round_pace_custom_interval():
+
+    assert round_pace(
+        5 + 7 / 60,
+        interval_seconds=10,
+    ) == 5 + 10 / 60
+
+
+# ======================================================
+
+def test_round_pace_rejects_invalid_values():
+
+    assert round_pace(None) is None
+    assert round_pace(0) is None
+
+    assert round_pace(
+        5,
+        interval_seconds=0,
+    ) is None
+    
 # ======================================================
 
 def test_duration():

@@ -64,6 +64,47 @@ def pace(
 
     return minutes / distance
 
+# ======================================================
+# Practical Pace
+# ======================================================
+
+def round_pace(
+    pace_value: float | None,
+    interval_seconds: int = 5,
+) -> float | None:
+    """
+    Rounds a pace in minutes per kilometre to a
+    practical interval in seconds.
+
+    Example:
+        5:12/km becomes 5:10/km.
+        5:13/km becomes 5:15/km.
+    """
+
+    if (
+        pace_value is None
+        or pace_value <= 0
+        or interval_seconds <= 0
+    ):
+        return None
+
+    total_seconds = (
+        pace_value * 60
+    )
+
+    rounded_seconds = (
+        int(
+            total_seconds
+            / interval_seconds
+            + 0.5
+        )
+        * interval_seconds
+    )
+
+    return (
+        rounded_seconds
+        / 60
+    )
 
 # ======================================================
 # Duration from Pace
