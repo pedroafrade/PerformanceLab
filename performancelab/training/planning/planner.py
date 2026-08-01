@@ -1398,9 +1398,7 @@ class Planner:
                 build_race_execution_plan(
                     event=event_entry.event,
                     expected_duration=(
-                        context.event_duration(
-                            event_entry
-                        )
+                        workout.duration
                     ),
                     heart_rate_profile=(
                         getattr(

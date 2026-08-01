@@ -898,6 +898,7 @@ def test_attaches_road_10k_execution_plan():
         event_duration=(
             lambda entry: timedelta(
                 minutes=50,
+                seconds=40,
             )
         ),
     )
@@ -933,4 +934,36 @@ def test_attaches_road_10k_execution_plan():
             "Nutrition: "
         )
         for step in result[0].structure
+    )
+
+    pacing_steps = tuple(
+        step
+        for step in result[0].structure
+        if step.startswith(
+            "Pacing: "
+        )
+    )
+
+    assert any(
+        "First 10 min"
+        in step
+        for step in pacing_steps
+    )
+
+    assert any(
+        "Minutes 10–35"
+        in step
+        for step in pacing_steps
+    )
+
+    assert any(
+        "Minutes 35–45"
+        in step
+        for step in pacing_steps
+    )
+
+    assert any(
+        "Final 5 min"
+        in step
+        for step in pacing_steps
     )
