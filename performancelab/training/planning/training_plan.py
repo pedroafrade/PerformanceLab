@@ -9,8 +9,15 @@ Container for an athlete's planned workouts.
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 
+from performancelab.history import History
+
 from .planned_workout import PlannedWorkout
 from .workout_collection import WorkoutCollection
+
+from .workout_outcome import (
+    WorkoutOutcome,
+    assess_workout_outcome,
+)
 
 from uuid import uuid4
 
@@ -220,6 +227,79 @@ class TrainingPlan(WorkoutCollection):
     def clear(self) -> None:
 
         self.workouts.clear()
+
+    # ======================================================
+
+    def assess_outcomes(
+        self,
+        *,
+        history: History,
+        reference_day: date,
+    ) -> tuple[WorkoutOutcome, ...]:
+        """
+        Compares every planned workout with the activity
+        recorded on the same calendar day.
+        """
+
+        if not isinstance(
+            history,
+            History,
+        ):
+            raise TypeError(
+                "history must be a History."
+            )
+
+        if (
+            not isinstance(
+                reference_day,
+                date,
+            )
+            or isinstance(
+                reference_day,
+                datetime,
+            )
+        ):
+            raise TypeError(
+                "reference_day must be a date."
+            )
+
+        completed_by_day = {}
+
+        for workout in history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            if not isinstance(
+                workout_day,
+                date,
+            ):
+                continue
+
+            completed_by_day[
+                workout_day
+            ] = workout
+
+        return tuple(
+            assess_workout_outcome(
+                planned_workout=planned_workout,
+                completed_workout=(
+                    completed_by_day.get(
+                        planned_workout.day
+                    )
+                ),
+                reference_day=reference_day,
+            )
+            for planned_workout in self.workouts
+        )
+    
     # ======================================================
 
     def covers(

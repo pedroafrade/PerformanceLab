@@ -6,9 +6,13 @@ Tests for planned workout outcomes.
 
 from datetime import date, datetime, timedelta
 
-from performancelab import create_workout
+from performancelab import (
+    History,
+    create_workout,
+)
 from performancelab.training.planning import (
     PlannedWorkout,
+    TrainingPlan,
     WorkoutOutcomeStatus,
     assess_workout_outcome,
 )
@@ -173,4 +177,117 @@ def test_different_sport_is_substitute():
     assert (
         outcome.status
         is WorkoutOutcomeStatus.SUBSTITUTE
+    )
+
+def test_training_plan_assesses_complete_history():
+
+    completed = (
+        make_completed_workout()
+    )
+
+    future = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            6,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Easy",
+    )
+
+    history = History(
+        workouts=[
+            completed,
+        ]
+    )
+
+    plan = TrainingPlan(
+        workouts=[
+            make_planned_workout(),
+            future,
+        ]
+    )
+
+    outcomes = plan.assess_outcomes(
+        history=history,
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert len(outcomes) == 2
+
+    assert (
+        outcomes[0].status
+        is WorkoutOutcomeStatus.EQUIVALENT
+    )
+
+    assert (
+        outcomes[1].status
+        is WorkoutOutcomeStatus.PENDING
+    )
+
+
+def test_training_plan_detects_missed_workout():
+
+    plan = TrainingPlan(
+        workouts=[
+            make_planned_workout(),
+        ]
+    )
+
+    outcomes = plan.assess_outcomes(
+        history=History(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert len(outcomes) == 1
+
+    assert (
+        outcomes[0].status
+        is WorkoutOutcomeStatus.MISSED
+    )
+
+
+def test_training_plan_matches_workout_by_calendar_day():
+
+    completed = (
+        make_completed_workout()
+    )
+
+    history = History(
+        workouts=[
+            completed,
+        ]
+    )
+
+    plan = TrainingPlan(
+        workouts=[
+            make_planned_workout(),
+        ]
+    )
+
+    outcomes = plan.assess_outcomes(
+        history=history,
+        reference_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert (
+        outcomes[0].completed_workout
+        is completed
     )
