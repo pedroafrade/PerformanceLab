@@ -107,7 +107,10 @@ SHAKEOUT_TEMPLATE = WorkoutTemplate(
     ),
     structure=(
         "Easy running 10 min",
-        "4×20 sec relaxed strides with full easy recovery",
+        (
+            "4×20 sec relaxed strides with full "
+            "easy recovery (5 min block)"
+        ),
         "Easy running 5 min",
     ),
 )

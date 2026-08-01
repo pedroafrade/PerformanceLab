@@ -32,6 +32,7 @@ from performancelab.coaching.workout_templates import (
     TEMPO_TEMPLATE,
     HILLS_TEMPLATE,
     SPEED_TEMPLATE,
+    SHAKEOUT_TEMPLATE,
     template_for,
 )
 
@@ -262,6 +263,16 @@ def test_for_sport_rejects_empty_sport() -> None:
 
         template.for_sport("   ")
 
+def test_shakeout_structure_has_explicit_duration() -> None:
+
+    assert SHAKEOUT_TEMPLATE.structure == (
+        "Easy running 10 min",
+        (
+            "4×20 sec relaxed strides with full "
+            "easy recovery (5 min block)"
+        ),
+        "Easy running 5 min",
+    )
 
 @pytest.mark.parametrize(
     (
@@ -303,6 +314,7 @@ def test_for_sport_rejects_empty_sport() -> None:
         ),
     ),
 )
+
 def test_returns_default_template(
     purpose: SessionPurpose,
     expected: WorkoutTemplate,
