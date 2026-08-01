@@ -64,7 +64,7 @@ def _format_elevation_gain(
         return None
 
     return (
-        f"{round(elevation_gain)} m D+"
+        f"{round(elevation_gain)} D+"
     )
 
 def _planned(day) -> bool:
