@@ -16,6 +16,7 @@ from performancelab.analysis.performance import (
 from performancelab.physiology import (
     acute_chronic_ratio as calculate_acute_chronic_ratio,
     monotony as calculate_training_monotony,
+    round_pace,
     strain as calculate_training_strain,
 )
 from performancelab.training import DailyLoadBuilder
@@ -37,6 +38,7 @@ ROAD_10K_MAX_DISTANCE = 12.0
 ROAD_10K_MIN_RPE = 7.5
 ROAD_10K_MIN_HEART_RATE_RATIO = 0.85
 ROAD_10K_MAX_ELEVATION_PER_KILOMETRE = 25.0
+LT2_10K_ADJUSTMENT_SECONDS = 8
 
 EASY_RUNNING_LOOKBACK_DAYS = 90
 EASY_RUNNING_MAX_RPE = 6.0
@@ -66,6 +68,7 @@ class AthleteAnalytics:
         """
 
         self._training_state = None
+        self._performance_profile = None
 
     # ======================================================
 
@@ -735,16 +738,17 @@ class AthleteAnalytics:
         )
     
     # ======================================================
-    @property
-    def road_10k_performance_pace(
+    def _road_10k_pace_candidates(
         self,
-    ) -> float | None:
+    ) -> tuple[
+        tuple[float, float],
+        ...,
+    ]:
         """
-        Returns the best effort-adjusted pace from recent,
-        physiologically demanding road-running workouts
-        comparable to a 10 km event.
+        Returns raw and effort-adjusted pace candidates
+        from demanding road runs comparable to 10 km.
 
-        Pace is expressed in minutes per effort kilometre.
+        Both paces are expressed in minutes per kilometre.
         """
 
         maximum_heart_rate = (
@@ -752,7 +756,7 @@ class AthleteAnalytics:
         )
 
         if maximum_heart_rate is None:
-            return None
+            return ()
 
         today = date.today()
 
@@ -771,7 +775,7 @@ class AthleteAnalytics:
             * ROAD_10K_MIN_HEART_RATE_RATIO
         )
 
-        candidate_paces = []
+        candidates = []
 
         for workout in self.history:
 
@@ -869,6 +873,16 @@ class AthleteAnalytics:
             ):
                 continue
 
+            duration_minutes = (
+                duration.total_seconds()
+                / 60
+            )
+
+            raw_pace = (
+                duration_minutes
+                / distance
+            )
+
             effort_distance = (
                 distance
                 + (
@@ -877,20 +891,95 @@ class AthleteAnalytics:
                 )
             )
 
-            duration_minutes = (
-                duration.total_seconds()
-                / 60
-            )
-
-            candidate_paces.append(
+            effort_pace = (
                 duration_minutes
                 / effort_distance
             )
 
-        if not candidate_paces:
+            candidates.append(
+                (
+                    raw_pace,
+                    effort_pace,
+                )
+            )
+
+        return tuple(candidates)
+
+    # ======================================================
+
+    @property
+    def road_10k_performance_pace(
+        self,
+    ) -> float | None:
+        """
+        Returns the best effort-adjusted pace for estimating
+        road events comparable to 10 km.
+        """
+
+        candidates = (
+            self._road_10k_pace_candidates()
+        )
+
+        if not candidates:
             return None
 
-        return min(candidate_paces)
+        return min(
+            effort_pace
+            for _, effort_pace in candidates
+        )
+
+    # ======================================================
+
+    @property
+    def road_10k_raw_performance_pace(
+        self,
+    ) -> float | None:
+        """
+        Returns the best real pace from demanding road runs
+        comparable to 10 km, without elevation adjustment.
+        """
+
+        candidates = (
+            self._road_10k_pace_candidates()
+        )
+
+        if not candidates:
+            return None
+
+        return min(
+            raw_pace
+            for raw_pace, _ in candidates
+        )
+
+    # ======================================================
+
+    @property
+    def lt2_running_pace(
+        self,
+    ) -> float | None:
+        """
+        Estimates sustainable LT2 training pace from recent
+        demanding road-running performance.
+        """
+
+        performance_pace = (
+            self.road_10k_raw_performance_pace
+        )
+
+        if performance_pace is None:
+            return None
+
+        adjusted_pace = (
+            performance_pace
+            + (
+                LT2_10K_ADJUSTMENT_SECONDS
+                / 60
+            )
+        )
+
+        return round_pace(
+            adjusted_pace
+        )
 
     # ======================================================
     
@@ -1540,7 +1629,9 @@ class AthleteAnalytics:
                     self.athlete.threshold_hr
                 ),
 
-                threshold_pace=None,
+                threshold_pace=(
+                    self.lt2_running_pace
+                ),
 
                 max_hr=self.athlete.max_hr,
 
