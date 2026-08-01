@@ -317,6 +317,16 @@ class WorkoutGenerator:
                 if duration_minutes is not None
                 else None
             ),
+            elevation_gain=(
+                strategy_plan
+                .long_session_elevation_gain
+                if (
+                    strategy_plan is not None
+                    and slot.purpose
+                    is SessionPurpose.LONG
+                )
+                else None
+            ),
             description=template.description,
             intensity=template.intensity,
             objective=template.objective,
@@ -516,6 +526,11 @@ class WorkoutGenerator:
                 elevation_demand=getattr(
                     strategy_plan,
                     "elevation_demand",
+                    None,
+                ),
+                target_elevation_gain=getattr(
+                    strategy_plan,
+                    "long_session_elevation_gain",
                     None,
                 ),
             )
@@ -892,6 +907,7 @@ class WorkoutGenerator:
         duration_minutes: int,
         sport: str | None,
         elevation_demand: str | None = None,
+        target_elevation_gain: int | None = None,
     ) -> tuple[str, ...]:
         """
         Builds a long aerobic session appropriate to the
@@ -927,6 +943,16 @@ class WorkoutGenerator:
             warm_up_minutes=10,
             cool_down_minutes=5,
         )
+        
+        if target_elevation_gain is not None:
+            structure = (
+                *structure[:-1],
+                (
+                    "Target elevation gain: "
+                    f"{target_elevation_gain} m D+"
+                ),
+                structure[-1],
+            )
 
         if elevation_demand == "mountainous":
             return (

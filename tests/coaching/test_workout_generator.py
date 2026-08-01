@@ -909,6 +909,7 @@ def test_builds_mountainous_long_run_structure():
         duration_minutes=120,
         sport="Trail Running",
         elevation_demand="mountainous",
+        target_elevation_gain=450,
     )
 
     assert structure == (
@@ -917,6 +918,7 @@ def test_builds_mountainous_long_run_structure():
             "Long aerobic run on mountainous "
             "terrain 105 min"
         ),
+        "Target elevation gain: 450 m D+",
         (
             "Keep climbs aerobic and use purposeful "
             "hiking on steep gradients"
@@ -1004,6 +1006,36 @@ def test_builds_duration_aware_pre_race_structure():
             "full easy recovery (5 min block)"
         ),
         "Cool down 5 min",
+    )
+
+def test_copies_long_elevation_target_to_planned_workout():
+
+    strategy_plan = make_strategy_plan(
+        long_session_elevation_gain=450,
+    )
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.LONG,
+            duration_minutes=120,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            2,
+        ),
+        template=LONG_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(),
+        strategy_plan=strategy_plan,
+    )
+
+    assert workout.elevation_gain == 450
+
+    assert (
+        "Target elevation gain: 450 m D+"
+        in workout.structure
     )
 
 def test_copies_strategy_phase_to_planned_workout():
