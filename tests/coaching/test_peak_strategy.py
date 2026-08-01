@@ -117,7 +117,7 @@ def test_default_peak_uses_concrete_key_session():
     )
 
 
-def test_trail_peak_rotates_hills_and_threshold():
+def test_trail_peak_rotates_key_session_focus():
 
     event = SimpleNamespace(
         event=SimpleNamespace(
@@ -134,12 +134,14 @@ def test_trail_peak_rotates_hills_and_threshold():
         for days in (
             28,
             35,
+            42,
         )
     )
 
     assert set(focuses) == {
         "hills",
         "threshold",
+        "tempo",
     }
 
 def test_trail_peak_preserves_elevation_demand():

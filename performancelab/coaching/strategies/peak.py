@@ -189,6 +189,7 @@ class PeakStrategy(CoachStrategy):
             rotation = (
                 "hills",
                 "threshold",
+                "tempo",
             )
 
         else:
