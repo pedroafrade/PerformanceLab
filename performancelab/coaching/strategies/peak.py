@@ -57,6 +57,14 @@ class PeakStrategy(CoachStrategy):
                 event_sport=event_sport,
             )
         )
+        secondary_intensity_focus = (
+            self._secondary_intensity_focus(
+                key_session_focus=(
+                    key_session_focus
+                ),
+                event_sport=event_sport,
+            )
+        )
         elevation_demand = (
             self._event_elevation_demand(
                 context
@@ -153,6 +161,9 @@ class PeakStrategy(CoachStrategy):
             key_session_focus=(
                 key_session_focus
             ),
+            secondary_intensity_focus=(
+                secondary_intensity_focus
+            ),
             secondary_focus="race pace",
 
             recovery_priority=(
@@ -183,7 +194,50 @@ class PeakStrategy(CoachStrategy):
         )
 
     # ======================================================
+    @staticmethod
+    def _secondary_intensity_focus(
+        *,
+        key_session_focus: str,
+        event_sport: str | None,
+    ) -> str:
+        """
+        Selects a complementary second quality session
+        instead of repeating the primary stimulus.
+        """
 
+        is_trail = (
+            event_sport is not None
+            and "trail"
+            in event_sport.lower()
+        )
+
+        if is_trail:
+
+            complements = {
+                "hills": "threshold",
+                "threshold": "tempo",
+                "tempo": "hills",
+                "vo2max": "threshold",
+                "speed": "tempo",
+            }
+
+        else:
+
+            complements = {
+                "hills": "tempo",
+                "threshold": "tempo",
+                "tempo": "threshold",
+                "vo2max": "threshold",
+                "speed": "tempo",
+            }
+
+        return complements.get(
+            key_session_focus,
+            "tempo",
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _key_session_focus(
         *,

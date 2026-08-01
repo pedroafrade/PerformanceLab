@@ -96,6 +96,7 @@ class WorkoutGenerator:
         )
 
         workouts: list[PlannedWorkout] = []
+        intensity_index = 0
 
         for slot in training_week:
 
@@ -109,8 +110,15 @@ class WorkoutGenerator:
                 sport=sport,
                 strategy_plan=strategy_plan,
                 coach_context=coach_context,
+                intensity_index=(
+                    intensity_index
+                ),
             )
-
+            if (
+                slot.purpose
+                is SessionPurpose.INTENSITY
+            ):
+                intensity_index += 1
             if workout is not None:
 
                 workouts.append(
@@ -129,6 +137,7 @@ class WorkoutGenerator:
         sport: str | None,
         strategy_plan: StrategyPlan,
         coach_context: CoachContext,
+        intensity_index: int = 0,
     ) -> PlannedWorkout | None:
 
         if slot.purpose is SessionPurpose.REST:
@@ -140,6 +149,7 @@ class WorkoutGenerator:
         focus = self._focus_for_slot(
             purpose=slot.purpose,
             strategy_plan=strategy_plan,
+            intensity_index=intensity_index,
         )
 
         template = template_for(
@@ -196,6 +206,7 @@ class WorkoutGenerator:
         *,
         purpose: SessionPurpose,
         strategy_plan: StrategyPlan,
+        intensity_index: int = 0,
     ) -> str | None:
         """
         Selects the most appropriate strategic focus for a slot.
@@ -205,15 +216,28 @@ class WorkoutGenerator:
         available. Other session purposes retain the general focus.
         """
 
-        if purpose in {
-            SessionPurpose.INTENSITY,
-            SessionPurpose.RACE,
-        }:
+        if purpose is SessionPurpose.INTENSITY:
+
+            if intensity_index > 0:
+                return (
+                    strategy_plan
+                    .secondary_intensity_focus
+                    or strategy_plan
+                    .key_session_focus
+                    or strategy_plan.focus
+                )
+
             return (
                 strategy_plan.key_session_focus
                 or strategy_plan.focus
             )
 
+        if purpose is SessionPurpose.RACE:
+            return (
+                strategy_plan.key_session_focus
+                or strategy_plan.focus
+            )
+        
         if purpose in {
             SessionPurpose.LONG,
             SessionPurpose.EASY,

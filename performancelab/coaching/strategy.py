@@ -41,6 +41,7 @@ class StrategyPlan:
     focus: str | None = None
 
     key_session_focus: str | None = None
+    secondary_intensity_focus: str | None = None
     secondary_focus: str | None = None
 
     recovery_priority: str = "normal"
@@ -83,7 +84,16 @@ class StrategyPlan:
                 self.key_session_focus,
                 field="key_session_focus",
             )
-
+        if (
+            self.secondary_intensity_focus
+            is not None
+        ):
+            self._validate_text(
+                self.secondary_intensity_focus,
+                field=(
+                    "secondary_intensity_focus"
+                ),
+            )
         if self.secondary_focus is not None:
             self._validate_text(
                 self.secondary_focus,

@@ -1462,3 +1462,28 @@ def test_threshold_uses_threshold_heart_rate_range():
         "Heart rate target: "
         "Z4 · 177–181 bpm"
     )
+def test_second_intensity_uses_secondary_focus():
+
+    strategy_plan = make_strategy_plan(
+        key_session_focus="threshold",
+        secondary_intensity_focus="tempo",
+    )
+
+    first_focus = (
+        WorkoutGenerator._focus_for_slot(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=strategy_plan,
+            intensity_index=0,
+        )
+    )
+
+    second_focus = (
+        WorkoutGenerator._focus_for_slot(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=strategy_plan,
+            intensity_index=1,
+        )
+    )
+
+    assert first_focus == "threshold"
+    assert second_focus == "tempo"

@@ -126,6 +126,49 @@ def test_default_peak_uses_concrete_key_session():
         == "threshold"
     )
 
+def test_peak_uses_complementary_intensity_focus():
+
+    plan = build_plan()
+
+    assert (
+        plan.key_session_focus
+        == "threshold"
+    )
+
+    assert (
+        plan.secondary_intensity_focus
+        == "tempo"
+    )
+
+    assert (
+        plan.secondary_intensity_focus
+        != plan.key_session_focus
+    )
+
+
+def test_trail_peak_complements_hills_with_threshold():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+        days_until_phase_event=21,
+    )
+
+    assert (
+        plan.key_session_focus
+        == "hills"
+    )
+
+    assert (
+        plan.secondary_intensity_focus
+        == "threshold"
+    )
 
 def test_trail_peak_rotates_key_session_focus():
 
