@@ -12,6 +12,10 @@ from performancelab.training.planning.planned_workout import PlannedWorkout
 
 from performancelab.physiology.thresholds import lthr
 
+from performancelab.race.event import (
+    ELEVATION_METRES_PER_EFFORT_KILOMETRE,
+)
+
 from .context import CoachContext
 from .draft_slot import DraftTrainingSlot
 from .heart_rate_target import (
@@ -302,6 +306,35 @@ class WorkoutGenerator:
                 heart_rate_guidance,
             )
 
+        planned_elevation_gain = (
+            getattr(
+                strategy_plan,
+                "long_session_elevation_gain",
+                None,
+            )
+            if (
+                strategy_plan is not None
+                and slot.purpose
+                is SessionPurpose.LONG
+            )
+            else None
+        )
+
+        planned_distance = (
+            self._planned_long_distance(
+                purpose=slot.purpose,
+                duration_minutes=duration_minutes,
+                elevation_gain=(
+                    planned_elevation_gain
+                ),
+                training_state=getattr(
+                    coach_context,
+                    "training_state",
+                    None,
+                ),
+            )
+        )
+
         return PlannedWorkout(
             scheduled_at=self._scheduled_at(
                 scheduled_day
@@ -317,15 +350,9 @@ class WorkoutGenerator:
                 if duration_minutes is not None
                 else None
             ),
+            distance=planned_distance,
             elevation_gain=(
-                strategy_plan
-                .long_session_elevation_gain
-                if (
-                    strategy_plan is not None
-                    and slot.purpose
-                    is SessionPurpose.LONG
-                )
-                else None
+                planned_elevation_gain
             ),
             description=template.description,
             intensity=template.intensity,
@@ -342,6 +369,67 @@ class WorkoutGenerator:
                 if strategy_plan is not None
                 else None
             ),
+        )
+
+    # ======================================================
+    @staticmethod
+    def _planned_long_distance(
+        *,
+        purpose: SessionPurpose,
+        duration_minutes: int | None,
+        elevation_gain: float | None,
+        training_state,
+    ) -> float | None:
+        """
+        Estimates planned long-run distance from duration,
+        elevation gain and the athlete's recent long-run
+        effort pace.
+        """
+
+        if (
+            purpose is not SessionPurpose.LONG
+            or duration_minutes is None
+            or duration_minutes <= 0
+            or training_state is None
+        ):
+            return None
+
+        effort_pace = getattr(
+            training_state,
+            (
+                "typical_running_long_session_"
+                "effort_pace"
+            ),
+            0.0,
+        )
+
+        if effort_pace <= 0:
+            return None
+
+        effort_distance = (
+            duration_minutes
+            / effort_pace
+        )
+
+        elevation_distance = (
+            max(
+                elevation_gain or 0.0,
+                0.0,
+            )
+            / ELEVATION_METRES_PER_EFFORT_KILOMETRE
+        )
+
+        planned_distance = (
+            effort_distance
+            - elevation_distance
+        )
+
+        if planned_distance <= 0:
+            return None
+
+        return round(
+            planned_distance,
+            1,
         )
 
     # ======================================================
