@@ -848,6 +848,22 @@ def test_typical_running_long_session_uses_weekly_longest():
     )
     assert (
         analytics
+        .typical_running_long_session_effort_pace
+        == pytest.approx(
+            7.380570818
+        )
+    )
+
+    assert (
+        analytics
+        .training_state
+        .typical_running_long_session_effort_pace
+        == pytest.approx(
+            7.380570818
+        )
+    )
+    assert (
+        analytics
         .training_state
         .typical_running_long_session_minutes
         == 97.5

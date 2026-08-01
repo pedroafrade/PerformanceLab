@@ -935,6 +935,143 @@ class AthleteAnalytics:
         )
 
     @property
+    def typical_running_long_session_effort_pace(
+        self,
+    ) -> float:
+        """
+        Returns the average effort pace of the longest
+        running session from each active week within the
+        latest rolling 28 days.
+
+        Effort pace is expressed in minutes per
+        effort kilometre.
+        """
+
+        today = date.today()
+        start_date = today - timedelta(
+            days=27
+        )
+
+        weekly_longest = [
+            (0.0, 0.0),
+            (0.0, 0.0),
+            (0.0, 0.0),
+            (0.0, 0.0),
+        ]
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            normalized_sport = str(
+                workout.sport or ""
+            ).strip().lower()
+
+            is_running = any(
+                token in normalized_sport
+                for token in (
+                    "run",
+                    "running",
+                    "trail",
+                    "jog",
+                )
+            )
+
+            if (
+                not is_running
+                or workout_day is None
+                or workout_day < start_date
+                or workout_day > today
+                or workout.duration is None
+                or workout.distance is None
+                or workout.distance <= 0
+            ):
+                continue
+
+            duration_minutes = (
+                workout.duration.total_seconds()
+                / 60
+            )
+
+            if duration_minutes <= 0:
+                continue
+
+            days_ago = (
+                today - workout_day
+            ).days
+
+            week_index = min(
+                days_ago // 7,
+                3,
+            )
+
+            previous_duration, _ = (
+                weekly_longest[
+                    week_index
+                ]
+            )
+
+            if (
+                duration_minutes
+                <= previous_duration
+            ):
+                continue
+
+            elevation_gain = max(
+                workout.elevation_gain
+                or 0.0,
+                0.0,
+            )
+
+            effort_distance = (
+                workout.distance
+                + (
+                    elevation_gain
+                    / EFFORT_ELEVATION_METRES_PER_KILOMETRE
+                )
+            )
+
+            if effort_distance <= 0:
+                continue
+
+            effort_pace = (
+                duration_minutes
+                / effort_distance
+            )
+
+            weekly_longest[
+                week_index
+            ] = (
+                duration_minutes,
+                effort_pace,
+            )
+
+        active_paces = [
+            effort_pace
+            for (
+                duration_minutes,
+                effort_pace,
+            ) in weekly_longest
+            if duration_minutes > 0
+        ]
+
+        if not active_paces:
+            return 0.0
+
+        return (
+            sum(active_paces)
+            / len(active_paces)
+        )
+
+    @property
     def training_monotony(self) -> float | None:
 
         loads = self.current_training_loads[-7:]
@@ -1161,6 +1298,10 @@ class AthleteAnalytics:
                 typical_running_long_session_elevation_gain=(
                     self
                     .typical_running_long_session_elevation_gain
+                ),
+                typical_running_long_session_effort_pace=(
+                    self
+                    .typical_running_long_session_effort_pace
                 ),
             )
 
