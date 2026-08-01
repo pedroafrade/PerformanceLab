@@ -53,22 +53,6 @@ class TrainingPlanAdapter:
             reference_day=reference_day,
         )
 
-        unsupported_outcome = next(
-            (
-                outcome
-                for outcome in outcomes
-                if outcome.status
-                is WorkoutOutcomeStatus.SUBSTITUTE
-            ),
-            None,
-        )
-
-        if unsupported_outcome is not None:
-            raise NotImplementedError(
-                "Adaptive rules are not yet implemented "
-                "for substitute workouts."
-            )
-
         workouts = list(
             plan.workouts
         )
@@ -76,7 +60,10 @@ class TrainingPlanAdapter:
         has_overload = any(
             (
                 outcome.status
-                is WorkoutOutcomeStatus.MODIFIED
+                in {
+                    WorkoutOutcomeStatus.MODIFIED,
+                    WorkoutOutcomeStatus.SUBSTITUTE,
+                }
                 and outcome.load_difference is not None
                 and outcome.load_difference > 0
             )
@@ -100,7 +87,10 @@ class TrainingPlanAdapter:
                 is WorkoutOutcomeStatus.MISSED
                 or (
                     outcome.status
-                    is WorkoutOutcomeStatus.MODIFIED
+                    in {
+                        WorkoutOutcomeStatus.MODIFIED,
+                        WorkoutOutcomeStatus.SUBSTITUTE,
+                    }
                     and (
                         outcome.load_difference is None
                         or outcome.load_difference < 0

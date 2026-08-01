@@ -6,8 +6,6 @@ Tests for incremental training-plan adaptation.
 
 from datetime import date, datetime, timedelta
 
-import pytest
-
 from performancelab.analysis.training_state import (
     TrainingState,
 )
@@ -494,4 +492,105 @@ def test_underload_does_not_move_missed_workout():
             8,
             4,
         )
+    )
+
+def test_equivalent_substitute_load_preserves_future_plan():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        planned_load=180.0,
+        completed_load=180.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert adapted.workouts == plan.workouts
+
+
+def test_substitute_overload_reduces_demanding_session():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        planned_load=180.0,
+        completed_load=270.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=40)
+    )
+
+
+def test_substitute_underload_increases_easy_session():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        planned_load=180.0,
+        completed_load=90.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=50)
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=63)
     )
