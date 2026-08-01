@@ -70,7 +70,7 @@ def sample_messages():
                 ),
                 "total_distance": 5000.0,
                 "total_elapsed_time": 600.0,
-                "total_ascent": 15.0,
+                "total_calories": 420,
             }
         ],
         "activities": [],
@@ -179,6 +179,13 @@ def test_fit_sensor_series(monkeypatch):
         workout.sensors.get("cadence")
     ) == 2
 
+    assert workout.sensors.get(
+        "active_calories"
+    ) == [
+        {
+            "value": 420.0,
+        },
+    ]
 
 # ======================================================
 

@@ -24,6 +24,8 @@ from .dashboard_models import (
     TrainingLoadCardData,
     NextEventCardData,
 )
+from .chart import sensor_summary
+
 from .planning_presenter import PlanningPresenter
 
 import streamlit as st
@@ -376,6 +378,8 @@ class DashboardData:
                 maximum_heart_rate=None,
                 average_power=None,
                 active_calories=None,
+                average_cadence=None,
+                rpe=None,
             )
 
         sport = self._nested_value(
@@ -420,40 +424,50 @@ class DashboardData:
             ("total_ascent",),
         )
 
-        average_heart_rate = self._nested_value(
+        heart_rate_summary = sensor_summary(
             workout,
-            ("heart_rate", "average"),
-            ("metrics", "average_heart_rate"),
-            ("average_heart_rate",),
-            ("avg_heart_rate",),
+            "heart_rate",
         )
 
-        maximum_heart_rate = self._nested_value(
+        power_summary = sensor_summary(
             workout,
-            ("heart_rate", "maximum"),
-            ("heart_rate", "max"),
-            ("metrics", "maximum_heart_rate"),
-            ("maximum_heart_rate",),
-            ("max_heart_rate",),
-            ("max_hr",),
+            "power",
         )
 
-        average_power = self._nested_value(
+        cadence_summary = sensor_summary(
             workout,
-            ("power", "average"),
-            ("metrics", "average_power"),
-            ("average_power",),
-            ("avg_power",),
-            ("power",),
+            "cadence",
         )
 
-        active_calories = self._nested_value(
+        calories_summary = sensor_summary(
             workout,
-            ("energy", "active_calories"),
-            ("metrics", "active_calories"),
-            ("active_calories",),
-            ("calories",),
-            ("kilocalories",),
+            "active_calories",
+        )
+
+        average_heart_rate = (
+            heart_rate_summary["average"]
+        )
+
+        maximum_heart_rate = (
+            heart_rate_summary["maximum"]
+        )
+
+        average_power = (
+            power_summary["average"]
+        )
+
+        average_cadence = (
+            cadence_summary["average"]
+        )
+
+        active_calories = (
+            calories_summary["average"]
+        )
+
+        rpe = self._nested_value(
+            workout,
+            ("feedback", "effective_rpe"),
+            ("feedback", "rpe"),
         )
 
         return LatestActivityCardData(
@@ -497,6 +511,16 @@ class DashboardData:
             active_calories=(
                 float(active_calories)
                 if active_calories is not None
+                else None
+            ),
+            average_cadence=(
+                float(average_cadence)
+                if average_cadence is not None
+                else None
+            ),
+            rpe=(
+                float(rpe)
+                if rpe is not None
                 else None
             ),
         )

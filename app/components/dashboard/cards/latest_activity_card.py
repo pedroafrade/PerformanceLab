@@ -88,6 +88,17 @@ def _format_number(
 
     return f"{value:.0f} {unit}"
 
+def _format_rpe(
+    value: float | None,
+) -> str:
+    """
+    Format the effective workout RPE.
+    """
+
+    if value is None:
+        return "—"
+
+    return f"{value:.1f}"
 
 def _format_heart_rate(
     average: float | None,
@@ -129,8 +140,8 @@ def _detail_row(
         "grid-template-columns:minmax(0,1fr) auto;"
         "align-items:baseline;"
         "column-gap:0.75rem;"
-        "margin-bottom:0.40rem;"
-        "font-size:0.78rem;"
+        "margin-bottom:0.25rem;"
+        "font-size:0.74rem;"
         "line-height:1.15;"
         "'>"
         "<span style='color:#8b949e;'>"
@@ -273,10 +284,30 @@ def latest_activity_card(
             ),
         ),
         _detail_row(
-            "Power",
+            "Active energy",
+            _format_number(
+                data.active_calories,
+                "kcal",
+            ),
+        ),
+        _detail_row(
+            "Power (avg)",
             _format_number(
                 data.average_power,
                 "W",
+            ),
+        ),
+        _detail_row(
+            "Cadence (avg)",
+            _format_number(
+                data.average_cadence,
+                "spm",
+            ),
+        ),
+        _detail_row(
+            "RPE",
+            _format_rpe(
+                data.rpe
             ),
         ),
 

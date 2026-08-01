@@ -344,3 +344,64 @@ def test_weekly_plan_day_carries_workout_structure():
         ),
         "Cool down 10 min",
     )
+
+def test_latest_activity_uses_sensor_metrics():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        date(2026, 7, 30),
+        timedelta(minutes=73),
+        7,
+    )
+
+    workout.feedback.estimated_rpe = 6.8
+
+    workout.sensors.add(
+        "heart_rate",
+        [
+            {"value": 150},
+            {"value": 170},
+            {"value": 190},
+        ],
+    )
+
+    workout.sensors.add(
+        "power",
+        [
+            {"value": 200},
+            {"value": 220},
+        ],
+    )
+
+    workout.sensors.add(
+        "cadence",
+        [
+            {"value": 168},
+            {"value": 172},
+        ],
+    )
+
+    workout.sensors.add(
+        "active_calories",
+        [
+            {"value": 850},
+        ],
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    latest = DashboardData(
+        athlete
+    ).latest_activity
+
+    assert latest.average_heart_rate == 170
+    assert latest.maximum_heart_rate == 190
+    assert latest.average_power == 210
+    assert latest.average_cadence == 170
+    assert latest.active_calories == 850
+    assert latest.rpe == 7

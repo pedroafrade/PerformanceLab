@@ -43,6 +43,8 @@ class LatestActivityCardData:
     maximum_heart_rate: float | None
     average_power: float | None
     active_calories: float | None
+    average_cadence: float | None
+    rpe: float | None
 
 
 # ======================================================

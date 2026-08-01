@@ -132,9 +132,58 @@ class FITImporter(WorkoutImporter):
                 "cadence",
                 cadence,
             )
+        active_calories = (
+            self._active_calories(
+                session
+            )
+        )
 
+        if active_calories is not None:
+
+            workout.sensors.add(
+                "active_calories",
+                [
+                    {
+                        "value": (
+                            active_calories
+                        ),
+                    },
+                ],
+            )
         return workout
 
+    # ======================================================
+    # Active calories
+    # ======================================================
+
+    @staticmethod
+    def _active_calories(
+        session: dict,
+    ) -> float | None:
+        """
+        Returns calories burned during the FIT session.
+        """
+
+        value = session.get(
+            "total_calories"
+        )
+
+        if value is None:
+            return None
+
+        try:
+
+            calories = float(value)
+
+        except (TypeError, ValueError):
+
+            return None
+
+        if calories < 0:
+            return None
+
+        return calories
+    
     # ======================================================
     # Source reading
     # ======================================================
