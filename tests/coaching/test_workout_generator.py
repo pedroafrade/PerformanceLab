@@ -494,7 +494,7 @@ def test_returns_threshold_template_for_threshold_focus():
     )
 
     assert template is THRESHOLD_TEMPLATE
-    assert template.title == "Threshold Session"
+    assert template.title == "LT2 Session"
     assert template.purpose is SessionPurpose.INTENSITY
 
 
@@ -744,7 +744,7 @@ def test_threshold_workout_structure_matches_duration():
 
     assert structure == (
         "Warm up 16 min",
-        "3×13 min at threshold (177 bpm)",
+        "3×13 min at LT2 (177 bpm)",
         (
             "Recover 2 min easy "
             "between repetitions"
@@ -752,6 +752,37 @@ def test_threshold_workout_structure_matches_duration():
         "Cool down 11 min",
     )
 
+def test_lt2_workout_has_prescription_summary():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=70,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            4,
+        ),
+        template=THRESHOLD_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(
+            athlete=SimpleNamespace(
+                threshold_hr=177,
+            ),
+        ),
+        strategy_plan=make_strategy_plan(
+            key_session_focus="threshold",
+        ),
+    )
+
+    assert workout.title == "LT2 Run"
+
+    assert (
+        workout.prescription_summary
+        == "3×13 min at LT2 (177 bpm)"
+    )
 
 def test_vo2max_workout_distributes_complementary_time():
 

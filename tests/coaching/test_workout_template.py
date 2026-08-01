@@ -484,7 +484,7 @@ def test_returns_threshold_template_for_threshold_focus():
     )
 
     assert template is THRESHOLD_TEMPLATE
-    assert template.title == "Threshold Session"
+    assert template.title == "LT2 Session"
     assert template.purpose is SessionPurpose.INTENSITY
 
 

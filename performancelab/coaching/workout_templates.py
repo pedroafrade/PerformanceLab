@@ -139,16 +139,16 @@ INTENSITY_TEMPLATE = WorkoutTemplate(
 
 THRESHOLD_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
-    title="Threshold Session",
-    objective="Develop sustainable threshold capacity.",
+    title="LT2 Session",
+    objective="Develop sustainable LT2 capacity.",
     intensity="Moderately hard",
     description=(
-        "Complete sustained efforts near threshold while "
+        "Complete sustained efforts near LT2 while "
         "maintaining controlled pacing and good technique."
     ),
     structure=(
         "Progressive warm-up",
-        "Controlled threshold intervals",
+        "Controlled LT2 intervals",
         "Controlled recoveries",
         "Easy cool-down",
     ),

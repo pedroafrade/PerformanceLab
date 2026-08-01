@@ -437,6 +437,22 @@ class WorkoutGenerator:
             template.title.strip().lower()
         )
 
+        if (
+            purpose is SessionPurpose.INTENSITY
+            and (
+                "lt2" in normalized_title
+                or "threshold" in normalized_title
+            )
+        ):
+            return next(
+                (
+                    step
+                    for step in structure
+                    if "at lt2" in step.lower()
+                ),
+                None,
+            )
+
         if "hill" not in normalized_title:
             return None
 
@@ -1374,7 +1390,10 @@ class WorkoutGenerator:
         normalized_title = template.title.lower()
         complementary_minutes = 0
 
-        if "threshold" in normalized_title:
+        if (
+            "lt2" in normalized_title
+            or "threshold" in normalized_title
+        ):
             (
                 main_steps,
                 complementary_minutes,
@@ -1493,7 +1512,7 @@ class WorkoutGenerator:
         steps = (
             (
                 f"{repetitions}×{work_minutes} min "
-                f"at threshold ({threshold_target})"
+                f"at LT2 ({threshold_target})"
             ),
             (
                 f"Recover {recovery_minutes} min easy "
