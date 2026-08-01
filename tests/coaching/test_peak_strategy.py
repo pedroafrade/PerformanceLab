@@ -30,6 +30,7 @@ def make_context(
     phase_event=None,
     primary_event=None,
     days_until_phase_event: int | None = None,
+    typical_running_long_session_elevation_gain: float = 0.0,
 ):
     return SimpleNamespace(
         tsb=tsb,
@@ -37,6 +38,11 @@ def make_context(
         next_event=phase_event,
         phase_event=phase_event,
         primary_event=primary_event,
+        training_state=SimpleNamespace(
+            typical_running_long_session_elevation_gain=(
+                typical_running_long_session_elevation_gain
+            ),
+        ),
         days_until_phase_event=(
             days_until_phase_event
         ),
@@ -50,6 +56,7 @@ def build_plan(
     phase_event=None,
     primary_event=None,
     days_until_phase_event: int | None = None,
+    typical_running_long_session_elevation_gain: float = 0.0,
 ):
     strategy = StubPeakStrategy(
         event_name=event_name,
@@ -61,6 +68,9 @@ def build_plan(
             average_rpe=average_rpe,
             phase_event=phase_event,
             primary_event=primary_event,
+            typical_running_long_session_elevation_gain=(
+                typical_running_long_session_elevation_gain
+            ),
             days_until_phase_event=(
                 days_until_phase_event
             ),
@@ -161,6 +171,36 @@ def test_trail_peak_preserves_elevation_demand():
     assert (
         plan.elevation_demand
         == "mountainous"
+    )
+    
+def test_trail_peak_progresses_long_elevation():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            elevation_gain=950,
+        ),
+    )
+
+    targets = tuple(
+        build_plan(
+            phase_event=event,
+            days_until_phase_event=days,
+            typical_running_long_session_elevation_gain=(
+                175
+            ),
+        ).long_session_elevation_gain
+        for days in (
+            35,
+            28,
+        )
+    )
+
+    assert targets == (
+        475,
+        575,
     )
 
 def test_road_peak_uses_vo2max_sparingly():

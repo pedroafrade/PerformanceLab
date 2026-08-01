@@ -57,6 +57,46 @@ class PeakStrategy(CoachStrategy):
                 event_sport=event_sport,
             )
         )
+        elevation_demand = (
+            self._event_elevation_demand(
+                context
+            )
+        )
+
+        training_state = getattr(
+            context,
+            "training_state",
+            None,
+        )
+
+        typical_long_elevation_gain = getattr(
+            training_state,
+            (
+                "typical_running_long_session_"
+                "elevation_gain"
+            ),
+            0.0,
+        )
+
+        long_session_elevation_gain = None
+
+        if (
+            elevation_demand
+            in {
+                "rolling",
+                "hilly",
+                "mountainous",
+            }
+            and typical_long_elevation_gain > 0
+        ):
+            long_session_elevation_gain = (
+                self._progressive_long_elevation_gain(
+                    context=context,
+                    baseline_elevation_gain=(
+                        typical_long_elevation_gain
+                    ),
+                )
+            )
 
         if context.tsb < -10:
             volume_factor = 0.80
@@ -129,16 +169,14 @@ class PeakStrategy(CoachStrategy):
 
             race_specificity=0.80,
 
-            elevation_demand=(
-                self._event_elevation_demand(
-                    context
-                )
-            ),
+            elevation_demand=elevation_demand,
 
             target_weekly_minutes=330,
             target_weekly_load=450.0 * volume_factor,
             long_session_minutes=90,
-
+            long_session_elevation_gain=(
+                long_session_elevation_gain
+            ),
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
