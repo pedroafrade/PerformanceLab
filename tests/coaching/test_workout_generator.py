@@ -765,6 +765,30 @@ def test_vo2max_workout_distributes_complementary_time():
         "Cool down 17 min",
     )
 
+def test_speed_workout_distributes_complementary_time():
+
+    structure = (
+        WorkoutGenerator._intensity_structure(
+            template=(
+                SPEED_TEMPLATE.for_sport(
+                    "Road Running"
+                )
+            ),
+            duration_minutes=50,
+            coach_context=SimpleNamespace(),
+        )
+    )
+
+    assert structure == (
+        "Warm up 18 min",
+        "10×30 sec fast",
+        (
+            "Recover 90 sec easy "
+            "after each repetition"
+        ),
+        "Cool down 12 min",
+    )
+
 def test_builds_mountainous_hill_structure():
 
     structure, complementary_minutes = (

@@ -1152,7 +1152,10 @@ class WorkoutGenerator:
             )
 
         elif "speed" in normalized_title:
-            main_steps = cls._speed_steps(
+            (
+                main_steps,
+                complementary_minutes,
+            ) = cls._speed_steps(
                 available_minutes
             )
 
@@ -1397,20 +1400,48 @@ class WorkoutGenerator:
     @staticmethod
     def _speed_steps(
         available_minutes: int,
-    ) -> tuple[str, ...]:
+    ) -> tuple[tuple[str, ...], int]:
+        """
+        Builds short speed repetitions and reports the
+        remaining preparation time.
+
+        Each repetition occupies two complete minutes:
+        30 seconds fast followed by 90 seconds easy.
+        """
+
+        block_minutes = 2
+
         repetitions = max(
             6,
             min(
                 10,
-                available_minutes // 3,
+                available_minutes
+                // block_minutes,
+            ),
+        )
+
+        prescribed_minutes = (
+            repetitions * block_minutes
+        )
+
+        complementary_minutes = max(
+            0,
+            available_minutes
+            - prescribed_minutes,
+        )
+
+        steps = (
+            f"{repetitions}×30 sec fast",
+            (
+                "Recover 90 sec easy "
+                "after each repetition"
             ),
         )
 
         return (
-            f"{repetitions}×30 sec fast",
-            "Recover 90 sec easy",
+            steps,
+            complementary_minutes,
         )
-
     # ======================================================
 
     @staticmethod
