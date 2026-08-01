@@ -82,7 +82,20 @@ class BuildStrategy(CoachStrategy):
             "typical_running_long_session_minutes",
             0.0,
         )
+        typical_long_elevation_gain = getattr(
+            training_state,
+            (
+                "typical_running_long_session_"
+                "elevation_gain"
+            ),
+            0.0,
+        )
 
+        elevation_demand = (
+            self._event_elevation_demand(
+                context
+            )
+        )
         if typical_weekly_sessions > 0:
 
             target_sessions = max(
@@ -173,6 +186,23 @@ class BuildStrategy(CoachStrategy):
             target_weekly_minutes,
         )
 
+        long_session_elevation_gain = None
+
+        if (
+            elevation_demand
+            in {
+                "rolling",
+                "hilly",
+                "mountainous",
+            }
+            and typical_long_elevation_gain > 0
+        ):
+            long_session_elevation_gain = (
+                self._round_elevation_to_twenty_five(
+                    typical_long_elevation_gain
+                )
+            )
+
         event_name = self._event_name(context)
 
         if event_name is not None:
@@ -210,16 +240,14 @@ class BuildStrategy(CoachStrategy):
 
             race_specificity=0.30,
 
-            elevation_demand=(
-                self._event_elevation_demand(
-                    context
-                )
-            ),
+            elevation_demand=elevation_demand,
 
             target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=500.0 * volume_factor,
             long_session_minutes=long_session_minutes,
-
+            long_session_elevation_gain=(
+                long_session_elevation_gain
+            ),
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
@@ -285,6 +313,25 @@ class BuildStrategy(CoachStrategy):
             weeks_until_event
             % len(rotation)
         ]
+
+    # ======================================================
+    @staticmethod
+    def _round_elevation_to_twenty_five(
+        elevation_gain: float,
+    ) -> int:
+        """
+        Rounds elevation gain to a practical
+        twenty-five-metre increment.
+        """
+
+        return int(
+            (
+                elevation_gain
+                + 12.5
+            )
+            // 25
+            * 25
+        )
 
     # ======================================================
     

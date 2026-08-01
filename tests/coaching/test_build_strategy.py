@@ -23,6 +23,7 @@ def make_context(
     typical_weekly_minutes: float = 0.0,
     typical_weekly_sessions: float = 0.0,
     typical_running_long_session_minutes: float = 0.0,
+    typical_running_long_session_elevation_gain: float = 0.0,
     days_until_phase_event: int | None = None,
 ):
     """
@@ -47,6 +48,9 @@ def make_context(
             ),
             typical_running_long_session_minutes=(
                 typical_running_long_session_minutes
+            ),
+            typical_running_long_session_elevation_gain=(
+                typical_running_long_session_elevation_gain
             ),
         ),
     )
@@ -121,6 +125,48 @@ def test_default_build_concrete_weekly_targets():
     assert plan.target_weekly_load == pytest.approx(540.0)
     assert plan.long_session_minutes == 120
 
+def test_build_uses_recent_long_run_elevation():
+
+    event = make_event(
+        sport="Trail Running",
+        elevation_demand="mountainous",
+    )
+
+    plan = BuildStrategy().build(
+        make_context(
+            phase_event=event,
+            typical_running_long_session_elevation_gain=(
+                312.5
+            ),
+        )
+    )
+
+    assert (
+        plan.long_session_elevation_gain
+        == 325
+    )
+
+def test_flat_build_has_no_elevation_target():
+
+    event = make_event(
+        sport="Road Running",
+        elevation_demand="flat",
+    )
+
+    plan = BuildStrategy().build(
+        make_context(
+            phase_event=event,
+            typical_running_long_session_elevation_gain=(
+                312.5
+            ),
+        )
+    )
+
+    assert (
+        plan.long_session_elevation_gain
+        is None
+    )
+    
 def test_trail_build_rotates_key_session_focus():
 
     event = make_event(
