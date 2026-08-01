@@ -731,20 +731,47 @@ def test_threshold_workout_structure_matches_duration():
     )
 
     assert structure == (
-        "Warm up 15 min",
+        "Warm up 16 min",
         "3×13 min at threshold (177 bpm)",
         (
             "Recover 2 min easy "
             "between repetitions"
         ),
-        "Cool down 12 min",
+        "Cool down 11 min",
+    )
+
+
+def test_vo2max_workout_distributes_complementary_time():
+
+    structure = (
+        WorkoutGenerator._intensity_structure(
+            template=(
+                VO2MAX_TEMPLATE.for_sport(
+                    "Road Running"
+                )
+            ),
+            duration_minutes=70,
+            coach_context=SimpleNamespace(),
+        )
+    )
+
+    assert structure == (
+        "Warm up 25 min",
+        "6×3 min at VO₂max effort",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+        "Cool down 17 min",
     )
 
 def test_builds_mountainous_hill_structure():
 
-    structure = WorkoutGenerator._hill_steps(
-        35,
-        elevation_demand="mountainous",
+    structure, complementary_minutes = (
+        WorkoutGenerator._hill_steps(
+            35,
+            elevation_demand="mountainous",
+        )
     )
 
     assert structure == (
@@ -753,15 +780,18 @@ def test_builds_mountainous_hill_structure():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
-        "Easy aerobic training 2 min",
     )
+
+    assert complementary_minutes == 2
 
 
 def test_builds_hilly_event_hill_structure():
 
-    structure = WorkoutGenerator._hill_steps(
-        35,
-        elevation_demand="hilly",
+    structure, complementary_minutes = (
+        WorkoutGenerator._hill_steps(
+            35,
+            elevation_demand="hilly",
+        )
     )
 
     assert structure == (
@@ -770,15 +800,18 @@ def test_builds_hilly_event_hill_structure():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
-        "Easy aerobic training 7 min",
     )
+
+    assert complementary_minutes == 7
 
 
 def test_builds_rolling_event_hill_structure():
 
-    structure = WorkoutGenerator._hill_steps(
-        35,
-        elevation_demand="rolling",
+    structure, complementary_minutes = (
+        WorkoutGenerator._hill_steps(
+            35,
+            elevation_demand="rolling",
+        )
     )
 
     assert structure == (
@@ -787,15 +820,18 @@ def test_builds_rolling_event_hill_structure():
             "Recover 1 min easy downhill "
             "between repetitions"
         ),
-        "Easy aerobic training 16 min",
     )
+
+    assert complementary_minutes == 16
 
 
 def test_mountainous_hill_structure_adapts_to_short_session():
 
-    structure = WorkoutGenerator._hill_steps(
-        15,
-        elevation_demand="mountainous",
+    structure, complementary_minutes = (
+        WorkoutGenerator._hill_steps(
+            15,
+            elevation_demand="mountainous",
+        )
     )
 
     assert structure == (
@@ -804,8 +840,9 @@ def test_mountainous_hill_structure_adapts_to_short_session():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
-        "Easy aerobic training 2 min",
     )
+
+    assert complementary_minutes == 2
 
 def test_hill_workout_structure_matches_duration():
 
@@ -821,14 +858,13 @@ def test_hill_workout_structure_matches_duration():
     )
 
     assert structure == (
-        "Warm up 15 min",
+        "Warm up 22 min",
         "5×5 min uphill",
         (
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
-        "Easy aerobic run 12 min",
-        "Cool down 10 min",
+        "Cool down 15 min",
     )
 
 def test_builds_mountainous_long_run_structure():

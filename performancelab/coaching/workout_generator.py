@@ -1041,6 +1041,36 @@ class WorkoutGenerator:
 
     # ======================================================
 
+    @staticmethod
+    def _split_complementary_minutes(
+        minutes: int,
+    ) -> tuple[int, int]:
+        """
+        Distributes unused interval-session time between
+        warm-up and cool-down.
+
+        Warm-up receives 60% because demanding sessions
+        benefit from more preparation.
+        """
+
+        if minutes <= 0:
+            return 0, 0
+
+        warm_up_minutes = round(
+            minutes * 0.60
+        )
+
+        cool_down_minutes = (
+            minutes - warm_up_minutes
+        )
+
+        return (
+            warm_up_minutes,
+            cool_down_minutes,
+        )
+
+    # ======================================================
+
     @classmethod
     def _intensity_structure(
         cls,
@@ -1082,21 +1112,26 @@ class WorkoutGenerator:
         )
 
         normalized_title = template.title.lower()
-
-        cool_down_extension = 0
+        complementary_minutes = 0
 
         if "threshold" in normalized_title:
             (
                 main_steps,
-                cool_down_extension,
+                complementary_minutes,
             ) = cls._threshold_steps(
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
             )
 
-        elif "vo₂" in normalized_title or "vo2" in normalized_title:
-            main_steps = cls._vo2max_steps(
+        elif (
+            "vo₂" in normalized_title
+            or "vo2" in normalized_title
+        ):
+            (
+                main_steps,
+                complementary_minutes,
+            ) = cls._vo2max_steps(
                 available_minutes
             )
 
@@ -1106,12 +1141,14 @@ class WorkoutGenerator:
             )
 
         elif "hill" in normalized_title:
-            main_steps = cls._hill_steps(
+            (
+                main_steps,
+                complementary_minutes,
+            ) = cls._hill_steps(
                 available_minutes,
                 elevation_demand=(
                     elevation_demand
                 ),
-                sport=template.sport,
             )
 
         elif "speed" in normalized_title:
@@ -1122,20 +1159,27 @@ class WorkoutGenerator:
         else:
             (
                 main_steps,
-                cool_down_extension,
+                complementary_minutes,
             ) = cls._threshold_steps(
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
             )
 
+        (
+            warm_up_extension,
+            cool_down_extension,
+        ) = cls._split_complementary_minutes(
+            complementary_minutes
+        )
+
+        warm_up_minutes += warm_up_extension
+        cool_down_minutes += cool_down_extension
+
         return (
             f"Warm up {warm_up_minutes} min",
             *main_steps,
-            (
-                f"Cool down "
-                f"{cool_down_minutes + cool_down_extension} min"
-            ),
+            f"Cool down {cool_down_minutes} min",
         )
 
     # ======================================================
@@ -1201,7 +1245,12 @@ class WorkoutGenerator:
     @staticmethod
     def _vo2max_steps(
         available_minutes: int,
-    ) -> tuple[str, ...]:
+    ) -> tuple[tuple[str, ...], int]:
+        """
+        Builds VO2max repetitions and reports the remaining
+        minutes for warm-up and cool-down.
+        """
+
         repetitions = max(
             4,
             min(
@@ -1210,9 +1259,36 @@ class WorkoutGenerator:
             ),
         )
 
+        effort_minutes = 3
+        recovery_minutes = 2
+
+        prescribed_minutes = (
+            repetitions * effort_minutes
+            + (repetitions - 1)
+            * recovery_minutes
+        )
+
+        complementary_minutes = max(
+            0,
+            available_minutes
+            - prescribed_minutes,
+        )
+
+        steps = (
+            (
+                f"{repetitions}×"
+                f"{effort_minutes} min "
+                "at VO₂max effort"
+            ),
+            (
+                f"Recover {recovery_minutes} min "
+                "easy between repetitions"
+            ),
+        )
+
         return (
-            f"{repetitions}×3 min at VO₂max effort",
-            "Recover 2 min easy",
+            steps,
+            complementary_minutes,
         )
 
 
@@ -1222,14 +1298,10 @@ class WorkoutGenerator:
         available_minutes: int,
         *,
         elevation_demand: str | None = None,
-        sport: str | None = None,
-    ) -> tuple[str, ...]:
+    ) -> tuple[tuple[str, ...], int]:
         """
-        Builds hill repetitions appropriate to the target event.
-
-        Any time not occupied by repetitions and recoveries
-        remains easy aerobic training, ensuring that the
-        prescribed steps match the session duration.
+        Builds hill repetitions appropriate to the target event
+        and reports the remaining preparation time.
         """
 
         if elevation_demand == "mountainous":
@@ -1300,13 +1372,13 @@ class WorkoutGenerator:
             + recovery_blocks * recovery_minutes
         )
 
-        easy_minutes = max(
+        complementary_minutes = max(
             0,
             available_minutes
             - prescribed_minutes,
         )
 
-        steps = [
+        steps = (
             (
                 f"{repetitions}×"
                 f"{repetition_minutes} min uphill"
@@ -1315,23 +1387,12 @@ class WorkoutGenerator:
                 f"Recover {recovery_minutes} min "
                 "easy downhill between repetitions"
             ),
-        ]
+        )
 
-        if easy_minutes > 0:
-
-            easy_label = cls._sport_label(
-                sport,
-                running="Easy aerobic run",
-                cycling="Easy aerobic ride",
-                swimming="Easy aerobic swim",
-                fallback="Easy aerobic training",
-            )
-
-            steps.append(
-                f"{easy_label} {easy_minutes} min"
-            )
-
-        return tuple(steps)
+        return (
+            steps,
+            complementary_minutes,
+        )
 
     @staticmethod
     def _speed_steps(
