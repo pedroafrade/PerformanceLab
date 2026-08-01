@@ -334,10 +334,29 @@ class WorkoutGenerator:
                 ),
             )
         )
+        if planned_distance is None:
+
+            planned_distance = (
+                self._planned_easy_distance(
+                    purpose=slot.purpose,
+                    sport=template.sport,
+                    duration_minutes=(
+                        duration_minutes
+                    ),
+                    training_state=getattr(
+                        coach_context,
+                        "training_state",
+                        None,
+                    ),
+                )
+            )
+
         prescription_summary = (
             self._prescription_summary(
+                purpose=slot.purpose,
                 template=template,
                 structure=structure,
+                distance=planned_distance,
             )
         )
 
@@ -381,11 +400,14 @@ class WorkoutGenerator:
         )
 
     # ======================================================
-    @staticmethod
+    @classmethod
     def _prescription_summary(
+        cls,
         *,
+        purpose: SessionPurpose,
         template: WorkoutTemplate,
         structure: tuple[str, ...],
+        distance: float | None,
     ) -> str | None:
         """
         Returns the essential workout prescription.
@@ -394,6 +416,22 @@ class WorkoutGenerator:
         presentation components do not need to interpret
         workout titles or structures.
         """
+
+        normalized_sport = str(
+            template.sport or ""
+        ).strip().lower()
+
+        if (
+            purpose is SessionPurpose.EASY
+            and cls._is_running(
+                normalized_sport
+            )
+            and distance is not None
+            and distance > 0
+        ):
+            return (
+                f"{round(distance)} km · Z2"
+            )
 
         normalized_title = (
             template.title.strip().lower()
@@ -422,6 +460,61 @@ class WorkoutGenerator:
         return main_step.replace(
             "×1 min uphill",
             "×60 sec uphill",
+        )
+
+    # ======================================================
+    @classmethod
+    def _planned_easy_distance(
+        cls,
+        *,
+        purpose: SessionPurpose,
+        sport: str | None,
+        duration_minutes: int | None,
+        training_state,
+    ) -> float | None:
+        """
+        Estimates the distance of an easy running session
+        from the athlete's recent physiological easy pace.
+
+        The reference pace is effort-adjusted. Because an
+        easy planned session does not prescribe elevation,
+        the resulting distance represents a flat route.
+        """
+
+        normalized_sport = str(
+            sport or ""
+        ).strip().lower()
+
+        if (
+            purpose is not SessionPurpose.EASY
+            or not cls._is_running(
+                normalized_sport
+            )
+            or duration_minutes is None
+            or duration_minutes <= 0
+            or training_state is None
+        ):
+            return None
+
+        easy_pace = getattr(
+            training_state,
+            "typical_easy_running_pace",
+            0.0,
+        )
+
+        if easy_pace <= 0:
+            return None
+
+        planned_distance = (
+            duration_minutes
+            / easy_pace
+        )
+
+        if planned_distance <= 0:
+            return None
+
+        return round(
+            planned_distance
         )
 
     # ======================================================

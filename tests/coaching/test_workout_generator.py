@@ -1233,6 +1233,65 @@ def test_easy_workout_uses_athlete_z2():
         )
     )
 
+def test_easy_workout_uses_easy_pace_for_summary():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.EASY,
+            duration_minutes=60,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            6,
+        ),
+        template=EASY_TEMPLATE.for_sport(
+            "Road Running"
+        ),
+        coach_context=SimpleNamespace(
+            training_state=SimpleNamespace(
+                typical_easy_running_pace=6.0,
+            ),
+        ),
+        strategy_plan=make_strategy_plan(),
+    )
+
+    assert workout.distance == 10
+
+    assert (
+        workout.prescription_summary
+        == "10 km · Z2"
+    )
+
+def test_easy_running_pace_is_not_used_for_cycling():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.EASY,
+            duration_minutes=60,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            6,
+        ),
+        template=EASY_TEMPLATE.for_sport(
+            "Cycling"
+        ),
+        coach_context=SimpleNamespace(
+            training_state=SimpleNamespace(
+                typical_easy_running_pace=6.0,
+            ),
+        ),
+        strategy_plan=make_strategy_plan(),
+    )
+
+    assert workout.distance is None
+
+    assert (
+        workout.prescription_summary
+        is None
+    )
 
 def test_workout_keeps_semantic_zone_without_profile():
 
