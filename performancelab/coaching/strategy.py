@@ -45,6 +45,7 @@ class StrategyPlan:
     target_weekly_minutes: int | None = None
     target_weekly_load: float | None = None
     long_session_minutes: int | None = None
+    long_session_elevation_gain: int | None = None
 
     objectives: tuple[str, ...] = field(
         default_factory=tuple,
@@ -127,6 +128,10 @@ class StrategyPlan:
             self.long_session_minutes,
             field="long_session_minutes",
         )
+        self._validate_optional_non_negative_integer(
+            self.long_session_elevation_gain,
+            field="long_session_elevation_gain",
+        )
         self._validate_optional_non_negative_number(
             self.target_weekly_load,
             field="target_weekly_load",
@@ -162,7 +167,17 @@ class StrategyPlan:
                 "long_session_minutes requires at least "
                 "one long session"
             )
-
+        if (
+            self.long_sessions == 0
+            and (
+                self.long_session_elevation_gain
+                is not None
+            )
+        ):
+            raise ValueError(
+                "long_session_elevation_gain requires "
+                "at least one long session"
+            )
         if (
             self.long_sessions > 0
             and self.long_session_minutes is not None

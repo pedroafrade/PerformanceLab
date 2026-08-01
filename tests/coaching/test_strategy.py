@@ -62,6 +62,7 @@ def test_supports_concrete_weekly_targets():
         target_weekly_minutes=420,
         target_weekly_load=480.0,
         long_session_minutes=120,
+        long_session_elevation_gain=450,
     )
 
     assert plan.focus == "threshold"
@@ -407,7 +408,50 @@ def test_rejects_invalid_optional_minutes_type(
         make_strategy_plan(
             **{field: value},
         )
+@pytest.mark.parametrize(
+    "value",
+    [
+        1.5,
+        "450",
+        True,
+    ],
+)
+def test_rejects_invalid_long_session_elevation_type(
+    value,
+):
+    with pytest.raises(
+        TypeError,
+        match="long_session_elevation_gain",
+    ):
+        make_strategy_plan(
+            long_session_elevation_gain=value,
+        )
 
+
+def test_rejects_negative_long_session_elevation():
+
+    with pytest.raises(
+        ValueError,
+        match="long_session_elevation_gain",
+    ):
+        make_strategy_plan(
+            long_session_elevation_gain=-1,
+        )
+
+
+def test_rejects_long_session_elevation_without_long_session():
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "long_session_elevation_gain "
+            "requires at least one long session"
+        ),
+    ):
+        make_strategy_plan(
+            long_sessions=0,
+            long_session_elevation_gain=450,
+        )
 
 @pytest.mark.parametrize(
     "value",
