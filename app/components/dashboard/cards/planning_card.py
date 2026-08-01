@@ -56,6 +56,16 @@ def _format_distance(
 
     return f"{distance:.1f} km"
 
+def _format_elevation_gain(
+    elevation_gain: float | None,
+) -> str | None:
+
+    if elevation_gain is None:
+        return None
+
+    return (
+        f"{round(elevation_gain)} m D+"
+    )
 
 def _planned(day) -> bool:
     return bool(day.title or day.sport)
@@ -101,8 +111,28 @@ def _day_details(day) -> str:
 
     details = []
 
-    distance = _format_distance(day.distance)
-    duration = _format_duration(day.duration)
+    distance = _format_distance(
+        day.distance
+    )
+
+    elevation_gain = (
+        _format_elevation_gain(
+            day.elevation_gain
+        )
+    )
+
+    duration = _format_duration(
+        day.duration
+    )
+
+    if (
+        distance
+        and elevation_gain
+    ):
+        return (
+            f"{distance} · "
+            f"{elevation_gain}"
+        )
 
     if distance:
         details.append(distance)

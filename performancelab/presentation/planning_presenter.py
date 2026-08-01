@@ -273,6 +273,11 @@ class PlanningPresenter:
                         if workout is not None
                         else None
                     ),
+                    elevation_gain=(
+                        workout.elevation_gain
+                        if workout is not None
+                        else None
+                    ),
                     intensity=(
                         workout.intensity
                         if workout is not None
