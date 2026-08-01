@@ -3,6 +3,7 @@ PerformanceLab
 
 Import Panel Component.
 """
+from datetime import date, datetime
 from gzip import decompress
 from io import BytesIO
 
@@ -14,6 +15,10 @@ import streamlit as st
 from performancelab.importers import (
     FITImporter,
     GPXImporter,
+)
+
+from performancelab.training.planning import (
+    TrainingPlanReconciler,
 )
 
 from performancelab.workout import (
@@ -60,6 +65,27 @@ def _store_imported_workout(
     )
 
     return added
+# ======================================================
+def _reconcile_training_plan(
+    athlete,
+    *,
+    through_day: date,
+) -> None:
+    """
+    Reconciles the persistent plan after imported
+    activities have updated the athlete's history.
+    """
+
+    athlete.training_plan = (
+        TrainingPlanReconciler().reconcile(
+            plan=athlete.training_plan,
+            history=athlete.history,
+            training_state=(
+                athlete.analytics.training_state
+            ),
+            through_day=through_day,
+        )
+    )
 
 # ======================================================
 
@@ -223,7 +249,7 @@ def _import_uploaded_file(
     uploaded_file,
     athlete,
     strava_titles=None,
-) -> bool:
+) -> tuple[bool, date | None]:
     """
     Imports one uploaded activity.
 
@@ -265,9 +291,30 @@ def _import_uploaded_file(
             athlete,
         )
 
-    return _store_imported_workout(
+    added = _store_imported_workout(
         workout,
         athlete,
+    )
+
+    workout_day = workout.date
+
+    if isinstance(
+        workout_day,
+        datetime,
+    ):
+        workout_day = (
+            workout_day.date()
+        )
+
+    if not isinstance(
+        workout_day,
+        date,
+    ):
+        workout_day = None
+
+    return (
+        added,
+        workout_day,
     )
 
 # ======================================================
@@ -289,6 +336,7 @@ def _import_uploaded_files(
     added_count = 0
     updated_count = 0
     failed_count = 0
+    imported_days = []
 
     for uploaded_file in uploaded_files:
 
@@ -300,7 +348,10 @@ def _import_uploaded_files(
 
         try:
 
-            added = _import_uploaded_file(
+            (
+                added,
+                workout_day,
+            ) = _import_uploaded_file(
                 uploaded_file,
                 athlete,
                 strava_titles,
@@ -311,13 +362,22 @@ def _import_uploaded_files(
             failed_count += 1
 
             continue
-
+        if workout_day is not None:
+            imported_days.append(
+                workout_day
+            )
         if added:
             added_count += 1
 
         else:
             updated_count += 1
-
+    if imported_days:
+        _reconcile_training_plan(
+            athlete,
+            through_day=max(
+                imported_days
+            ),
+        )
     return (
         added_count,
         updated_count,

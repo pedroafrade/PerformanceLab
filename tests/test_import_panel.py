@@ -1,3 +1,4 @@
+from datetime import date
 from gzip import compress
 
 from types import SimpleNamespace
@@ -109,21 +110,51 @@ def test_imports_multiple_files_and_counts_results(
     ):
 
         if uploaded_file is new_file:
-            return True
+            return (
+                True,
+                date(
+                    2026,
+                    8,
+                    1,
+                ),
+            )
 
         if uploaded_file is existing_file:
-            return False
+            return (
+                False,
+                date(
+                    2026,
+                    8,
+                    2,
+                ),
+            )
 
         raise ValueError(
             "Invalid activity"
         )
-
     monkeypatch.setattr(
         import_panel,
         "_import_uploaded_file",
         fake_import,
     )
+    reconciled = {}
 
+    def fake_reconcile(
+        athlete,
+        *,
+        through_day,
+    ):
+
+        reconciled["athlete"] = athlete
+        reconciled["through_day"] = (
+            through_day
+        )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_reconcile_training_plan",
+        fake_reconcile,
+    )
     counts = (
         import_panel._import_uploaded_files(
             [
@@ -140,7 +171,14 @@ def test_imports_multiple_files_and_counts_results(
         1,
         1,
     )
-
+    assert (
+        reconciled["through_day"]
+        == date(
+            2026,
+            8,
+            2,
+        )
+    )
 def test_prepares_compressed_fit_upload():
 
     uploaded_file = SimpleNamespace(
@@ -206,3 +244,81 @@ def test_uses_strava_activity_title():
     )
 
     assert title == "Morning Run"
+
+def test_reconciliation_updates_athlete_plan(
+    monkeypatch,
+):
+
+    original_plan = object()
+    adapted_plan = object()
+    history = object()
+    training_state = object()
+
+    athlete = SimpleNamespace(
+        training_plan=original_plan,
+        history=history,
+        analytics=SimpleNamespace(
+            training_state=training_state,
+        ),
+    )
+
+    calls = {}
+
+    class FakeReconciler:
+
+        def reconcile(
+            self,
+            *,
+            plan,
+            history,
+            training_state,
+            through_day,
+        ):
+
+            calls["plan"] = plan
+            calls["history"] = history
+            calls["training_state"] = (
+                training_state
+            )
+            calls["through_day"] = (
+                through_day
+            )
+
+            return adapted_plan
+
+    monkeypatch.setattr(
+        import_panel,
+        "TrainingPlanReconciler",
+        FakeReconciler,
+    )
+
+    import_panel._reconcile_training_plan(
+        athlete,
+        through_day=date(
+            2026,
+            8,
+            2,
+        ),
+    )
+
+    assert calls["plan"] is original_plan
+    assert calls["history"] is history
+
+    assert (
+        calls["training_state"]
+        is training_state
+    )
+
+    assert (
+        calls["through_day"]
+        == date(
+            2026,
+            8,
+            2,
+        )
+    )
+
+    assert (
+        athlete.training_plan
+        is adapted_plan
+    )
