@@ -20,12 +20,15 @@ from performancelab.training.planning import (
 )
 
 
-def make_training_state() -> TrainingState:
+def make_training_state(
+    *,
+    tsb=5.0,
+) -> TrainingState:
 
     return TrainingState(
         ctl=40.0,
         atl=35.0,
-        tsb=5.0,
+        tsb=tsb,
         acute_chronic_ratio=1.0,
         monotony=1.0,
         strain=350.0,
@@ -85,13 +88,29 @@ def make_plan() -> TrainingPlan:
     )
 
 
+def make_outcome(
+    *,
+    plan,
+    status,
+    planned_load,
+    completed_load,
+) -> WorkoutOutcome:
+
+    return WorkoutOutcome(
+        planned_workout=plan.workouts[0],
+        completed_workout=None,
+        status=status,
+        planned_load=planned_load,
+        completed_load=completed_load,
+    )
+
+
 def test_equivalent_outcome_preserves_plan():
 
     plan = make_plan()
 
-    outcome = WorkoutOutcome(
-        planned_workout=plan.workouts[0],
-        completed_workout=None,
+    outcome = make_outcome(
+        plan=plan,
         status=(
             WorkoutOutcomeStatus.EQUIVALENT
         ),
@@ -152,13 +171,176 @@ def test_pending_outcome_preserves_future_workout():
     )
 
 
-def test_unimplemented_adaptation_fails_explicitly():
+def test_overload_reduces_next_demanding_workout():
 
     plan = make_plan()
 
-    outcome = WorkoutOutcome(
-        planned_workout=plan.workouts[0],
-        completed_workout=None,
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=270.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        plan.workouts[1].duration
+        == timedelta(minutes=50)
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=40)
+    )
+
+
+def test_overload_preserves_plan_when_recovery_is_good():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=270.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert adapted.workouts == plan.workouts
+
+
+def test_overload_does_not_change_past_workout():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=270.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[0]
+        == plan.workouts[0]
+    )
+
+
+def test_overload_preserves_taper_workout():
+
+    plan = make_plan()
+
+    taper_workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            6,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Tempo Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Tempo",
+        phase="Taper",
+    )
+
+    plan.workouts = [
+        plan.workouts[0],
+        taper_workout,
+    ]
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=270.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=50)
+    )
+
+
+def test_missed_adaptation_fails_explicitly():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
         status=(
             WorkoutOutcomeStatus.MISSED
         ),
@@ -169,6 +351,39 @@ def test_unimplemented_adaptation_fails_explicitly():
     with pytest.raises(
         NotImplementedError,
         match="missed",
+    ):
+        TrainingPlanAdapter().adapt(
+            plan=plan,
+            outcomes=(
+                outcome,
+            ),
+            training_state=(
+                make_training_state()
+            ),
+            reference_day=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+
+
+def test_lower_load_adaptation_fails_explicitly():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=90.0,
+    )
+
+    with pytest.raises(
+        NotImplementedError,
+        match="lower load",
     ):
         TrainingPlanAdapter().adapt(
             plan=plan,
