@@ -12,6 +12,11 @@ from numbers import Real
 
 from .context import CoachContext
 
+LONG_ELEVATION_EVENT_RATIO = 0.65
+LONG_ELEVATION_PROGRESSION_WEEKS = 8
+LONG_ELEVATION_TARGET_STEPS = 4
+MAX_WEEKLY_ELEVATION_INCREASE = 100
+ELEVATION_INCREMENT = 25
 
 @dataclass(frozen=True)
 class StrategyPlan:
@@ -585,6 +590,185 @@ class CoachStrategy(ABC):
             "elevation_demand",
             None,
         )
+    
+    # ======================================================
+
+    @staticmethod
+    def _event_elevation_gain(
+        context: CoachContext,
+    ) -> float | None:
+        """
+        Returns the elevation gain of the event that
+        currently determines the training phase.
+        """
+
+        target_event = (
+            getattr(
+                context,
+                "phase_event",
+                None,
+            )
+            or getattr(
+                context,
+                "primary_event",
+                None,
+            )
+            or getattr(
+                context,
+                "next_event",
+                None,
+            )
+        )
+
+        event = getattr(
+            target_event,
+            "event",
+            None,
+        )
+
+        elevation_gain = getattr(
+            event,
+            "elevation_gain",
+            None,
+        )
+
+        if (
+            not isinstance(
+                elevation_gain,
+                (int, float),
+            )
+            or isinstance(
+                elevation_gain,
+                bool,
+            )
+            or elevation_gain <= 0
+        ):
+            return None
+
+        return float(
+            elevation_gain
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _round_elevation(
+        elevation_gain: float,
+    ) -> int:
+        """
+        Rounds elevation to a practical 25-metre
+        increment.
+        """
+
+        return int(
+            (
+                elevation_gain
+                + ELEVATION_INCREMENT / 2
+            )
+            // ELEVATION_INCREMENT
+            * ELEVATION_INCREMENT
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _progressive_long_elevation_gain(
+        cls,
+        *,
+        context: CoachContext,
+        baseline_elevation_gain: float,
+    ) -> int | None:
+        """
+        Progresses long-run elevation from the athlete's
+        recent capacity towards part of the event demand.
+
+        The progression is limited to 100 metres per week
+        and never requires reproducing the full event D+.
+        """
+
+        if baseline_elevation_gain <= 0:
+            return None
+
+        baseline = cls._round_elevation(
+            baseline_elevation_gain
+        )
+
+        event_elevation_gain = (
+            cls._event_elevation_gain(
+                context
+            )
+        )
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        if (
+            event_elevation_gain is None
+            or days_until_event is None
+        ):
+            return baseline
+
+        event_target = cls._round_elevation(
+            event_elevation_gain
+            * LONG_ELEVATION_EVENT_RATIO
+        )
+
+        event_target = max(
+            baseline,
+            event_target,
+        )
+
+        if event_target <= baseline:
+            return baseline
+
+        required_increase = (
+            event_target - baseline
+        )
+
+        calculated_step = cls._round_elevation(
+            required_increase
+            / LONG_ELEVATION_TARGET_STEPS
+        )
+
+        weekly_step = min(
+            MAX_WEEKLY_ELEVATION_INCREASE,
+            max(
+                ELEVATION_INCREMENT,
+                calculated_step,
+            ),
+        )
+
+        weeks_until_event = max(
+            0,
+            (
+                days_until_event + 6
+            )
+            // 7,
+        )
+
+        completed_weeks = max(
+            0,
+            LONG_ELEVATION_PROGRESSION_WEEKS
+            - weeks_until_event,
+        )
+
+        progressive_target = (
+            baseline
+            + completed_weeks
+            * weekly_step
+        )
+
+        return min(
+            event_target,
+            cls._round_elevation(
+                progressive_target
+            ),
+        )
+
+    # ======================================================
 
     @staticmethod
     def _event_priority(

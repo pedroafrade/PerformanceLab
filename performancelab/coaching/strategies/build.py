@@ -198,8 +198,11 @@ class BuildStrategy(CoachStrategy):
             and typical_long_elevation_gain > 0
         ):
             long_session_elevation_gain = (
-                self._round_elevation_to_twenty_five(
-                    typical_long_elevation_gain
+                self._progressive_long_elevation_gain(
+                    context=context,
+                    baseline_elevation_gain=(
+                        typical_long_elevation_gain
+                    ),
                 )
             )
 

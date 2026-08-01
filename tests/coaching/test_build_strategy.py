@@ -61,6 +61,7 @@ def make_event(
     priority: str = "A",
     sport: str | None = None,
     elevation_demand: str | None = None,
+    elevation_gain: float | None = None,
 ):
     """
     Creates an event wrapper compatible with CoachStrategy helpers.
@@ -71,6 +72,7 @@ def make_event(
             name=name,
             sport=sport,
             elevation_demand=elevation_demand,
+            elevation_gain=elevation_gain,
         ),
         priority=priority,
     )
@@ -144,6 +146,37 @@ def test_build_uses_recent_long_run_elevation():
     assert (
         plan.long_session_elevation_gain
         == 325
+    )
+    
+def test_build_progresses_long_elevation_towards_event():
+
+    event = make_event(
+        sport="Trail Running",
+        elevation_demand="mountainous",
+        elevation_gain=950,
+    )
+
+    targets = tuple(
+        BuildStrategy().build(
+            make_context(
+                phase_event=event,
+                typical_running_long_session_elevation_gain=(
+                    175
+                ),
+                days_until_phase_event=days,
+            )
+        ).long_session_elevation_gain
+        for days in (
+            56,
+            49,
+            42,
+        )
+    )
+
+    assert targets == (
+        175,
+        275,
+        375,
     )
 
 def test_flat_build_has_no_elevation_target():
