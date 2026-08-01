@@ -997,6 +997,14 @@ class Planner:
             weekly_plan.workouts
         )
 
+        workouts = (
+            Planner
+            ._reduce_ordinary_workout_durations(
+                workouts=workouts,
+                maximum_load=maximum_load,
+            )
+        )
+
         while (
             planned_weekly_load(workouts)
             > maximum_load
@@ -1064,7 +1072,140 @@ class Planner:
         )
 
     # ======================================================
+    @staticmethod
+    def _reduce_ordinary_workout_durations(
+        *,
+        workouts,
+        maximum_load: float,
+    ):
+        """
+        Reduces ordinary workout durations proportionally
+        before removing complete sessions.
 
+        Long sessions, races, shakeouts and pre-race
+        sessions retain their prescribed duration.
+        """
+
+        current_load = planned_weekly_load(
+            workouts
+        )
+
+        if current_load <= maximum_load:
+            return workouts
+
+        adjustable = [
+            workout
+            for workout in workouts
+            if (
+                workout.duration is not None
+                and not Planner._is_long_workout(
+                    workout
+                )
+                and not Planner._is_race_workout(
+                    workout
+                )
+                and not Planner._is_shakeout_workout(
+                    workout
+                )
+                and not Planner._is_pre_race_workout(
+                    workout
+                )
+            )
+        ]
+
+        adjustable_load = (
+            planned_weekly_load(
+                adjustable
+            )
+        )
+
+        if adjustable_load <= 0:
+            return workouts
+
+        protected_load = max(
+            current_load
+            - adjustable_load,
+            0.0,
+        )
+
+        available_load = max(
+            maximum_load
+            - protected_load,
+            0.0,
+        )
+
+        if available_load >= adjustable_load:
+            return workouts
+
+        reduction_factor = (
+            available_load
+            / adjustable_load
+        )
+
+        adjustable_ids = {
+            id(workout)
+            for workout in adjustable
+        }
+
+        updated = []
+
+        for workout in workouts:
+
+            if (
+                id(workout)
+                not in adjustable_ids
+            ):
+                updated.append(
+                    workout
+                )
+                continue
+
+            original_minutes = int(
+                workout.duration.total_seconds()
+                // 60
+            )
+
+            reduced_minutes = int(
+                (
+                    original_minutes
+                    * reduction_factor
+                )
+                // 5
+                * 5
+            )
+
+            minimum_minutes = min(
+                original_minutes,
+                20,
+            )
+
+            reduced_minutes = max(
+                reduced_minutes,
+                minimum_minutes,
+            )
+
+            if (
+                reduced_minutes
+                >= original_minutes
+            ):
+                updated.append(
+                    workout
+                )
+                continue
+
+            updated.append(
+                replace(
+                    workout,
+                    duration=timedelta(
+                        minutes=reduced_minutes
+                    ),
+                )
+            )
+
+        return updated
+
+    # ======================================================
+    
     @staticmethod
     def _is_demanding_workout(
         workout,

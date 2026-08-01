@@ -607,19 +607,57 @@ def test_limits_planned_weekly_load_growth():
         for workout in result.workouts
     )
 
+    assert titles == (
+        "Monday Quality",
+        "Wednesday Quality",
+        "Easy Aerobic Run",
+        "Long Aerobic Run",
+    )
+
+    original_durations = {
+        workout.title: workout.duration
+        for workout in weekly_plan.workouts
+    }
+
+    result_durations = {
+        workout.title: workout.duration
+        for workout in result.workouts
+    }
+
     assert (
-        "Monday Quality"
-        not in titles
+        result_durations[
+            "Monday Quality"
+        ]
+        < original_durations[
+            "Monday Quality"
+        ]
     )
 
     assert (
-        "Wednesday Quality"
-        in titles
+        result_durations[
+            "Wednesday Quality"
+        ]
+        < original_durations[
+            "Wednesday Quality"
+        ]
     )
 
     assert (
-        "Long Aerobic Run"
-        in titles
+        result_durations[
+            "Easy Aerobic Run"
+        ]
+        < original_durations[
+            "Easy Aerobic Run"
+        ]
+    )
+
+    assert (
+        result_durations[
+            "Long Aerobic Run"
+        ]
+        == original_durations[
+            "Long Aerobic Run"
+        ]
     )
 
     assert planned_weekly_load(
