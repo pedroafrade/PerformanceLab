@@ -16,7 +16,9 @@ PLANNED_INTENSITY_RPE = {
     "very hard": 9.0,
     "race effort": 8.0,
 }
-
+ELEVATION_GAIN_BLOCK_METRES = 100.0
+ELEVATION_LOAD_PER_BLOCK = 0.05
+MAX_ELEVATION_LOAD_BONUS = 0.30
 # ======================================================
 # Workout load (Session RPE)
 # ======================================================
@@ -73,6 +75,70 @@ def planned_workout_rpe(
         normalized_intensity
     )
 
+# ======================================================
+
+def planned_elevation_load_factor(
+    workout,
+) -> float:
+    """
+    Returns a conservative elevation load multiplier for
+    planned running workouts.
+
+    Each 100 metres of elevation gain adds 5%, capped at
+    a maximum elevation bonus of 30%.
+    """
+
+    sport = str(
+        getattr(
+            workout,
+            "sport",
+            "",
+        )
+        or ""
+    ).strip().lower()
+
+    is_running = any(
+        token in sport
+        for token in (
+            "run",
+            "running",
+            "trail",
+            "jog",
+        )
+    )
+
+    if not is_running:
+        return 1.0
+
+    elevation_gain = getattr(
+        workout,
+        "elevation_gain",
+        None,
+    )
+
+    if (
+        not isinstance(
+            elevation_gain,
+            (int, float),
+        )
+        or isinstance(
+            elevation_gain,
+            bool,
+        )
+        or elevation_gain <= 0
+    ):
+        return 1.0
+
+    elevation_bonus = min(
+        (
+            elevation_gain
+            / ELEVATION_GAIN_BLOCK_METRES
+        )
+        * ELEVATION_LOAD_PER_BLOCK,
+        MAX_ELEVATION_LOAD_BONUS,
+    )
+
+    return 1.0 + elevation_bonus
 
 # ======================================================
 
@@ -107,7 +173,14 @@ def planned_workout_load(
         / 60
     )
 
-    return minutes * rpe
+    base_load = minutes * rpe
+
+    return (
+        base_load
+        * planned_elevation_load_factor(
+            workout
+        )
+    )
 
 # ======================================================
 # Planned weekly load

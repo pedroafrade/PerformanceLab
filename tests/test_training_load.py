@@ -3,7 +3,7 @@ PerformanceLab
 
 Tests for Training Load.
 """
-
+import pytest
 from datetime import date, timedelta
 
 from performancelab import Workout
@@ -441,3 +441,71 @@ def test_empty_planned_week_has_zero_load():
     assert planned_weekly_load(
         ()
     ) == 0.0
+
+def test_planned_running_load_includes_elevation():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            8,
+            23,
+        ),
+        sport="Trail Running",
+        duration=timedelta(
+            minutes=90,
+        ),
+        elevation_gain=400,
+        intensity="Easy to moderate",
+    )
+
+    assert planned_workout_load(
+        workout
+    ) == pytest.approx(
+        432.0
+    )
+
+
+def test_planned_cycling_load_ignores_running_elevation_factor():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            8,
+            23,
+        ),
+        sport="Cycling",
+        duration=timedelta(
+            minutes=90,
+        ),
+        elevation_gain=400,
+        intensity="Easy to moderate",
+    )
+
+    assert planned_workout_load(
+        workout
+    ) == pytest.approx(
+        360.0
+    )
+
+
+def test_planned_elevation_load_bonus_is_capped():
+
+    workout = PlannedWorkout(
+        scheduled_at=date(
+            2026,
+            8,
+            23,
+        ),
+        sport="Trail Running",
+        duration=timedelta(
+            minutes=90,
+        ),
+        elevation_gain=1000,
+        intensity="Easy to moderate",
+    )
+
+    assert planned_workout_load(
+        workout
+    ) == pytest.approx(
+        468.0
+    )
