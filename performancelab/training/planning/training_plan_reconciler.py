@@ -106,7 +106,52 @@ class TrainingPlanReconciler:
         return adapted
 
     # ======================================================
+    def reconcile_closed_days(
+        self,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        training_state: TrainingState,
+        today: date | None = None,
+    ) -> TrainingPlan:
+        """
+        Reconciles completed calendar days when the
+        application loads.
 
+        The current day remains open because its planned
+        workout may still be completed later.
+        """
+
+        reference_day = (
+            today or date.today()
+        )
+
+        if (
+            not isinstance(
+                reference_day,
+                date,
+            )
+            or isinstance(
+                reference_day,
+                datetime,
+            )
+        ):
+            raise TypeError(
+                "today must be a date or None."
+            )
+
+        return self.reconcile(
+            plan=plan,
+            history=history,
+            training_state=training_state,
+            through_day=(
+                reference_day
+                - timedelta(days=1)
+            ),
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _validate_inputs(
         *,

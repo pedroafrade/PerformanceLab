@@ -34,6 +34,9 @@ from performancelab.storage.json_user_repository import (
 
 from performancelab.coaching import Coach
 from performancelab.training.config import AthleteAvailability
+from performancelab.training.planning import (
+    TrainingPlanReconciler,
+)
 
 
 # ======================================================
@@ -483,10 +486,42 @@ if current_user is None:
 if "athlete" not in st.session_state:
 
     try:
-        st.session_state.athlete = (
+        loaded_athlete = (
             load_active_athlete(
                 current_user
             )
+        )
+
+        previous_plan = (
+            loaded_athlete.training_plan
+        )
+
+        reconciled_plan = (
+            TrainingPlanReconciler()
+            .reconcile_closed_days(
+                plan=previous_plan,
+                history=(
+                    loaded_athlete.history
+                ),
+                training_state=(
+                    loaded_athlete
+                    .analytics
+                    .training_state
+                ),
+            )
+        )
+
+        loaded_athlete.training_plan = (
+            reconciled_plan
+        )
+
+        if reconciled_plan is not previous_plan:
+            athlete_repository.save(
+                loaded_athlete
+            )
+
+        st.session_state.athlete = (
+            loaded_athlete
         )
 
     except KeyError:

@@ -237,3 +237,103 @@ def test_reconciliation_processes_only_new_period():
         second.workouts[1].duration
         == timedelta(minutes=63)
     )
+def test_closed_day_reconciliation_stops_at_yesterday():
+
+    plan = make_plan()
+
+    reconciled = (
+        TrainingPlanReconciler()
+        .reconcile_closed_days(
+            plan=plan,
+            history=History(),
+            training_state=(
+                make_training_state()
+            ),
+            today=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+    )
+
+    assert (
+        reconciled.reconciled_through
+        == date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        reconciled.workouts[1].duration
+        == timedelta(minutes=63)
+    )
+
+
+def test_closed_day_reconciliation_keeps_today_open():
+
+    today_workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            5,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Easy",
+    )
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            8,
+            31,
+        ),
+        workouts=[
+            today_workout,
+        ],
+    )
+
+    reconciled = (
+        TrainingPlanReconciler()
+        .reconcile_closed_days(
+            plan=plan,
+            history=History(),
+            training_state=(
+                make_training_state()
+            ),
+            today=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+    )
+
+    assert (
+        reconciled.reconciled_through
+        == date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        reconciled.workouts
+        == [
+            today_workout,
+        ]
+    )
