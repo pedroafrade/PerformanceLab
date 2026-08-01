@@ -573,7 +573,43 @@ def test_returns_tempo_template_for_tempo_focus() -> None:
     assert template is TEMPO_TEMPLATE
     assert template.title == "Tempo Session"
     assert template.intensity == "Hard"
+def test_tempo_workout_uses_athlete_pace() -> None:
 
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=70,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            4,
+        ),
+        template=TEMPO_TEMPLATE.for_sport(
+            "Road Running"
+        ),
+        coach_context=SimpleNamespace(
+            performance_profile=SimpleNamespace(
+                tempo_pace=5.25,
+            ),
+        ),
+        strategy_plan=make_strategy_plan(
+            key_session_focus="tempo",
+        ),
+    )
+
+    assert workout.title == "Tempo Run"
+
+    assert (
+        "Tempo effort 45 min at 5:15/km"
+        in workout.structure
+    )
+
+    assert (
+        workout.prescription_summary
+        == "9 km at 5:15/km"
+    )
+    
 def test_returns_hills_template_for_hills_focus() -> None:
 
     template = template_for(

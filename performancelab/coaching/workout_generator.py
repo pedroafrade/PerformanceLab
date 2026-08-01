@@ -357,6 +357,8 @@ class WorkoutGenerator:
                 template=template,
                 structure=structure,
                 distance=planned_distance,
+                duration_minutes=duration_minutes,
+                coach_context=coach_context,
             )
         )
 
@@ -400,6 +402,99 @@ class WorkoutGenerator:
         )
 
     # ======================================================
+    @staticmethod
+    def _tempo_pace(
+        coach_context,
+    ) -> float | None:
+        """
+        Returns the athlete's Tempo pace from the
+        physiological performance profile.
+        """
+
+        performance_profile = getattr(
+            coach_context,
+            "performance_profile",
+            None,
+        )
+
+        if performance_profile is None:
+            return None
+
+        tempo_pace = getattr(
+            performance_profile,
+            "tempo_pace",
+            None,
+        )
+
+        if (
+            tempo_pace is None
+            or tempo_pace <= 0
+        ):
+            return None
+
+        return tempo_pace
+
+    # ======================================================
+
+    @staticmethod
+    def _format_pace(
+        pace: float,
+    ) -> str:
+        """
+        Formats minutes per kilometre as mm:ss/km.
+        """
+
+        total_seconds = round(
+            pace * 60
+        )
+
+        minutes, seconds = divmod(
+            total_seconds,
+            60,
+        )
+
+        return (
+            f"{minutes}:{seconds:02d}/km"
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _intensity_timing(
+        duration_minutes: int,
+    ) -> tuple[int, int, int]:
+        """
+        Returns warm-up, cool-down and main-work
+        durations for an intensity session.
+        """
+
+        warm_up_minutes = (
+            15
+            if duration_minutes >= 45
+            else 10
+        )
+
+        cool_down_minutes = (
+            10
+            if duration_minutes >= 45
+            else 5
+        )
+
+        available_minutes = max(
+            8,
+            duration_minutes
+            - warm_up_minutes
+            - cool_down_minutes,
+        )
+
+        return (
+            warm_up_minutes,
+            cool_down_minutes,
+            available_minutes,
+        )
+
+    # ======================================================
+
     @classmethod
     def _prescription_summary(
         cls,
@@ -408,6 +503,8 @@ class WorkoutGenerator:
         template: WorkoutTemplate,
         structure: tuple[str, ...],
         distance: float | None,
+        duration_minutes: int | None,
+        coach_context: CoachContext,
     ) -> str | None:
         """
         Returns the essential workout prescription.
@@ -436,7 +533,35 @@ class WorkoutGenerator:
         normalized_title = (
             template.title.strip().lower()
         )
+        if (
+            purpose is SessionPurpose.INTENSITY
+            and "tempo" in normalized_title
+            and duration_minutes is not None
+            and duration_minutes >= 30
+        ):
+            tempo_pace = cls._tempo_pace(
+                coach_context
+            )
 
+            if tempo_pace is None:
+                return None
+
+            (
+                _,
+                _,
+                main_minutes,
+            ) = cls._intensity_timing(
+                duration_minutes
+            )
+
+            main_distance = round(
+                main_minutes / tempo_pace
+            )
+
+            return (
+                f"{main_distance} km at "
+                f"{cls._format_pace(tempo_pace)}"
+            )
         if (
             purpose is SessionPurpose.INTENSITY
             and (
@@ -1368,23 +1493,12 @@ class WorkoutGenerator:
                 cool_down_minutes=5,
             )
 
-        warm_up_minutes = (
-            15
-            if duration_minutes >= 45
-            else 10
-        )
-
-        cool_down_minutes = (
-            10
-            if duration_minutes >= 45
-            else 5
-        )
-
-        available_minutes = max(
-            8,
+        (
+            warm_up_minutes,
+            cool_down_minutes,
+            available_minutes,
+        ) = cls._intensity_timing(
             duration_minutes
-            - warm_up_minutes
-            - cool_down_minutes,
         )
 
         normalized_title = template.title.lower()
@@ -1415,8 +1529,23 @@ class WorkoutGenerator:
             )
 
         elif "tempo" in normalized_title:
+
+            tempo_pace = cls._tempo_pace(
+                coach_context
+            )
+
+            pace_text = (
+                f" at {cls._format_pace(tempo_pace)}"
+                if tempo_pace is not None
+                else ""
+            )
+
             main_steps = (
-                f"Tempo effort {available_minutes} min",
+                (
+                    f"Tempo effort "
+                    f"{available_minutes} min"
+                    f"{pace_text}"
+                ),
             )
 
         elif "hill" in normalized_title:
