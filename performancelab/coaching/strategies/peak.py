@@ -129,6 +129,12 @@ class PeakStrategy(CoachStrategy):
 
             race_specificity=0.80,
 
+            elevation_demand=(
+                self._event_elevation_demand(
+                    context
+                )
+            ),
+
             target_weekly_minutes=330,
             target_weekly_load=450.0 * volume_factor,
             long_session_minutes=90,

@@ -142,6 +142,24 @@ def test_trail_peak_rotates_hills_and_threshold():
         "threshold",
     }
 
+def test_trail_peak_preserves_elevation_demand():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+    )
+
+    assert (
+        plan.elevation_demand
+        == "mountainous"
+    )
 
 def test_road_peak_uses_vo2max_sparingly():
 
