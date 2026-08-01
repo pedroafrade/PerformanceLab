@@ -443,6 +443,10 @@ def _planned_workout_to_dict(workout):
 
         "description": workout.description,
 
+        "prescription_summary": (
+            workout.prescription_summary
+        ),
+
         "intensity": workout.intensity,
 
         "objective": workout.objective,
@@ -483,6 +487,10 @@ def _planned_workout_from_dict(data):
         ),
 
         description=data.get("description"),
+
+        prescription_summary=data.get(
+            "prescription_summary"
+        ),
 
         intensity=data.get("intensity"),
 

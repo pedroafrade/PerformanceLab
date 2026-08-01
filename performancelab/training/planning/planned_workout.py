@@ -26,6 +26,7 @@ class PlannedWorkout:
     elevation_gain: float | None = None
 
     description: str | None = None
+    prescription_summary: str | None = None
     intensity: str | None = None
     objective: str | None = None
 

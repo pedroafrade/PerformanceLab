@@ -667,6 +667,9 @@ def test_training_plan_metadata_round_trip():
                 hours=2,
             ),
             elevation_gain=450,
+            prescription_summary=(
+                "18 km · 450 D+"
+            ),
             phase="Build",
         )
     )
@@ -766,6 +769,12 @@ def test_training_plan_metadata_round_trip():
         == 450
     )
 
+    assert (
+        loaded.training_plan[0]
+        .prescription_summary
+        == "18 km · 450 D+"
+    )
+
 
 def test_loads_legacy_training_plan_list():
 
@@ -855,7 +864,11 @@ def test_loads_planned_workout_without_phase():
         loaded.training_plan[0].phase
         is None
     )
-
+    assert (
+        loaded.training_plan[0]
+        .prescription_summary
+        is None
+    )
 # ======================================================
 
 def test_load_old_json_without_heart_rate_profile():
