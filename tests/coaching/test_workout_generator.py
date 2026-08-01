@@ -725,6 +725,7 @@ def test_builds_mountainous_hill_structure():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
+        "Easy aerobic training 2 min",
     )
 
 
@@ -741,6 +742,7 @@ def test_builds_hilly_event_hill_structure():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
+        "Easy aerobic training 7 min",
     )
 
 
@@ -757,6 +759,7 @@ def test_builds_rolling_event_hill_structure():
             "Recover 1 min easy downhill "
             "between repetitions"
         ),
+        "Easy aerobic training 16 min",
     )
 
 
@@ -773,6 +776,31 @@ def test_mountainous_hill_structure_adapts_to_short_session():
             "Recover 2 min easy downhill "
             "between repetitions"
         ),
+        "Easy aerobic training 2 min",
+    )
+
+def test_hill_workout_structure_matches_duration():
+
+    structure = (
+        WorkoutGenerator._intensity_structure(
+            template=HILLS_TEMPLATE.for_sport(
+                "Trail Running"
+            ),
+            duration_minutes=70,
+            coach_context=SimpleNamespace(),
+            elevation_demand="mountainous",
+        )
+    )
+
+    assert structure == (
+        "Warm up 15 min",
+        "5×5 min uphill",
+        (
+            "Recover 2 min easy downhill "
+            "between repetitions"
+        ),
+        "Easy aerobic run 12 min",
+        "Cool down 10 min",
     )
 
 def test_builds_mountainous_long_run_structure():

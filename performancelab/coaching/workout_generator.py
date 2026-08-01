@@ -1106,6 +1106,7 @@ class WorkoutGenerator:
                 elevation_demand=(
                     elevation_demand
                 ),
+                sport=template.sport,
             )
 
         elif "speed" in normalized_title:
@@ -1182,17 +1183,20 @@ class WorkoutGenerator:
         )
 
 
-    @staticmethod
+    @classmethod
     def _hill_steps(
+        cls,
         available_minutes: int,
         *,
         elevation_demand: str | None = None,
+        sport: str | None = None,
     ) -> tuple[str, ...]:
         """
         Builds hill repetitions appropriate to the target event.
 
-        Greater event elevation demand uses longer, controlled
-        climbing efforts rather than only short hill repetitions.
+        Any time not occupied by repetitions and recoveries
+        remains easy aerobic training, ensuring that the
+        prescribed steps match the session duration.
         """
 
         if elevation_demand == "mountainous":
@@ -1253,7 +1257,23 @@ class WorkoutGenerator:
                 ),
             )
 
-        return (
+        recovery_blocks = max(
+            0,
+            repetitions - 1,
+        )
+
+        prescribed_minutes = (
+            repetitions * repetition_minutes
+            + recovery_blocks * recovery_minutes
+        )
+
+        easy_minutes = max(
+            0,
+            available_minutes
+            - prescribed_minutes,
+        )
+
+        steps = [
             (
                 f"{repetitions}×"
                 f"{repetition_minutes} min uphill"
@@ -1262,8 +1282,23 @@ class WorkoutGenerator:
                 f"Recover {recovery_minutes} min "
                 "easy downhill between repetitions"
             ),
-        )
+        ]
 
+        if easy_minutes > 0:
+
+            easy_label = cls._sport_label(
+                sport,
+                running="Easy aerobic run",
+                cycling="Easy aerobic ride",
+                swimming="Easy aerobic swim",
+                fallback="Easy aerobic training",
+            )
+
+            steps.append(
+                f"{easy_label} {easy_minutes} min"
+            )
+
+        return tuple(steps)
 
     @staticmethod
     def _speed_steps(
