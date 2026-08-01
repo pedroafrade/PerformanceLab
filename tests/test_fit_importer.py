@@ -179,6 +179,13 @@ def test_fit_sensor_series(monkeypatch):
         workout.sensors.get("cadence")
     ) == 2
 
+    cadence = workout.sensors.get(
+        "cadence"
+    )
+
+    assert cadence[0]["value"] == 164
+    assert cadence[1]["value"] == 172
+
     assert workout.sensors.get(
         "active_calories"
     ) == [
@@ -243,3 +250,49 @@ def test_fit_default_sport(monkeypatch):
     workout = importer.read(b"ignored")
 
     assert workout.sport == "Cycling"
+
+def test_fit_derives_running_cadence_from_total_strides(
+    monkeypatch,
+):
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    for record in messages["records"]:
+        record.pop(
+            "cadence",
+            None,
+        )
+
+    messages["sessions"][0][
+        "total_strides"
+    ] = 810
+
+    messages["sessions"][0][
+        "total_timer_time"
+    ] = 600
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: messages,
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    cadence = workout.sensors.get(
+        "cadence"
+    )
+
+    assert cadence is not None
+    assert len(cadence) == 1
+    assert cadence[0]["value"] == 162

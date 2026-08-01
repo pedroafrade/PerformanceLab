@@ -124,7 +124,10 @@ class FITImporter(WorkoutImporter):
                 power,
             )
 
-        cadence = self._cadence(records)
+        cadence = self._cadence(
+            records,
+            session,
+        )
 
         if cadence:
 
@@ -629,9 +632,39 @@ class FITImporter(WorkoutImporter):
     @staticmethod
     def _cadence(
         records: list[dict],
+        session: dict,
     ) -> list[dict]:
+        """
+        Returns cadence samples.
 
-        return [
+        FIT running cadence is stored as complete strides
+        per minute. The dashboard presents running cadence
+        as steps per minute, so running values are doubled.
+
+        When individual cadence samples are unavailable,
+        average cadence is derived from total strides and
+        moving time.
+        """
+
+        sport = str(
+            session.get(
+                "sport",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        is_running = (
+            sport == "running"
+        )
+
+        multiplier = (
+            2
+            if is_running
+            else 1
+        )
+
+        samples = [
             {
                 "time": (
                     record["timestamp"].isoformat()
@@ -641,10 +674,70 @@ class FITImporter(WorkoutImporter):
                     )
                     else None
                 ),
-                "value": record["cadence"],
+                "value": (
+                    float(record["cadence"])
+                    * multiplier
+                ),
             }
             for record in records
             if record.get("cadence") is not None
+        ]
+
+        if samples:
+            return samples
+
+        if not is_running:
+            return []
+
+        total_strides = session.get(
+            "total_strides"
+        )
+
+        duration_seconds = session.get(
+            "total_timer_time",
+            session.get(
+                "total_elapsed_time"
+            ),
+        )
+
+        if (
+            total_strides is None
+            or duration_seconds is None
+        ):
+            return []
+
+        try:
+
+            total_strides = float(
+                total_strides
+            )
+
+            duration_seconds = float(
+                duration_seconds
+            )
+
+        except (TypeError, ValueError):
+
+            return []
+
+        if (
+            total_strides < 0
+            or duration_seconds <= 0
+        ):
+            return []
+
+        steps_per_minute = (
+            total_strides
+            * 2
+            / duration_seconds
+            * 60
+        )
+
+        return [
+            {
+                "time": None,
+                "value": steps_per_minute,
+            },
         ]
 
     # ======================================================
