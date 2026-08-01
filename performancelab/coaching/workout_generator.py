@@ -1083,8 +1083,13 @@ class WorkoutGenerator:
 
         normalized_title = template.title.lower()
 
+        cool_down_extension = 0
+
         if "threshold" in normalized_title:
-            main_steps = cls._threshold_steps(
+            (
+                main_steps,
+                cool_down_extension,
+            ) = cls._threshold_steps(
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
@@ -1115,7 +1120,10 @@ class WorkoutGenerator:
             )
 
         else:
-            main_steps = cls._threshold_steps(
+            (
+                main_steps,
+                cool_down_extension,
+            ) = cls._threshold_steps(
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
@@ -1124,7 +1132,10 @@ class WorkoutGenerator:
         return (
             f"Warm up {warm_up_minutes} min",
             *main_steps,
-            f"Cool down {cool_down_minutes} min",
+            (
+                f"Cool down "
+                f"{cool_down_minutes + cool_down_extension} min"
+            ),
         )
 
     # ======================================================
@@ -1136,10 +1147,10 @@ class WorkoutGenerator:
         available_minutes: int,
         sport: str | None,
         coach_context: CoachContext,
-    ) -> tuple[str, ...]:
+    ) -> tuple[tuple[str, ...], int]:
         """
-        Builds threshold repetitions whose prescribed
-        duration matches the available session time.
+        Builds threshold repetitions and returns any unused
+        minutes so they can extend the cool-down.
         """
 
         repetitions = 3
@@ -1161,7 +1172,7 @@ class WorkoutGenerator:
             * (repetitions - 1)
         )
 
-        easy_minutes = max(
+        unused_minutes = max(
             0,
             available_minutes
             - prescribed_minutes,
@@ -1172,7 +1183,7 @@ class WorkoutGenerator:
             coach_context=coach_context,
         )
 
-        steps = [
+        steps = (
             (
                 f"{repetitions}×{work_minutes} min "
                 f"at threshold ({threshold_target})"
@@ -1181,23 +1192,9 @@ class WorkoutGenerator:
                 f"Recover {recovery_minutes} min easy "
                 "between repetitions"
             ),
-        ]
+        )
 
-        if easy_minutes > 0:
-
-            easy_label = cls._sport_label(
-                sport,
-                running="Easy aerobic run",
-                cycling="Easy aerobic ride",
-                swimming="Easy aerobic swim",
-                fallback="Easy aerobic training",
-            )
-
-            steps.append(
-                f"{easy_label} {easy_minutes} min"
-            )
-
-        return tuple(steps)
+        return steps, unused_minutes
 
     # ======================================================
 

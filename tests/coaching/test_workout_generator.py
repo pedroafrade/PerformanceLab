@@ -737,8 +737,7 @@ def test_threshold_workout_structure_matches_duration():
             "Recover 2 min easy "
             "between repetitions"
         ),
-        "Easy aerobic run 2 min",
-        "Cool down 10 min",
+        "Cool down 12 min",
     )
 
 def test_builds_mountainous_hill_structure():
