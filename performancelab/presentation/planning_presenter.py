@@ -278,6 +278,11 @@ class PlanningPresenter:
                         if workout is not None
                         else None
                     ),
+                    prescription_summary=(
+                        workout.prescription_summary
+                        if workout is not None
+                        else None
+                    ),
                     intensity=(
                         workout.intensity
                         if workout is not None

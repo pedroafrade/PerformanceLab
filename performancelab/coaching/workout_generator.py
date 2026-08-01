@@ -334,6 +334,12 @@ class WorkoutGenerator:
                 ),
             )
         )
+        prescription_summary = (
+            self._prescription_summary(
+                template=template,
+                structure=structure,
+            )
+        )
 
         return PlannedWorkout(
             scheduled_at=self._scheduled_at(
@@ -355,6 +361,9 @@ class WorkoutGenerator:
                 planned_elevation_gain
             ),
             description=template.description,
+            prescription_summary=(
+                prescription_summary
+            ),
             intensity=template.intensity,
             objective=template.objective,
             structure=structure,
@@ -372,6 +381,51 @@ class WorkoutGenerator:
         )
 
     # ======================================================
+    @staticmethod
+    def _prescription_summary(
+        *,
+        template: WorkoutTemplate,
+        structure: tuple[str, ...],
+    ) -> str | None:
+        """
+        Returns the essential workout prescription.
+
+        The summary is prepared by the domain so that
+        presentation components do not need to interpret
+        workout titles or structures.
+        """
+
+        normalized_title = (
+            template.title.strip().lower()
+        )
+
+        if "hill" not in normalized_title:
+            return None
+
+        main_step = next(
+            (
+                step
+                for step in structure
+                if (
+                    "uphill" in step.lower()
+                    and not step.lower().startswith(
+                        "recover"
+                    )
+                )
+            ),
+            None,
+        )
+
+        if main_step is None:
+            return None
+
+        return main_step.replace(
+            "×1 min uphill",
+            "×60 sec uphill",
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _planned_long_distance(
         *,

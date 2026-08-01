@@ -115,6 +115,7 @@ class WeeklyPlanDayData:
     duration: timedelta | None
     distance: float | None
     elevation_gain: float | None = None
+    prescription_summary: str | None = None
     intensity: str | None = None
     structure: Sequence[str] = ()
 

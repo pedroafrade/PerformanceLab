@@ -903,6 +903,32 @@ def test_hill_workout_structure_matches_duration():
         "Cool down 15 min",
     )
 
+def test_hill_workout_has_prescription_summary():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=70,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            11,
+        ),
+        template=HILLS_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(),
+        strategy_plan=make_strategy_plan(
+            elevation_demand="rolling",
+        ),
+    )
+
+    assert (
+        workout.prescription_summary
+        == "10×60 sec uphill"
+    )
+
 def test_builds_mountainous_long_run_structure():
 
     structure = WorkoutGenerator._long_structure(

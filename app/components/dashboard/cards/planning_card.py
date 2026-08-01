@@ -109,6 +109,15 @@ def _day_details(day) -> str:
     ):
         return f"Feito: {actual_title}"
 
+    prescription_summary = getattr(
+        day,
+        "prescription_summary",
+        None,
+    )
+
+    if prescription_summary:
+        return prescription_summary
+
     details = []
 
     distance = _format_distance(

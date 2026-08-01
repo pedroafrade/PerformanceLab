@@ -24,5 +24,29 @@ def test_long_run_displays_distance_and_elevation():
 
     assert (
         _day_details(day)
-        == "12 km · 450 m D+"
+        == "12 km · 450 D+"
+    )
+
+def test_uses_workout_prescription_summary():
+
+    day = SimpleNamespace(
+        completed=False,
+        completed_title=None,
+        completed_sport=None,
+        title="Hill Run",
+        sport="Trail Running",
+        prescription_summary=(
+            "10×60 sec uphill"
+        ),
+        distance=None,
+        elevation_gain=None,
+        duration=timedelta(
+            minutes=60
+        ),
+        intensity="Hard",
+    )
+
+    assert (
+        _day_details(day)
+        == "10×60 sec uphill"
     )
