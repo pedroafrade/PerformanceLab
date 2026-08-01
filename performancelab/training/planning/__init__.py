@@ -9,6 +9,12 @@ from .training_plan import TrainingPlan
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
 from .workout_collection import WorkoutCollection
+from .workout_outcome import (
+    WorkoutOutcome,
+    WorkoutOutcomeStatus,
+    assess_workout_outcome,
+)
+
 
 __all__ = [
     "PlannedWorkout",
@@ -16,4 +22,7 @@ __all__ = [
     "WeeklyPlan",
     "WeeklyPlanBuilder",
     "WorkoutCollection",
+    "WorkoutOutcome",
+    "WorkoutOutcomeStatus",
+    "assess_workout_outcome",
 ]
