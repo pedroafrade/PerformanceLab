@@ -6,7 +6,7 @@ Tests for one-time training-plan reconciliation.
 
 from datetime import date, datetime, timedelta
 
-from performancelab import History
+from performancelab import History, Workout
 from performancelab.analysis.training_state import (
     TrainingState,
 )
@@ -336,4 +336,72 @@ def test_closed_day_reconciliation_keeps_today_open():
         == [
             today_workout,
         ]
+    )
+def test_reconciliation_records_closed_workout_identity():
+
+    history = History()
+
+    completed = Workout(
+        workout_id="completed-workout",
+    )
+
+    completed.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+
+    completed.info.sport = "Running"
+
+    completed.info.duration = timedelta(
+        minutes=50,
+    )
+
+    completed.info.distance = 10.0
+
+    future = Workout(
+        workout_id="future-workout",
+    )
+
+    future.info.date = datetime(
+        2026,
+        8,
+        6,
+        9,
+        0,
+    )
+
+    future.info.sport = "Running"
+
+    future.info.duration = timedelta(
+        minutes=60,
+    )
+
+    future.info.distance = 10.0
+
+    history.add(completed)
+    history.add(future)
+
+    reconciled = (
+        TrainingPlanReconciler().reconcile(
+            plan=make_plan(),
+            history=history,
+            training_state=(
+                make_training_state()
+            ),
+            through_day=date(
+                2026,
+                8,
+                4,
+            ),
+        )
+    )
+
+    assert (
+        reconciled.reconciled_workout_ids
+        == (
+            "completed-workout",
+        )
     )

@@ -103,6 +103,58 @@ class TrainingPlanReconciler:
             through_day
         )
 
+        reconciled_workout_ids = list(
+            adapted.reconciled_workout_ids
+        )
+
+        known_workout_ids = set(
+            reconciled_workout_ids
+        )
+
+        for workout in history:
+
+            workout_day = self._workout_day(
+                workout
+            )
+
+            if workout_day is None:
+                continue
+
+            if workout_day > through_day:
+                continue
+
+            if (
+                adapted.start_date is not None
+                and workout_day
+                < adapted.start_date
+            ):
+                continue
+
+            if (
+                adapted.end_date is not None
+                and workout_day
+                > adapted.end_date
+            ):
+                continue
+
+            if (
+                workout.workout_id
+                in known_workout_ids
+            ):
+                continue
+
+            reconciled_workout_ids.append(
+                workout.workout_id
+            )
+
+            known_workout_ids.add(
+                workout.workout_id
+            )
+
+        adapted.reconciled_workout_ids = tuple(
+            reconciled_workout_ids
+        )
+
         return adapted
 
     # ======================================================
@@ -152,6 +204,34 @@ class TrainingPlanReconciler:
 
     # ======================================================
     
+    @staticmethod
+    def _workout_day(
+        workout,
+    ) -> date | None:
+        """
+        Returns the workout calendar day when available.
+        """
+
+        workout_day = workout.date
+
+        if isinstance(
+            workout_day,
+            datetime,
+        ):
+            workout_day = (
+                workout_day.date()
+            )
+
+        if not isinstance(
+            workout_day,
+            date,
+        ):
+            return None
+
+        return workout_day
+
+    # ======================================================
+
     @staticmethod
     def _validate_inputs(
         *,
