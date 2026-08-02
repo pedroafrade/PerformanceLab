@@ -35,7 +35,7 @@ Não significa apenas disponibilizar publicamente a aplicação Streamlit de des
 
 Estabelecer uma fonte de verdade coerente antes de novas alterações estruturais ou visuais.
 
-### Trabalho
+### Trabalho (Fase concluída)
 
 1. Adicionar a auditoria do estado atual.
 2. Adicionar este roadmap.
@@ -63,7 +63,7 @@ Estabelecer uma fonte de verdade coerente antes de novas alterações estruturai
 
 Garantir que métricas e adaptações publicadas não são enganadoras ou incompletas.
 
-### Trabalho
+### Trabalho (Fase concluída)
 
 1. Inventariar todas as intensidades geradas pelo Planner.
 2. Garantir tradução de carga para todas as intensidades planeadas.
