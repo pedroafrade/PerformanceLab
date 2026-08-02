@@ -586,3 +586,93 @@ def test_late_workout_is_reconciled_once():
         repeated.workouts[1].duration
         == timedelta(minutes=63)
     )
+def test_late_workout_is_assessed_with_multiple_same_day():
+
+    plan = make_plan()
+
+    plan.reconciled_through = date(
+        2026,
+        8,
+        4,
+    )
+
+    plan.reconciled_workout_ids = (
+        "existing-workout",
+    )
+
+    history = History()
+
+    late_workout = Workout(
+        workout_id="late-workout",
+    )
+
+    late_workout.info.date = datetime(
+        2026,
+        8,
+        4,
+        7,
+        0,
+    )
+
+    late_workout.info.sport = "Cycling"
+
+    late_workout.info.duration = timedelta(
+        minutes=30,
+    )
+
+    late_workout.info.distance = 15.0
+
+    late_workout.feedback.rpe = 4
+
+    existing_workout = Workout(
+        workout_id="existing-workout",
+    )
+
+    existing_workout.info.date = datetime(
+        2026,
+        8,
+        4,
+        18,
+        0,
+    )
+
+    existing_workout.info.sport = "Running"
+
+    existing_workout.info.duration = timedelta(
+        minutes=50,
+    )
+
+    existing_workout.info.distance = 10.0
+
+    existing_workout.feedback.rpe = 7
+
+    history.add(late_workout)
+    history.add(existing_workout)
+
+    reconciled = (
+        TrainingPlanReconciler().reconcile(
+            plan=plan,
+            history=history,
+            training_state=(
+                make_training_state()
+            ),
+            through_day=date(
+                2026,
+                8,
+                4,
+            ),
+        )
+    )
+
+    assert (
+        reconciled.reconciled_workout_ids
+        == (
+            "existing-workout",
+            "late-workout",
+        )
+    )
+
+    assert (
+        reconciled.workouts[1].duration
+        == timedelta(minutes=63)
+    )

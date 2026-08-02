@@ -19,6 +19,9 @@ from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
 )
+from .workout_outcome import (
+    assess_workout_outcome,
+)
 
 
 class TrainingPlanReconciler:
@@ -121,7 +124,7 @@ class TrainingPlanReconciler:
             + timedelta(days=1)
         )
 
-        outcomes = tuple(
+        period_outcomes = tuple(
             outcome
             for outcome in plan.assess_outcomes(
                 history=history,
@@ -136,17 +139,29 @@ class TrainingPlanReconciler:
                     previous_boundary is None
                     or outcome.planned_workout.day
                     > previous_boundary
-                    or (
-                        outcome.completed_workout
-                        is not None
-                        and (
-                            outcome.completed_workout
-                            .workout_id
-                            in new_workout_ids
-                        )
-                    )
                 )
             )
+        )
+
+        late_outcomes = (
+            self._assess_late_workouts(
+                plan=plan,
+                history=history,
+                new_workout_ids=(
+                    new_workout_ids
+                ),
+                previous_boundary=(
+                    previous_boundary
+                ),
+                reference_day=(
+                    assessment_reference_day
+                ),
+            )
+        )
+
+        outcomes = (
+            period_outcomes
+            + late_outcomes
         )
 
         adaptation_reference_day = (
@@ -243,6 +258,82 @@ class TrainingPlanReconciler:
         )
 
     # ======================================================
+    @classmethod
+    def _assess_late_workouts(
+        cls,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        new_workout_ids: tuple[str, ...],
+        previous_boundary: date | None,
+        reference_day: date,
+    ):
+        """
+        Assesses each new workout imported into an already
+        reconciled calendar day.
+        """
+
+        if (
+            previous_boundary is None
+            or not new_workout_ids
+        ):
+            return ()
+
+        new_workout_id_set = set(
+            new_workout_ids
+        )
+
+        planned_by_day = {
+            workout.day: workout
+            for workout in plan.workouts
+        }
+
+        outcomes = []
+
+        for workout in history:
+
+            if (
+                workout.workout_id
+                not in new_workout_id_set
+            ):
+                continue
+
+            workout_day = cls._workout_day(
+                workout
+            )
+
+            if (
+                workout_day is None
+                or workout_day
+                > previous_boundary
+            ):
+                continue
+
+            planned_workout = (
+                planned_by_day.get(
+                    workout_day
+                )
+            )
+
+            if planned_workout is None:
+                continue
+
+            outcomes.append(
+                assess_workout_outcome(
+                    planned_workout=(
+                        planned_workout
+                    ),
+                    completed_workout=workout,
+                    reference_day=(
+                        reference_day
+                    ),
+                )
+            )
+
+        return tuple(outcomes)
+
+    # ======================================================
+    
     @classmethod
     def _unreconciled_workout_ids(
         cls,
