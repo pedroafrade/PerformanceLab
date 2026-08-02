@@ -747,3 +747,39 @@ def test_unknown_substitute_load_preserves_plan():
         adapted.workouts
         == plan.workouts
     )
+
+def test_small_underload_uses_proportional_increase():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=174.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state()
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(
+            minutes=60,
+            seconds=30,
+        )
+    )

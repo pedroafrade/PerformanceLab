@@ -12,7 +12,9 @@ from datetime import date, datetime
 from performancelab.analysis.training_state import (
     TrainingState,
 )
-
+from performancelab.training.load import (
+    planned_workout_load,
+)
 from .planned_workout import PlannedWorkout
 from .training_plan import TrainingPlan
 from .workout_outcome import (
@@ -22,7 +24,8 @@ from .workout_outcome import (
 
 
 OVERLOAD_DURATION_REDUCTION = 0.20
-UNDERLOAD_DURATION_INCREASE = 0.05
+MAX_UNDERLOAD_DURATION_INCREASE = 0.05
+UNDERLOAD_RECOVERY_FRACTION = 0.25
 
 
 class TrainingPlanAdapter:
@@ -105,6 +108,12 @@ class TrainingPlanAdapter:
             underload_outcomes
         )
 
+        missing_load = (
+            self._missing_load(
+                underload_outcomes
+            )
+        )
+
         if (
             has_underload
             and training_state.can_absorb_more_volume
@@ -113,6 +122,7 @@ class TrainingPlanAdapter:
                 self._increase_next_easy_workout(
                     workouts=workouts,
                     reference_day=reference_day,
+                    missing_load=missing_load,
                     preferred_sport_families=tuple(
                         dict.fromkeys(
                             self._sport_family(
@@ -209,12 +219,61 @@ class TrainingPlanAdapter:
         return updated
 
     # ======================================================
+    @staticmethod
+    def _missing_load(
+        outcomes: tuple[
+            WorkoutOutcome,
+            ...,
+        ],
+    ) -> float | None:
+        """
+        Returns total known missing load.
 
+        None means at least one missed workout does not
+        have enough planned-load information.
+        """
+
+        missing_load = 0.0
+
+        for outcome in outcomes:
+
+            if (
+                outcome.status
+                is WorkoutOutcomeStatus.MISSED
+            ):
+
+                if outcome.planned_load is None:
+                    return None
+
+                missing_load += max(
+                    0.0,
+                    outcome.planned_load,
+                )
+
+                continue
+
+            load_difference = (
+                outcome.load_difference
+            )
+
+            if (
+                load_difference is not None
+                and load_difference < 0
+            ):
+                missing_load += (
+                    -load_difference
+                )
+
+        return missing_load
+
+    # ======================================================
+    
     @staticmethod
     def _increase_next_easy_workout(
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
+        missing_load: float | None,
         preferred_sport_families: tuple[
             str,
             ...,
@@ -275,14 +334,43 @@ class TrainingPlanAdapter:
         candidate = updated[
             candidate_index
         ]
+        increase_fraction = (
+            MAX_UNDERLOAD_DURATION_INCREASE
+        )
 
+        candidate_load = (
+            planned_workout_load(
+                candidate
+            )
+        )
+
+        if (
+            missing_load is not None
+            and candidate_load is not None
+            and candidate_load > 0
+        ):
+
+            recoverable_load = (
+                missing_load
+                * UNDERLOAD_RECOVERY_FRACTION
+            )
+
+            increase_fraction = min(
+                MAX_UNDERLOAD_DURATION_INCREASE,
+                recoverable_load
+                / candidate_load,
+            )
+
+        if increase_fraction <= 0:
+            return updated
+        
         updated[candidate_index] = replace(
             candidate,
             duration=(
                 candidate.duration
                 * (
                     1.0
-                    + UNDERLOAD_DURATION_INCREASE
+                    + increase_fraction
                 )
             ),
         )
