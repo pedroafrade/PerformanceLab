@@ -793,6 +793,53 @@ O sistema não deve incentivar ingestão forçada de água nem estrear estratég
 - “Este valor de VO₂max foi medido”, quando foi estimado.
 - “Está pronto para intensidade”, sem contexto ou incerteza.
 
+### 18.3. Precisão de apresentação
+
+A precisão visual deve corresponder à precisão real dos dados e do modelo. Casas decimais adicionais não tornam uma estimativa mais exata.
+
+A primeira interface pública deve utilizar o seguinte contrato:
+
+| Métrica | Apresentação |
+|---|---|
+| Número de sessões, dias e modalidades | número inteiro |
+| Duração | horas e minutos, sem segundos quando estes não forem relevantes |
+| Distância | uma casa decimal em quilómetros |
+| Desnível | metros inteiros |
+| Ritmo | minutos e segundos por quilómetro |
+| Frequência cardíaca | batimentos por minuto inteiros |
+| Potência | watts inteiros |
+| Cadência | valor inteiro por minuto |
+| RPE declarado | no máximo uma casa decimal |
+| RPE estimado | no máximo uma casa decimal e identificação como estimativa |
+| Carga de uma sessão | unidades de carga inteiras ou uma casa decimal quando necessária |
+| CTL | uma casa decimal |
+| ATL | uma casa decimal |
+| TSB | uma casa decimal e sinal explícito |
+| Recovery Score | número inteiro numa escala de 0 a 100 |
+| Carga aguda e crónica do dashboard | uma casa decimal |
+| Ramp rate | uma casa decimal e símbolo `%` |
+| Training Load Score | número inteiro numa escala de 0 a 100 |
+| ACWR | duas casas decimais |
+| Monotonia | duas casas decimais |
+| Strain | número inteiro ou uma casa decimal |
+| VO₂max estimado | uma casa decimal e unidade `ml/kg/min` |
+| FTP estimado | watts inteiros e identificação como estimativa |
+| Percentagem de progresso | número inteiro e símbolo `%` |
+
+Regras adicionais:
+
+- valores desconhecidos devem ser apresentados como indisponíveis e não como zero;
+- zeros reais devem permanecer distinguíveis de dados ausentes;
+- uma escala de 0 a 100 não deve ser apresentada como percentagem sem significado percentual;
+- estimativas devem ser identificadas como estimativas;
+- unidades devem aparecer no valor ou no rótulo;
+- períodos temporais devem aparecer no cartão, título, rótulo ou explicação;
+- o domínio conserva a precisão necessária aos cálculos;
+- o arredondamento pertence à camada de apresentação;
+- valores arredondados nunca devem voltar a entrar nos cálculos do domínio.
+
+Quando o espaço disponível for reduzido, deve reduzir-se o texto secundário e não remover a unidade, o período ou a indicação de estimativa.
+
 ---
 
 ## 19. Classificação das regras atuais
