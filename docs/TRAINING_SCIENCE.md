@@ -302,6 +302,32 @@ Resultados dependem de:
 - inclusão correta dos dias de descanso;
 - consistência da unidade de carga.
 
+**Unidade e escala atuais**
+
+A carga diária utiliza unidades arbitrárias de session-RPE:
+
+```text
+unidades de carga = duração em minutos × RPE efetivo
+```
+
+Como CTL e ATL são médias móveis exponenciais desta carga diária, ambos mantêm uma unidade equivalente a **unidades de session-RPE por dia**:
+
+- CTL representa carga diária habitual suavizada;
+- ATL representa carga diária recente suavizada;
+- TSB é a diferença entre essas duas médias e conserva a mesma unidade.
+
+Estes valores:
+
+- não são percentagens;
+- não estão limitados ao intervalo de 0 a 100;
+- não possuem um máximo fisiológico universal;
+- não devem ser comparados diretamente entre atletas sem considerar histórico, modalidade e qualidade dos dados;
+- devem ser interpretados principalmente pela evolução do próprio atleta.
+
+Um CTL de 50 não significa “50% de fitness”. Um ATL de 70 não significa “70% de fadiga”. Um TSB de `+10` ou `-20` descreve apenas a diferença calculada entre carga habitual e carga recente segundo o modelo atual.
+
+O código devolve atualmente `0.0` para CTL, ATL e TSB quando a série está vazia. Este comportamento é uma limitação conhecida: nesse contexto, zero pode significar ausência de dados e não uma medição real de carga nula. A apresentação pública deverá distinguir explicitamente estes estados.
+
 ### 7.2. CTL
 
 O Chronic Training Load atual é uma média móvel exponencial da carga diária com constante temporal de 42 dias.
