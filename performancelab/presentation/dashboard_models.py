@@ -41,9 +41,13 @@ class LatestActivityCardData:
     elevation_gain: float | None
     average_heart_rate: float | None
     maximum_heart_rate: float | None
+    average_speed: float | None
     average_power: float | None
+    maximum_power: float | None
     active_calories: float | None
     average_cadence: float | None
+    maximum_cadence: float | None
+    is_cycling: bool
     rpe: float | None
 
 

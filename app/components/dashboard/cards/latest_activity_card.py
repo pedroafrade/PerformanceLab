@@ -74,6 +74,17 @@ def _format_pace(
 
     return f"{minutes}:{seconds:02d}/km"
 
+def _format_speed(
+    value: float | None,
+) -> str:
+    """
+    Format average cycling speed.
+    """
+
+    if value is None:
+        return "—"
+
+    return f"{value:.1f} km/h"
 
 def _format_number(
     value: float | None,
@@ -87,6 +98,35 @@ def _format_number(
         return "—"
 
     return f"{value:.0f} {unit}"
+
+def _format_average_maximum(
+    average: float | None,
+    maximum: float | None,
+    unit: str,
+) -> str:
+    """
+    Format average and maximum sensor values.
+    """
+
+    if average is None and maximum is None:
+        return "—"
+
+    average_text = (
+        f"{average:.0f}"
+        if average is not None
+        else "—"
+    )
+
+    maximum_text = (
+        f"{maximum:.0f}"
+        if maximum is not None
+        else "—"
+    )
+
+    return (
+        f"{average_text} / "
+        f"{maximum_text} {unit}"
+    )
 
 def _format_rpe(
     value: float | None,
@@ -194,6 +234,19 @@ def latest_activity_card(
         if data.elevation_gain is not None
         else "D+—"
     )
+    if data.is_cycling:
+        pace_label = "Avg speed"
+        pace_value = _format_speed(
+            data.average_speed
+        )
+        cadence_unit = "rpm"
+    else:
+        pace_label = "Pace"
+        pace_value = _format_pace(
+            data.distance,
+            data.duration,
+        )
+        cadence_unit = "spm"
 
     parts = [
         "<div style='",
@@ -270,11 +323,8 @@ def latest_activity_card(
             ),
         ),
         _detail_row(
-            "Pace",
-            _format_pace(
-                data.distance,
-                data.duration,
-            ),
+            pace_label,
+            pace_value,
         ),
         _detail_row(
             "HR (avg/max)",
@@ -291,17 +341,19 @@ def latest_activity_card(
             ),
         ),
         _detail_row(
-            "Power (avg)",
-            _format_number(
+            "Power (avg/max)",
+            _format_average_maximum(
                 data.average_power,
+                data.maximum_power,
                 "W",
             ),
         ),
         _detail_row(
-            "Cadence (avg)",
-            _format_number(
+            "Cadence (avg/max)",
+            _format_average_maximum(
                 data.average_cadence,
-                "spm",
+                data.maximum_cadence,
+                cadence_unit,
             ),
         ),
         _detail_row(

@@ -376,9 +376,13 @@ class DashboardData:
                 elevation_gain=None,
                 average_heart_rate=None,
                 maximum_heart_rate=None,
+                average_speed=None,
                 average_power=None,
+                maximum_power=None,
                 active_calories=None,
                 average_cadence=None,
+                maximum_cadence=None,
+                is_cycling=False,
                 rpe=None,
             )
 
@@ -456,14 +460,43 @@ class DashboardData:
             power_summary["average"]
         )
 
+        maximum_power = (
+            power_summary["maximum"]
+        )
+
         average_cadence = (
             cadence_summary["average"]
+        )
+
+        maximum_cadence = (
+            cadence_summary["maximum"]
         )
 
         active_calories = (
             calories_summary["average"]
         )
+        is_cycling = (
+            self._sport_group(
+                sport
+            )
+            == "Cycling"
+        )
 
+        average_speed = None
+
+        if (
+            is_cycling
+            and distance is not None
+            and duration is not None
+            and duration.total_seconds() > 0
+        ):
+            average_speed = (
+                float(distance)
+                / (
+                    duration.total_seconds()
+                    / 3600
+                )
+            )
         rpe = self._nested_value(
             workout,
             ("feedback", "effective_rpe"),
@@ -503,9 +536,19 @@ class DashboardData:
                 if maximum_heart_rate is not None
                 else None
             ),
+            average_speed=(
+                float(average_speed)
+                if average_speed is not None
+                else None
+            ),
             average_power=(
                 float(average_power)
                 if average_power is not None
+                else None
+            ),
+            maximum_power=(
+                float(maximum_power)
+                if maximum_power is not None
                 else None
             ),
             active_calories=(
@@ -518,6 +561,12 @@ class DashboardData:
                 if average_cadence is not None
                 else None
             ),
+            maximum_cadence=(
+                float(maximum_cadence)
+                if maximum_cadence is not None
+                else None
+            ),
+            is_cycling=is_cycling,
             rpe=(
                 float(rpe)
                 if rpe is not None

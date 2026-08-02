@@ -462,6 +462,61 @@ def test_latest_activity_uses_sensor_metrics():
     assert latest.average_heart_rate == 170
     assert latest.maximum_heart_rate == 190
     assert latest.average_power == 210
+    assert latest.maximum_power == 220
     assert latest.average_cadence == 170
+    assert latest.maximum_cadence == 172
+    assert latest.is_cycling is False
+    assert latest.average_speed is None
     assert latest.active_calories == 850
     assert latest.rpe == 7
+
+def test_cycling_activity_exposes_average_speed():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = Workout()
+
+    workout.info.sport = "Cycling"
+    workout.info.date = date(
+        2026,
+        8,
+        2,
+    )
+    workout.info.duration = timedelta(
+        hours=2,
+        minutes=30,
+    )
+    workout.info.distance = 50.0
+
+    workout.sensors.add(
+        "power",
+        [
+            {"value": 150},
+            {"value": 300},
+        ],
+    )
+
+    workout.sensors.add(
+        "cadence",
+        [
+            {"value": 60},
+            {"value": 95},
+        ],
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    latest = DashboardData(
+        athlete
+    ).latest_activity
+
+    assert latest.is_cycling is True
+    assert latest.average_speed == 20.0
+    assert latest.average_power == 225
+    assert latest.maximum_power == 300
+    assert latest.average_cadence == 77.5
+    assert latest.maximum_cadence == 95
