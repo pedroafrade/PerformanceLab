@@ -5,17 +5,24 @@ Training Load
 
 Utilities for calculating training load.
 """
+from types import MappingProxyType
+from typing import Mapping
 
-PLANNED_INTENSITY_RPE = {
-    "none": 0.0,
-    "very easy": 2.0,
-    "easy": 3.0,
-    "easy to moderate": 4.0,
-    "moderately hard": 6.0,
-    "hard": 7.0,
-    "very hard": 9.0,
-    "race effort": 8.0,
-}
+PLANNED_INTENSITY_RPE: Mapping[
+    str,
+    float,
+] = MappingProxyType(
+    {
+        "none": 0.0,
+        "very easy": 2.0,
+        "easy": 3.0,
+        "easy to moderate": 4.0,
+        "moderately hard": 6.0,
+        "hard": 7.0,
+        "race effort": 8.0,
+        "very hard": 9.0,
+    }
+)
 ELEVATION_GAIN_BLOCK_METRES = 100.0
 ELEVATION_LOAD_PER_BLOCK = 0.05
 MAX_ELEVATION_LOAD_BONUS = 0.30

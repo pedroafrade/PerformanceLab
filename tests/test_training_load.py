@@ -19,6 +19,7 @@ from performancelab.training.planning import (
     PlannedWorkout,
 )
 from performancelab.training.load import (
+    PLANNED_INTENSITY_RPE,
     workout_load,
     weekly_load,
     monthly_load,
@@ -542,3 +543,12 @@ def test_every_planner_template_has_known_rpe():
     }
 
     assert unsupported_templates == set()
+
+def test_planned_intensity_rpe_mapping_is_immutable():
+
+    with pytest.raises(
+        TypeError,
+    ):
+        PLANNED_INTENSITY_RPE[
+            "easy"
+        ] = 10.0
