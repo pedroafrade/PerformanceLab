@@ -37,7 +37,26 @@ def test_add_workout():
 
     assert workout in history
 
+def test_add_workout_notifies_change():
 
+    notifications = []
+
+    history = History(
+        on_change=lambda: (
+            notifications.append(
+                "changed"
+            )
+        ),
+    )
+
+    history.add(
+        Workout()
+    )
+
+    assert notifications == [
+        "changed"
+    ]
+    
 # ======================================================
 # Clear history
 # ======================================================
