@@ -243,7 +243,10 @@ def test_overload_reduces_next_demanding_workout():
 
     assert (
         adapted.workouts[1].duration
-        == timedelta(minutes=40)
+        == timedelta(
+            minutes=43,
+            seconds=45,
+        )
     )
 
 
@@ -577,7 +580,10 @@ def test_substitute_overload_reduces_demanding_session():
 
     assert (
         adapted.workouts[1].duration
-        == timedelta(minutes=40)
+        == timedelta(
+            minutes=43,
+            seconds=45,
+        )
     )
 
 
@@ -782,4 +788,39 @@ def test_small_underload_uses_proportional_increase():
             minutes=60,
             seconds=30,
         )
+    )
+
+def test_overload_reduction_is_capped_at_twenty_percent():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=900.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=40)
     )

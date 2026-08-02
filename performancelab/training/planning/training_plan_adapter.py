@@ -23,7 +23,8 @@ from .workout_outcome import (
 )
 
 
-OVERLOAD_DURATION_REDUCTION = 0.20
+MAX_OVERLOAD_DURATION_REDUCTION = 0.20
+OVERLOAD_RESPONSE_FRACTION = 0.25
 MAX_UNDERLOAD_DURATION_INCREASE = 0.05
 UNDERLOAD_RECOVERY_FRACTION = 0.25
 
@@ -60,27 +61,37 @@ class TrainingPlanAdapter:
             plan.workouts
         )
 
-        has_overload = any(
-            (
-                outcome.status
-                in {
-                    WorkoutOutcomeStatus.MODIFIED,
-                    WorkoutOutcomeStatus.SUBSTITUTE,
-                }
-                and outcome.load_difference is not None
-                and outcome.load_difference > 0
-            )
+        overload_outcomes = tuple(
+            outcome
             for outcome in outcomes
+            if outcome.status
+            in {
+                WorkoutOutcomeStatus.MODIFIED,
+                WorkoutOutcomeStatus.SUBSTITUTE,
+            }
+            and outcome.load_difference
+            is not None
+            and outcome.load_difference
+            > 0
+        )
+
+        overload_reduction = (
+            self._overload_reduction(
+                overload_outcomes
+            )
         )
 
         if (
-            has_overload
+            overload_reduction > 0
             and training_state.should_reduce_volume
         ):
             workouts = (
                 self._reduce_next_demanding_workout(
                     workouts=workouts,
                     reference_day=reference_day,
+                    reduction_fraction=(
+                        overload_reduction
+                    ),
                 )
             )
 
@@ -162,14 +173,69 @@ class TrainingPlanAdapter:
     # ======================================================
 
     @staticmethod
+    def _overload_reduction(
+        outcomes: tuple[
+            WorkoutOutcome,
+            ...,
+        ],
+    ) -> float:
+        planned_load = 0.0
+        excess_load = 0.0
+
+        for outcome in outcomes:
+            if (
+                outcome.planned_load
+                is None
+                or outcome.planned_load
+                <= 0
+            ):
+                continue
+
+            load_difference = (
+                outcome.load_difference
+            )
+
+            if (
+                load_difference is None
+                or load_difference <= 0
+            ):
+                continue
+
+            planned_load += (
+                outcome.planned_load
+            )
+            excess_load += (
+                load_difference
+            )
+
+        if (
+            planned_load <= 0
+            or excess_load <= 0
+        ):
+            return 0.0
+
+        overload_ratio = (
+            excess_load
+            / planned_load
+        )
+
+        return min(
+            MAX_OVERLOAD_DURATION_REDUCTION,
+            overload_ratio
+            * OVERLOAD_RESPONSE_FRACTION,
+        )
+    
+    # ======================================================
+
+    @staticmethod
     def _reduce_next_demanding_workout(
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
+        reduction_fraction: float,
     ) -> list[PlannedWorkout]:
         """
-        Reduces the duration of the next unprotected
-        demanding workout by 20%.
+        Reduce the next demanding workout proportionally to excess load.
         """
 
         updated = list(
@@ -211,7 +277,7 @@ class TrainingPlanAdapter:
                 candidate.duration
                 * (
                     1.0
-                    - OVERLOAD_DURATION_REDUCTION
+                    - reduction_fraction
                 )
             ),
         )
