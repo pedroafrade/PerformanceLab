@@ -787,3 +787,110 @@ def test_existing_ids_bootstrap_signatures_once():
     )
 
     assert repeated is bootstrapped
+def test_revised_workout_is_reconciled_once():
+
+    plan = make_plan()
+
+    plan.reconciled_through = date(
+        2026,
+        8,
+        4,
+    )
+
+    plan.reconciled_workout_ids = (
+        "revised-workout",
+    )
+
+    plan.reconciled_workout_signatures = (
+        (
+            "revised-workout",
+            (
+                "2026-08-04",
+                "running",
+                3000.0,
+                7.0,
+            ),
+        ),
+    )
+
+    history = History()
+
+    revised = Workout(
+        workout_id="revised-workout",
+    )
+
+    revised.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+
+    revised.info.sport = "Running"
+
+    revised.info.duration = timedelta(
+        minutes=50,
+    )
+
+    revised.feedback.rpe = 4
+
+    history.add(revised)
+
+    reconciler = TrainingPlanReconciler()
+
+    reconciled = reconciler.reconcile(
+        plan=plan,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert reconciled is not plan
+
+    assert (
+        reconciled.workouts[1].duration
+        == timedelta(minutes=63)
+    )
+
+    assert (
+        reconciled
+        .reconciled_workout_signatures
+        == (
+            (
+                "revised-workout",
+                (
+                    "2026-08-04",
+                    "running",
+                    3000.0,
+                    4.0,
+                ),
+            ),
+        )
+    )
+
+    repeated = reconciler.reconcile(
+        plan=reconciled,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert repeated is reconciled
+
+    assert (
+        repeated.workouts[1].duration
+        == timedelta(minutes=63)
+    )

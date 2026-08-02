@@ -152,6 +152,23 @@ class TrainingPlanReconciler:
             )
         )
 
+        revised_workout_ids = (
+            self._revised_workout_ids(
+                plan=plan,
+                history=history,
+                through_day=through_day,
+            )
+        )
+
+        workout_ids_to_assess = tuple(
+            dict.fromkeys(
+                (
+                    *new_workout_ids,
+                    *revised_workout_ids,
+                )
+            )
+        )
+
         has_new_period = (
             previous_boundary is None
             or through_day
@@ -160,7 +177,7 @@ class TrainingPlanReconciler:
 
         if (
             not has_new_period
-            and not new_workout_ids
+            and not workout_ids_to_assess
         ):
             return plan
 
@@ -189,11 +206,11 @@ class TrainingPlanReconciler:
         )
 
         late_outcomes = (
-            self._assess_late_workouts(
+            self._assess_closed_workouts(
                 plan=plan,
                 history=history,
-                new_workout_ids=(
-                    new_workout_ids
+                workout_ids=(
+                    workout_ids_to_assess
                 ),
                 previous_boundary=(
                     previous_boundary
@@ -314,28 +331,28 @@ class TrainingPlanReconciler:
 
     # ======================================================
     @classmethod
-    def _assess_late_workouts(
+    def _assess_closed_workouts(
         cls,
         *,
         plan: TrainingPlan,
         history: History,
-        new_workout_ids: tuple[str, ...],
+        workout_ids: tuple[str, ...],
         previous_boundary: date | None,
         reference_day: date,
     ):
         """
-        Assesses each new workout imported into an already
-        reconciled calendar day.
+        Assesses each new or revised workout belonging to
+        an already reconciled calendar day.
         """
 
         if (
             previous_boundary is None
-            or not new_workout_ids
+            or not workout_ids
         ):
             return ()
 
-        new_workout_id_set = set(
-            new_workout_ids
+        workout_id_set = set(
+            workout_ids
         )
 
         planned_by_day = {
@@ -349,7 +366,7 @@ class TrainingPlanReconciler:
 
             if (
                 workout.workout_id
-                not in new_workout_id_set
+                not in workout_id_set
             ):
                 continue
 
@@ -386,6 +403,52 @@ class TrainingPlanReconciler:
             )
 
         return tuple(outcomes)
+
+    # ======================================================
+    @classmethod
+    def _revised_workout_ids(
+        cls,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        through_day: date,
+    ) -> tuple[str, ...]:
+        """
+        Returns processed workouts whose relevant
+        reconciliation state has changed.
+        """
+
+        stored_signatures = dict(
+            plan.reconciled_workout_signatures
+        )
+
+        current_signatures = dict(
+            cls._collect_workout_signatures(
+                plan=plan,
+                history=history,
+                through_day=through_day,
+            )
+        )
+
+        return tuple(
+            workout_id
+            for workout_id
+            in plan.reconciled_workout_ids
+            if (
+                workout_id
+                in stored_signatures
+                and workout_id
+                in current_signatures
+                and (
+                    current_signatures[
+                        workout_id
+                    ]
+                    != stored_signatures[
+                        workout_id
+                    ]
+                )
+            )
+        )
 
     # ======================================================
     
