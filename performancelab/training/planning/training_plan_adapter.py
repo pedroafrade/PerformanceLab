@@ -118,6 +118,9 @@ class TrainingPlanAdapter:
             reconciled_through=(
                 plan.reconciled_through
             ),
+            reconciled_workout_ids=(
+                plan.reconciled_workout_ids
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),

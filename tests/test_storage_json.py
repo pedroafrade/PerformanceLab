@@ -227,7 +227,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 6
+    assert data["version"] == 7
 
     assert "id" in data["athlete"]
 
@@ -934,6 +934,10 @@ def test_training_plan_reconciliation_date_round_trip():
             8,
             5,
         ),
+        reconciled_workout_ids=(
+            "workout-a",
+            "workout-b",
+        ),
     )
 
     data = athlete_to_dict(
@@ -942,7 +946,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 6
+        == 7
     )
 
     assert (
@@ -950,6 +954,16 @@ def test_training_plan_reconciliation_date_round_trip():
             "reconciled_through"
         ]
         == "2026-08-05"
+    )
+
+    assert (
+        data["training_plan"][
+            "reconciled_workout_ids"
+        ]
+        == [
+            "workout-a",
+            "workout-b",
+        ]
     )
 
     loaded = athlete_from_dict(
@@ -965,6 +979,14 @@ def test_training_plan_reconciliation_date_round_trip():
         )
     )
 
+    assert (
+        loaded.training_plan.reconciled_workout_ids
+        == (
+            "workout-a",
+            "workout-b",
+        )
+    )
+
 
 def test_loads_plan_without_reconciliation_date():
 
@@ -975,7 +997,7 @@ def test_loads_plan_without_reconciliation_date():
     )
 
     del data["training_plan"][
-        "reconciled_through"
+        "reconciled_workout_ids"
     ]
 
     loaded = athlete_from_dict(
@@ -985,4 +1007,8 @@ def test_loads_plan_without_reconciliation_date():
     assert (
         loaded.training_plan.reconciled_through
         is None
+    )
+    assert (
+        loaded.training_plan.reconciled_workout_ids
+        == ()
     )

@@ -37,6 +37,8 @@ class TrainingPlan(WorkoutCollection):
 
     reconciled_through: date | None = None
 
+    reconciled_workout_ids: tuple[str, ...] = ()
+
     primary_event_id: str | None = None
 
     competition_event_ids: tuple[str, ...] = ()
@@ -112,6 +114,26 @@ class TrainingPlan(WorkoutCollection):
                 "or None."
             )
 
+        for workout_id in self.reconciled_workout_ids:
+
+            if (
+                not isinstance(workout_id, str)
+                or not workout_id.strip()
+            ):
+                raise ValueError(
+                    "reconciled_workout_ids must contain "
+                    "non-empty strings."
+                )
+
+        if (
+            len(set(self.reconciled_workout_ids))
+            != len(self.reconciled_workout_ids)
+        ):
+            raise ValueError(
+                "reconciled_workout_ids cannot contain "
+                "duplicates."
+            )
+        
         for event_id in self.competition_event_ids:
 
             if (

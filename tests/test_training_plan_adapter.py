@@ -51,6 +51,9 @@ def make_plan() -> TrainingPlan:
             8,
             31,
         ),
+        reconciled_workout_ids=(
+            "completed-workout",
+        ),
         workouts=[
             PlannedWorkout(
                 scheduled_at=datetime(
@@ -148,6 +151,10 @@ def test_equivalent_outcome_preserves_plan():
     assert adapted.plan_id == plan.plan_id
     assert adapted.start_date == plan.start_date
     assert adapted.end_date == plan.end_date
+    assert (
+        adapted.reconciled_workout_ids
+        == plan.reconciled_workout_ids
+    )
     assert adapted.workouts == plan.workouts
 
 
