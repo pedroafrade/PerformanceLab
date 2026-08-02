@@ -1,9 +1,18 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 from gzip import compress
 
 from types import SimpleNamespace
 
 import app.components.import_panel as import_panel
+
+from performancelab import History, Workout
+from performancelab.analysis.training_state import (
+    TrainingState,
+)
+from performancelab.training.planning import (
+    PlannedWorkout,
+    TrainingPlan,
+)
 
 
 def test_import_panel_uses_athlete_profile_for_rpe(
@@ -321,4 +330,143 @@ def test_reconciliation_updates_athlete_plan(
     assert (
         athlete.training_plan
         is adapted_plan
+    )
+
+def test_imported_activity_adapts_athlete_plan():
+
+    plan = TrainingPlan(
+        plan_id="import-flow-plan",
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            8,
+            31,
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    4,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    6,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Tempo Run",
+                duration=timedelta(
+                    minutes=50,
+                ),
+                intensity="Tempo",
+            ),
+        ],
+    )
+
+    training_state = TrainingState(
+        ctl=40.0,
+        atl=65.0,
+        tsb=-25.0,
+        acute_chronic_ratio=1.4,
+        monotony=1.0,
+        strain=650.0,
+        consistency=0.8,
+        weekly_frequency=4.0,
+        days_since_last_workout=0,
+        recent_training_load=500.0,
+    )
+
+    athlete = SimpleNamespace(
+        training_plan=plan,
+        history=History(),
+        analytics=SimpleNamespace(
+            training_state=training_state,
+        ),
+    )
+
+    completed = Workout(
+        workout_id="imported-overload",
+    )
+
+    completed.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+
+    completed.info.sport = "Running"
+
+    completed.info.duration = timedelta(
+        minutes=90,
+    )
+
+    completed.feedback.rpe = 4
+
+    added = (
+        import_panel._store_imported_workout(
+            completed,
+            athlete,
+        )
+    )
+
+    import_panel._reconcile_training_plan(
+        athlete,
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert added is True
+
+    assert (
+        len(athlete.history)
+        == 1
+    )
+
+    assert (
+        athlete.training_plan.workouts[0].duration
+        == timedelta(minutes=60)
+    )
+
+    assert (
+        athlete.training_plan.workouts[1].duration
+        == timedelta(minutes=40)
+    )
+
+    assert (
+        athlete.training_plan.reconciled_through
+        == date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        athlete.training_plan
+        .reconciled_workout_ids
+        == (
+            "imported-overload",
+        )
     )
