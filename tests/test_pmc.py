@@ -80,3 +80,60 @@ def test_repr():
     )
 
     assert "PerformanceManagementChart" in repr(pmc)
+
+# ======================================================
+
+def test_empty_chart_has_no_load_data():
+
+    pmc = PerformanceManagementChart()
+
+    assert pmc.history_days == 0
+    assert pmc.has_data is False
+    assert (
+        pmc.has_complete_atl_window
+        is False
+    )
+    assert (
+        pmc.has_complete_ctl_window
+        is False
+    )
+
+
+# ======================================================
+
+def test_seven_days_complete_only_atl_window():
+
+    pmc = PerformanceManagementChart(
+        [0.0] * 7
+    )
+
+    assert pmc.history_days == 7
+    assert pmc.has_data is True
+    assert (
+        pmc.has_complete_atl_window
+        is True
+    )
+    assert (
+        pmc.has_complete_ctl_window
+        is False
+    )
+
+
+# ======================================================
+
+def test_forty_two_days_complete_both_windows():
+
+    pmc = PerformanceManagementChart(
+        [0.0] * 42
+    )
+
+    assert pmc.history_days == 42
+    assert pmc.has_data is True
+    assert (
+        pmc.has_complete_atl_window
+        is True
+    )
+    assert (
+        pmc.has_complete_ctl_window
+        is True
+    )

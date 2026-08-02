@@ -116,7 +116,55 @@ class PerformanceManagementChart:
             return 0.0
 
         return values[-1]
+    # ======================================================
 
+    @property
+    def history_days(self) -> int:
+        """
+        Returns the number of calendar days represented
+        in the load series.
+        """
+
+        return len(
+            self.daily_loads
+        )
+
+    # ======================================================
+
+    @property
+    def has_data(self) -> bool:
+        """
+        Returns whether the chart contains load history.
+        """
+
+        return self.history_days > 0
+
+    # ======================================================
+
+    @property
+    def has_complete_atl_window(self) -> bool:
+        """
+        Returns whether the acute-load window is complete.
+        """
+
+        return (
+            self.history_days
+            >= self.atl_days
+        )
+
+    # ======================================================
+
+    @property
+    def has_complete_ctl_window(self) -> bool:
+        """
+        Returns whether the chronic-load window is complete.
+        """
+
+        return (
+            self.history_days
+            >= self.ctl_days
+        )
+    
     # ======================================================
 
     @property

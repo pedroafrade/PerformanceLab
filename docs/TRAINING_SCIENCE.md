@@ -462,6 +462,30 @@ Estes nomes são heurísticas do produto e não diagnósticos fisiológicos. Em 
 
 Quando a carga crónica é zero, o código define atualmente ramp rate e score como zero. A apresentação pública deverá distinguir ausência de histórico suficiente de um ramp rate realmente calculado.
 
+### 7.8. Estados de disponibilidade da carga
+
+A disponibilidade das métricas de carga deve ser determinada pelo número de dias representados na série, e não apenas pelo valor numérico da carga.
+
+O domínio distingue os seguintes estados:
+
+| Histórico representado | Estado |
+|---:|---|
+| 0 dias | sem dados |
+| 1 a 6 dias | janela aguda incompleta |
+| 7 a 41 dias | janela aguda completa e janela crónica incompleta |
+| 42 dias ou mais | janelas aguda e crónica completas |
+
+Uma série composta por zeros pode representar dias reais sem treino. Por isso, carga igual a zero não significa necessariamente ausência de dados.
+
+As propriedades de disponibilidade não afirmam que os dados possuem qualidade suficiente ou que o modelo está fisiologicamente estabilizado. Confirmam apenas que existe o número de dias necessário para preencher as janelas configuradas.
+
+A interface pública deverá:
+
+- apresentar “Sem dados” quando não existir histórico;
+- identificar métricas como preliminares quando a respetiva janela estiver incompleta;
+- evitar estados positivos como “Good”, “Optimal” ou “Ready” baseados apenas em valores produzidos por histórico insuficiente;
+- distinguir explicitamente uma carga real igual a zero de um valor indisponível.
+
 ---
 
 ## 8. ACWR, monotonia e strain
