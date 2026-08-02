@@ -227,7 +227,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 5
+    assert data["version"] == 6
 
     assert "id" in data["athlete"]
 
@@ -236,6 +236,11 @@ def test_athlete_to_dict():
     assert data["athlete"]["name"] == "Pedro"
 
     assert len(data["workouts"]) == 1
+
+    assert (
+        data["workouts"][0]["id"]
+        == athlete.history[0].workout_id
+    )
 
     assert len(data["goals"]) == 1
 
@@ -246,6 +251,28 @@ def test_athlete_to_dict():
         == athlete.events[0].event.event_id
     )
 
+# ======================================================
+
+def test_workout_without_id_receives_id():
+
+    data = athlete_to_dict(
+        create_athlete()
+    )
+
+    data["workouts"][0].pop("id")
+
+    loaded = athlete_from_dict(data)
+
+    workout_id = (
+        loaded.history[0].workout_id
+    )
+
+    assert isinstance(
+        workout_id,
+        str,
+    )
+
+    assert workout_id
 
 # ======================================================
 
@@ -321,6 +348,11 @@ def test_athlete_round_trip():
     assert len(loaded.events) == 1
 
     workout = loaded.history[0]
+
+    assert (
+        workout.workout_id
+        == original.history[0].workout_id
+    )
 
     assert workout.date == datetime(
         2026,
@@ -910,7 +942,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 5
+        == 6
     )
 
     assert (

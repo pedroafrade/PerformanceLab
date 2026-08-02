@@ -209,6 +209,8 @@ def _workout_to_dict(workout):
 
     return {
 
+        "id": workout.workout_id,
+
         "info": {
 
             "date": _serialize_date(
@@ -300,7 +302,12 @@ def _workout_to_dict(workout):
 
 def _workout_from_dict(data):
 
-    workout = Workout()
+    workout = Workout(
+        workout_id=(
+            data.get("id")
+            or str(uuid4())
+        )
+    )
 
     info = data.get("info", {})
 
@@ -770,7 +777,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 5,
+        "version": 6,
 
         "athlete": {
 

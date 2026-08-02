@@ -7,6 +7,7 @@ Complete workout object.
 """
 
 from dataclasses import dataclass, field
+from uuid import uuid4
 
 from .environment import Environment
 from .feedback import AthleteFeedback
@@ -16,6 +17,10 @@ from .sensors import SensorCollection
 
 @dataclass
 class Workout:
+
+    workout_id: str = field(
+        default_factory=lambda: str(uuid4())
+    )
 
     info: WorkoutInfo = field(default_factory=WorkoutInfo)
 
