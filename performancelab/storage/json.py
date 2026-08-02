@@ -777,7 +777,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 7,
+        "version": 8,
 
         "athlete": {
 
@@ -869,6 +869,20 @@ def athlete_to_dict(athlete):
             "reconciled_workout_ids": list(
                 athlete.training_plan.reconciled_workout_ids
             ),
+
+            "reconciled_workout_signatures": [
+                {
+                    "workout_id": workout_id,
+                    "signature": list(
+                        signature
+                    ),
+                }
+                for workout_id, signature
+                in (
+                    athlete.training_plan
+                    .reconciled_workout_signatures
+                )
+            ],
 
             "primary_event_id": (
                 athlete.training_plan.primary_event_id
@@ -1026,6 +1040,27 @@ def athlete_from_dict(data):
                 training_plan_data.get(
                     "reconciled_workout_ids",
                     [],
+                )
+            ),
+
+            reconciled_workout_signatures=tuple(
+                (
+                    record.get(
+                        "workout_id",
+                        "",
+                    ),
+                    tuple(
+                        record.get(
+                            "signature",
+                            [],
+                        )
+                    ),
+                )
+                for record in (
+                    training_plan_data.get(
+                        "reconciled_workout_signatures",
+                        [],
+                    )
                 )
             ),
 

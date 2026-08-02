@@ -121,6 +121,9 @@ class TrainingPlanAdapter:
             reconciled_workout_ids=(
                 plan.reconciled_workout_ids
             ),
+            reconciled_workout_signatures=(
+                plan.reconciled_workout_signatures
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),

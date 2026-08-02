@@ -227,7 +227,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 7
+    assert data["version"] == 8
 
     assert "id" in data["athlete"]
 
@@ -938,6 +938,26 @@ def test_training_plan_reconciliation_date_round_trip():
             "workout-a",
             "workout-b",
         ),
+        reconciled_workout_signatures=(
+            (
+                "workout-a",
+                (
+                    "2026-08-04",
+                    "running",
+                    3600.0,
+                    6.0,
+                ),
+            ),
+            (
+                "workout-b",
+                (
+                    "2026-08-05",
+                    "cycling",
+                    5400.0,
+                    5.0,
+                ),
+            ),
+        ),
     )
 
     data = athlete_to_dict(
@@ -946,7 +966,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 7
+        == 8
     )
 
     assert (
@@ -965,7 +985,31 @@ def test_training_plan_reconciliation_date_round_trip():
             "workout-b",
         ]
     )
-
+    assert (
+        data["training_plan"][
+            "reconciled_workout_signatures"
+        ]
+        == [
+            {
+                "workout_id": "workout-a",
+                "signature": [
+                    "2026-08-04",
+                    "running",
+                    3600.0,
+                    6.0,
+                ],
+            },
+            {
+                "workout_id": "workout-b",
+                "signature": [
+                    "2026-08-05",
+                    "cycling",
+                    5400.0,
+                    5.0,
+                ],
+            },
+        ]
+    )
     loaded = athlete_from_dict(
         data
     )
@@ -986,7 +1030,30 @@ def test_training_plan_reconciliation_date_round_trip():
             "workout-b",
         )
     )
-
+    assert (
+        loaded.training_plan
+        .reconciled_workout_signatures
+        == (
+            (
+                "workout-a",
+                (
+                    "2026-08-04",
+                    "running",
+                    3600.0,
+                    6.0,
+                ),
+            ),
+            (
+                "workout-b",
+                (
+                    "2026-08-05",
+                    "cycling",
+                    5400.0,
+                    5.0,
+                ),
+            ),
+        )
+    )
 
 def test_loads_plan_without_reconciliation_date():
 
@@ -997,7 +1064,7 @@ def test_loads_plan_without_reconciliation_date():
     )
 
     del data["training_plan"][
-        "reconciled_workout_ids"
+        "reconciled_workout_signatures"
     ]
 
     loaded = athlete_from_dict(
@@ -1010,5 +1077,10 @@ def test_loads_plan_without_reconciliation_date():
     )
     assert (
         loaded.training_plan.reconciled_workout_ids
+        == ()
+    )
+    assert (
+        loaded.training_plan
+        .reconciled_workout_signatures
         == ()
     )

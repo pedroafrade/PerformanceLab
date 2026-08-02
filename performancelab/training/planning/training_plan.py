@@ -39,6 +39,19 @@ class TrainingPlan(WorkoutCollection):
 
     reconciled_workout_ids: tuple[str, ...] = ()
 
+    reconciled_workout_signatures: tuple[
+        tuple[
+            str,
+            tuple[
+                str,
+                str,
+                float | None,
+                float | None,
+            ],
+        ],
+        ...,
+    ] = ()
+
     primary_event_id: str | None = None
 
     competition_event_ids: tuple[str, ...] = ()
@@ -132,6 +145,54 @@ class TrainingPlan(WorkoutCollection):
             raise ValueError(
                 "reconciled_workout_ids cannot contain "
                 "duplicates."
+            )
+
+        signature_workout_ids = []
+
+        for record in (
+            self.reconciled_workout_signatures
+        ):
+
+            if (
+                not isinstance(record, tuple)
+                or len(record) != 2
+            ):
+                raise ValueError(
+                    "reconciled_workout_signatures must "
+                    "contain workout ID and signature pairs."
+                )
+
+            workout_id, signature = record
+
+            if (
+                not isinstance(workout_id, str)
+                or not workout_id.strip()
+            ):
+                raise ValueError(
+                    "reconciled workout signature IDs "
+                    "must be non-empty strings."
+                )
+
+            if (
+                not isinstance(signature, tuple)
+                or len(signature) != 4
+            ):
+                raise ValueError(
+                    "workout reconciliation signatures "
+                    "must contain four values."
+                )
+
+            signature_workout_ids.append(
+                workout_id
+            )
+
+        if (
+            len(set(signature_workout_ids))
+            != len(signature_workout_ids)
+        ):
+            raise ValueError(
+                "reconciled_workout_signatures cannot "
+                "contain duplicate workout IDs."
             )
         
         for event_id in self.competition_event_ids:
