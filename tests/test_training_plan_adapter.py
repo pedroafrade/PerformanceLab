@@ -5,6 +5,7 @@ Tests for incremental training-plan adaptation.
 """
 
 from datetime import date, datetime, timedelta
+from dataclasses import replace
 
 from performancelab.analysis.training_state import (
     TrainingState,
@@ -209,7 +210,21 @@ def test_pending_outcome_preserves_future_workout():
 def test_overload_reduces_next_demanding_workout():
 
     plan = make_plan()
-
+    plan.workouts[1] = replace(
+        plan.workouts[1],
+        prescription_summary=(
+            "35 min tempo"
+        ),
+        structure=(
+            "Warm up 10 min",
+            "Tempo effort 35 min",
+            "Cool down 5 min",
+            (
+                "Heart rate target: "
+                "Z3–Z4 · 168–175 bpm"
+            ),
+        ),
+    )
     outcome = make_outcome(
         plan=plan,
         status=(
@@ -248,7 +263,30 @@ def test_overload_reduces_next_demanding_workout():
             seconds=45,
         )
     )
+    assert (
+        adapted.workouts[1]
+        .prescription_summary
+        == (
+            "Reduced quality session · "
+            "44 min total"
+        )
+    )
 
+    assert (
+        adapted.workouts[1].structure
+        == (
+            "Warm up 10 min",
+            (
+                "Controlled quality work "
+                "29 min"
+            ),
+            "Cool down 5 min",
+            (
+                "Heart rate target: "
+                "Z3–Z4 · 168–175 bpm"
+            ),
+        )
+    )
 
 def test_overload_preserves_plan_when_recovery_is_good():
 

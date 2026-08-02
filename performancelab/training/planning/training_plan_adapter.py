@@ -271,13 +271,37 @@ class TrainingPlanAdapter:
             candidate_index
         ]
 
+        adjusted_duration = (
+            candidate.duration
+            * (
+                1.0
+                - reduction_fraction
+            )
+        )
+
+        adjusted_minutes = max(
+            1,
+            round(
+                adjusted_duration.total_seconds()
+                / 60
+            ),
+        )
+
         updated[candidate_index] = replace(
             candidate,
-            duration=(
-                candidate.duration
-                * (
-                    1.0
-                    - reduction_fraction
+            duration=adjusted_duration,
+            prescription_summary=(
+                "Reduced quality session · "
+                f"{adjusted_minutes} min total"
+            ),
+            structure=(
+                TrainingPlanAdapter
+                ._adapted_structure(
+                    workout=candidate,
+                    duration=adjusted_duration,
+                    main_label=(
+                        "Controlled quality work"
+                    ),
                 )
             ),
         )
@@ -430,13 +454,37 @@ class TrainingPlanAdapter:
         if increase_fraction <= 0:
             return updated
         
+        adjusted_duration = (
+            candidate.duration
+            * (
+                1.0
+                + increase_fraction
+            )
+        )
+
+        adjusted_minutes = max(
+            1,
+            round(
+                adjusted_duration.total_seconds()
+                / 60
+            ),
+        )
+
         updated[candidate_index] = replace(
             candidate,
-            duration=(
-                candidate.duration
-                * (
-                    1.0
-                    + increase_fraction
+            duration=adjusted_duration,
+            prescription_summary=(
+                "Adjusted easy session · "
+                f"{adjusted_minutes} min total"
+            ),
+            structure=(
+                TrainingPlanAdapter
+                ._adapted_structure(
+                    workout=candidate,
+                    duration=adjusted_duration,
+                    main_label=(
+                        "Easy aerobic training"
+                    ),
                 )
             ),
         )
@@ -444,7 +492,96 @@ class TrainingPlanAdapter:
         return updated
 
     # ======================================================
+    @staticmethod
+    def _adapted_structure(
+        *,
+        workout: PlannedWorkout,
+        duration,
+        main_label: str,
+    ) -> tuple[str, ...]:
+        """
+        Builds a conservative prescription whose timed
+        steps match the adapted total duration.
+        """
 
+        total_minutes = max(
+            1,
+            round(
+                duration.total_seconds()
+                / 60
+            ),
+        )
+
+        if total_minutes <= 15:
+
+            timed_steps = (
+                f"{main_label} "
+                f"{total_minutes} min",
+            )
+
+        else:
+
+            warm_up_minutes = min(
+                10,
+                max(
+                    5,
+                    total_minutes // 4,
+                ),
+            )
+
+            cool_down_minutes = min(
+                5,
+                max(
+                    3,
+                    total_minutes // 6,
+                ),
+            )
+
+            main_minutes = max(
+                1,
+                (
+                    total_minutes
+                    - warm_up_minutes
+                    - cool_down_minutes
+                ),
+            )
+
+            timed_steps = (
+                (
+                    "Warm up "
+                    f"{warm_up_minutes} min"
+                ),
+                (
+                    f"{main_label} "
+                    f"{main_minutes} min"
+                ),
+                (
+                    "Cool down "
+                    f"{cool_down_minutes} min"
+                ),
+            )
+
+        target_guidance = tuple(
+            step
+            for step in workout.structure
+            if str(
+                step
+            ).strip().lower().startswith(
+                (
+                    "heart rate target:",
+                    "power target:",
+                    "pace target:",
+                )
+            )
+        )
+
+        return (
+            *timed_steps,
+            *target_guidance,
+        )
+
+    # ======================================================
+    
     @staticmethod
     def _is_easy(
         workout: PlannedWorkout,
