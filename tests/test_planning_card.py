@@ -123,3 +123,26 @@ def test_displays_missed_outcome():
         _day_details(day)
         == "Missed · 50 min · Hard"
     )
+
+def test_displays_modified_outcome():
+
+    day = SimpleNamespace(
+        completed=True,
+        completed_title="Tempo Run",
+        completed_sport="Running",
+        outcome_status="modified",
+        title="Tempo Run",
+        sport="Running",
+        prescription_summary=None,
+        distance=None,
+        elevation_gain=None,
+        duration=timedelta(
+            minutes=50
+        ),
+        intensity="Hard",
+    )
+
+    assert (
+        _day_details(day)
+        == "Modified · 50 min · Hard"
+    )
