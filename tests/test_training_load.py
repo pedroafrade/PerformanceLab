@@ -7,6 +7,10 @@ import pytest
 from datetime import date, timedelta
 
 from performancelab import Workout
+from performancelab.coaching.workout_templates import (
+    DEFAULT_WORKOUT_TEMPLATES,
+    FOCUSED_WORKOUT_TEMPLATES,
+)
 from performancelab.training import (
     WeeklySummary,
     MonthlySummary,
@@ -509,3 +513,32 @@ def test_planned_elevation_load_bonus_is_capped():
     ) == pytest.approx(
         468.0
     )
+
+# ======================================================
+# Planned intensity coverage
+# ======================================================
+
+def test_every_planner_template_has_known_rpe():
+
+    templates = (
+        *DEFAULT_WORKOUT_TEMPLATES.values(),
+        *FOCUSED_WORKOUT_TEMPLATES.values(),
+    )
+
+    unsupported_templates = {
+        template.title
+        for template in templates
+        if planned_workout_rpe(
+            PlannedWorkout(
+                scheduled_at=date(
+                    2026,
+                    8,
+                    2,
+                ),
+                intensity=template.intensity,
+            )
+        )
+        is None
+    }
+
+    assert unsupported_templates == set()
