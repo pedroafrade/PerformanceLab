@@ -532,6 +532,7 @@ class TrainingPlanAdapter:
                 "shakeout",
                 "pre-race",
                 "pre race",
+                "recovery",
             )
         )
 

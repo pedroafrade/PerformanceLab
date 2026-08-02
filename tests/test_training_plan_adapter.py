@@ -824,3 +824,55 @@ def test_overload_reduction_is_capped_at_twenty_percent():
         adapted.workouts[1].duration
         == timedelta(minutes=40)
     )
+
+def test_underload_does_not_increase_recovery_session():
+
+    plan = make_plan()
+
+    plan.workouts[1] = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            6,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Recovery Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Recovery",
+    )
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=50)
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=63)
+    )
