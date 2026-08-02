@@ -81,8 +81,10 @@ class TrainingPlanAdapter:
                 )
             )
 
-        has_underload = any(
-            (
+        underload_outcomes = tuple(
+            outcome
+            for outcome in outcomes
+            if (
                 outcome.status
                 is WorkoutOutcomeStatus.MISSED
                 or (
@@ -97,7 +99,10 @@ class TrainingPlanAdapter:
                     )
                 )
             )
-            for outcome in outcomes
+        )
+
+        has_underload = bool(
+            underload_outcomes
         )
 
         if (
@@ -108,6 +113,17 @@ class TrainingPlanAdapter:
                 self._increase_next_easy_workout(
                     workouts=workouts,
                     reference_day=reference_day,
+                    preferred_sport_families=tuple(
+                        dict.fromkeys(
+                            self._sport_family(
+                                outcome
+                                .planned_workout
+                                .sport
+                            )
+                            for outcome
+                            in underload_outcomes
+                        )
+                    ),
                 )
             )
 
@@ -199,6 +215,10 @@ class TrainingPlanAdapter:
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
+        preferred_sport_families: tuple[
+            str,
+            ...,
+        ] = (),
     ) -> list[PlannedWorkout]:
         """
         Adds a small fraction of missing load to the next
@@ -211,26 +231,42 @@ class TrainingPlanAdapter:
             workouts
         )
 
+        candidate_indices = [
+            index
+            for index, workout
+            in enumerate(updated)
+            if (
+                workout.day
+                > reference_day
+                and workout.duration is not None
+                and workout.duration.total_seconds()
+                > 0
+                and TrainingPlanAdapter._is_easy(
+                    workout
+                )
+                and not TrainingPlanAdapter._is_protected(
+                    workout
+                )
+            )
+        ]
+
         candidate_index = next(
             (
                 index
-                for index, workout
-                in enumerate(updated)
+                for index in candidate_indices
                 if (
-                    workout.day
-                    > reference_day
-                    and workout.duration is not None
-                    and workout.duration.total_seconds()
-                    > 0
-                    and TrainingPlanAdapter._is_easy(
-                        workout
+                    TrainingPlanAdapter
+                    ._sport_family(
+                        updated[index].sport
                     )
-                    and not TrainingPlanAdapter._is_protected(
-                        workout
-                    )
+                    in preferred_sport_families
                 )
             ),
-            None,
+            (
+                candidate_indices[0]
+                if candidate_indices
+                else None
+            ),
         )
 
         if candidate_index is None:
@@ -346,7 +382,46 @@ class TrainingPlanAdapter:
         )
 
     # ======================================================
+    @staticmethod
+    def _sport_family(
+        sport,
+    ) -> str:
+        """
+        Normalizes sports into comparable training families.
+        """
 
+        normalized = str(
+            sport or ""
+        ).strip().lower()
+
+        if any(
+            token in normalized
+            for token in (
+                "run",
+                "running",
+                "trail",
+                "jog",
+            )
+        ):
+            return "running"
+
+        if any(
+            token in normalized
+            for token in (
+                "cycl",
+                "bike",
+                "bicycle",
+            )
+        ):
+            return "cycling"
+
+        if "swim" in normalized:
+            return "swimming"
+
+        return normalized or "other"
+
+    # ======================================================
+    
     @staticmethod
     def _description(
         workout: PlannedWorkout,

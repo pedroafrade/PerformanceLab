@@ -616,3 +616,101 @@ def test_substitute_underload_increases_easy_session():
         adapted.workouts[2].duration
         == timedelta(minutes=63)
     )
+def test_underload_prefers_planned_sport_family():
+
+    plan = TrainingPlan(
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            8,
+            31,
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    4,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Tempo Run",
+                duration=timedelta(
+                    minutes=50,
+                ),
+                intensity="Tempo",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    6,
+                    8,
+                    0,
+                ),
+                sport="Cycling",
+                title="Easy Ride",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    8,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+        ],
+    )
+
+    outcome = WorkoutOutcome(
+        planned_workout=(
+            plan.workouts[0]
+        ),
+        completed_workout=None,
+        status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        planned_load=350.0,
+        completed_load=120.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state()
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[1].duration
+        == timedelta(minutes=60)
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=63)
+    )
