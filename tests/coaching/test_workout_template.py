@@ -28,6 +28,9 @@ from performancelab.coaching.workout_templates import (
 
 from performancelab.coaching.strategy import StrategyPlan
 from performancelab.coaching.training_focus import TrainingFocus
+from performancelab.training.load import (
+    planned_workout_rpe,
+)
 
 
 def test_creates_workout_template() -> None:
@@ -608,4 +611,104 @@ def test_shakeout_template_is_pre_race_activation():
         in " ".join(
             template.structure
         ).lower()
+    )
+
+def test_planned_intensities_follow_semantic_hierarchy():
+
+    pre_race = DEFAULT_WORKOUT_TEMPLATES[
+        SessionPurpose.PRE_RACE
+    ]
+
+    rest_rpe = planned_workout_rpe(
+        REST_TEMPLATE
+    )
+    recovery_rpe = planned_workout_rpe(
+        RECOVERY_TEMPLATE
+    )
+    shakeout_rpe = planned_workout_rpe(
+        SHAKEOUT_TEMPLATE
+    )
+    easy_rpe = planned_workout_rpe(
+        EASY_TEMPLATE
+    )
+    pre_race_rpe = planned_workout_rpe(
+        pre_race
+    )
+    technique_rpe = planned_workout_rpe(
+        TECHNIQUE_TEMPLATE
+    )
+    long_rpe = planned_workout_rpe(
+        LONG_TEMPLATE
+    )
+    cross_training_rpe = planned_workout_rpe(
+        CROSS_TRAINING_TEMPLATE
+    )
+    tempo_rpe = planned_workout_rpe(
+        TEMPO_TEMPLATE
+    )
+    threshold_rpe = planned_workout_rpe(
+        THRESHOLD_TEMPLATE
+    )
+    generic_intensity_rpe = planned_workout_rpe(
+        INTENSITY_TEMPLATE
+    )
+    hills_rpe = planned_workout_rpe(
+        HILLS_TEMPLATE
+    )
+    race_rpe = planned_workout_rpe(
+        RACE_TEMPLATE
+    )
+    vo2max_rpe = planned_workout_rpe(
+        VO2MAX_TEMPLATE
+    )
+    speed_rpe = planned_workout_rpe(
+        SPEED_TEMPLATE
+    )
+
+    assert rest_rpe == 0.0
+
+    assert (
+        recovery_rpe
+        == shakeout_rpe
+        == 2.0
+    )
+
+    assert (
+        easy_rpe
+        == pre_race_rpe
+        == 3.0
+    )
+
+    assert (
+        technique_rpe
+        == long_rpe
+        == cross_training_rpe
+        == 4.0
+    )
+
+    assert tempo_rpe == 6.0
+
+    assert (
+        threshold_rpe
+        == generic_intensity_rpe
+        == hills_rpe
+        == 7.0
+    )
+
+    assert race_rpe == 8.0
+
+    assert (
+        vo2max_rpe
+        == speed_rpe
+        == 9.0
+    )
+
+    assert (
+        recovery_rpe
+        < easy_rpe
+        < long_rpe
+        < tempo_rpe
+        < threshold_rpe
+        < race_rpe
+        < vo2max_rpe
     )
