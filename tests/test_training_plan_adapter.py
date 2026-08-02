@@ -876,3 +876,72 @@ def test_underload_does_not_increase_recovery_session():
         adapted.workouts[2].duration
         == timedelta(minutes=63)
     )
+
+def test_underload_preserves_schedule_and_weekly_limit():
+
+    plan = make_plan()
+
+    original_days = tuple(
+        workout.day
+        for workout in plan.workouts
+    )
+
+    original_duration = sum(
+        (
+            workout.duration
+            for workout in plan.workouts
+            if workout.duration is not None
+        ),
+        timedelta(),
+    )
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    adapted_days = tuple(
+        workout.day
+        for workout in adapted.workouts
+    )
+
+    adapted_duration = sum(
+        (
+            workout.duration
+            for workout in adapted.workouts
+            if workout.duration is not None
+        ),
+        timedelta(),
+    )
+
+    assert (
+        len(adapted.workouts)
+        == len(plan.workouts)
+    )
+
+    assert (
+        adapted_days
+        == original_days
+    )
+
+    assert (
+        adapted_duration
+        <= original_duration * 1.05
+    )
