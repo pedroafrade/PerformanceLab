@@ -1050,3 +1050,176 @@ def test_completed_overload_adapts_future_once():
         repeated.workouts[1].duration
         == timedelta(minutes=40)
     )
+
+def test_multiple_late_overloads_apply_one_capped_adaptation():
+
+    plan = TrainingPlan(
+        plan_id="multiple-late-plan",
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            8,
+            31,
+        ),
+        reconciled_through=date(
+            2026,
+            8,
+            4,
+        ),
+        reconciled_workout_ids=(
+            "previous-workout",
+        ),
+        reconciled_workout_signatures=(
+            (
+                "previous-workout",
+                (
+                    "2026-08-01",
+                    "running",
+                    1800.0,
+                    4.0,
+                ),
+            ),
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    2,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    4,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=60,
+                ),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    6,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Tempo Run",
+                duration=timedelta(
+                    minutes=50,
+                ),
+                intensity="Tempo",
+            ),
+        ],
+    )
+
+    first_late = Workout(
+        workout_id="first-late-workout",
+    )
+
+    first_late.info.date = datetime(
+        2026,
+        8,
+        2,
+        9,
+        0,
+    )
+    first_late.info.sport = "Cycling"
+    first_late.info.duration = timedelta(
+        minutes=120,
+    )
+    first_late.feedback.rpe = 8
+
+    second_late = Workout(
+        workout_id="second-late-workout",
+    )
+
+    second_late.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+    second_late.info.sport = "Cycling"
+    second_late.info.duration = timedelta(
+        minutes=120,
+    )
+    second_late.feedback.rpe = 8
+
+    history = History()
+    history.add(first_late)
+    history.add(second_late)
+
+    reconciler = TrainingPlanReconciler()
+
+    reconciled = reconciler.reconcile(
+        plan=plan,
+        history=history,
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert (
+        reconciled.workouts[2].duration
+        == timedelta(minutes=40)
+    )
+
+    assert (
+        reconciled.reconciled_workout_ids
+        == (
+            "previous-workout",
+            "first-late-workout",
+            "second-late-workout",
+        )
+    )
+
+    repeated = reconciler.reconcile(
+        plan=reconciled,
+        history=history,
+        training_state=(
+            make_training_state(
+                tsb=-25.0,
+            )
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert repeated is reconciled
+
+    assert (
+        repeated.workouts[2].duration
+        == timedelta(minutes=40)
+    )
