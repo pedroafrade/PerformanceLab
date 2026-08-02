@@ -47,8 +47,8 @@ class TrainingPlanReconciler:
         through_day: date,
     ) -> TrainingPlan:
         """
-        Reconciles all unprocessed planned workouts up to
-        and including through_day.
+        Reconciles new plan days and completed workouts
+        that have not previously been processed.
         """
 
         self._validate_inputs(
@@ -58,21 +58,27 @@ class TrainingPlanReconciler:
             through_day=through_day,
         )
 
-        if (
-            plan.reconciled_through is not None
-            and through_day
-            <= plan.reconciled_through
-        ):
+        previous_boundary = (
+            plan.reconciled_through
+        )
 
-            if plan.reconciled_workout_ids:
-                return plan
+        is_closed_period = (
+            previous_boundary is not None
+            and through_day
+            <= previous_boundary
+        )
+
+        if (
+            is_closed_period
+            and not plan.reconciled_workout_ids
+        ):
 
             reconciled_workout_ids = (
                 self._collect_workout_ids(
                     plan=plan,
                     history=history,
                     through_day=(
-                        plan.reconciled_through
+                        previous_boundary
                     ),
                 )
             )
@@ -90,9 +96,25 @@ class TrainingPlanReconciler:
                 ),
             )
 
-        previous_boundary = (
-            plan.reconciled_through
+        new_workout_ids = (
+            self._unreconciled_workout_ids(
+                plan=plan,
+                history=history,
+                through_day=through_day,
+            )
         )
+
+        has_new_period = (
+            previous_boundary is None
+            or through_day
+            > previous_boundary
+        )
+
+        if (
+            not has_new_period
+            and not new_workout_ids
+        ):
+            return plan
 
         assessment_reference_day = (
             through_day
@@ -114,26 +136,62 @@ class TrainingPlanReconciler:
                     previous_boundary is None
                     or outcome.planned_workout.day
                     > previous_boundary
+                    or (
+                        outcome.completed_workout
+                        is not None
+                        and (
+                            outcome.completed_workout
+                            .workout_id
+                            in new_workout_ids
+                        )
+                    )
                 )
             )
         )
+
+        adaptation_reference_day = (
+            through_day
+        )
+
+        if (
+            previous_boundary is not None
+            and previous_boundary
+            > adaptation_reference_day
+        ):
+            adaptation_reference_day = (
+                previous_boundary
+            )
 
         adapted = self.adapter.adapt(
             plan=plan,
             outcomes=outcomes,
             training_state=training_state,
-            reference_day=through_day,
+            reference_day=(
+                adaptation_reference_day
+            ),
         )
 
-        adapted.reconciled_through = (
-            through_day
-        )
+        if (
+            previous_boundary is None
+            or through_day
+            > previous_boundary
+        ):
+            adapted.reconciled_through = (
+                through_day
+            )
+
+        else:
+            adapted.reconciled_through = (
+                previous_boundary
+            )
 
         adapted.reconciled_workout_ids = (
             self._collect_workout_ids(
                 plan=adapted,
                 history=history,
-                through_day=through_day,
+                through_day=(
+                    adapted.reconciled_through
+                ),
             )
         )
 
@@ -182,6 +240,36 @@ class TrainingPlanReconciler:
                 reference_day
                 - timedelta(days=1)
             ),
+        )
+
+    # ======================================================
+    @classmethod
+    def _unreconciled_workout_ids(
+        cls,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        through_day: date,
+    ) -> tuple[str, ...]:
+        """
+        Returns workout identities inside the closed plan
+        horizon that have not previously been processed.
+        """
+
+        known_workout_ids = set(
+            plan.reconciled_workout_ids
+        )
+
+        return tuple(
+            workout_id
+            for workout_id
+            in cls._collect_workout_ids(
+                plan=plan,
+                history=history,
+                through_day=through_day,
+            )
+            if workout_id
+            not in known_workout_ids
         )
 
     # ======================================================

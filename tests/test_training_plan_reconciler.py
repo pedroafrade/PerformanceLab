@@ -487,3 +487,102 @@ def test_existing_reconciliation_bootstraps_workout_ids():
     )
 
     assert repeated is bootstrapped
+
+def test_late_workout_is_reconciled_once():
+
+    plan = make_plan()
+
+    plan.reconciled_through = date(
+        2026,
+        8,
+        4,
+    )
+
+    plan.reconciled_workout_ids = (
+        "previous-workout",
+    )
+
+    history = History()
+
+    late_workout = Workout(
+        workout_id="late-workout",
+    )
+
+    late_workout.info.date = datetime(
+        2026,
+        8,
+        4,
+        18,
+        0,
+    )
+
+    late_workout.info.sport = "Cycling"
+
+    late_workout.info.duration = timedelta(
+        minutes=30,
+    )
+
+    late_workout.info.distance = 15.0
+
+    late_workout.feedback.rpe = 4
+
+    history.add(late_workout)
+
+    reconciler = TrainingPlanReconciler()
+
+    reconciled = reconciler.reconcile(
+        plan=plan,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert reconciled is not plan
+
+    assert (
+        reconciled.reconciled_through
+        == date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        reconciled.reconciled_workout_ids
+        == (
+            "previous-workout",
+            "late-workout",
+        )
+    )
+
+    assert (
+        reconciled.workouts[1].duration
+        == timedelta(minutes=63)
+    )
+
+    repeated = reconciler.reconcile(
+        plan=reconciled,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert repeated is reconciled
+
+    assert (
+        repeated.workouts[1].duration
+        == timedelta(minutes=63)
+    )
