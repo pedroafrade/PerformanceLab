@@ -365,6 +365,40 @@ Estas são **heurísticas do produto**. Devem ser tratadas como regras conservad
 
 O dashboard deve apresentar linguagem prudente, arredondamento adequado e explicação da informação em falta.
 
+### 7.6. Recovery Score
+
+O Recovery Score atual é calculado diretamente a partir do TSB:
+
+`Recovery Score = TSB + 50`
+
+O resultado é limitado ao intervalo de 0 a 100:
+
+- valores inferiores a 0 são apresentados como 0;
+- valores superiores a 100 são apresentados como 100;
+- um TSB de 0 produz um Recovery Score de 50;
+- um TSB de -20 produz um Recovery Score de 30;
+- um TSB de +20 produz um Recovery Score de 70.
+
+Esta transformação não acrescenta nova informação fisiológica ao TSB. Apenas converte o mesmo valor para uma escala visual mais familiar.
+
+O Recovery Score atual não considera diretamente:
+
+- sono;
+- HRV;
+- frequência cardíaca de repouso;
+- dor ou desconforto;
+- doença;
+- stress psicológico;
+- fadiga muscular;
+- perceção subjetiva de recuperação;
+- tempo decorrido desde a última sessão;
+- contexto ambiental.
+
+Por isso, o nome “Recovery Score” é uma simplificação do produto. O valor deve ser apresentado como uma estimativa heurística baseada em carga, nunca como medição completa da recuperação do atleta.
+
+Um valor elevado também pode resultar de pouca carga recente ou de um período sem treino. Não significa automaticamente preparação para intensidade, adaptação positiva ou capacidade máxima de desempenho.
+
+Quando o histórico necessário para CTL, ATL e TSB for insuficiente, o sistema deverá apresentar um estado de dados insuficientes em vez de comunicar o Recovery Score com falsa confiança.
 ---
 
 ## 8. ACWR, monotonia e strain
