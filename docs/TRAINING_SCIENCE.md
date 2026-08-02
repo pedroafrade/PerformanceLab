@@ -757,6 +757,40 @@ Consequências para o planeamento:
 - sessões LT2, longos específicos e técnica exigem avaliação própria;
 - substituições devem ser conservadoras e explicáveis.
 
+### 15.1. Comportamento implementado
+
+A reconciliação atual normaliza as atividades nas famílias:
+
+- running;
+- cycling;
+- swimming;
+- outras modalidades.
+
+Trail running, road running e jogging pertencem atualmente à família running. Esta classificação inicial não distingue terreno, impacto, técnica ou desnível.
+
+Quando a família realizada é diferente da família planeada, o resultado é sempre `substitute`, mesmo que a carga interna seja exatamente igual.
+
+Isto significa que:
+
+- a carga realizada continua a entrar em CTL, ATL, TSB e no `TrainingState`;
+- o treino não é classificado como equivalente;
+- uma carga superior pode justificar redução prudente do próximo treino exigente;
+- uma carga inferior pode justificar um pequeno aumento num treino fácil futuro;
+- o adaptador dá preferência à família da modalidade planeada quando recupera uma fração de carga em falta;
+- uma substituição com carga igual não provoca alteração de volume.
+
+O adaptador atual não recria automaticamente uma sessão específica perdida quando a carga do substituto é equivalente. Esta é uma limitação conservadora: evita duplicar carga, mas também significa que a especificidade perdida não é recuperada explicitamente.
+
+Futuras regras de transferência deverão avaliar separadamente:
+
+1. carga interna;
+2. família da modalidade;
+3. objetivo da sessão;
+4. especificidade musculoesquelética;
+5. terreno e técnica;
+6. proximidade da prova.
+
+Até existir esse modelo, igualdade de carga nunca deve ser apresentada como igualdade completa de estímulo.
 ---
 
 ## 16. Progressão, recuperação e periodização

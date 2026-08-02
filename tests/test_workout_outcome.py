@@ -179,6 +179,39 @@ def test_different_sport_is_substitute():
         is WorkoutOutcomeStatus.SUBSTITUTE
     )
 
+def test_equal_load_different_sport_remains_substitute():
+
+    planned = make_planned_workout(
+        sport="Road Running",
+        duration_minutes=60,
+        intensity="Hard",
+    )
+
+    completed = make_completed_workout(
+        sport="Cycling",
+        duration_minutes=60,
+        rpe=7,
+    )
+
+    outcome = assess_workout_outcome(
+        planned_workout=planned,
+        completed_workout=completed,
+        reference_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert outcome.planned_load == 420
+    assert outcome.completed_load == 420
+    assert outcome.load_difference == 0
+
+    assert (
+        outcome.status
+        is WorkoutOutcomeStatus.SUBSTITUTE
+    )
+    
 def test_training_plan_assesses_complete_history():
 
     completed = (
