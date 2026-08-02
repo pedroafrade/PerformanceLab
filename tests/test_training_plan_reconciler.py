@@ -405,3 +405,85 @@ def test_reconciliation_records_closed_workout_identity():
             "completed-workout",
         )
     )
+def test_existing_reconciliation_bootstraps_workout_ids():
+
+    plan = make_plan()
+
+    plan.reconciled_through = date(
+        2026,
+        8,
+        4,
+    )
+
+    history = History()
+
+    completed = Workout(
+        workout_id="existing-workout",
+    )
+
+    completed.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+
+    completed.info.sport = "Running"
+
+    completed.info.duration = timedelta(
+        minutes=50,
+    )
+
+    completed.info.distance = 10.0
+
+    history.add(completed)
+
+    reconciler = TrainingPlanReconciler()
+
+    bootstrapped = reconciler.reconcile(
+        plan=plan,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert bootstrapped is not plan
+
+    assert (
+        bootstrapped.reconciled_workout_ids
+        == (
+            "existing-workout",
+        )
+    )
+
+    assert (
+        bootstrapped.workouts
+        == plan.workouts
+    )
+
+    assert (
+        bootstrapped.workouts[1].duration
+        == timedelta(minutes=60)
+    )
+
+    repeated = reconciler.reconcile(
+        plan=bootstrapped,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert repeated is bootstrapped

@@ -7,6 +7,7 @@ Reconciles a persistent training plan with completed
 training history exactly once for each closed period.
 """
 
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 from performancelab.analysis.training_state import (
@@ -62,7 +63,32 @@ class TrainingPlanReconciler:
             and through_day
             <= plan.reconciled_through
         ):
-            return plan
+
+            if plan.reconciled_workout_ids:
+                return plan
+
+            reconciled_workout_ids = (
+                self._collect_workout_ids(
+                    plan=plan,
+                    history=history,
+                    through_day=(
+                        plan.reconciled_through
+                    ),
+                )
+            )
+
+            if not reconciled_workout_ids:
+                return plan
+
+            return replace(
+                plan,
+                reconciled_workout_ids=(
+                    reconciled_workout_ids
+                ),
+                workouts=list(
+                    plan.workouts
+                ),
+            )
 
         previous_boundary = (
             plan.reconciled_through
@@ -103,56 +129,12 @@ class TrainingPlanReconciler:
             through_day
         )
 
-        reconciled_workout_ids = list(
-            adapted.reconciled_workout_ids
-        )
-
-        known_workout_ids = set(
-            reconciled_workout_ids
-        )
-
-        for workout in history:
-
-            workout_day = self._workout_day(
-                workout
+        adapted.reconciled_workout_ids = (
+            self._collect_workout_ids(
+                plan=adapted,
+                history=history,
+                through_day=through_day,
             )
-
-            if workout_day is None:
-                continue
-
-            if workout_day > through_day:
-                continue
-
-            if (
-                adapted.start_date is not None
-                and workout_day
-                < adapted.start_date
-            ):
-                continue
-
-            if (
-                adapted.end_date is not None
-                and workout_day
-                > adapted.end_date
-            ):
-                continue
-
-            if (
-                workout.workout_id
-                in known_workout_ids
-            ):
-                continue
-
-            reconciled_workout_ids.append(
-                workout.workout_id
-            )
-
-            known_workout_ids.add(
-                workout.workout_id
-            )
-
-        adapted.reconciled_workout_ids = tuple(
-            reconciled_workout_ids
         )
 
         return adapted
@@ -204,6 +186,73 @@ class TrainingPlanReconciler:
 
     # ======================================================
     
+    @classmethod
+    def _collect_workout_ids(
+        cls,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        through_day: date,
+    ) -> tuple[str, ...]:
+        """
+        Collects workout identities inside the closed
+        training-plan horizon without duplicates.
+        """
+
+        reconciled_workout_ids = list(
+            plan.reconciled_workout_ids
+        )
+
+        known_workout_ids = set(
+            reconciled_workout_ids
+        )
+
+        for workout in history:
+
+            workout_day = cls._workout_day(
+                workout
+            )
+
+            if workout_day is None:
+                continue
+
+            if workout_day > through_day:
+                continue
+
+            if (
+                plan.start_date is not None
+                and workout_day
+                < plan.start_date
+            ):
+                continue
+
+            if (
+                plan.end_date is not None
+                and workout_day
+                > plan.end_date
+            ):
+                continue
+
+            if (
+                workout.workout_id
+                in known_workout_ids
+            ):
+                continue
+
+            reconciled_workout_ids.append(
+                workout.workout_id
+            )
+
+            known_workout_ids.add(
+                workout.workout_id
+            )
+
+        return tuple(
+            reconciled_workout_ids
+        )
+
+    # ======================================================
+
     @staticmethod
     def _workout_day(
         workout,
