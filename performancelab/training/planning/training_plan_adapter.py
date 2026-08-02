@@ -8,6 +8,7 @@ Applies incremental revisions to future planned workouts.
 
 from dataclasses import replace
 from datetime import date, datetime
+from math import ceil
 
 from performancelab.analysis.training_state import (
     TrainingState,
@@ -287,23 +288,45 @@ class TrainingPlanAdapter:
             ),
         )
 
+        adjusted_structure = (
+            TrainingPlanAdapter
+            ._adapted_structure(
+                workout=candidate,
+                duration=adjusted_duration,
+                main_label=(
+                    "Controlled quality work"
+                ),
+            )
+        )
+
+        interval_summary = next(
+            (
+                step
+                for step in adjusted_structure
+                if "×" in step
+            ),
+            None,
+        )
+
+        prescription_summary = (
+            (
+                f"{interval_summary} · "
+                f"{adjusted_minutes} min total"
+            )
+            if interval_summary is not None
+            else (
+                "Reduced quality session · "
+                f"{adjusted_minutes} min total"
+            )
+        )
+
         updated[candidate_index] = replace(
             candidate,
             duration=adjusted_duration,
             prescription_summary=(
-                "Reduced quality session · "
-                f"{adjusted_minutes} min total"
+                prescription_summary
             ),
-            structure=(
-                TrainingPlanAdapter
-                ._adapted_structure(
-                    workout=candidate,
-                    duration=adjusted_duration,
-                    main_label=(
-                        "Controlled quality work"
-                    ),
-                )
-            ),
+            structure=adjusted_structure,
         )
 
         return updated
@@ -502,6 +525,9 @@ class TrainingPlanAdapter:
         """
         Builds a conservative prescription whose timed
         steps match the adapted total duration.
+
+        Threshold sessions preserve an explicit interval
+        structure whenever the available duration allows it.
         """
 
         total_minutes = max(
@@ -512,15 +538,101 @@ class TrainingPlanAdapter:
             ),
         )
 
-        if total_minutes <= 15:
+        description = (
+            TrainingPlanAdapter
+            ._description(
+                workout
+            )
+        )
+
+        is_threshold_session = any(
+            token in description
+            for token in (
+                "lt2",
+                "threshold",
+            )
+        )
+
+        if (
+            is_threshold_session
+            and total_minutes >= 30
+        ):
+            repetitions = 3
+            recovery_minutes = 2
+
+            work_minutes = max(
+                4,
+                ceil(
+                    total_minutes
+                    / (
+                        repetitions
+                        * 2
+                    )
+                ),
+            )
+
+            total_work_minutes = (
+                repetitions
+                * work_minutes
+            )
+
+            total_recovery_minutes = (
+                (
+                    repetitions
+                    - 1
+                )
+                * recovery_minutes
+            )
+
+            preparation_minutes = (
+                total_minutes
+                - total_work_minutes
+                - total_recovery_minutes
+            )
+
+            cool_down_minutes = max(
+                4,
+                round(
+                    preparation_minutes
+                    * 0.35
+                ),
+            )
+
+            warm_up_minutes = (
+                preparation_minutes
+                - cool_down_minutes
+            )
 
             timed_steps = (
-                f"{main_label} "
-                f"{total_minutes} min",
+                (
+                    "Warm up "
+                    f"{warm_up_minutes} min"
+                ),
+                (
+                    f"{repetitions}×"
+                    f"{work_minutes} min "
+                    "at LT2"
+                ),
+                (
+                    "Recover "
+                    f"{recovery_minutes} min "
+                    "easy between repetitions"
+                ),
+                (
+                    "Cool down "
+                    f"{cool_down_minutes} min"
+                ),
+            )
+
+        elif total_minutes <= 15:
+            timed_steps = (
+                (
+                    f"{main_label} "
+                    f"{total_minutes} min"
+                ),
             )
 
         else:
-
             warm_up_minutes = min(
                 10,
                 max(

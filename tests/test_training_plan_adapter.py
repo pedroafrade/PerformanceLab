@@ -983,3 +983,64 @@ def test_underload_preserves_schedule_and_weekly_limit():
         adapted_duration
         <= original_duration * 1.05
     )
+
+def test_adapted_lt2_structure_preserves_intervals():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Hard",
+        structure=(
+            "Warm up 16 min",
+            (
+                "3×10 min at LT2 "
+                "(177 bpm)"
+            ),
+            (
+                "Recover 2 min easy "
+                "between repetitions"
+            ),
+            "Cool down 10 min",
+            (
+                "Heart rate target: "
+                "Z4 · 177–181 bpm"
+            ),
+        ),
+    )
+
+    structure = (
+        TrainingPlanAdapter
+        ._adapted_structure(
+            workout=workout,
+            duration=timedelta(
+                minutes=38,
+            ),
+            main_label=(
+                "Controlled quality work"
+            ),
+        )
+    )
+
+    assert structure == (
+        "Warm up 8 min",
+        "3×7 min at LT2",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+        "Cool down 5 min",
+        (
+            "Heart rate target: "
+            "Z4 · 177–181 bpm"
+        ),
+    )
