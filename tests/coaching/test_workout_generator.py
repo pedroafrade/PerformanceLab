@@ -572,7 +572,7 @@ def test_returns_tempo_template_for_tempo_focus() -> None:
 
     assert template is TEMPO_TEMPLATE
     assert template.title == "Tempo Session"
-    assert template.intensity == "Hard"
+    assert template.intensity == "Moderately hard"
 def test_tempo_workout_uses_athlete_pace() -> None:
 
     workout = WorkoutGenerator()._build_workout(

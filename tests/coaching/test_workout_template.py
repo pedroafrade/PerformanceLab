@@ -486,6 +486,7 @@ def test_returns_threshold_template_for_threshold_focus():
     assert template is THRESHOLD_TEMPLATE
     assert template.title == "LT2 Session"
     assert template.purpose is SessionPurpose.INTENSITY
+    assert template.intensity == "Hard"
 
 
 def test_focus_matching_is_normalized():
@@ -562,7 +563,7 @@ def test_returns_tempo_template_for_tempo_focus() -> None:
 
     assert template is TEMPO_TEMPLATE
     assert template.title == "Tempo Session"
-    assert template.intensity == "Hard"
+    assert template.intensity == "Moderately hard"
 
 def test_returns_hills_template_for_hills_focus() -> None:
 
