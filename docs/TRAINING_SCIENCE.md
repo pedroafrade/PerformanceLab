@@ -399,6 +399,69 @@ Por isso, o nome “Recovery Score” é uma simplificação do produto. O valor
 Um valor elevado também pode resultar de pouca carga recente ou de um período sem treino. Não significa automaticamente preparação para intensidade, adaptação positiva ou capacidade máxima de desempenho.
 
 Quando o histórico necessário para CTL, ATL e TSB for insuficiente, o sistema deverá apresentar um estado de dados insuficientes em vez de comunicar o Recovery Score com falsa confiança.
+
+### 7.7. Training Load Score e ramp rate
+
+O cartão Training Load utiliza duas médias aritméticas da série de carga diária:
+
+- carga aguda: média dos últimos 7 dias disponíveis;
+- carga crónica: média dos últimos 42 dias disponíveis.
+
+Estas métricas não são iguais ao ATL e ao CTL, apesar de utilizarem atualmente os rótulos “Acute” e “Chronic” na interface. ATL e CTL são médias móveis exponenciais; os valores deste cartão são médias aritméticas simples.
+
+Quando existem menos de 7 ou 42 dias, o código calcula a média apenas com os dias disponíveis. Consequentemente, um valor apresentado no início do histórico pode não representar uma janela completa.
+
+Quando a carga crónica é superior a zero, o ramp rate é calculado por:
+
+`ramp rate = (carga aguda − carga crónica) ÷ carga crónica × 100`
+
+O resultado representa a diferença percentual entre a média recente e a média de referência:
+
+- `0%` significa que as duas médias são iguais;
+- um valor positivo significa carga recente superior à referência;
+- um valor negativo significa carga recente inferior à referência.
+
+O Training Load Score é calculado por:
+
+`score = 100 − valor absoluto do ramp rate`
+
+O resultado é arredondado e limitado ao intervalo de 0 a 100.
+
+Exemplos:
+
+- ramp rate de `0%` produz score 100;
+- ramp rate de `+20%` produz score 80;
+- ramp rate de `-20%` também produz score 80;
+- ramp rate de `+100%` ou `-100%` produz score 0.
+
+Por usar o valor absoluto, o score mede proximidade à carga de referência e não a direção da mudança. O mesmo score pode representar aumento ou redução de carga.
+
+O score não mede:
+
+- fitness;
+- fadiga;
+- recuperação;
+- qualidade do treino;
+- adaptação fisiológica;
+- risco individual de lesão;
+- preparação para competir.
+
+É um índice heurístico de estabilidade relativa da carga. Um score elevado significa apenas que a média recente está próxima da média de referência segundo estas janelas.
+
+Os estados atuais do cartão usam a razão entre carga aguda e carga crónica:
+
+| Razão aguda/crónica | Estado |
+|---:|---|
+| inferior a 0,8 | `Detraining` |
+| 0,8 a menos de 1,0 | `Maintaining` |
+| 1,0 a 1,3 | `Optimal` |
+| superior a 1,3 e até 1,5 | `High load` |
+| superior a 1,5 | `Overreaching` |
+
+Estes nomes são heurísticas do produto e não diagnósticos fisiológicos. Em particular, “Optimal” não demonstra que uma carga seja ideal para aquele atleta e “Overreaching” não confirma um estado fisiológico de overreaching.
+
+Quando a carga crónica é zero, o código define atualmente ramp rate e score como zero. A apresentação pública deverá distinguir ausência de histórico suficiente de um ramp rate realmente calculado.
+
 ---
 
 ## 8. ACWR, monotonia e strain
