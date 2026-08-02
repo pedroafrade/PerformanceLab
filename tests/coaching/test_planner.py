@@ -33,7 +33,10 @@ from performancelab.training.planning import (
 from performancelab.coaching.strategy import (
     StrategyPlan,
 )
-from performancelab.training.planning.planner import Planner
+from performancelab.training.planning.planner import (
+    MAX_PLANNED_WEEKLY_LOAD_GROWTH,
+    Planner,
+)
 
 from performancelab.training.config import (
     Weekday,
@@ -1371,4 +1374,64 @@ def test_weekly_load_limit_preserves_pre_race_workout():
         "Pre-Race Easy Run",
         "Shakeout Run",
         "Race",
+    )
+
+def test_weekly_load_growth_limit_is_ten_percent():
+
+    assert (
+        MAX_PLANNED_WEEKLY_LOAD_GROWTH
+        == pytest.approx(0.10)
+    )
+
+
+def test_weekly_load_limit_preserves_long_run_even_above_limit():
+
+    long_run = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+        ),
+        sport="Trail Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    weekly_plan = WeeklyPlan(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        workouts=[
+            long_run,
+        ],
+    )
+
+    result = (
+        Planner._limit_weekly_load_growth(
+            weekly_plan=weekly_plan,
+            previous_weekly_load=100.0,
+        )
+    )
+
+    assert tuple(
+        result.workouts
+    ) == (
+        long_run,
+    )
+
+    assert (
+        planned_weekly_load(
+            result.workouts
+        )
+        > 110.0
     )
