@@ -94,8 +94,8 @@ class TrainingPlanAdapter:
                         WorkoutOutcomeStatus.SUBSTITUTE,
                     }
                     and (
-                        outcome.load_difference is None
-                        or outcome.load_difference < 0
+                        outcome.load_difference is not None
+                        and outcome.load_difference < 0
                     )
                 )
             )

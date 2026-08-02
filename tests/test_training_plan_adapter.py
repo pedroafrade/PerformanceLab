@@ -714,3 +714,36 @@ def test_underload_prefers_planned_sport_family():
         adapted.workouts[2].duration
         == timedelta(minutes=63)
     )
+
+def test_unknown_substitute_load_preserves_plan():
+
+    plan = make_plan()
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(
+            outcome,
+        ),
+        training_state=(
+            make_training_state()
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts
+        == plan.workouts
+    )

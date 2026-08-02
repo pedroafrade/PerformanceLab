@@ -61,7 +61,7 @@ def make_plan() -> TrainingPlan:
                 duration=timedelta(
                     minutes=50,
                 ),
-                intensity="Tempo",
+                intensity="Hard",
             ),
             PlannedWorkout(
                 scheduled_at=datetime(
