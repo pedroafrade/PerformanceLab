@@ -314,6 +314,66 @@ def test_next_workout_remains_anchored_to_today():
         planning.next_workout.title
         == "Current Workout"
     )
+
+def test_next_workout_skips_completed_planned_day():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+    future_day = today + timedelta(
+        days=2
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            today,
+            time.min,
+        ),
+        sport="Trail Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            future_day,
+            time.min,
+        ),
+        sport="Road Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+    )
+
+    athlete.history.add(
+        create_workout(
+            today,
+            timedelta(
+                minutes=152,
+            ),
+            7.5,
+        )
+    )
+
+    planning = DashboardData(
+        athlete
+    ).planning
+
+    assert (
+        planning.next_workout.title
+        == "LT2 Run"
+    )
+
+    assert (
+        planning.next_workout.scheduled_at.date()
+        == future_day
+    )
+
 def test_weekly_plan_day_carries_workout_structure():
 
     day = WeeklyPlanDayData(

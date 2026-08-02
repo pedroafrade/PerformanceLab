@@ -222,6 +222,41 @@ class PlanningPresenter:
         return "rest"
 
     # ======================================================
+    def _next_uncompleted_workout(self):
+        """
+        Returns the next planned workout whose calendar
+        day does not already contain a completed activity.
+        """
+
+        completed_days = set(
+            self._completed_workouts()
+        )
+
+        reference = (
+            self._next_workout_reference()
+        )
+
+        workout_source = (
+            self.training_plan
+            if self.training_plan is not None
+            else self.plan
+        )
+
+        return next(
+            (
+                workout
+                for workout in workout_source
+                if (
+                    workout.scheduled_at
+                    >= reference
+                    and workout.day
+                    not in completed_days
+                )
+            ),
+            None,
+        )
+
+    # ======================================================
 
     def _weekly_plan(self):
 
@@ -235,8 +270,8 @@ class PlanningPresenter:
             self._outcomes_by_day()
         )
 
-        next_workout = self.plan.next_workout(
-            reference=self._next_workout_reference(),
+        next_workout = (
+            self._next_uncompleted_workout()
         )
 
         next_workout_day = None
@@ -419,8 +454,8 @@ class PlanningPresenter:
 
     def _next_workout(self):
 
-        workout = self.plan.next_workout(
-            reference=self._next_workout_reference(),
+        workout = (
+            self._next_uncompleted_workout()
         )
 
         if workout is None:
@@ -444,8 +479,8 @@ class PlanningPresenter:
 
     def _coach_recommendation(self):
 
-        next_workout = self.plan.next_workout(
-            reference=self._next_workout_reference(),
+        next_workout = (
+            self._next_uncompleted_workout()
         )
 
         if next_workout is None:
