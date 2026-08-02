@@ -464,6 +464,22 @@ def test_existing_reconciliation_bootstraps_workout_ids():
     )
 
     assert (
+        bootstrapped
+        .reconciled_workout_signatures
+        == (
+            (
+                "existing-workout",
+                (
+                    "2026-08-04",
+                    "running",
+                    3000.0,
+                    None,
+                ),
+            ),
+        )
+    )
+
+    assert (
         bootstrapped.workouts
         == plan.workouts
     )
@@ -676,3 +692,98 @@ def test_late_workout_is_assessed_with_multiple_same_day():
         reconciled.workouts[1].duration
         == timedelta(minutes=63)
     )
+def test_existing_ids_bootstrap_signatures_once():
+
+    plan = make_plan()
+
+    plan.reconciled_through = date(
+        2026,
+        8,
+        4,
+    )
+
+    plan.reconciled_workout_ids = (
+        "existing-workout",
+    )
+
+    history = History()
+
+    completed = Workout(
+        workout_id="existing-workout",
+    )
+
+    completed.info.date = datetime(
+        2026,
+        8,
+        4,
+        9,
+        0,
+    )
+
+    completed.info.sport = "Running"
+
+    completed.info.duration = timedelta(
+        minutes=50,
+    )
+
+    completed.feedback.rpe = 6
+
+    history.add(completed)
+
+    reconciler = TrainingPlanReconciler()
+
+    bootstrapped = reconciler.reconcile(
+        plan=plan,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert bootstrapped is not plan
+
+    assert (
+        bootstrapped
+        .reconciled_workout_signatures
+        == (
+            (
+                "existing-workout",
+                (
+                    "2026-08-04",
+                    "running",
+                    3000.0,
+                    6.0,
+                ),
+            ),
+        )
+    )
+
+    assert (
+        bootstrapped.workouts
+        == plan.workouts
+    )
+
+    assert (
+        bootstrapped.workouts[1].duration
+        == timedelta(minutes=60)
+    )
+
+    repeated = reconciler.reconcile(
+        plan=bootstrapped,
+        history=history,
+        training_state=(
+            make_training_state()
+        ),
+        through_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert repeated is bootstrapped

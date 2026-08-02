@@ -89,7 +89,7 @@ class TrainingPlanReconciler:
             if not reconciled_workout_ids:
                 return plan
 
-            return replace(
+            bootstrapped = replace(
                 plan,
                 reconciled_workout_ids=(
                     reconciled_workout_ids
@@ -98,6 +98,51 @@ class TrainingPlanReconciler:
                     plan.workouts
                 ),
             )
+
+            return replace(
+                bootstrapped,
+                reconciled_workout_signatures=(
+                    self._collect_workout_signatures(
+                        plan=bootstrapped,
+                        history=history,
+                        through_day=(
+                            previous_boundary
+                        ),
+                    )
+                ),
+                workouts=list(
+                    bootstrapped.workouts
+                ),
+            )
+        if (
+            is_closed_period
+            and plan.reconciled_workout_ids
+            and not (
+                plan.reconciled_workout_signatures
+            )
+        ):
+
+            reconciled_workout_signatures = (
+                self._collect_workout_signatures(
+                    plan=plan,
+                    history=history,
+                    through_day=(
+                        previous_boundary
+                    ),
+                )
+            )
+
+            if reconciled_workout_signatures:
+
+                plan = replace(
+                    plan,
+                    reconciled_workout_signatures=(
+                        reconciled_workout_signatures
+                    ),
+                    workouts=list(
+                        plan.workouts
+                    ),
+                )
 
         new_workout_ids = (
             self._unreconciled_workout_ids(
@@ -202,6 +247,16 @@ class TrainingPlanReconciler:
 
         adapted.reconciled_workout_ids = (
             self._collect_workout_ids(
+                plan=adapted,
+                history=history,
+                through_day=(
+                    adapted.reconciled_through
+                ),
+            )
+        )
+
+        adapted.reconciled_workout_signatures = (
+            self._collect_workout_signatures(
                 plan=adapted,
                 history=history,
                 through_day=(
@@ -361,6 +416,79 @@ class TrainingPlanReconciler:
             )
             if workout_id
             not in known_workout_ids
+        )
+
+    # ======================================================
+    @classmethod
+    def _collect_workout_signatures(
+        cls,
+        *,
+        plan: TrainingPlan,
+        history: History,
+        through_day: date,
+    ):
+        """
+        Collects the current reconciliation signature for
+        every processed workout inside the closed horizon.
+        """
+
+        known_workout_ids = set(
+            plan.reconciled_workout_ids
+        )
+
+        signatures_by_id = dict(
+            plan.reconciled_workout_signatures
+        )
+
+        for workout in history:
+
+            if (
+                workout.workout_id
+                not in known_workout_ids
+            ):
+                continue
+
+            workout_day = cls._workout_day(
+                workout
+            )
+
+            if workout_day is None:
+                continue
+
+            if workout_day > through_day:
+                continue
+
+            if (
+                plan.start_date is not None
+                and workout_day
+                < plan.start_date
+            ):
+                continue
+
+            if (
+                plan.end_date is not None
+                and workout_day
+                > plan.end_date
+            ):
+                continue
+
+            signatures_by_id[
+                workout.workout_id
+            ] = (
+                workout.reconciliation_signature
+            )
+
+        return tuple(
+            (
+                workout_id,
+                signatures_by_id[
+                    workout_id
+                ],
+            )
+            for workout_id
+            in plan.reconciled_workout_ids
+            if workout_id
+            in signatures_by_id
         )
 
     # ======================================================
