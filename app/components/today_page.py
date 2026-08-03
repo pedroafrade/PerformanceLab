@@ -15,6 +15,12 @@ from performancelab.presentation import (
 from .dashboard.cards.next_workout_card import (
     next_workout_card,
 )
+from .dashboard.cards.latest_activity_card import (
+    latest_activity_card,
+)
+from .dashboard.cards.next_event_card import (
+    next_event_card,
+)
 from .dashboard.cards.recovery_card import (
     recovery_card,
 )
@@ -188,6 +194,76 @@ def _show_today_session(
             f"{index}. {step}"
         )
 
+def _outcome_label(
+    status: str | None,
+) -> str:
+    """
+    Returns a readable activity outcome.
+    """
+
+    labels = {
+        "equivalent": "Equivalent",
+        "modified": "Modified",
+        "substitute": "Substitute",
+        "unplanned": "Unplanned",
+        "outside_plan": "Outside plan",
+    }
+
+    if status is None:
+        return "Not compared"
+
+    return labels.get(
+        status,
+        status.replace(
+            "_",
+            " ",
+        ).title(),
+    )
+
+
+def _activity_outcome_summary(
+    activity,
+) -> str:
+    """
+    Summarises how the latest activity compared
+    with the plan.
+    """
+
+    if activity is None:
+        return (
+            "No recent activity is available."
+        )
+
+    parts = [
+        _outcome_label(
+            activity.outcome_status
+        )
+    ]
+
+    if activity.planned_title:
+
+        parts.append(
+            (
+                "Planned: "
+                f"{activity.planned_title}"
+            )
+        )
+
+    if (
+        activity.load_difference
+        is not None
+    ):
+
+        parts.append(
+            (
+                "Load difference: "
+                f"{activity.load_difference:+.0f} AU"
+            )
+        )
+
+    return " · ".join(
+        parts
+    )
 
 def show_today_page(
     athlete,
@@ -279,5 +355,47 @@ def show_today_page(
             training_load_card(
                 today.training_load
             )
+    st.markdown(
+        "### Recent context"
+    )
 
+    activity_column, event_column = (
+        st.columns(
+            [1.4, 1],
+            gap="large",
+        )
+    )
+
+    with activity_column:
+
+        with dashboard_widget(
+            title="Latest activity",
+            icon=":material/history:",
+            divider=True,
+        ):
+
+            st.markdown(
+                (
+                    "**Plan result:** "
+                    f"{_activity_outcome_summary(
+                        today.latest_activity_summary
+                    )}"
+                )
+            )
+
+            latest_activity_card(
+                today.latest_activity
+            )
+
+    with event_column:
+
+        with dashboard_widget(
+            title="Next event",
+            icon=":material/event:",
+            divider=True,
+        ):
+
+            next_event_card(
+                today.next_event
+            )
     return None

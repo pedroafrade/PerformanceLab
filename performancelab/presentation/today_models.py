@@ -6,7 +6,9 @@ Today presentation models.
 
 from dataclasses import dataclass
 from datetime import date
-
+from .activity_models import (
+    ActivityListItemData,
+)
 from .dashboard_models import (
     CoachRecommendationData,
     LatestActivityCardData,
@@ -41,7 +43,10 @@ class TodayData:
     latest_activity: (
         LatestActivityCardData
     )
-
+    latest_activity_summary: (
+        ActivityListItemData
+        | None
+    )
     recovery: RecoveryCardData
 
     training_load: (

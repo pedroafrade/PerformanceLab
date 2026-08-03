@@ -205,3 +205,20 @@ def test_completed_today_moves_to_next_workout():
         .date()
         == future_day
     )
+
+    assert (
+        result.latest_activity_summary
+        is not None
+    )
+
+    assert (
+        result.latest_activity_summary
+        .title
+        == "Easy Run"
+    )
+
+    assert (
+        result.latest_activity_summary
+        .planned_title
+        == "Easy Run"
+    )

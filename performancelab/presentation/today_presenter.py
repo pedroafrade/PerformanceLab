@@ -18,6 +18,9 @@ from performancelab.training.planning.planner import (
 )
 
 from .dashboard import DashboardData
+from .activities_presenter import (
+    ActivitiesPresenter,
+)
 from .planning_presenter import (
     PlanningPresenter,
 )
@@ -82,7 +85,21 @@ class TodayPresenter:
             ),
             None,
         )
+        activities = ActivitiesPresenter(
+            self.athlete.history,
+            training_plan=(
+                self.athlete.training_plan
+            ),
+            reference_day=(
+                reference_day
+            ),
+        ).build()
 
+        latest_activity_summary = (
+            activities[0]
+            if activities
+            else None
+        )
         return TodayData(
             reference_day=reference_day,
             today_session=today_session,
@@ -92,6 +109,9 @@ class TodayPresenter:
             coach=planning.coach,
             latest_activity=(
                 dashboard.latest_activity
+            ),
+            latest_activity_summary=(
+                latest_activity_summary
             ),
             recovery=(
                 dashboard.recovery

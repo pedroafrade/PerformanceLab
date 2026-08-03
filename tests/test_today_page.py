@@ -6,7 +6,9 @@ from datetime import timedelta
 from types import SimpleNamespace
 
 from app.components.today_page import (
+    _activity_outcome_summary,
     _duration_label,
+    _outcome_label,
     _today_session_metadata,
     _today_session_status,
     _today_session_title,
@@ -139,4 +141,46 @@ def test_displays_rest_day():
             session
         )
         == "Recovery"
+    )
+
+def test_formats_activity_outcome():
+
+    activity = SimpleNamespace(
+        outcome_status="substitute",
+        planned_title="Long Run",
+        load_difference=744.0,
+    )
+
+    assert (
+        _outcome_label(
+            "substitute"
+        )
+        == "Substitute"
+    )
+
+    assert (
+        _activity_outcome_summary(
+            activity
+        )
+        == (
+            "Substitute · "
+            "Planned: Long Run · "
+            "Load difference: +744 AU"
+        )
+    )
+
+
+def test_formats_activity_outside_plan():
+
+    activity = SimpleNamespace(
+        outcome_status="outside_plan",
+        planned_title=None,
+        load_difference=None,
+    )
+
+    assert (
+        _activity_outcome_summary(
+            activity
+        )
+        == "Outside plan"
     )
