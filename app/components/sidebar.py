@@ -129,36 +129,41 @@ def _sidebar_styles(
             margin:
                 clamp(-0.55rem, -0.8vh, -0.2rem)
                 0
-                0;
+                0.35rem;
+            overflow: visible;
         }}
 
         .st-key-sidebar_brand button {{
-            width: auto;
-            min-width: 0;
-            min-height: 0;
-            height: auto;
-            margin: 0;
-            padding: 0 0.45rem;
-            justify-content: flex-start;
+            width: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 0.45rem !important;
+            justify-content: flex-start !important;
+            overflow: visible !important;
             border: 0 !important;
-            border-radius: 0;
+            border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
             color: inherit !important;
-            font-size: clamp(1.02rem, 2.2vh, 1.3rem);
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            line-height: 1.15;
+        }}
+
+        .st-key-sidebar_brand button,
+        .st-key-sidebar_brand button div,
+        .st-key-sidebar_brand button p,
+        .st-key-sidebar_brand button span {{
+            color: inherit !important;
+            font-size: 2rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.06em !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
         }}
 
         .st-key-sidebar_brand button p {{
-            width: auto;
-            margin: 0;
-            color: inherit !important;
-            font-size: inherit;
-            font-weight: inherit;
-            letter-spacing: inherit;
-            line-height: inherit;
+            width: auto !important;
+            margin: 0 !important;
         }}
 
         .st-key-sidebar_brand button:hover,
