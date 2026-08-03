@@ -84,6 +84,8 @@ def test_builds_activity_table_rows():
             "Duration": "2h 32m",
             "Elevation": "980 m",
             "RPE": 7.5,
+            "Plan result": "Unplanned",
+            "Planned": "—",
         }
     ]
 
@@ -283,3 +285,41 @@ def test_returns_none_for_missing_activity():
     )
 
     assert result is None
+
+
+
+def test_displays_planned_activity_outcome():
+
+    activity = ActivityListItemData(
+        workout_id="activity-3",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Volta da Ericeira",
+        sport="Cycling",
+        distance=50.3,
+        duration=timedelta(
+            hours=2,
+            minutes=32,
+        ),
+        elevation_gain=980,
+        rpe=7.5,
+        outcome_status="substitute",
+        planned_title="Long Run",
+        load_difference=500,
+    )
+
+    row = _activity_rows(
+        (
+            activity,
+        )
+    )[0]
+
+    assert row["Plan result"] == (
+        "Substitute"
+    )
+    assert row["Planned"] == (
+        "Long Run"
+    )

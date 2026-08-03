@@ -23,9 +23,18 @@ class ActivitiesPresenter:
     def __init__(
         self,
         history,
+        *,
+        training_plan=None,
+        reference_day: date | None = None,
     ) -> None:
 
         self.history = history
+        self.training_plan = training_plan
+        self.reference_day = (
+            reference_day
+            if reference_day is not None
+            else date.today()
+        )
 
     @staticmethod
     def _sortable_date(
@@ -33,9 +42,6 @@ class ActivitiesPresenter:
     ) -> datetime:
         """
         Converts activity dates into comparable datetimes.
-
-        Activities without a date are placed after dated
-        activities.
         """
 
         if value is None:
@@ -70,9 +76,44 @@ class ActivitiesPresenter:
 
         return value
 
+    def _outcomes_by_workout_id(
+        self,
+    ) -> dict[str, object]:
+        """
+        Indexes plan outcomes by completed workout ID.
+        """
+
+        if self.training_plan is None:
+            return {}
+
+        outcomes = (
+            self.training_plan
+            .assess_outcomes(
+                history=self.history,
+                reference_day=(
+                    self.reference_day
+                ),
+            )
+        )
+
+        return {
+            str(
+                outcome
+                .completed_workout
+                .workout_id
+            ): outcome
+            for outcome in outcomes
+            if (
+                outcome.completed_workout
+                is not None
+            )
+        }
+
     @staticmethod
     def _item_from_workout(
         workout,
+        *,
+        outcome=None,
     ) -> ActivityListItemData:
         """
         Builds one immutable activity list item.
@@ -81,6 +122,26 @@ class ActivitiesPresenter:
         effective_rpe = (
             workout.feedback.effective_rpe
         )
+
+        outcome_status = None
+        planned_title = None
+        load_difference = None
+
+        if outcome is not None:
+
+            outcome_status = (
+                outcome.status.value
+            )
+
+            planned_title = (
+                outcome
+                .planned_workout
+                .title
+            )
+
+            load_difference = (
+                outcome.load_difference
+            )
 
         return ActivityListItemData(
             workout_id=str(
@@ -111,6 +172,13 @@ class ActivitiesPresenter:
             rpe=(
                 float(effective_rpe)
                 if effective_rpe is not None
+                else None
+            ),
+            outcome_status=outcome_status,
+            planned_title=planned_title,
+            load_difference=(
+                float(load_difference)
+                if load_difference is not None
                 else None
             ),
         )
@@ -184,9 +252,16 @@ class ActivitiesPresenter:
             reverse=True,
         )
 
+        outcomes_by_id = (
+            self._outcomes_by_workout_id()
+        )
+
         activities = tuple(
             self._item_from_workout(
-                workout
+                workout,
+                outcome=outcomes_by_id.get(
+                    str(workout.workout_id)
+                ),
             )
             for workout in workouts
         )

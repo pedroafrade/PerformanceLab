@@ -23,6 +23,11 @@ class ActivityListItemData:
     elevation_gain: float | None
     rpe: float | None
 
+    outcome_status: str | None = None
+    planned_title: str | None = None
+    load_difference: float | None = None
+
+
 @dataclass(frozen=True)
 class ActivityFilters:
     """

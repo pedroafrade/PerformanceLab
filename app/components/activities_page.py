@@ -65,6 +65,16 @@ def _activity_rows(
                 if activity.rpe is not None
                 else "—"
             ),
+            "Plan result": (
+                activity.outcome_status.title()
+                if activity.outcome_status
+                is not None
+                else "Unplanned"
+            ),
+            "Planned": (
+                activity.planned_title
+                or "—"
+            ),
         }
         for activity in activities
     ]
@@ -162,7 +172,11 @@ def show_activities_page(
         )
 
     presenter = ActivitiesPresenter(
-        athlete.history
+        athlete.history,
+        training_plan=(
+            athlete.training_plan
+        ),
+        reference_day=date.today(),
     )
 
     all_activities = presenter.build()
@@ -347,6 +361,34 @@ def show_activities_page(
         f"{selected_activity.sport} · "
         f"{format_workout_date(selected_activity.workout_date)}"
     )
+
+    if (
+        selected_activity.outcome_status
+        is not None
+    ):
+
+        outcome_label = (
+            selected_activity
+            .outcome_status
+            .title()
+        )
+
+        planned_label = (
+            selected_activity.planned_title
+            or "Planned workout"
+        )
+
+        st.info(
+            f"{outcome_label} · "
+            f"Planned: {planned_label}"
+        )
+
+    else:
+
+        st.caption(
+            "This activity was not associated "
+            "with a planned workout."
+        )
 
     show_workout_details(
         selected_workout

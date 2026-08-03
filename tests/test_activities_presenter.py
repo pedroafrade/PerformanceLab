@@ -3,7 +3,7 @@ Tests for ActivitiesPresenter.
 """
 
 from dataclasses import FrozenInstanceError
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -16,6 +16,11 @@ from performancelab.presentation import (
 )
 from performancelab.workout import (
     Workout,
+)
+
+from performancelab.training.planning import (
+    PlannedWorkout,
+    TrainingPlan,
 )
 
 
@@ -334,4 +339,110 @@ def test_filters_activities_by_date_range():
         for activity in result
     ) == (
         "Recent run",
+    )
+
+
+
+def test_attaches_plan_outcome_to_activity():
+
+    completed = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Volta da Ericeira",
+        sport="Cycling",
+        duration=timedelta(
+            minutes=60,
+        ),
+        rpe=7,
+    )
+
+    planned = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            2,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Hard",
+    )
+
+    history = History(
+        workouts=[
+            completed,
+        ]
+    )
+
+    result = ActivitiesPresenter(
+        history,
+        training_plan=TrainingPlan(
+            workouts=[
+                planned,
+            ]
+        ),
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    ).build()
+
+    assert (
+        result[0].outcome_status
+        == "substitute"
+    )
+    assert (
+        result[0].planned_title
+        == "Long Run"
+    )
+    assert (
+        result[0].load_difference
+        == 0
+    )
+
+
+def test_unplanned_activity_has_no_outcome():
+
+    completed = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Unplanned run",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                completed,
+            ]
+        ),
+        training_plan=TrainingPlan(),
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    ).build()
+
+    assert (
+        result[0].outcome_status
+        is None
+    )
+    assert (
+        result[0].planned_title
+        is None
+    )
+    assert (
+        result[0].load_difference
+        is None
     )
