@@ -10,7 +10,12 @@ from .activity_models import (
 from .activities_presenter import (
     ActivitiesPresenter,
 )
-
+from .development_models import (
+    DevelopmentData,
+)
+from .development_presenter import (
+    DevelopmentPresenter,
+)
 from .calendar_models import (
     CalendarDayData,
     CalendarItemData,
@@ -91,6 +96,11 @@ __all__ = [
     "PlanPresenter",
     "PlanWeekData",
     "PlanWorkoutData",
+
+    # Development
+    "DevelopmentData",
+    "DevelopmentPresenter",
+
 
     # Dashboard
     "DashboardData",
