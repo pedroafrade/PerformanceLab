@@ -37,6 +37,14 @@ _PERIOD_OPTIONS = (
 )
 
 
+_OUTCOME_OPTIONS = (
+    "All results",
+    "Equivalent",
+    "Modified",
+    "Substitute",
+    "Unplanned",
+)
+
 def _activity_rows(
     activities,
 ) -> list[dict]:
@@ -114,6 +122,19 @@ def _format_load(
         return f"{value:+.0f} AU"
 
     return f"{value:.0f} AU"
+
+
+def _outcome_filter_value(
+    label: str,
+) -> str | None:
+    """
+    Converts the visible outcome label into a filter value.
+    """
+
+    if label == "All results":
+        return None
+
+    return label.casefold()
 
 def _period_start_date(
     period: str,
@@ -219,9 +240,10 @@ def show_activities_page(
     (
         search_column,
         sport_column,
+        outcome_column,
         period_column,
     ) = st.columns(
-        [2, 1, 1]
+        [2, 1, 1, 1]
     )
 
     with search_column:
@@ -243,6 +265,14 @@ def show_activities_page(
             key="activities_sport",
         )
 
+    with outcome_column:
+
+        selected_outcome = st.selectbox(
+            "Plan result",
+            options=_OUTCOME_OPTIONS,
+            key="activities_outcome",
+        )
+
     with period_column:
 
         selected_period = st.selectbox(
@@ -261,6 +291,11 @@ def show_activities_page(
                 if selected_sport
                 == "All sports"
                 else selected_sport
+            ),
+            outcome_status=(
+                _outcome_filter_value(
+                    selected_outcome
+                )
             ),
             start_date=(
                 _period_start_date(

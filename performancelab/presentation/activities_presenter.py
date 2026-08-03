@@ -228,7 +228,35 @@ class ActivitiesPresenter:
             != filters.sport.casefold()
         ):
             return False
+        if (
+            filters.outcome_status
+            is not None
+        ):
 
+            expected_status = (
+                filters
+                .outcome_status
+                .casefold()
+            )
+
+            if expected_status == "unplanned":
+
+                if (
+                    activity.outcome_status
+                    is not None
+                ):
+                    return False
+
+            elif (
+                activity.outcome_status
+                is None
+                or activity
+                .outcome_status
+                .casefold()
+                != expected_status
+            ):
+                return False
+            
         activity_day = cls._activity_day(
             activity.workout_date
         )

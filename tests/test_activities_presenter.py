@@ -13,6 +13,7 @@ from performancelab.history import (
 from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
+    ActivityListItemData,
 )
 from performancelab.workout import (
     Workout,
@@ -461,4 +462,81 @@ def test_unplanned_activity_has_no_outcome():
     assert (
         result[0].load_difference
         is None
+    )
+
+
+
+def test_filters_activity_by_plan_result():
+
+    activity = ActivityListItemData(
+        workout_id="modified-activity",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        sport="Running",
+        title="Shortened run",
+        distance=5,
+        duration=timedelta(
+            minutes=30,
+        ),
+        elevation_gain=0,
+        rpe=5,
+        outcome_status="modified",
+    )
+
+    assert ActivitiesPresenter._matches_filters(
+        activity,
+        ActivityFilters(
+            outcome_status="modified"
+        ),
+    )
+
+    assert not (
+        ActivitiesPresenter
+        ._matches_filters(
+            activity,
+            ActivityFilters(
+                outcome_status="equivalent"
+            ),
+        )
+    )
+
+
+def test_filters_unplanned_activity():
+
+    activity = ActivityListItemData(
+        workout_id="unplanned-activity",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        sport="Cycling",
+        title="Unplanned ride",
+        distance=40,
+        duration=timedelta(
+            hours=2,
+        ),
+        elevation_gain=500,
+        rpe=5,
+        outcome_status=None,
+    )
+
+    assert ActivitiesPresenter._matches_filters(
+        activity,
+        ActivityFilters(
+            outcome_status="unplanned"
+        ),
+    )
+
+    assert not (
+        ActivitiesPresenter
+        ._matches_filters(
+            activity,
+            ActivityFilters(
+                outcome_status="substitute"
+            ),
+        )
     )

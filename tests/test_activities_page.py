@@ -7,6 +7,7 @@ from datetime import date, timedelta
 from app.components.activities_page import (
     _activity_rows,
     _format_load,
+    _outcome_filter_value,
     _period_start_date,
     _total_duration,
     _workout_for_activity,
@@ -354,3 +355,33 @@ def test_formats_missing_activity_load():
     assert _format_load(
         None
     ) == "—"
+
+
+
+def test_converts_plan_result_filter():
+
+    assert _outcome_filter_value(
+        "Equivalent"
+    ) == "equivalent"
+
+    assert _outcome_filter_value(
+        "Modified"
+    ) == "modified"
+
+    assert _outcome_filter_value(
+        "Substitute"
+    ) == "substitute"
+
+    assert _outcome_filter_value(
+        "Unplanned"
+    ) == "unplanned"
+
+
+def test_all_plan_results_has_no_filter():
+
+    assert (
+        _outcome_filter_value(
+            "All results"
+        )
+        is None
+    )

@@ -38,5 +38,6 @@ class ActivityFilters:
 
     query: str = ""
     sport: str | None = None
+    outcome_status: str | None = None
     start_date: date | None = None
     end_date: date | None = None
