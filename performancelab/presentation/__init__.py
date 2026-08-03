@@ -11,6 +11,15 @@ from .activities_presenter import (
     ActivitiesPresenter,
 )
 
+from .calendar_models import (
+    CalendarDayData,
+    CalendarItemData,
+    CalendarMonthData,
+)
+from .calendar_presenter import (
+    CalendarPresenter,
+)
+
 from .card import (
     SensorCard,
     cadence_card,
@@ -61,6 +70,12 @@ __all__ = [
     "ActivityFilters",
     "ActivityListItemData",
     "ActivitiesPresenter",
+
+    # Calendar
+    "CalendarDayData",
+    "CalendarItemData",
+    "CalendarMonthData",
+    "CalendarPresenter",
 
     # Dashboard
     "DashboardData",
