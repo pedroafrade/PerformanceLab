@@ -23,7 +23,7 @@ def test_sidebar_uses_public_page_navigation():
     )
 
     assert routes == (
-        "dashboard",
+        "today",
         "training",
         "activities",
         "calendar",

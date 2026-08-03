@@ -20,7 +20,7 @@ from .i18n import translate
 
 _NAVIGATION_ITEMS = (
     (
-        "dashboard",
+        "today",
         "nav.today",
         ":material/home:",
     ),
@@ -463,7 +463,7 @@ def _show_navigation(
     """
 
     if "page" not in st.session_state:
-        st.session_state.page = "dashboard"
+        st.session_state.page = "today"
 
     with st.container(
         key="sidebar_navigation",
@@ -586,7 +586,7 @@ def show_sidebar(
 
     active_page = st.session_state.get(
         "page",
-        "dashboard",
+        "today",
     )
 
     with st.sidebar:
