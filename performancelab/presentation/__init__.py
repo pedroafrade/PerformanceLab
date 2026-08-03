@@ -20,6 +20,15 @@ from .calendar_presenter import (
     CalendarPresenter,
 )
 
+from .plan_models import (
+    CompletePlanData,
+    PlanWeekData,
+    PlanWorkoutData,
+)
+from .plan_presenter import (
+    PlanPresenter,
+)
+
 from .card import (
     SensorCard,
     cadence_card,
@@ -76,6 +85,12 @@ __all__ = [
     "CalendarItemData",
     "CalendarMonthData",
     "CalendarPresenter",
+
+    # Complete plan
+    "CompletePlanData",
+    "PlanPresenter",
+    "PlanWeekData",
+    "PlanWorkoutData",
 
     # Dashboard
     "DashboardData",
