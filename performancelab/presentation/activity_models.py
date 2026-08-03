@@ -22,3 +22,14 @@ class ActivityListItemData:
     duration: timedelta | None
     elevation_gain: float | None
     rpe: float | None
+
+@dataclass(frozen=True)
+class ActivityFilters:
+    """
+    Immutable filters applied to completed activities.
+    """
+
+    query: str = ""
+    sport: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None

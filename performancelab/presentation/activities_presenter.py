@@ -10,6 +10,7 @@ presentation-ready activity summaries.
 from datetime import date, datetime, time
 
 from .activity_models import (
+    ActivityFilters,
     ActivityListItemData,
 )
 
@@ -52,6 +53,22 @@ class ActivitiesPresenter:
             value,
             time.min,
         )
+
+    @staticmethod
+    def _activity_day(
+        value: date | datetime | None,
+    ) -> date | None:
+        """
+        Returns the calendar day of an activity.
+        """
+
+        if isinstance(
+            value,
+            datetime,
+        ):
+            return value.date()
+
+        return value
 
     @staticmethod
     def _item_from_workout(
@@ -98,8 +115,60 @@ class ActivitiesPresenter:
             ),
         )
 
+    @classmethod
+    def _matches_filters(
+        cls,
+        activity: ActivityListItemData,
+        filters: ActivityFilters,
+    ) -> bool:
+        """
+        Checks whether an activity satisfies all filters.
+        """
+
+        query = filters.query.strip().casefold()
+
+        if (
+            query
+            and query
+            not in activity.title.casefold()
+        ):
+            return False
+
+        if (
+            filters.sport is not None
+            and activity.sport.casefold()
+            != filters.sport.casefold()
+        ):
+            return False
+
+        activity_day = cls._activity_day(
+            activity.workout_date
+        )
+
+        if filters.start_date is not None:
+
+            if (
+                activity_day is None
+                or activity_day
+                < filters.start_date
+            ):
+                return False
+
+        if filters.end_date is not None:
+
+            if (
+                activity_day is None
+                or activity_day
+                > filters.end_date
+            ):
+                return False
+
+        return True
+
     def build(
         self,
+        *,
+        filters: ActivityFilters | None = None,
     ) -> tuple[ActivityListItemData, ...]:
         """
         Returns completed activities from newest to oldest.
@@ -115,9 +184,21 @@ class ActivitiesPresenter:
             reverse=True,
         )
 
-        return tuple(
+        activities = tuple(
             self._item_from_workout(
                 workout
             )
             for workout in workouts
+        )
+
+        if filters is None:
+            return activities
+
+        return tuple(
+            activity
+            for activity in activities
+            if self._matches_filters(
+                activity,
+                filters,
+            )
         )

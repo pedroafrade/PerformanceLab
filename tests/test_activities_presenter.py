@@ -12,6 +12,7 @@ from performancelab.history import (
 )
 from performancelab.presentation import (
     ActivitiesPresenter,
+    ActivityFilters,
 )
 from performancelab.workout import (
     Workout,
@@ -198,3 +199,139 @@ def test_activity_list_item_is_immutable():
         FrozenInstanceError
     ):
         activity.title = "Changed"
+
+
+
+def test_filters_activities_by_sport():
+
+    run = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            1,
+        ),
+        title="Morning run",
+        sport="Running",
+    )
+
+    ride = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Evening ride",
+        sport="Cycling",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                run,
+                ride,
+            ]
+        )
+    ).build(
+        filters=ActivityFilters(
+            sport="Cycling"
+        )
+    )
+
+    assert tuple(
+        activity.title
+        for activity in result
+    ) == (
+        "Evening ride",
+    )
+
+
+def test_filters_activities_by_title():
+
+    run = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            1,
+        ),
+        title="Morning Easy Run",
+    )
+
+    ride = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Long Ride",
+        sport="Cycling",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                run,
+                ride,
+            ]
+        )
+    ).build(
+        filters=ActivityFilters(
+            query="easy"
+        )
+    )
+
+    assert tuple(
+        activity.title
+        for activity in result
+    ) == (
+        "Morning Easy Run",
+    )
+
+
+def test_filters_activities_by_date_range():
+
+    older = create_activity(
+        workout_date=date(
+            2026,
+            6,
+            1,
+        ),
+        title="Older run",
+    )
+
+    recent = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Recent run",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                older,
+                recent,
+            ]
+        )
+    ).build(
+        filters=ActivityFilters(
+            start_date=date(
+                2026,
+                7,
+                5,
+            ),
+            end_date=date(
+                2026,
+                8,
+                3,
+            ),
+        )
+    )
+
+    assert tuple(
+        activity.title
+        for activity in result
+    ) == (
+        "Recent run",
+    )

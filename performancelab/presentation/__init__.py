@@ -4,6 +4,7 @@ PerformanceLab
 Presentation package.
 """
 from .activity_models import (
+    ActivityFilters,
     ActivityListItemData,
 )
 from .activities_presenter import (
@@ -57,6 +58,7 @@ from .route import (
 __all__ = [
 
     # Activities
+    "ActivityFilters",
     "ActivityListItemData",
     "ActivitiesPresenter",
 

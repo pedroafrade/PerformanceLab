@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from app.components.activities_page import (
     _activity_rows,
+    _period_start_date,
     _total_duration,
     show_activities_page,
 )
@@ -160,4 +161,52 @@ def test_calculates_total_activity_duration():
     ) == timedelta(
         hours=3,
         minutes=30,
+    )
+
+
+
+def test_last_thirty_days_start_date():
+
+    assert _period_start_date(
+        "Last 30 days",
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    ) == date(
+        2026,
+        7,
+        5,
+    )
+
+
+def test_this_year_start_date():
+
+    assert _period_start_date(
+        "This year",
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    ) == date(
+        2026,
+        1,
+        1,
+    )
+
+
+def test_all_time_has_no_start_date():
+
+    assert (
+        _period_start_date(
+            "All time",
+            reference_day=date(
+                2026,
+                8,
+                3,
+            ),
+        )
+        is None
     )

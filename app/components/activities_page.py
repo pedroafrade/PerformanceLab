@@ -4,12 +4,13 @@ PerformanceLab
 Activities page.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import streamlit as st
 
 from performancelab.presentation import (
     ActivitiesPresenter,
+    ActivityFilters,
 )
 
 from .workout_table import (
@@ -17,6 +18,14 @@ from .workout_table import (
     format_duration,
     format_elevation,
     format_workout_date,
+)
+
+
+_PERIOD_OPTIONS = (
+    "All time",
+    "Last 30 days",
+    "Last 90 days",
+    "This year",
 )
 
 
@@ -70,6 +79,37 @@ def _total_duration(
     )
 
 
+def _period_start_date(
+    period: str,
+    *,
+    reference_day: date,
+) -> date | None:
+    """
+    Converts a visible period option into a start date.
+    """
+
+    if period == "Last 30 days":
+
+        return reference_day - timedelta(
+            days=29
+        )
+
+    if period == "Last 90 days":
+
+        return reference_day - timedelta(
+            days=89
+        )
+
+    if period == "This year":
+
+        return reference_day.replace(
+            month=1,
+            day=1,
+        )
+
+    return None
+
+
 def show_activities_page(
     athlete,
 ) -> None:
@@ -83,11 +123,13 @@ def show_activities_page(
         "Review completed training and imported activity data."
     )
 
-    activities = ActivitiesPresenter(
+    presenter = ActivitiesPresenter(
         athlete.history
-    ).build()
+    )
 
-    if not activities:
+    all_activities = presenter.build()
+
+    if not all_activities:
 
         st.info(
             "No activities are available yet. "
@@ -95,6 +137,70 @@ def show_activities_page(
         )
 
         return
+
+    available_sports = sorted(
+        {
+            activity.sport
+            for activity in all_activities
+        },
+        key=str.casefold,
+    )
+
+    (
+        search_column,
+        sport_column,
+        period_column,
+    ) = st.columns(
+        [2, 1, 1]
+    )
+
+    with search_column:
+
+        query = st.text_input(
+            "Search activities",
+            placeholder="Search by activity name",
+            key="activities_search",
+        )
+
+    with sport_column:
+
+        selected_sport = st.selectbox(
+            "Sport",
+            options=(
+                "All sports",
+                *available_sports,
+            ),
+            key="activities_sport",
+        )
+
+    with period_column:
+
+        selected_period = st.selectbox(
+            "Period",
+            options=_PERIOD_OPTIONS,
+            key="activities_period",
+        )
+
+    today = date.today()
+
+    activities = presenter.build(
+        filters=ActivityFilters(
+            query=query,
+            sport=(
+                None
+                if selected_sport
+                == "All sports"
+                else selected_sport
+            ),
+            start_date=(
+                _period_start_date(
+                    selected_period,
+                    reference_day=today,
+                )
+            ),
+            end_date=today,
+        )
+    )
 
     total_duration = _total_duration(
         activities
@@ -105,9 +211,11 @@ def show_activities_page(
         for activity in activities
     }
 
-    activity_column, sport_column, duration_column = (
-        st.columns(3)
-    )
+    (
+        activity_column,
+        summary_sport_column,
+        duration_column,
+    ) = st.columns(3)
 
     with activity_column:
 
@@ -116,7 +224,7 @@ def show_activities_page(
             len(activities),
         )
 
-    with sport_column:
+    with summary_sport_column:
 
         st.metric(
             "Sports",
@@ -137,6 +245,14 @@ def show_activities_page(
     st.subheader(
         "Activity history"
     )
+
+    if not activities:
+
+        st.info(
+            "No activities match the selected filters."
+        )
+
+        return
 
     st.dataframe(
         _activity_rows(
