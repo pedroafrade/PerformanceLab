@@ -9,6 +9,10 @@ presentation-ready activity summaries.
 
 from datetime import date, datetime, time
 
+from performancelab.text import (
+    repair_mojibake,
+)
+
 from .activity_models import (
     ActivityFilters,
     ActivityListItemData,
@@ -190,10 +194,12 @@ class ActivitiesPresenter:
                 workout.sport
                 or "Other"
             ),
-            title=str(
-                workout.info.title
-                or workout.sport
-                or "Activity"
+            title=repair_mojibake(
+                str(
+                    workout.info.title
+                    or workout.sport
+                    or "Activity"
+                )
             ),
             distance=(
                 float(workout.distance)

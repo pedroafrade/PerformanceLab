@@ -591,3 +591,28 @@ def test_filters_unplanned_activity():
             ),
         )
     )
+
+
+
+def test_repairs_legacy_activity_title():
+
+    completed = create_activity(
+        workout_date=date(
+            2026,
+            7,
+            21,
+        ),
+        title="T75_RecuperaÃ§Ã£o",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                completed,
+            ]
+        )
+    ).build()
+
+    assert result[0].title == (
+        "T75_Recuperação"
+    )

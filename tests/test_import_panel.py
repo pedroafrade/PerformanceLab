@@ -470,3 +470,24 @@ def test_imported_activity_adapts_athlete_plan():
             "imported-overload",
         )
     )
+
+
+
+def test_repairs_imported_strava_title():
+
+    uploaded_file = SimpleNamespace(
+        name="activity.fit",
+    )
+
+    title = import_panel._activity_title(
+        uploaded_file,
+        {
+            "activity.fit": (
+                "T75_RecuperaÃ§Ã£o"
+            ),
+        },
+    )
+
+    assert title == (
+        "T75_Recuperação"
+    )

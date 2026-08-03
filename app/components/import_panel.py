@@ -16,7 +16,9 @@ from performancelab.importers import (
     FITImporter,
     GPXImporter,
 )
-
+from performancelab.text import (
+    repair_mojibake,
+)
 from performancelab.training.planning import (
     TrainingPlanReconciler,
 )
@@ -229,7 +231,9 @@ def _activity_title(
 
     if strava_title:
 
-        return strava_title
+        return repair_mojibake(
+            strava_title
+        )
 
     file_name = uploaded_file.name
 
@@ -239,7 +243,7 @@ def _activity_title(
 
         file_name = file_name[:-3]
 
-    return (
+    return repair_mojibake(
         file_name
         .rsplit(".", 1)[0]
     )
