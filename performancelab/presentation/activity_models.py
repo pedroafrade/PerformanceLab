@@ -25,6 +25,8 @@ class ActivityListItemData:
 
     outcome_status: str | None = None
     planned_title: str | None = None
+    planned_load: float | None = None
+    completed_load: float | None = None
     load_difference: float | None = None
 
 

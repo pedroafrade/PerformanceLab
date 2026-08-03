@@ -125,6 +125,8 @@ class ActivitiesPresenter:
 
         outcome_status = None
         planned_title = None
+        planned_load = None
+        completed_load = None
         load_difference = None
 
         if outcome is not None:
@@ -137,6 +139,14 @@ class ActivitiesPresenter:
                 outcome
                 .planned_workout
                 .title
+            )
+
+            planned_load = (
+                outcome.planned_load
+            )
+
+            completed_load = (
+                outcome.completed_load
             )
 
             load_difference = (
@@ -176,6 +186,16 @@ class ActivitiesPresenter:
             ),
             outcome_status=outcome_status,
             planned_title=planned_title,
+            planned_load=(
+                float(planned_load)
+                if planned_load is not None
+                else None
+            ),
+            completed_load=(
+                float(completed_load)
+                if completed_load is not None
+                else None
+            ),
             load_difference=(
                 float(load_difference)
                 if load_difference is not None

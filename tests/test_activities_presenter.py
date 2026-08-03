@@ -404,6 +404,14 @@ def test_attaches_plan_outcome_to_activity():
         == "Long Run"
     )
     assert (
+        result[0].planned_load
+        == 420
+    )
+    assert (
+        result[0].completed_load
+        == 420
+    )
+    assert (
         result[0].load_difference
         == 0
     )
@@ -440,6 +448,14 @@ def test_unplanned_activity_has_no_outcome():
     )
     assert (
         result[0].planned_title
+        is None
+    )
+    assert (
+        result[0].planned_load
+        is None
+    )
+    assert (
+        result[0].completed_load
         is None
     )
     assert (

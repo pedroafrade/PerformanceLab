@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from app.components.activities_page import (
     _activity_rows,
+    _format_load,
     _period_start_date,
     _total_duration,
     _workout_for_activity,
@@ -308,6 +309,8 @@ def test_displays_planned_activity_outcome():
         rpe=7.5,
         outcome_status="substitute",
         planned_title="Long Run",
+        planned_load=420,
+        completed_load=920,
         load_difference=500,
     )
 
@@ -323,3 +326,31 @@ def test_displays_planned_activity_outcome():
     assert row["Planned"] == (
         "Long Run"
     )
+
+
+
+def test_formats_activity_load():
+
+    assert _format_load(
+        420.4
+    ) == "420 AU"
+
+
+def test_formats_signed_load_difference():
+
+    assert _format_load(
+        90,
+        signed=True,
+    ) == "+90 AU"
+
+    assert _format_load(
+        -90,
+        signed=True,
+    ) == "-90 AU"
+
+
+def test_formats_missing_activity_load():
+
+    assert _format_load(
+        None
+    ) == "—"

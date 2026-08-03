@@ -97,6 +97,24 @@ def _total_duration(
     )
 
 
+
+def _format_load(
+    value: float | None,
+    *,
+    signed: bool = False,
+) -> str:
+    """
+    Formats session-RPE load in arbitrary units.
+    """
+
+    if value is None:
+        return "—"
+
+    if signed:
+        return f"{value:+.0f} AU"
+
+    return f"{value:.0f} AU"
+
 def _period_start_date(
     period: str,
     *,
@@ -381,6 +399,46 @@ def show_activities_page(
         st.info(
             f"{outcome_label} · "
             f"Planned: {planned_label}"
+        )
+        (
+            planned_load_column,
+            completed_load_column,
+            difference_column,
+        ) = st.columns(3)
+
+        with planned_load_column:
+
+            st.metric(
+                "Planned load",
+                _format_load(
+                    selected_activity.planned_load
+                ),
+            )
+
+        with completed_load_column:
+
+            st.metric(
+                "Completed load",
+                _format_load(
+                    selected_activity.completed_load
+                ),
+            )
+
+        with difference_column:
+
+            st.metric(
+                "Load difference",
+                _format_load(
+                    selected_activity.load_difference,
+                    signed=True,
+                ),
+            )
+
+        st.caption(
+            "Session-RPE load is calculated from "
+            "duration × RPE. Planned running load may "
+            "also include the conservative elevation "
+            "adjustment defined by PerformanceLab."
         )
 
     else:
