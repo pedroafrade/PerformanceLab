@@ -108,12 +108,38 @@ class ActivitiesPresenter:
                 is not None
             )
         }
+    def _status_without_outcome(
+        self,
+        workout,
+    ) -> str | None:
+        """
+        Classifies an activity without an associated
+        planned workout.
+        """
 
+        if self.training_plan is None:
+            return None
+
+        workout_day = self._activity_day(
+            workout.date
+        )
+
+        if workout_day is None:
+            return None
+
+        if self.training_plan.covers(
+            workout_day
+        ):
+            return "unplanned"
+
+        return "outside_plan"
+    
     @staticmethod
     def _item_from_workout(
         workout,
         *,
         outcome=None,
+        status_without_outcome: str | None = None,
     ) -> ActivityListItemData:
         """
         Builds one immutable activity list item.
@@ -123,7 +149,9 @@ class ActivitiesPresenter:
             workout.feedback.effective_rpe
         )
 
-        outcome_status = None
+        outcome_status = (
+            status_without_outcome
+        )
         planned_title = None
         planned_load = None
         completed_load = None
@@ -239,15 +267,7 @@ class ActivitiesPresenter:
                 .casefold()
             )
 
-            if expected_status == "unplanned":
-
-                if (
-                    activity.outcome_status
-                    is not None
-                ):
-                    return False
-
-            elif (
+            if (
                 activity.outcome_status
                 is None
                 or activity
@@ -309,6 +329,11 @@ class ActivitiesPresenter:
                 workout,
                 outcome=outcomes_by_id.get(
                     str(workout.workout_id)
+                ),
+                status_without_outcome=(
+                    self._status_without_outcome(
+                        workout
+                    )
                 ),
             )
             for workout in workouts

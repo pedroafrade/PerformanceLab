@@ -418,7 +418,7 @@ def test_attaches_plan_outcome_to_activity():
     )
 
 
-def test_unplanned_activity_has_no_outcome():
+def test_activity_inside_plan_can_be_unplanned():
 
     completed = create_activity(
         workout_date=date(
@@ -435,7 +435,18 @@ def test_unplanned_activity_has_no_outcome():
                 completed,
             ]
         ),
-        training_plan=TrainingPlan(),
+        training_plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                1,
+            ),
+            end_date=date(
+                2026,
+                8,
+                31,
+            ),
+        ),
         reference_day=date(
             2026,
             8,
@@ -445,7 +456,7 @@ def test_unplanned_activity_has_no_outcome():
 
     assert (
         result[0].outcome_status
-        is None
+        == "unplanned"
     )
     assert (
         result[0].planned_title
@@ -465,6 +476,46 @@ def test_unplanned_activity_has_no_outcome():
     )
 
 
+def test_activity_before_plan_is_outside_plan():
+
+    completed = create_activity(
+        workout_date=date(
+            2026,
+            7,
+            20,
+        ),
+        title="Historical run",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                completed,
+            ]
+        ),
+        training_plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                1,
+            ),
+            end_date=date(
+                2026,
+                8,
+                31,
+            ),
+        ),
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    ).build()
+
+    assert (
+        result[0].outcome_status
+        == "outside_plan"
+    )
 
 def test_filters_activity_by_plan_result():
 
@@ -521,7 +572,7 @@ def test_filters_unplanned_activity():
         ),
         elevation_gain=500,
         rpe=5,
-        outcome_status=None,
+        outcome_status="unplanned",
     )
 
     assert ActivitiesPresenter._matches_filters(

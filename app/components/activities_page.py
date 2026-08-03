@@ -43,7 +43,24 @@ _OUTCOME_OPTIONS = (
     "Modified",
     "Substitute",
     "Unplanned",
+    "Outside plan",
 )
+
+def _outcome_label(
+    status: str | None,
+) -> str:
+    """
+    Returns a readable plan-result label.
+    """
+
+    if status is None:
+        return "Not assessed"
+
+    return (
+        status
+        .replace("_", " ")
+        .title()
+    )
 
 def _activity_rows(
     activities,
@@ -74,10 +91,9 @@ def _activity_rows(
                 else "—"
             ),
             "Plan result": (
-                activity.outcome_status.title()
-                if activity.outcome_status
-                is not None
-                else "Unplanned"
+                _outcome_label(
+                    activity.outcome_status
+                )
             ),
             "Planned": (
                 activity.planned_title
@@ -134,7 +150,11 @@ def _outcome_filter_value(
     if label == "All results":
         return None
 
-    return label.casefold()
+    return (
+        label
+        .casefold()
+        .replace(" ", "_")
+    )
 
 def _period_start_date(
     period: str,
@@ -420,10 +440,8 @@ def show_activities_page(
         is not None
     ):
 
-        outcome_label = (
-            selected_activity
-            .outcome_status
-            .title()
+        outcome_label = _outcome_label(
+            selected_activity.outcome_status
         )
 
         planned_label = (

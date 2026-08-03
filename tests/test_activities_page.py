@@ -8,6 +8,7 @@ from app.components.activities_page import (
     _activity_rows,
     _format_load,
     _outcome_filter_value,
+    _outcome_label,
     _period_start_date,
     _total_duration,
     _workout_for_activity,
@@ -86,7 +87,7 @@ def test_builds_activity_table_rows():
             "Duration": "2h 32m",
             "Elevation": "980 m",
             "RPE": 7.5,
-            "Plan result": "Unplanned",
+            "Plan result": "Not assessed",
             "Planned": "—",
         }
     ]
@@ -385,3 +386,30 @@ def test_all_plan_results_has_no_filter():
         )
         is None
     )
+
+
+
+def test_formats_activity_outcome_labels():
+
+    assert _outcome_label(
+        "outside_plan"
+    ) == "Outside Plan"
+
+    assert _outcome_label(
+        "unplanned"
+    ) == "Unplanned"
+
+    assert _outcome_label(
+        "substitute"
+    ) == "Substitute"
+
+    assert _outcome_label(
+        None
+    ) == "Not assessed"
+
+
+def test_converts_outside_plan_filter():
+
+    assert _outcome_filter_value(
+        "Outside plan"
+    ) == "outside_plan"
