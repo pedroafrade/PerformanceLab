@@ -33,7 +33,12 @@ from .plan_models import (
 from .plan_presenter import (
     PlanPresenter,
 )
-
+from .today_models import (
+    TodayData,
+)
+from .today_presenter import (
+    TodayPresenter,
+)
 from .card import (
     SensorCard,
     cadence_card,
@@ -96,6 +101,11 @@ __all__ = [
     "PlanPresenter",
     "PlanWeekData",
     "PlanWorkoutData",
+
+    # Today
+    "TodayData",
+    "TodayPresenter",
+
 
     # Development
     "DevelopmentData",
