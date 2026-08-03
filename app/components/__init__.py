@@ -22,6 +22,9 @@ from .dashboard import (
     show_dashboard,
     show_selected_workout_route,
 )
+from .development_page import (
+    show_development_page,
+)
 from .elevation_profile import (
     show_elevation_profile,
 )
@@ -61,6 +64,7 @@ __all__ = [
     "show_activity_input",
     "show_athlete_panel",
     "show_dashboard",
+    "show_development_page",
     "show_elevation_profile",
     "show_import_panel",
     "show_plan_page",

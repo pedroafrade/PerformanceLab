@@ -14,6 +14,7 @@ from components import (
     show_athlete_panel,
     show_calendar_page,
     show_dashboard,
+    show_development_page,
     show_plan_page,
     show_selected_workout_route,
     show_sidebar,
@@ -624,6 +625,11 @@ elif page == "athlete":
 elif page == "calendar":
 
     show_calendar_page(
+        athlete
+    )
+elif page == "development":
+
+    show_development_page(
         athlete
     )
 elif page == "accounts":
