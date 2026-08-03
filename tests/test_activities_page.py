@@ -8,6 +8,7 @@ from app.components.activities_page import (
     _activity_rows,
     _period_start_date,
     _total_duration,
+    _workout_for_activity,
     show_activities_page,
 )
 from performancelab.presentation import (
@@ -210,3 +211,75 @@ def test_all_time_has_no_start_date():
         )
         is None
     )
+
+
+
+def test_resolves_domain_workout_from_activity():
+
+    from performancelab.history import (
+        History,
+    )
+    from performancelab.workout import (
+        Workout,
+    )
+
+    workout = Workout()
+
+    activity = create_activity(
+        workout_id=workout.workout_id,
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Selected activity",
+        sport="Running",
+        distance=10,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=100,
+        rpe=5,
+    )
+
+    result = _workout_for_activity(
+        History(
+            workouts=[
+                workout,
+            ]
+        ),
+        activity,
+    )
+
+    assert result is workout
+
+
+def test_returns_none_for_missing_activity():
+
+    from performancelab.history import (
+        History,
+    )
+
+    activity = create_activity(
+        workout_id="missing-workout",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Missing activity",
+        sport="Running",
+        distance=10,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=100,
+        rpe=5,
+    )
+
+    result = _workout_for_activity(
+        History(),
+        activity,
+    )
+
+    assert result is None

@@ -13,6 +13,12 @@ from performancelab.presentation import (
     ActivityFilters,
 )
 
+from .route_map import (
+    show_route_map,
+)
+from .workout_details import (
+    show_workout_details,
+)
 from .workout_table import (
     format_distance,
     format_duration,
@@ -106,6 +112,25 @@ def _period_start_date(
             month=1,
             day=1,
         )
+
+    return None
+
+
+def _workout_for_activity(
+    history,
+    activity,
+):
+    """
+    Resolves a presentation item to its domain workout.
+    """
+
+    for workout in history:
+
+        if (
+            str(workout.workout_id)
+            == activity.workout_id
+        ):
+            return workout
 
     return None
 
@@ -254,10 +279,66 @@ def show_activities_page(
 
         return
 
-    st.dataframe(
+    selection_event = st.dataframe(
         _activity_rows(
             activities
         ),
         width="stretch",
         hide_index=True,
+        key="activities_history_table",
+        on_select="rerun",
+        selection_mode="single-row",
+    )
+
+    selected_rows = (
+        selection_event.selection.rows
+    )
+
+    if not selected_rows:
+
+        st.caption(
+            "Select an activity to view its details."
+        )
+
+        return
+
+    selected_index = selected_rows[0]
+
+    if selected_index >= len(activities):
+        return
+
+    selected_activity = activities[
+        selected_index
+    ]
+
+    selected_workout = _workout_for_activity(
+        athlete.history,
+        selected_activity,
+    )
+
+    if selected_workout is None:
+
+        st.warning(
+            "The selected activity is no longer available."
+        )
+
+        return
+
+    st.divider()
+
+    st.subheader(
+        selected_activity.title
+    )
+
+    st.caption(
+        f"{selected_activity.sport} · "
+        f"{format_workout_date(selected_activity.workout_date)}"
+    )
+
+    show_workout_details(
+        selected_workout
+    )
+
+    show_route_map(
+        selected_workout
     )
