@@ -1,0 +1,24 @@
+"""
+PerformanceLab
+
+Activity presentation models.
+"""
+
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
+
+
+@dataclass(frozen=True)
+class ActivityListItemData:
+    """
+    Presentation-ready summary of one completed activity.
+    """
+
+    workout_id: str
+    workout_date: date | datetime | None
+    sport: str
+    title: str
+    distance: float | None
+    duration: timedelta | None
+    elevation_gain: float | None
+    rpe: float | None

@@ -3,6 +3,12 @@ PerformanceLab
 
 Presentation package.
 """
+from .activity_models import (
+    ActivityListItemData,
+)
+from .activities_presenter import (
+    ActivitiesPresenter,
+)
 
 from .card import (
     SensorCard,
@@ -49,6 +55,10 @@ from .route import (
 
 
 __all__ = [
+
+    # Activities
+    "ActivityListItemData",
+    "ActivitiesPresenter",
 
     # Dashboard
     "DashboardData",
