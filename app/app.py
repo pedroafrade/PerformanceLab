@@ -10,6 +10,7 @@ from pathlib import Path
 import streamlit as st
 
 from components import (
+    show_activities_page,
     show_athlete_panel,
     show_dashboard,
     show_selected_workout_route,
@@ -606,7 +607,11 @@ elif page == "training":
     show_training_page(
         athlete
     )
+elif page == "activities":
 
+    show_activities_page(
+        athlete
+    )
 elif page == "athlete":
 
     athlete = show_athlete_panel(

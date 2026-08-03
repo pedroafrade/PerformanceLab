@@ -1,0 +1,163 @@
+"""
+Tests for the Activities page.
+"""
+
+from datetime import date, timedelta
+
+from app.components.activities_page import (
+    _activity_rows,
+    _total_duration,
+    show_activities_page,
+)
+from performancelab.presentation import (
+    ActivityListItemData,
+)
+
+
+def create_activity(
+    *,
+    workout_id: str,
+    workout_date: date,
+    title: str,
+    sport: str,
+    distance: float | None,
+    duration: timedelta | None,
+    elevation_gain: float | None,
+    rpe: float | None,
+) -> ActivityListItemData:
+
+    return ActivityListItemData(
+        workout_id=workout_id,
+        workout_date=workout_date,
+        title=title,
+        sport=sport,
+        distance=distance,
+        duration=duration,
+        elevation_gain=elevation_gain,
+        rpe=rpe,
+    )
+
+
+def test_show_activities_page_exists():
+
+    assert callable(
+        show_activities_page
+    )
+
+
+def test_builds_activity_table_rows():
+
+    activity = create_activity(
+        workout_id="activity-1",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Volta da Ericeira",
+        sport="Cycling",
+        distance=50.3,
+        duration=timedelta(
+            hours=2,
+            minutes=32,
+        ),
+        elevation_gain=980,
+        rpe=7.5,
+    )
+
+    rows = _activity_rows(
+        (
+            activity,
+        )
+    )
+
+    assert rows == [
+        {
+            "Date": "2026-08-02",
+            "Activity": (
+                "Volta da Ericeira"
+            ),
+            "Sport": "Cycling",
+            "Distance": "50.30 km",
+            "Duration": "2h 32m",
+            "Elevation": "980 m",
+            "RPE": 7.5,
+        }
+    ]
+
+
+def test_displays_missing_values_as_dash():
+
+    activity = create_activity(
+        workout_id="activity-2",
+        workout_date=date(
+            2026,
+            8,
+            1,
+        ),
+        title="Manual activity",
+        sport="Other",
+        distance=None,
+        duration=None,
+        elevation_gain=None,
+        rpe=None,
+    )
+
+    row = _activity_rows(
+        (
+            activity,
+        )
+    )[0]
+
+    assert row["Distance"] == "—"
+    assert row["Duration"] == "—"
+    assert row["Elevation"] == "—"
+    assert row["RPE"] == "—"
+
+
+def test_calculates_total_activity_duration():
+
+    first = create_activity(
+        workout_id="activity-1",
+        workout_date=date(
+            2026,
+            8,
+            1,
+        ),
+        title="Run",
+        sport="Running",
+        distance=10,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=100,
+        rpe=5,
+    )
+
+    second = create_activity(
+        workout_id="activity-2",
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Ride",
+        sport="Cycling",
+        distance=40,
+        duration=timedelta(
+            hours=2,
+            minutes=30,
+        ),
+        elevation_gain=500,
+        rpe=6,
+    )
+
+    assert _total_duration(
+        (
+            first,
+            second,
+        )
+    ) == timedelta(
+        hours=3,
+        minutes=30,
+    )
