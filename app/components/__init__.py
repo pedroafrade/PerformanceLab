@@ -40,6 +40,9 @@ from .sensor_card import (
 from .sidebar import (
     show_sidebar,
 )
+from .settings_page import (
+    show_settings_page,
+)
 from .storage_panel import (
     show_storage_panel,
 )
@@ -71,6 +74,7 @@ __all__ = [
     "show_route_map",
     "show_selected_workout_route",
     "show_sensor_card",
+    "show_settings_page",
     "show_sidebar",
     "show_storage_panel",
     "show_training_page",

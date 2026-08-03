@@ -1121,6 +1121,8 @@ def _show_athlete_form(
 
 def show_athlete_panel(
     athlete,
+    *,
+    show_heading: bool = True,
 ):
     """
     Displays athlete information and allows it to be edited.
@@ -1136,9 +1138,11 @@ def show_athlete_panel(
         The same athlete instance after any edits.
     """
 
-    st.header(
-        "Athlete"
-    )
+    if show_heading:
+
+        st.header(
+            "Athlete"
+        )
 
     if _EDIT_STATE_KEY not in st.session_state:
 
