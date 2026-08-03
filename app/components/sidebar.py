@@ -21,28 +21,28 @@ from .i18n import translate
 _NAVIGATION_ITEMS = (
     (
         "dashboard",
-        "nav.dashboard",
-        ":material/dashboard:",
+        "nav.today",
+        ":material/home:",
     ),
     (
         "training",
-        "nav.training",
+        "nav.plan",
         ":material/fitness_center:",
     ),
     (
-        "events",
-        "nav.events",
-        ":material/event:",
+        "activities",
+        "nav.activities",
+        ":material/directions_run:",
     ),
     (
-        "analytics",
-        "nav.analytics",
-        ":material/analytics:",
+        "calendar",
+        "nav.calendar",
+        ":material/calendar_month:",
     ),
     (
-        "statistics",
-        "nav.statistics",
-        ":material/bar_chart:",
+        "development",
+        "nav.development",
+        ":material/trending_up:",
     ),
     (
         "settings",
