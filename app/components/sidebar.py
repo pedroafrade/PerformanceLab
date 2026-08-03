@@ -50,7 +50,7 @@ _NAVIGATION_ITEMS = (
         ":material/settings:",
     ),
 )
-
+_HOME_PAGE = "dashboard"
 
 # ======================================================
 # Styling
@@ -125,52 +125,69 @@ def _sidebar_styles(
                 clamp(0.12rem, 0.45vh, 0.25rem);
         }}
 
-        .performancelab-brand {{
+        .st-key-sidebar_brand {{
             margin:
                 clamp(-0.55rem, -0.8vh, -0.2rem)
                 0
                 0;
+        }}
+
+        .st-key-sidebar_brand button {{
+            width: auto;
+            min-width: 0;
+            min-height: 0;
+            height: auto;
+            margin: 0;
             padding: 0 0.45rem;
+            justify-content: flex-start;
+            border: 0 !important;
+            border-radius: 0;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: inherit !important;
             font-size: clamp(1.02rem, 2.2vh, 1.3rem);
             font-weight: 700;
             letter-spacing: -0.04em;
             line-height: 1.15;
         }}
 
-        .sidebar-account {{
-            display: flex;
-            align-items: center;
-            gap: clamp(0.4rem, 0.8vh, 0.55rem);
-            margin:
-                clamp(0.08rem, 0.35vh, 0.2rem)
-                0
-                clamp(0.1rem, 0.4vh, 0.25rem);
-            padding:
-                clamp(0.18rem, 0.55vh, 0.3rem)
-                0.45rem;
-            border-radius: 0.5rem;
+        .st-key-sidebar_brand button p {{
+            width: auto;
+            margin: 0;
+            color: inherit !important;
+            font-size: inherit;
+            font-weight: inherit;
+            letter-spacing: inherit;
+            line-height: inherit;
         }}
 
-        .sidebar-account-avatar {{
+        .st-key-sidebar_brand button:hover,
+        .st-key-sidebar_brand button:focus,
+        .st-key-sidebar_brand button:active {{
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: inherit !important;
+        }}
+
+        .sidebar-account-label {{
             display: flex;
+            min-height: clamp(1.8rem, 4vh, 2.2rem);
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.2rem 0.45rem;
+            font-size: 0.82rem;
+        }}
+
+        .sidebar-account-icon {{
+            display: inline-flex;
+            width: 1.45rem;
+            height: 1.45rem;
             align-items: center;
             justify-content: center;
-            width: clamp(1.4rem, 3.1vh, 1.7rem);
-            height: clamp(1.4rem, 3.1vh, 1.7rem);
-            flex: 0 0 clamp(1.4rem, 3.1vh, 1.7rem);
             border: 1px solid rgba(128, 128, 128, 0.35);
             border-radius: 50%;
-            font-size: clamp(0.68rem, 1.45vh, 0.8rem);
-        }}
-
-        .sidebar-account-name {{
-            min-width: 0;
-            flex: 1;
-            overflow: hidden;
-            font-size: 0.82rem;
-            font-weight: 600;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            font-size: 0.72rem;
         }}
 
         .st-key-sidebar_edit_athlete button,
@@ -405,16 +422,6 @@ def _sidebar_styles(
         }}
 
         @media (max-height: 700px) {{
-            .performancelab-brand {{
-                font-size: 1rem;
-            }}
-
-            .sidebar-account {{
-                margin: 0;
-                padding-top: 0.12rem;
-                padding-bottom: 0.12rem;
-            }}
-
             .st-key-sidebar_navigation .stButton button {{
                 min-height: 1.45rem;
                 height: 1.45rem;
@@ -463,7 +470,7 @@ def _show_navigation(
     """
 
     if "page" not in st.session_state:
-        st.session_state.page = "today"
+        st.session_state.page = _HOME_PAGE
 
     with st.container(
         key="sidebar_navigation",
@@ -520,14 +527,12 @@ def _show_user_account(
     )
 
     st.markdown(
-        f"""
-        <div class="sidebar-account">
-            <span class="sidebar-account-avatar">◯</span>
-            <span class="sidebar-account-name">
-                {account_name}
-            </span>
-        </div>
-        """,
+        (
+            '<div class="sidebar-account-label">'
+            '<span class="sidebar-account-icon">◯</span>'
+            f"<strong>{account_name}</strong>"
+            "</div>"
+        ),
         unsafe_allow_html=True,
     )
 
@@ -586,7 +591,7 @@ def show_sidebar(
 
     active_page = st.session_state.get(
         "page",
-        "today",
+        _HOME_PAGE,
     )
 
     with st.sidebar:
@@ -599,11 +604,11 @@ def show_sidebar(
             key="sidebar_top",
         ):
 
-            st.markdown(
-                '<div class="performancelab-brand">'
-                'performancelab'
-                '</div>',
-                unsafe_allow_html=True,
+            st.button(
+                "performancelab",
+                key="sidebar_brand",
+                on_click=_set_page,
+                args=(_HOME_PAGE,),
             )
 
             _show_user_account(
