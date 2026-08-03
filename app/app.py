@@ -14,10 +14,10 @@ from components import (
     show_athlete_panel,
     show_calendar_page,
     show_dashboard,
+    show_plan_page,
     show_selected_workout_route,
     show_sidebar,
     show_workout_editor,
-    show_training_page,
 )
 
 from performancelab import (
@@ -605,8 +605,11 @@ if page == "dashboard":
 
 elif page == "training":
 
-    show_training_page(
-        athlete
+    show_plan_page(
+        athlete,
+        on_generate_plan=(
+            regenerate_weekly_plan
+        ),
     )
 elif page == "activities":
 

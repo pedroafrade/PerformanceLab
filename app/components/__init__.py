@@ -9,6 +9,9 @@ from .activities_page import (
 from .calendar_page import (
     show_calendar_page,
 )
+from .plan_page import (
+    show_plan_page,
+)
 from .activity_input import (
     show_activity_input,
 )
@@ -60,6 +63,7 @@ __all__ = [
     "show_dashboard",
     "show_elevation_profile",
     "show_import_panel",
+    "show_plan_page",
     "show_route_map",
     "show_selected_workout_route",
     "show_sensor_card",

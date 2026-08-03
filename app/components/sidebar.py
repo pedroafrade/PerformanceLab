@@ -627,26 +627,6 @@ def show_sidebar(
             st.markdown(
                 (
                     '<div class="sidebar-section-label">'
-                    f'{translate("plan.section")}'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
-
-            st.button(
-                translate("plan.generate"),
-                icon=":material/auto_awesome:",
-                use_container_width=True,
-                key="sidebar_generate_plan",
-                on_click=on_generate_plan,
-                disabled=on_generate_plan is None,
-            )
-
-            st.divider()
-
-            st.markdown(
-                (
-                    '<div class="sidebar-section-label">'
                     f'{translate("activity.section")}'
                     '</div>'
                 ),
