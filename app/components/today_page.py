@@ -6,19 +6,14 @@ Today page.
 
 import streamlit as st
 
-from .dashboard import (
-    show_dashboard,
-)
-
 
 def show_today_page(
     athlete,
 ):
     """
-    Displays the athlete's current-day overview.
+    Displays the athlete's daily decision page.
 
-    The existing dashboard remains intact and is
-    composed inside the Today page.
+    This page is independent from the main dashboard.
     """
 
     st.title(
@@ -26,10 +21,13 @@ def show_today_page(
     )
 
     st.caption(
-        "Your current training context, next decisions "
-        "and most relevant athlete information."
+        "Your current training context and the decisions "
+        "that matter today."
     )
 
-    return show_dashboard(
-        athlete
+    st.info(
+        "The Today page is ready for its dedicated "
+        "daily training content."
     )
+
+    return None

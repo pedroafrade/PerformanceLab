@@ -13,6 +13,7 @@ from components import (
     show_activities_page,
     show_athlete_panel,
     show_calendar_page,
+    show_dashboard,
     show_development_page,
     show_plan_page,
     show_selected_workout_route,
@@ -464,10 +465,8 @@ def initialize_session_state() -> None:
         st.session_state.edit_workout = False
 
     if "page" not in st.session_state:
-        st.session_state.page = "today"
+        st.session_state.page = "dashboard"
 
-    if st.session_state.page == "dashboard":
-        st.session_state.page = "today"
 # ======================================================
 # Application
 # ======================================================
@@ -595,7 +594,7 @@ if st.session_state.notice:
 
 if page == "dashboard":
 
-    selected_workout = show_today_page(
+    selected_workout = show_dashboard(
         athlete,
     )
 
@@ -607,6 +606,13 @@ if page == "dashboard":
     show_selected_workout_route(
         selected_workout,
     )
+
+elif page == "today":
+
+    show_today_page(
+        athlete
+    )
+
 
 elif page == "training":
 
@@ -683,6 +689,6 @@ if page != "accounts":
 
 if (
     page == "athlete"
-    and st.session_state.page == "today"
+    and st.session_state.page == "dashboard"
 ):
     st.rerun()

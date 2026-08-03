@@ -46,6 +46,9 @@ from .settings_page import (
 from .storage_panel import (
     show_storage_panel,
 )
+from .today_page import (
+    show_today_page,
+)
 from .training_page import (
     show_training_page,
 )
@@ -77,6 +80,7 @@ __all__ = [
     "show_settings_page",
     "show_sidebar",
     "show_storage_panel",
+    "show_today_page",
     "show_training_page",
     "show_workout_details",
     "show_workout_editor",
