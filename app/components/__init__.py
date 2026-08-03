@@ -6,6 +6,9 @@ Streamlit UI components.
 from .activities_page import (
     show_activities_page,
 )
+from .calendar_page import (
+    show_calendar_page,
+)
 from .activity_input import (
     show_activity_input,
 )
@@ -51,6 +54,7 @@ from .workout_table import (
 
 __all__ = [
     "show_activities_page",
+    "show_calendar_page",
     "show_activity_input",
     "show_athlete_panel",
     "show_dashboard",

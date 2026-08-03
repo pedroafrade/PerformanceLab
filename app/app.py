@@ -12,6 +12,7 @@ import streamlit as st
 from components import (
     show_activities_page,
     show_athlete_panel,
+    show_calendar_page,
     show_dashboard,
     show_selected_workout_route,
     show_sidebar,
@@ -617,7 +618,11 @@ elif page == "athlete":
     athlete = show_athlete_panel(
         athlete,
     )
+elif page == "calendar":
 
+    show_calendar_page(
+        athlete
+    )
 elif page == "accounts":
 
     if not current_user.is_coach:
