@@ -14,14 +14,12 @@ from .import_panel import (
 )
 
 
-# ======================================================
-# Activity input
-# ======================================================
-
 def show_activity_input(
     athlete,
+    *,
+    key_prefix: str = "activity",
+    show_header: bool = True,
 ):
-
     """
     Displays controls for adding an activity manually
     or importing it from a supported file.
@@ -32,7 +30,11 @@ def show_activity_input(
         Current athlete instance.
     """
 
-    st.header("Add activity")
+    if show_header:
+
+        st.header(
+            "Add activity"
+        )
 
     mode = st.segmented_control(
         "Activity source",
@@ -42,19 +44,21 @@ def show_activity_input(
         ],
         default="File",
         label_visibility="collapsed",
-        key="activity_input_mode",
+        key=f"{key_prefix}_input_mode",
     )
 
     if mode == "Manual":
 
         show_manual_workout_form(
-            athlete
+            athlete,
+            key_prefix=key_prefix,
         )
 
     elif mode == "File":
 
         show_import_panel(
-            athlete
+            athlete,
+            key_prefix=key_prefix,
         )
 
     return athlete

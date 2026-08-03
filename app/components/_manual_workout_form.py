@@ -21,6 +21,8 @@ from performancelab.builders import (
 
 def show_manual_workout_form(
     athlete,
+    *,
+    key_prefix: str = "activity",
 ) -> None:
 
     """
@@ -28,7 +30,7 @@ def show_manual_workout_form(
     """
 
     with st.form(
-        "manual_workout_form",
+        f"{key_prefix}_manual_workout_form",
         clear_on_submit=True,
     ):
 

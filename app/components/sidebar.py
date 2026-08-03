@@ -658,7 +658,8 @@ def show_sidebar(
             ):
 
                 athlete = show_activity_input(
-                    athlete
+                    athlete,
+                    key_prefix="sidebar_activity",
                 )
 
         return athlete

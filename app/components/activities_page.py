@@ -12,7 +12,9 @@ from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
 )
-
+from .activity_input import (
+    show_activity_input,
+)
 from .route_map import (
     show_route_map,
 )
@@ -147,6 +149,17 @@ def show_activities_page(
     st.caption(
         "Review completed training and imported activity data."
     )
+
+    with st.expander(
+        "Add activity",
+        expanded=False,
+    ):
+
+        show_activity_input(
+            athlete,
+            key_prefix="activities_page",
+            show_header=False,
+        )
 
     presenter = ActivitiesPresenter(
         athlete.history
