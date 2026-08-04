@@ -9,6 +9,7 @@ from app.components.today_page import (
     _duration_label,
     _form_label,
     _guidance_item_html,
+    _navigate_to,
     _readiness_score_label,
     _recent_load_label,
     _session_step_html,
@@ -17,6 +18,8 @@ from app.components.today_page import (
     _today_session_title,
     show_today_page,
 )
+
+import app.components.today_page as today_page
 
 
 def create_session(
@@ -55,6 +58,27 @@ def test_show_today_page_exists():
     assert callable(
         show_today_page
     )
+
+
+def test_navigates_from_today(
+    monkeypatch,
+):
+
+    session_state = SimpleNamespace(
+        page="today"
+    )
+
+    monkeypatch.setattr(
+        today_page.st,
+        "session_state",
+        session_state,
+    )
+
+    _navigate_to(
+        "calendar"
+    )
+
+    assert session_state.page == "calendar"
 
 
 def test_formats_today_duration():

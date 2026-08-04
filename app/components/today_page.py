@@ -14,6 +14,16 @@ from performancelab.presentation import (
 )
 
 
+def _navigate_to(
+    page: str,
+) -> None:
+    """
+    Opens another application page from Today.
+    """
+
+    st.session_state.page = page
+
+
 def _duration_label(
     duration: timedelta | None,
 ) -> str | None:
@@ -261,6 +271,33 @@ def _show_today_session(
                 f"{_today_session_status(session)}"
             )
         )
+
+        activity_column, calendar_column = (
+            st.columns(
+                2,
+                gap="small",
+            )
+        )
+
+        with activity_column:
+            st.button(
+                "Add activity",
+                icon=":material/add:",
+                use_container_width=True,
+                key="today_add_activity",
+                on_click=_navigate_to,
+                args=("activities",),
+            )
+
+        with calendar_column:
+            st.button(
+                "View calendar",
+                icon=":material/calendar_month:",
+                use_container_width=True,
+                key="today_view_calendar",
+                on_click=_navigate_to,
+                args=("calendar",),
+            )
 
 
 def _guidance_item_html(
