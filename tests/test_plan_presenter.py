@@ -141,6 +141,18 @@ def test_groups_complete_plan_by_week():
         == pytest.approx(315)
     )
 
+    assert not (
+        result.weeks[0]
+        .workouts[0]
+        .is_race
+    )
+
+    assert not (
+        result.weeks[0]
+        .workouts[1]
+        .is_race
+    )
+
     assert (
         result.weeks[1].phase
         == "Peak"
@@ -370,3 +382,34 @@ def test_builds_immutable_plan_progression():
         FrozenInstanceError
     ):
         point.distance = 30.0
+
+def test_marks_race_session_for_presentation():
+
+    race = planned_workout(
+        day=13,
+        title="Race",
+        intensity="Race effort",
+        duration_minutes=120,
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                race,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            3,
+        )
+    )
+
+    assert (
+        result.weeks[0]
+        .workouts[0]
+        .is_race
+    )

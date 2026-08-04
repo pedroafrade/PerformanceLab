@@ -40,6 +40,7 @@ def create_week(
         intensity="Easy",
         phase="Build",
         planned_load=180.0,
+        is_race=False,
         status=status,
         prescription_summary=(
             "60 min easy"
@@ -87,6 +88,7 @@ def test_builds_planned_session_chart_data():
         intensity="Hard",
         phase="Peak",
         planned_load=315.0,
+        is_race=False,
         status="pending",
         prescription_summary=None,
         structure=(),
@@ -124,6 +126,7 @@ def test_builds_planned_session_chart_data():
             ),
             "Planned load": 180.0,
             "Session": "Easy Run",
+            "Session type": "Training",
         },
         {
             "Date": (
@@ -131,6 +134,7 @@ def test_builds_planned_session_chart_data():
             ),
             "Planned load": 315.0,
             "Session": "LT2 Run",
+            "Session type": "Training",
         },
     ]
 
@@ -210,6 +214,7 @@ def test_week_html_escapes_workout_title():
         intensity="Easy",
         phase="Build",
         planned_load=180.0,
+        is_race=False,
         status="pending",
         prescription_summary=None,
         structure=(),

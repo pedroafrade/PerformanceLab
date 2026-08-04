@@ -53,6 +53,11 @@ def _progression_chart_data(
                 workout.planned_load
             ),
             "Session": workout.title,
+            "Session type": (
+                "Race"
+                if workout.is_race
+                else "Training"
+            ),
         }
         for week in weeks
         for workout in week.workouts
@@ -64,6 +69,9 @@ def _progression_chart(
 ):
     """
     Builds a session-level planned-load chart.
+
+    All sessions belong to the same chronological line.
+    Race points are highlighted separately.
     """
 
     chart_data = (
@@ -72,14 +80,11 @@ def _progression_chart(
         )
     )
 
-    return (
+    base = (
         alt.Chart(
             alt.Data(
                 values=chart_data
             )
-        )
-        .mark_line(
-            point=True
         )
         .encode(
             x=alt.X(
@@ -104,15 +109,54 @@ def _progression_chart(
                     title="Session",
                 ),
                 alt.Tooltip(
+                    "Session type:N",
+                    title="Type",
+                ),
+                alt.Tooltip(
                     "Planned load:Q",
                     title="Planned load",
                     format=".0f",
                 ),
             ],
         )
-        .properties(
-            height=360
+    )
+
+    line = (
+        base
+        .mark_line(
+            point=False
         )
+    )
+
+    points = (
+        base
+        .mark_point(
+            filled=True,
+            size=65,
+        )
+        .encode(
+            shape=alt.Shape(
+                "Session type:N",
+                title="Session type",
+                scale=alt.Scale(
+                    domain=[
+                        "Training",
+                        "Race",
+                    ],
+                    range=[
+                        "circle",
+                        "diamond",
+                    ],
+                ),
+            )
+        )
+    )
+
+    return (
+        line
+        + points
+    ).properties(
+        height=360
     )
 
 def _week_is_current(

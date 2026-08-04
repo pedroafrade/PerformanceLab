@@ -23,6 +23,7 @@ class PlanWorkoutData:
     intensity: str | None
     phase: str | None
     planned_load: float | None
+    is_race: bool
     status: str
     prescription_summary: str | None
     structure: tuple[str, ...]

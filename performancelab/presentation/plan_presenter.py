@@ -130,6 +130,13 @@ class PlanPresenter:
                             workout
                         )
                     ),
+                    is_race=(
+                        str(
+                            workout.intensity
+                            or ""
+                        ).strip().lower()
+                        == "race effort"
+                    ),
                     status=outcomes.get(
                         workout,
                         "pending",
