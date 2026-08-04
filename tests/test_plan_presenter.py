@@ -11,6 +11,7 @@ from performancelab.history import (
     History,
 )
 from performancelab.presentation import (
+    PlanCurrentPhaseData,
     PlanPresenter,
     PlanProgressionPointData,
 )
@@ -413,3 +414,137 @@ def test_marks_race_session_for_presentation():
         .workouts[0]
         .is_race
     )
+
+def test_exposes_current_plan_phase():
+
+    build_week = (
+        planned_workout(
+            day=4,
+            title="Easy Run",
+            intensity="Easy",
+            duration_minutes=60,
+            phase="Build",
+        )
+    )
+
+    peak_week_one = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        phase="Peak",
+    )
+
+    peak_week_two = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            18,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        intensity="Easy to moderate",
+        phase="Peak",
+    )
+
+    taper_week = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            25,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Pre-Race Run",
+        duration=timedelta(
+            minutes=40,
+        ),
+        intensity="Easy",
+        phase="Taper",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                build_week,
+                peak_week_one,
+                peak_week_two,
+                taper_week,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            12,
+        )
+    )
+
+    assert isinstance(
+        result.current_phase,
+        PlanCurrentPhaseData,
+    )
+
+    assert (
+        result.current_phase.name
+        == "Peak"
+    )
+
+    assert (
+        result.current_phase.start_date
+        == date(2026, 8, 10)
+    )
+
+    assert (
+        result.current_phase.end_date
+        == date(2026, 8, 23)
+    )
+
+    assert (
+        result.current_phase.weeks_remaining
+        == 2
+    )
+
+
+def test_has_no_current_phase_outside_plan():
+
+    workout = planned_workout(
+        day=4,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=60,
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                workout,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            20,
+        )
+    )
+
+    assert result.current_phase is None

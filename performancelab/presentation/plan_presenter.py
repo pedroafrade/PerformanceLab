@@ -14,6 +14,7 @@ from performancelab.training.load import (
 
 from .plan_models import (
     CompletePlanData,
+    PlanCurrentPhaseData,
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
@@ -55,6 +56,93 @@ class PlanPresenter:
                 )
             )
         }
+
+    @staticmethod
+    def _current_phase_data(
+        weeks,
+        *,
+        reference_day: date,
+    ) -> PlanCurrentPhaseData | None:
+        """
+        Builds the phase containing the reference day.
+        """
+
+        current_index = next(
+            (
+                index
+                for index, week
+                in enumerate(weeks)
+                if (
+                    week.start_date
+                    <= reference_day
+                    <= week.end_date
+                )
+            ),
+            None,
+        )
+
+        if current_index is None:
+            return None
+
+        current_week = weeks[
+            current_index
+        ]
+
+        phase_name = (
+            current_week.phase
+            or "Unassigned"
+        )
+
+        phase_start_index = (
+            current_index
+        )
+
+        while (
+            phase_start_index > 0
+            and (
+                weeks[
+                    phase_start_index - 1
+                ].phase
+                == current_week.phase
+            )
+        ):
+            phase_start_index -= 1
+
+        phase_end_index = (
+            current_index
+        )
+
+        while (
+            phase_end_index
+            < len(weeks) - 1
+            and (
+                weeks[
+                    phase_end_index + 1
+                ].phase
+                == current_week.phase
+            )
+        ):
+            phase_end_index += 1
+
+        return PlanCurrentPhaseData(
+            name=phase_name,
+            start_date=(
+                weeks[
+                    phase_start_index
+                ].start_date
+            ),
+            end_date=(
+                weeks[
+                    phase_end_index
+                ].end_date
+            ),
+            weeks_remaining=(
+                phase_end_index
+                - current_index
+                + 1
+            ),
+        )
+
 
     def build(
         self,
@@ -241,13 +329,25 @@ class PlanPresenter:
                 )
             )
 
+        weeks_data = tuple(
+            weeks
+        )
+
         return CompletePlanData(
             plan_id=self.plan.plan_id,
             start_date=self.plan.start_date,
             end_date=self.plan.end_date,
             reference_day=reference_day,
-            weeks=tuple(weeks),
+            weeks=weeks_data,
             progression=tuple(
                 progression
+            ),
+            current_phase=(
+                self._current_phase_data(
+                    weeks_data,
+                    reference_day=(
+                        reference_day
+                    ),
+                )
             ),
         )

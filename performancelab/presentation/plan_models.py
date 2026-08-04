@@ -28,6 +28,7 @@ class PlanWorkoutData:
     prescription_summary: str | None
     structure: tuple[str, ...]
 
+
 @dataclass(frozen=True)
 class PlanProgressionPointData:
     """
@@ -40,6 +41,7 @@ class PlanProgressionPointData:
     duration_minutes: float
     distance: float
     elevation_gain: float
+
 
 @dataclass(frozen=True)
 class PlanWeekData:
@@ -55,6 +57,18 @@ class PlanWeekData:
         PlanWorkoutData,
         ...,
     ]
+
+
+@dataclass(frozen=True)
+class PlanCurrentPhaseData:
+    """
+    Current training phase prepared for presentation.
+    """
+
+    name: str
+    start_date: date
+    end_date: date
+    weeks_remaining: int
 
 
 @dataclass(frozen=True)
@@ -76,3 +90,7 @@ class CompletePlanData:
         PlanProgressionPointData,
         ...,
     ]
+    current_phase: (
+        PlanCurrentPhaseData
+        | None
+    )
