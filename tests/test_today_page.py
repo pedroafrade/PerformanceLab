@@ -6,15 +6,14 @@ from datetime import timedelta
 from types import SimpleNamespace
 
 from app.components.today_page import (
-    _activity_outcome_summary,
     _duration_label,
     _form_label,
-    _outcome_label,
+    _readiness_score_label,
+    _recent_load_label,
+    _session_step_html,
     _today_session_metadata,
     _today_session_status,
     _today_session_title,
-    _readiness_score_label,
-    _recent_load_label,
     show_today_page,
 )
 
@@ -146,56 +145,29 @@ def test_displays_rest_day():
         == "Recovery"
     )
 
-def test_formats_activity_outcome():
 
-    activity = SimpleNamespace(
-        outcome_status="substitute",
-        planned_title="Long Run",
-        load_difference=744.0,
+def test_builds_monochrome_session_step():
+
+    result = _session_step_html(
+        index=2,
+        step="3×7 min at LT2",
     )
 
-    assert (
-        _outcome_label(
-            "substitute"
-        )
-        == "Substitute"
+    assert ">2<" in result
+    assert "3×7 min at LT2" in result
+    assert "color:" not in result
+    assert "background:" not in result
+
+
+def test_escapes_session_step():
+
+    result = _session_step_html(
+        index=1,
+        step="Run < controlled",
     )
 
-    assert (
-        _activity_outcome_summary(
-            activity
-        )
-        == (
-            "Substitute · "
-            "Planned: Long Run · "
-            "Load difference: +744 AU"
-        )
-    )
+    assert "Run &lt; controlled" in result
 
-
-def test_formats_activity_outside_plan():
-
-    activity = SimpleNamespace(
-        outcome_status="outside_plan",
-        planned_title=None,
-        load_difference=None,
-    )
-
-    assert (
-        _activity_outcome_summary(
-            activity
-        )
-        == "Outside plan"
-    )
-
-def test_summarises_missing_recent_activity():
-
-    assert (
-        _activity_outcome_summary(
-            None
-        )
-        == "No recent activity is available."
-    )
 
 def test_formats_daily_readiness():
 

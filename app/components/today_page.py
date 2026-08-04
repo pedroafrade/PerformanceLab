@@ -5,24 +5,12 @@ Today page.
 """
 
 from datetime import timedelta
+from html import escape
 
 import streamlit as st
 
 from performancelab.presentation import (
     TodayPresenter,
-)
-
-from .dashboard.cards.next_workout_card import (
-    next_workout_card,
-)
-from .dashboard.cards.latest_activity_card import (
-    latest_activity_card,
-)
-from .dashboard.cards.next_event_card import (
-    next_event_card,
-)
-from .dashboard.widget import (
-    dashboard_widget,
 )
 
 
@@ -56,6 +44,7 @@ def _duration_label(
 
     return f"{minutes} min"
 
+
 def _readiness_score_label(
     value: int,
 ) -> str:
@@ -85,6 +74,7 @@ def _recent_load_label(
 
     return f"{value:.1f}"
 
+
 def _today_session_title(
     session,
 ) -> str:
@@ -96,7 +86,6 @@ def _today_session_title(
         return "Rest day"
 
     if session.completed:
-
         return (
             session.completed_title
             or session.title
@@ -120,7 +109,6 @@ def _today_session_status(
         return "No planned training"
 
     if session.outcome_status:
-
         return (
             session.outcome_status
             .replace("_", " ")
@@ -173,139 +161,107 @@ def _today_session_metadata(
     )
 
 
+def _session_step_html(
+    *,
+    index: int,
+    step: str,
+) -> str:
+    """
+    Builds one monochrome executable session row.
+    """
+
+    return (
+        "<div style='"
+        "display:grid;"
+        "grid-template-columns:1.55rem minmax(0,1fr);"
+        "align-items:center;"
+        "gap:0.65rem;"
+        "padding:0.62rem 0.15rem;"
+        "border-bottom:1px solid rgba(128,128,128,0.22);"
+        "'>"
+        "<span style='"
+        "display:flex;"
+        "align-items:center;"
+        "justify-content:center;"
+        "width:1.35rem;"
+        "height:1.35rem;"
+        "border:1px solid rgba(128,128,128,0.45);"
+        "border-radius:50%;"
+        "font-size:0.72rem;"
+        "font-weight:600;"
+        "'>"
+        f"{index}"
+        "</span>"
+        "<span style='"
+        "font-size:0.88rem;"
+        "line-height:1.35;"
+        "'>"
+        f"{escape(step)}"
+        "</span>"
+        "</div>"
+    )
+
+
 def _show_today_session(
     session,
 ) -> None:
     """
-    Displays today's planned or completed session.
+    Displays today's session as the dominant action.
     """
 
-    st.subheader(
-        _today_session_title(
-            session
-        )
-    )
-
-    st.caption(
-        _today_session_metadata(
-            session
-        )
-    )
-
-    st.markdown(
-        (
-            "**Status:** "
-            f"{_today_session_status(session)}"
-        )
-    )
-
-    if (
-        session is None
-        or not session.structure
+    with st.container(
+        border=True
     ):
-        return
-
-    st.divider()
-
-    for index, step in enumerate(
-        session.structure,
-        start=1,
-    ):
-
         st.markdown(
-            f"{index}. {step}"
+            "**Today's session**"
         )
 
-
-def _outcome_label(
-    status: str | None,
-) -> str:
-    """
-    Returns a readable activity outcome.
-    """
-
-    labels = {
-        "equivalent": "Equivalent",
-        "modified": "Modified",
-        "substitute": "Substitute",
-        "unplanned": "Unplanned",
-        "outside_plan": "Outside plan",
-    }
-
-    if status is None:
-        return "Not compared"
-
-    return labels.get(
-        status,
-        status.replace(
-            "_",
-            " ",
-        ).title(),
-    )
-
-
-def _activity_outcome_summary(
-    activity,
-) -> str:
-    """
-    Summarises how the latest activity compared
-    with the plan.
-    """
-
-    if activity is None:
-        return (
-            "No recent activity is available."
-        )
-
-    parts = [
-        _outcome_label(
-            activity.outcome_status
-        )
-    ]
-
-    if activity.planned_title:
-
-        parts.append(
-            (
-                "Planned: "
-                f"{activity.planned_title}"
+        st.subheader(
+            _today_session_title(
+                session
             )
         )
 
-    if (
-        activity.load_difference
-        is not None
-    ):
-
-        parts.append(
-            (
-                "Load difference: "
-                f"{activity.load_difference:+.0f} AU"
+        st.caption(
+            _today_session_metadata(
+                session
             )
         )
 
-    return " · ".join(
-        parts
-    )
+        if (
+            session is not None
+            and session.structure
+        ):
+            steps = "".join(
+                _session_step_html(
+                    index=index,
+                    step=step,
+                )
+                for index, step in enumerate(
+                    session.structure,
+                    start=1,
+                )
+            )
 
+            st.html(
+                (
+                    "<div style='"
+                    "margin-top:0.55rem;"
+                    "border-top:1px solid "
+                    "rgba(128,128,128,0.22);"
+                    "'>"
+                    f"{steps}"
+                    "</div>"
+                )
+            )
 
-def _show_empty_state(
-    *,
-    title: str,
-    message: str,
-) -> None:
-    """
-    Displays a consistent empty state inside a
-    Today page widget.
-    """
+        st.caption(
+            (
+                "Status · "
+                f"{_today_session_status(session)}"
+            )
+        )
 
-    st.markdown(
-        f"**{title}**"
-    )
-
-    st.caption(
-        message
-    )
 
 def _show_daily_decision(
     today,
@@ -318,7 +274,6 @@ def _show_daily_decision(
     with st.container(
         border=True
     ):
-
         (
             decision_column,
             recovery_column,
@@ -331,7 +286,6 @@ def _show_daily_decision(
         )
 
         with decision_column:
-
             st.markdown(
                 f"### {today.coach.summary}"
             )
@@ -341,7 +295,6 @@ def _show_daily_decision(
             )
 
         with recovery_column:
-
             st.metric(
                 label="Recovery",
                 value=_readiness_score_label(
@@ -356,7 +309,6 @@ def _show_daily_decision(
             )
 
         with form_column:
-
             st.metric(
                 label="Form",
                 value=_form_label(
@@ -365,7 +317,6 @@ def _show_daily_decision(
             )
 
         with load_column:
-
             st.metric(
                 label="Recent load",
                 value=_recent_load_label(
@@ -374,9 +325,10 @@ def _show_daily_decision(
                 ),
             )
 
+
 def show_today_page(
     athlete,
-):
+) -> None:
     """
     Displays the athlete's daily decision page.
     """
@@ -399,122 +351,6 @@ def show_today_page(
         today
     )
 
-    session_column, next_column = (
-        st.columns(
-            [1, 1],
-            gap="large",
-            vertical_alignment="top",
-        )
+    _show_today_session(
+        today.today_session
     )
-
-    with session_column:
-
-        with dashboard_widget(
-            title="Today's session",
-            icon=":material/today:",
-            divider=True,
-        ):
-
-            _show_today_session(
-                today.today_session
-            )
-
-    with next_column:
-
-        with dashboard_widget(
-            title="Next workout",
-            icon=":material/fitness_center:",
-            divider=True,
-        ):
-
-            if today.next_workout is None:
-
-                _show_empty_state(
-                    title="No upcoming workout",
-                    message=(
-                        "There is no future training "
-                        "session in the current plan."
-                    ),
-                )
-
-            else:
-
-                next_workout_card(
-                    today.next_workout
-                )
-
-
-    st.markdown(
-        "### Recent context"
-    )
-
-    activity_column, event_column = (
-        st.columns(
-            [1.4, 1],
-            gap="large",
-            vertical_alignment="top",
-        )
-    )
-
-    with activity_column:
-
-        with dashboard_widget(
-            title="Latest activity",
-            icon=":material/history:",
-            divider=True,
-        ):
-
-            if (
-                today.latest_activity_summary
-                is None
-            ):
-
-                _show_empty_state(
-                    title="No recent activity",
-                    message=(
-                        "Import an activity to compare "
-                        "completed and planned training."
-                    ),
-                )
-
-            else:
-
-                activity_outcome = (
-                    _activity_outcome_summary(
-                        today.latest_activity_summary
-                    )
-                )
-
-                st.markdown(
-                    f"**Plan result:** {activity_outcome}"
-                )
-
-                latest_activity_card(
-                    today.latest_activity
-                )
-
-    with event_column:
-
-        with dashboard_widget(
-            title="Next event",
-            icon=":material/event:",
-            divider=True,
-        ):
-
-            if today.next_event is None:
-
-                _show_empty_state(
-                    title="No upcoming event",
-                    message=(
-                        "Add an event to give the "
-                        "training plan a target."
-                    ),
-                )
-
-            else:
-
-                next_event_card(
-                    today.next_event
-                )
-
-    return None
