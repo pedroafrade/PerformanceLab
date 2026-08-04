@@ -652,9 +652,26 @@ def show_plan_page(
                 "**Current phase**"
             )
 
-            st.caption(
-                "Coming soon"
-            )
+            if current_week is None:
+
+                st.caption(
+                    "No current phase."
+                )
+
+            else:
+
+                current_phase = (
+                    current_week.phase
+                    or "Unassigned"
+                )
+
+                st.markdown(
+                    f"### {current_phase}"
+                )
+
+                st.caption(
+                    "Current training-plan phase."
+                )
 
         with st.container(
             border=True
