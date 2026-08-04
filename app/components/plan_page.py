@@ -652,7 +652,7 @@ def show_plan_page(
                 "**Current phase**"
             )
 
-            if current_week is None:
+            if plan.current_phase is None:
 
                 st.caption(
                     "No current phase."
@@ -661,16 +661,24 @@ def show_plan_page(
             else:
 
                 current_phase = (
-                    current_week.phase
-                    or "Unassigned"
+                    plan.current_phase
                 )
 
                 st.markdown(
-                    f"### {current_phase}"
+                    f"### {current_phase.name}"
                 )
 
                 st.caption(
-                    "Current training-plan phase."
+                    (
+                        f"{current_phase.start_date.strftime('%d %b')} "
+                        "– "
+                        f"{current_phase.end_date.strftime('%d %b')}"
+                    )
+                )
+
+                st.metric(
+                    "Weeks remaining",
+                    current_phase.weeks_remaining,
                 )
 
         with st.container(
