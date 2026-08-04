@@ -31,6 +31,26 @@ def _status_label(
         .title()
     )
 
+def _progression_chart_data(
+    progression,
+) -> dict[str, list]:
+    """
+    Converts immutable plan progression points into
+    Streamlit chart data.
+    """
+
+    return {
+        "Week": [
+            point.week_start
+            for point in progression
+        ],
+        "Planned load": [
+            point.planned_load
+            for point in progression
+        ],
+    }
+
+
 
 def _week_is_current(
     week,
@@ -348,6 +368,27 @@ def show_plan_page(
             "Planned load",
             f"{total_load:.0f} AU",
         )
+
+    st.divider()
+
+    st.subheader(
+        "Plan progression"
+    )
+
+    st.caption(
+        "Weekly planned training load across the "
+        "complete plan horizon."
+    )
+
+    st.line_chart(
+        _progression_chart_data(
+            plan.progression
+        ),
+        x="Week",
+        y="Planned load",
+        x_label="Week",
+        y_label="Planned load (AU)",
+    )
 
     st.divider()
 

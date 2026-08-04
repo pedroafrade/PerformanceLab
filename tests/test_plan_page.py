@@ -5,12 +5,14 @@ Tests for the complete training-plan page.
 from datetime import date, datetime, timedelta
 
 from app.components.plan_page import (
+    _progression_chart_data,
     _status_label,
     _week_html,
     _week_is_current,
     show_plan_page,
 )
 from performancelab.presentation import (
+    PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
 )
@@ -62,6 +64,51 @@ def create_week(
             workout,
         ),
     )
+
+def test_builds_planned_load_chart_data():
+
+    progression = (
+        PlanProgressionPointData(
+            week_start=date(
+                2026,
+                8,
+                3,
+            ),
+            phase="Build",
+            planned_load=420.0,
+            duration_minutes=180.0,
+            distance=30.0,
+            elevation_gain=600.0,
+        ),
+        PlanProgressionPointData(
+            week_start=date(
+                2026,
+                8,
+                10,
+            ),
+            phase="Build",
+            planned_load=460.0,
+            duration_minutes=195.0,
+            distance=33.0,
+            elevation_gain=700.0,
+        ),
+    )
+
+    result = _progression_chart_data(
+        progression
+    )
+
+    assert result == {
+        "Week": [
+            date(2026, 8, 3),
+            date(2026, 8, 10),
+        ],
+        "Planned load": [
+            420.0,
+            460.0,
+        ],
+    }
+
 
 
 def test_show_plan_page_exists():
