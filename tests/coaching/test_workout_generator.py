@@ -1487,3 +1487,145 @@ def test_second_intensity_uses_secondary_focus():
 
     assert first_focus == "threshold"
     assert second_focus == "tempo"
+
+def test_finds_registered_event_on_scheduled_day():
+
+    event = SimpleNamespace(
+        date=date(
+            2026,
+            9,
+            13,
+        ),
+        distance=10.0,
+        elevation_gain=113.0,
+    )
+
+    event_entry = SimpleNamespace(
+        event=event
+    )
+
+    coach_context = SimpleNamespace(
+        upcoming_events=(
+            event_entry,
+        ),
+        phase_event=None,
+        primary_event=None,
+        next_event=None,
+    )
+
+    result = (
+        WorkoutGenerator
+        ._event_for_day(
+            coach_context=coach_context,
+            scheduled_day=date(
+                2026,
+                9,
+                13,
+            ),
+        )
+    )
+
+    assert result is event
+
+
+def test_does_not_use_event_from_another_day():
+
+    event = SimpleNamespace(
+        date=date(
+            2026,
+            9,
+            27,
+        ),
+        distance=23.0,
+        elevation_gain=950.0,
+    )
+
+    event_entry = SimpleNamespace(
+        event=event
+    )
+
+    coach_context = SimpleNamespace(
+        upcoming_events=(
+            event_entry,
+        ),
+        phase_event=None,
+        primary_event=None,
+        next_event=None,
+    )
+
+    result = (
+        WorkoutGenerator
+        ._event_for_day(
+            coach_context=coach_context,
+            scheduled_day=date(
+                2026,
+                9,
+                13,
+            ),
+        )
+    )
+
+    assert result is None
+
+
+def test_finds_both_events_by_their_exact_dates():
+
+    first_event = SimpleNamespace(
+        date=date(
+            2026,
+            9,
+            13,
+        ),
+        distance=10.0,
+        elevation_gain=113.0,
+    )
+
+    second_event = SimpleNamespace(
+        date=date(
+            2026,
+            9,
+            27,
+        ),
+        distance=23.0,
+        elevation_gain=950.0,
+    )
+
+    coach_context = SimpleNamespace(
+        upcoming_events=(
+            SimpleNamespace(
+                event=first_event
+            ),
+            SimpleNamespace(
+                event=second_event
+            ),
+        ),
+        phase_event=None,
+        primary_event=None,
+        next_event=None,
+    )
+
+    assert (
+        WorkoutGenerator
+        ._event_for_day(
+            coach_context=coach_context,
+            scheduled_day=date(
+                2026,
+                9,
+                13,
+            ),
+        )
+        is first_event
+    )
+
+    assert (
+        WorkoutGenerator
+        ._event_for_day(
+            coach_context=coach_context,
+            scheduled_day=date(
+                2026,
+                9,
+                27,
+            ),
+        )
+        is second_event
+    )

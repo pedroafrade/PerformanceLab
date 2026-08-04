@@ -255,6 +255,68 @@ class WorkoutGenerator:
         return strategy_plan.focus
 
     # ======================================================
+    @staticmethod
+    def _event_for_day(
+        *,
+        coach_context: CoachContext,
+        scheduled_day: date,
+    ):
+        """
+        Returns the registered event occurring on the
+        scheduled workout day.
+        """
+
+        candidates = list(
+            getattr(
+                coach_context,
+                "upcoming_events",
+                (),
+            )
+            or ()
+        )
+
+        for attribute_name in (
+            "phase_event",
+            "primary_event",
+            "next_event",
+        ):
+
+            candidate = getattr(
+                coach_context,
+                attribute_name,
+                None,
+            )
+
+            if (
+                candidate is not None
+                and candidate not in candidates
+            ):
+                candidates.append(
+                    candidate
+                )
+
+        for event_entry in candidates:
+
+            event = getattr(
+                event_entry,
+                "event",
+                None,
+            )
+
+            if (
+                event is not None
+                and getattr(
+                    event,
+                    "date",
+                    None,
+                )
+                == scheduled_day
+            ):
+                return event
+
+        return None
+
+    # ======================================================
 
     def _generate_rest(
         self,
@@ -330,42 +392,52 @@ class WorkoutGenerator:
                 heart_rate_guidance,
             )
 
-        planned_elevation_gain = (
-            getattr(
-                strategy_plan,
-                "long_session_elevation_gain",
-                None,
+        race_event = (
+            self._event_for_day(
+                coach_context=coach_context,
+                scheduled_day=scheduled_day,
             )
-            if (
-                strategy_plan is not None
-                and slot.purpose
-                is SessionPurpose.LONG
-            )
+            if slot.purpose
+            is SessionPurpose.RACE
             else None
         )
 
-        planned_distance = (
-            self._planned_long_distance(
-                purpose=slot.purpose,
-                duration_minutes=duration_minutes,
-                elevation_gain=(
-                    planned_elevation_gain
-                ),
-                training_state=getattr(
-                    coach_context,
-                    "training_state",
-                    None,
-                ),
+        if race_event is not None:
+
+            planned_distance = getattr(
+                race_event,
+                "distance",
+                None,
             )
-        )
-        if planned_distance is None:
+
+            planned_elevation_gain = getattr(
+                race_event,
+                "elevation_gain",
+                None,
+            )
+
+        else:
+
+            planned_elevation_gain = (
+                getattr(
+                    strategy_plan,
+                    "long_session_elevation_gain",
+                    None,
+                )
+                if (
+                    strategy_plan is not None
+                    and slot.purpose
+                    is SessionPurpose.LONG
+                )
+                else None
+            )
 
             planned_distance = (
-                self._planned_easy_distance(
+                self._planned_long_distance(
                     purpose=slot.purpose,
-                    sport=template.sport,
-                    duration_minutes=(
-                        duration_minutes
+                    duration_minutes=duration_minutes,
+                    elevation_gain=(
+                        planned_elevation_gain
                     ),
                     training_state=getattr(
                         coach_context,
@@ -374,6 +446,23 @@ class WorkoutGenerator:
                     ),
                 )
             )
+
+            if planned_distance is None:
+
+                planned_distance = (
+                    self._planned_easy_distance(
+                        purpose=slot.purpose,
+                        sport=template.sport,
+                        duration_minutes=(
+                            duration_minutes
+                        ),
+                        training_state=getattr(
+                            coach_context,
+                            "training_state",
+                            None,
+                        ),
+                    )
+                )
 
         prescription_summary = (
             self._prescription_summary(
