@@ -287,6 +287,37 @@ def test_overload_reduces_next_demanding_workout():
             ),
         )
     )
+    assert len(
+        adapted.adaptations
+    ) == 1
+
+    adaptation = (
+        adapted.adaptations[0]
+    )
+
+    assert (
+        adaptation.workout_title
+        == adapted.workouts[1].title
+    )
+    assert (
+        adaptation.previous_duration
+        == timedelta(minutes=50)
+    )
+    assert (
+        adaptation.revised_duration
+        == timedelta(
+            minutes=43,
+            seconds=45,
+        )
+    )
+    assert (
+        adaptation.trigger_status
+        is WorkoutOutcomeStatus.MODIFIED
+    )
+    assert (
+        adaptation.load_difference
+        == 90.0
+    )
 
 def test_overload_preserves_plan_when_recovery_is_good():
 
@@ -315,6 +346,10 @@ def test_overload_preserves_plan_when_recovery_is_good():
     )
 
     assert adapted.workouts == plan.workouts
+    assert (
+        adapted.adaptations
+        == ()
+    )
 
 
 def test_overload_does_not_change_past_workout():
@@ -445,7 +480,30 @@ def test_missed_workout_increases_next_easy_session():
         adapted.workouts[2].duration
         == timedelta(minutes=63)
     )
+    assert len(
+        adapted.adaptations
+    ) == 1
 
+    adaptation = (
+        adapted.adaptations[0]
+    )
+
+    assert (
+        adaptation.previous_duration
+        == timedelta(minutes=60)
+    )
+    assert (
+        adaptation.revised_duration
+        == timedelta(minutes=63)
+    )
+    assert (
+        adaptation.trigger_status
+        is WorkoutOutcomeStatus.MISSED
+    )
+    assert (
+        adaptation.load_difference
+        is None
+    )
 
 def test_lower_load_increases_next_easy_session():
 

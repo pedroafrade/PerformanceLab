@@ -17,6 +17,9 @@ from performancelab.training.load import (
     planned_workout_load,
 )
 from .planned_workout import PlannedWorkout
+from .plan_adaptation import (
+    TrainingPlanAdaptation,
+)
 from .training_plan import TrainingPlan
 from .workout_outcome import (
     WorkoutOutcome,
@@ -56,6 +59,9 @@ class TrainingPlanAdapter:
             outcomes=outcomes,
             training_state=training_state,
             reference_day=reference_day,
+        )
+        original_workouts = tuple(
+            plan.workouts
         )
 
         workouts = list(
@@ -149,6 +155,26 @@ class TrainingPlanAdapter:
                 )
             )
 
+        adaptation_records = (
+            self._adaptation_records(
+                original_workouts=(
+                    original_workouts
+                ),
+                revised_workouts=tuple(
+                    workouts
+                ),
+                reference_day=(
+                    reference_day
+                ),
+                overload_outcomes=(
+                    overload_outcomes
+                ),
+                underload_outcomes=(
+                    underload_outcomes
+                ),
+            )
+        )
+
         return TrainingPlan(
             plan_id=plan.plan_id,
             start_date=plan.start_date,
@@ -162,6 +188,10 @@ class TrainingPlanAdapter:
             reconciled_workout_signatures=(
                 plan.reconciled_workout_signatures
             ),
+            adaptations=(
+                plan.adaptations
+                + adaptation_records
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),
@@ -173,6 +203,128 @@ class TrainingPlanAdapter:
 
     # ======================================================
 
+    @staticmethod
+    def _adaptation_records(
+        *,
+        original_workouts: tuple[
+            PlannedWorkout,
+            ...,
+        ],
+        revised_workouts: tuple[
+            PlannedWorkout,
+            ...,
+        ],
+        reference_day: date,
+        overload_outcomes: tuple[
+            WorkoutOutcome,
+            ...,
+        ],
+        underload_outcomes: tuple[
+            WorkoutOutcome,
+            ...,
+        ],
+    ) -> tuple[
+        TrainingPlanAdaptation,
+        ...,
+    ]:
+        """
+        Records duration changes made to future sessions.
+        """
+
+        records = []
+
+        for original, revised in zip(
+            original_workouts,
+            revised_workouts,
+        ):
+            if (
+                original.duration is None
+                or revised.duration is None
+                or original.duration
+                == revised.duration
+            ):
+                continue
+
+            if (
+                revised.duration
+                < original.duration
+            ):
+                candidates = (
+                    overload_outcomes
+                )
+            else:
+                candidates = (
+                    underload_outcomes
+                )
+
+            trigger = max(
+                candidates,
+                key=(
+                    TrainingPlanAdapter
+                    ._outcome_priority
+                ),
+                default=None,
+            )
+
+            if trigger is None:
+                continue
+
+            records.append(
+                TrainingPlanAdaptation(
+                    reconciled_on=(
+                        reference_day
+                    ),
+                    workout_day=(
+                        revised.day
+                    ),
+                    workout_title=(
+                        revised.title
+                        or original.title
+                        or "Planned workout"
+                    ),
+                    previous_duration=(
+                        original.duration
+                    ),
+                    revised_duration=(
+                        revised.duration
+                    ),
+                    trigger_status=(
+                        trigger.status
+                    ),
+                    load_difference=(
+                        trigger.load_difference
+                    ),
+                )
+            )
+
+        return tuple(
+            records
+        )
+
+    @staticmethod
+    def _outcome_priority(
+        outcome: WorkoutOutcome,
+    ) -> float:
+        """
+        Gives priority to the outcome with the largest
+        known load effect.
+        """
+
+        if (
+            outcome.load_difference
+            is not None
+        ):
+            return abs(
+                outcome.load_difference
+            )
+
+        if outcome.planned_load is not None:
+            return abs(
+                outcome.planned_load
+            )
+
+        return 0.0
+    
     @staticmethod
     def _overload_reduction(
         outcomes: tuple[
