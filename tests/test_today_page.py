@@ -184,3 +184,12 @@ def test_formats_activity_outside_plan():
         )
         == "Outside plan"
     )
+
+def test_summarises_missing_recent_activity():
+
+    assert (
+        _activity_outcome_summary(
+            None
+        )
+        == "No recent activity is available."
+    )

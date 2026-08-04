@@ -194,6 +194,7 @@ def _show_today_session(
             f"{index}. {step}"
         )
 
+
 def _outcome_label(
     status: str | None,
 ) -> str:
@@ -265,6 +266,26 @@ def _activity_outcome_summary(
         parts
     )
 
+
+def _show_empty_state(
+    *,
+    title: str,
+    message: str,
+) -> None:
+    """
+    Displays a consistent empty state inside a
+    Today page widget.
+    """
+
+    st.markdown(
+        f"**{title}**"
+    )
+
+    st.caption(
+        message
+    )
+
+
 def show_today_page(
     athlete,
 ):
@@ -297,6 +318,7 @@ def show_today_page(
         st.columns(
             [1, 1],
             gap="large",
+            vertical_alignment="top",
         )
     )
 
@@ -320,16 +342,32 @@ def show_today_page(
             divider=True,
         ):
 
-            next_workout_card(
-                today.next_workout
-            )
+            if today.next_workout is None:
+
+                _show_empty_state(
+                    title="No upcoming workout",
+                    message=(
+                        "There is no future training "
+                        "session in the current plan."
+                    ),
+                )
+
+            else:
+
+                next_workout_card(
+                    today.next_workout
+                )
 
     st.markdown(
         "### Current readiness"
     )
 
     recovery_column, load_column = (
-        st.columns(2)
+        st.columns(
+            2,
+            gap="large",
+            vertical_alignment="top",
+        )
     )
 
     with recovery_column:
@@ -355,6 +393,7 @@ def show_today_page(
             training_load_card(
                 today.training_load
             )
+
     st.markdown(
         "### Recent context"
     )
@@ -363,6 +402,7 @@ def show_today_page(
         st.columns(
             [1.4, 1],
             gap="large",
+            vertical_alignment="top",
         )
     )
 
@@ -374,18 +414,34 @@ def show_today_page(
             divider=True,
         ):
 
-            st.markdown(
-                (
-                    "**Plan result:** "
-                    f"{_activity_outcome_summary(
-                        today.latest_activity_summary
-                    )}"
-                )
-            )
+            if (
+                today.latest_activity_summary
+                is None
+            ):
 
-            latest_activity_card(
-                today.latest_activity
-            )
+                _show_empty_state(
+                    title="No recent activity",
+                    message=(
+                        "Import an activity to compare "
+                        "completed and planned training."
+                    ),
+                )
+
+            else:
+
+                activity_outcome = (
+                    _activity_outcome_summary(
+                        today.latest_activity_summary
+                    )
+                )
+
+                st.markdown(
+                    f"**Plan result:** {activity_outcome}"
+                )
+
+                latest_activity_card(
+                    today.latest_activity
+                )
 
     with event_column:
 
@@ -395,7 +451,20 @@ def show_today_page(
             divider=True,
         ):
 
-            next_event_card(
-                today.next_event
-            )
+            if today.next_event is None:
+
+                _show_empty_state(
+                    title="No upcoming event",
+                    message=(
+                        "Add an event to give the "
+                        "training plan a target."
+                    ),
+                )
+
+            else:
+
+                next_event_card(
+                    today.next_event
+                )
+
     return None
