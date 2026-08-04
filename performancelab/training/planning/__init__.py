@@ -5,6 +5,9 @@ Training Planning Package
 """
 
 from .planned_workout import PlannedWorkout
+from .plan_adaptation import (
+    TrainingPlanAdaptation,
+)
 from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
@@ -24,6 +27,7 @@ from .workout_outcome import (
 
 __all__ = [
     "PlannedWorkout",
+    "TrainingPlanAdaptation",
     "TrainingPlan",
     "TrainingPlanAdapter",
     "TrainingPlanReconciler",
