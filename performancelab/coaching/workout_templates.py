@@ -10,6 +10,7 @@ from types import MappingProxyType
 from typing import Mapping
 
 from .session_purpose import SessionPurpose
+from .stimulus_dose import StimulusDose
 from .training_focus import TrainingFocus
 from .workout_template import WorkoutTemplate
 
@@ -152,6 +153,13 @@ THRESHOLD_TEMPLATE = WorkoutTemplate(
         "Controlled recoveries",
         "Easy cool-down",
     ),
+    dose=StimulusDose(
+        minimum_work_minutes=18,
+        target_work_minutes=24,
+        maximum_work_minutes=36,
+        maximum_repetition_minutes=12,
+        recovery_minutes=2,
+    ),
 )
 
 
@@ -170,6 +178,13 @@ VO2MAX_TEMPLATE = WorkoutTemplate(
         "Recovery intervals",
         "Easy cool-down",
     ),
+    dose=StimulusDose(
+        minimum_work_minutes=12,
+        target_work_minutes=18,
+        maximum_work_minutes=24,
+        maximum_repetition_minutes=4,
+        recovery_minutes=2,
+    ),
 )
 
 
@@ -185,6 +200,11 @@ TEMPO_TEMPLATE = WorkoutTemplate(
         "Progressive warm-up",
         "Continuous tempo effort",
         "Easy cool-down",
+    ),
+    dose=StimulusDose(
+        minimum_work_minutes=20,
+        target_work_minutes=30,
+        maximum_work_minutes=45,
     ),
 )
 
@@ -204,6 +224,13 @@ HILLS_TEMPLATE = WorkoutTemplate(
         "Easy downhill recovery",
         "Easy cool-down",
     ),
+    dose=StimulusDose(
+        minimum_work_minutes=15,
+        target_work_minutes=21,
+        maximum_work_minutes=30,
+        maximum_repetition_minutes=5,
+        recovery_minutes=2,
+    ),
 )
 
 
@@ -222,6 +249,13 @@ SPEED_TEMPLATE = WorkoutTemplate(
         "Short fast repetitions",
         "Full recovery between repetitions",
         "Easy cool-down",
+    ),
+    dose=StimulusDose(
+        minimum_work_minutes=6,
+        target_work_minutes=8,
+        maximum_work_minutes=10,
+        maximum_repetition_minutes=1,
+        recovery_minutes=2,
     ),
 )
 

@@ -39,6 +39,7 @@ from .daily_guidance import (
 )
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
+from .stimulus_dose import StimulusDose
 from .structure_generator import WeekStructureGenerator
 from .workout_template import WorkoutTemplate
 from .workout_templates import (
@@ -94,6 +95,7 @@ __all__ = [
     "CoachReviewer",
 
     # Workout templates
+    "StimulusDose",
     "WorkoutTemplate",
     "DEFAULT_WORKOUT_TEMPLATES",
     "REST_TEMPLATE",

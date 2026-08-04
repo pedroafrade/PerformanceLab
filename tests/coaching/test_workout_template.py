@@ -6,6 +6,7 @@ from performancelab.coaching import (
     RACE_TEMPLATE,
     RECOVERY_TEMPLATE,
     REST_TEMPLATE,
+    StimulusDose,
     WorkoutTemplate,
     CROSS_TRAINING_TEMPLATE,
     SHAKEOUT_TEMPLATE,
@@ -712,3 +713,190 @@ def test_planned_intensities_follow_semantic_hierarchy():
         < race_rpe
         < vo2max_rpe
     )
+
+def test_creates_immutable_stimulus_dose() -> None:
+
+    dose = StimulusDose(
+        minimum_work_minutes=18,
+        target_work_minutes=24,
+        maximum_work_minutes=36,
+        maximum_repetition_minutes=12,
+        recovery_minutes=2,
+    )
+
+    assert dose.minimum_work_minutes == 18
+    assert dose.target_work_minutes == 24
+    assert dose.maximum_work_minutes == 36
+    assert dose.maximum_repetition_minutes == 12
+    assert dose.recovery_minutes == 2
+
+    with pytest.raises(
+        AttributeError,
+    ):
+        dose.target_work_minutes = 30
+
+
+@pytest.mark.parametrize(
+    (
+        "minimum",
+        "target",
+        "maximum",
+    ),
+    (
+        (
+            24,
+            18,
+            36,
+        ),
+        (
+            18,
+            40,
+            36,
+        ),
+    ),
+)
+def test_stimulus_dose_requires_ordered_work_limits(
+    minimum: int,
+    target: int,
+    maximum: int,
+) -> None:
+
+    with pytest.raises(
+        ValueError,
+        match="minimum <= target <= maximum",
+    ):
+        StimulusDose(
+            minimum_work_minutes=minimum,
+            target_work_minutes=target,
+            maximum_work_minutes=maximum,
+        )
+
+
+@pytest.mark.parametrize(
+    "field_name",
+    (
+        "minimum_work_minutes",
+        "target_work_minutes",
+        "maximum_work_minutes",
+    ),
+)
+def test_stimulus_dose_requires_positive_work_minutes(
+    field_name: str,
+) -> None:
+
+    values = {
+        "minimum_work_minutes": 18,
+        "target_work_minutes": 24,
+        "maximum_work_minutes": 36,
+    }
+
+    values[field_name] = 0
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            f"{field_name} must be greater than zero"
+        ),
+    ):
+        StimulusDose(
+            **values
+        )
+
+
+def test_workout_template_accepts_stimulus_dose() -> None:
+
+    dose = StimulusDose(
+        minimum_work_minutes=18,
+        target_work_minutes=24,
+        maximum_work_minutes=36,
+        maximum_repetition_minutes=12,
+        recovery_minutes=2,
+    )
+
+    template = WorkoutTemplate(
+        purpose=SessionPurpose.INTENSITY,
+        title="LT2 Session",
+        objective="Develop threshold capacity.",
+        intensity="Hard",
+        dose=dose,
+    )
+
+    assert template.dose is dose
+
+
+def test_workout_template_rejects_invalid_dose() -> None:
+
+    with pytest.raises(
+        TypeError,
+        match="dose must be a StimulusDose or None",
+    ):
+        WorkoutTemplate(
+            purpose=SessionPurpose.INTENSITY,
+            title="LT2 Session",
+            objective="Develop threshold capacity.",
+            intensity="Hard",
+            dose="invalid",
+        )
+
+
+def test_for_sport_preserves_stimulus_dose() -> None:
+
+    original = THRESHOLD_TEMPLATE
+
+    running = original.for_sport(
+        "running"
+    )
+
+    assert running.dose is original.dose
+
+
+def test_customization_preserves_stimulus_dose() -> None:
+
+    customized = (
+        THRESHOLD_TEMPLATE
+        .customized_for(
+            make_strategy_plan(
+                focus="threshold",
+            )
+        )
+    )
+
+    assert (
+        customized.dose
+        is THRESHOLD_TEMPLATE.dose
+    )
+
+
+def test_threshold_template_defines_controlled_dose() -> None:
+
+    dose = THRESHOLD_TEMPLATE.dose
+
+    assert dose is not None
+
+    assert dose.minimum_work_minutes == 18
+    assert dose.target_work_minutes == 24
+    assert dose.maximum_work_minutes == 36
+
+    assert (
+        dose.maximum_repetition_minutes
+        == 12
+    )
+
+    assert dose.recovery_minutes == 2
+
+
+@pytest.mark.parametrize(
+    "template",
+    (
+        THRESHOLD_TEMPLATE,
+        VO2MAX_TEMPLATE,
+        TEMPO_TEMPLATE,
+        HILLS_TEMPLATE,
+        SPEED_TEMPLATE,
+    ),
+)
+def test_focused_intensity_templates_define_a_dose(
+    template: WorkoutTemplate,
+) -> None:
+
+    assert template.dose is not None

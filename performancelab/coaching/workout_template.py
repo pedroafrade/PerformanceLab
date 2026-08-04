@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 
 from .recommendation import CoachRecommendation
 from .session_purpose import SessionPurpose
+from .stimulus_dose import StimulusDose
 if TYPE_CHECKING:
     from .strategy import StrategyPlan
 
@@ -35,6 +36,7 @@ class WorkoutTemplate:
     structure: tuple[str, ...] = ()
     equipment: tuple[str, ...] = ()
     sport: str | None = None
+    dose: StimulusDose | None = None
 
     # ======================================================
 
@@ -69,7 +71,17 @@ class WorkoutTemplate:
                 "sport",
                 self.sport,
             )
-
+        if (
+            self.dose is not None
+            and not isinstance(
+                self.dose,
+                StimulusDose,
+            )
+        ):
+            raise TypeError(
+                "dose must be a StimulusDose or None"
+            )
+        
         self._validate_text_tuple(
             "structure",
             self.structure,
@@ -151,6 +163,7 @@ class WorkoutTemplate:
             structure=self.structure,
             equipment=self.equipment,
             sport=sport,
+            dose=self.dose,
         )
 
     # ======================================================
@@ -202,6 +215,7 @@ class WorkoutTemplate:
             structure=self.structure,
             equipment=self.equipment,
             sport=self.sport,
+            dose=self.dose,
         )
     # ======================================================
 
