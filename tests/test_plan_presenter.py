@@ -505,6 +505,13 @@ def test_exposes_current_plan_phase():
         result.current_phase.name
         == "Peak"
     )
+    assert (
+        result.current_phase.objective
+        == (
+            "Increase race-specific endurance "
+            "and key-session quality."
+        )
+    )
 
     assert (
         result.current_phase.start_date
@@ -548,3 +555,56 @@ def test_has_no_current_phase_outside_plan():
     )
 
     assert result.current_phase is None
+
+def test_provides_objective_for_each_plan_phase():
+
+    expected_objectives = {
+        "Build": (
+            "Develop sustainable training volume "
+            "and aerobic durability."
+        ),
+        "Peak": (
+            "Increase race-specific endurance "
+            "and key-session quality."
+        ),
+        "Taper": (
+            "Reduce fatigue while preserving "
+            "race readiness."
+        ),
+        "Race": (
+            "Execute the target event with "
+            "freshness and specificity."
+        ),
+        "Transition": (
+            "Recover from racing while maintaining "
+            "gentle movement."
+        ),
+        "Regeneration": (
+            "Restore physical and mental freshness "
+            "before rebuilding."
+        ),
+    }
+
+    for phase_name, expected in (
+        expected_objectives.items()
+    ):
+
+        assert (
+            PlanPresenter._phase_objective(
+                phase_name
+            )
+            == expected
+        )
+
+
+def test_provides_fallback_phase_objective():
+
+    assert (
+        PlanPresenter._phase_objective(
+            "Unassigned"
+        )
+        == (
+            "Follow the planned sessions for "
+            "the current phase."
+        )
+    )

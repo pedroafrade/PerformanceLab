@@ -66,6 +66,7 @@ class PlanCurrentPhaseData:
     """
 
     name: str
+    objective: str
     start_date: date
     end_date: date
     weeks_remaining: int

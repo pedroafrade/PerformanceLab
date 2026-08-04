@@ -676,6 +676,10 @@ def show_plan_page(
                     )
                 )
 
+                st.write(
+                    current_phase.objective
+                )
+
                 st.metric(
                     "Weeks remaining",
                     current_phase.weeks_remaining,

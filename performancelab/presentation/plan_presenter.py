@@ -56,6 +56,50 @@ class PlanPresenter:
                 )
             )
         }
+    
+    @staticmethod
+    def _phase_objective(
+        phase_name: str,
+    ) -> str:
+        """
+        Returns a concise presentation objective
+        for one training-plan phase.
+        """
+
+        objectives = {
+            "Build": (
+                "Develop sustainable training volume "
+                "and aerobic durability."
+            ),
+            "Peak": (
+                "Increase race-specific endurance "
+                "and key-session quality."
+            ),
+            "Taper": (
+                "Reduce fatigue while preserving "
+                "race readiness."
+            ),
+            "Race": (
+                "Execute the target event with "
+                "freshness and specificity."
+            ),
+            "Transition": (
+                "Recover from racing while maintaining "
+                "gentle movement."
+            ),
+            "Regeneration": (
+                "Restore physical and mental freshness "
+                "before rebuilding."
+            ),
+        }
+
+        return objectives.get(
+            phase_name,
+            (
+                "Follow the planned sessions for "
+                "the current phase."
+            ),
+        )
 
     @staticmethod
     def _current_phase_data(
@@ -126,6 +170,12 @@ class PlanPresenter:
 
         return PlanCurrentPhaseData(
             name=phase_name,
+            objective=(
+                PlanPresenter
+                ._phase_objective(
+                    phase_name
+                )
+            ),
             start_date=(
                 weeks[
                     phase_start_index
