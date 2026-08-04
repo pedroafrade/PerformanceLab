@@ -12,7 +12,6 @@ from app.components.plan_page import (
     show_plan_page,
 )
 from performancelab.presentation import (
-    PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
 )
@@ -40,6 +39,7 @@ def create_week(
         elevation_gain=100,
         intensity="Easy",
         phase="Build",
+        planned_load=180.0,
         status=status,
         prescription_summary=(
             "60 min easy"
@@ -65,50 +65,82 @@ def create_week(
         ),
     )
 
-def test_builds_planned_load_chart_data():
+def test_builds_planned_session_chart_data():
 
-    progression = (
-        PlanProgressionPointData(
-            week_start=date(
-                2026,
-                8,
-                3,
-            ),
-            phase="Build",
-            planned_load=420.0,
-            duration_minutes=180.0,
-            distance=30.0,
-            elevation_gain=600.0,
+    first_week = create_week()
+
+    second_workout = PlanWorkoutData(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
         ),
-        PlanProgressionPointData(
-            week_start=date(
-                2026,
-                8,
-                10,
-            ),
-            phase="Build",
-            planned_load=460.0,
-            duration_minutes=195.0,
-            distance=33.0,
-            elevation_gain=700.0,
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        distance=8,
+        elevation_gain=50,
+        intensity="Hard",
+        phase="Peak",
+        planned_load=315.0,
+        status="pending",
+        prescription_summary=None,
+        structure=(),
+    )
+
+    second_week = PlanWeekData(
+        start_date=date(
+            2026,
+            8,
+            10,
+        ),
+        end_date=date(
+            2026,
+            8,
+            16,
+        ),
+        phase="Peak",
+        planned_load=315.0,
+        workouts=(
+            second_workout,
         ),
     )
 
     result = _progression_chart_data(
-        progression
+        (
+            first_week,
+            second_week,
+        )
     )
 
-    assert result == {
-        "Week": [
-            date(2026, 8, 3),
-            date(2026, 8, 10),
-        ],
-        "Planned load": [
-            420.0,
-            460.0,
-        ],
-    }
-
+    assert result == [
+        {
+            "Date": datetime(
+                2026,
+                8,
+                4,
+                8,
+                0,
+            ),
+            "Planned load": 180.0,
+            "Session": "Easy Run",
+        },
+        {
+            "Date": datetime(
+                2026,
+                8,
+                11,
+                8,
+                0,
+            ),
+            "Planned load": 315.0,
+            "Session": "LT2 Run",
+        },
+    ]
 
 
 def test_show_plan_page_exists():
@@ -185,6 +217,7 @@ def test_week_html_escapes_workout_title():
         elevation_gain=100,
         intensity="Easy",
         phase="Build",
+        planned_load=180.0,
         status="pending",
         prescription_summary=None,
         structure=(),

@@ -9,6 +9,7 @@ from datetime import date, timedelta
 
 from performancelab.training.load import (
     planned_weekly_load,
+    planned_workout_load,
 )
 
 from .plan_models import (
@@ -124,6 +125,11 @@ class PlanPresenter:
                     ),
                     intensity=workout.intensity,
                     phase=workout.phase,
+                    planned_load=(
+                        planned_workout_load(
+                            workout
+                        )
+                    ),
                     status=outcomes.get(
                         workout,
                         "pending",

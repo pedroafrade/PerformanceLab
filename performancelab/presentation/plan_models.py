@@ -22,6 +22,7 @@ class PlanWorkoutData:
     elevation_gain: float | None
     intensity: str | None
     phase: str | None
+    planned_load: float | None
     status: str
     prescription_summary: str | None
     structure: tuple[str, ...]

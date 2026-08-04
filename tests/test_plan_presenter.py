@@ -128,6 +128,20 @@ def test_groups_complete_plan_by_week():
     )
 
     assert (
+        result.weeks[0]
+        .workouts[0]
+        .planned_load
+        == pytest.approx(180)
+    )
+
+    assert (
+        result.weeks[0]
+        .workouts[1]
+        .planned_load
+        == pytest.approx(315)
+    )
+
+    assert (
         result.weeks[1].phase
         == "Peak"
     )

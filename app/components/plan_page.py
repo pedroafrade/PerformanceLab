@@ -7,6 +7,7 @@ Complete training-plan page.
 from datetime import date
 from html import escape
 
+import altair as alt
 import streamlit as st
 
 from performancelab.presentation import (
@@ -32,25 +33,82 @@ def _status_label(
     )
 
 def _progression_chart_data(
-    progression,
-) -> dict[str, list]:
+    weeks,
+) -> list[dict]:
     """
-    Converts immutable plan progression points into
-    Streamlit chart data.
+    Converts planned sessions into chronological
+    chart points.
+
+    Rest days are omitted because they do not contain
+    a planned workout.
     """
 
-    return {
-        "Week": [
-            point.week_start
-            for point in progression
-        ],
-        "Planned load": [
-            point.planned_load
-            for point in progression
-        ],
-    }
+    return [
+        {
+            "Date": workout.scheduled_at,
+            "Planned load": workout.planned_load,
+            "Session": workout.title,
+        }
+        for week in weeks
+        for workout in week.workouts
+        if workout.planned_load is not None
+    ]
 
+def _progression_chart(
+    weeks,
+):
+    """
+    Builds a session-level planned-load chart.
+    """
 
+    chart_data = (
+        _progression_chart_data(
+            weeks
+        )
+    )
+
+    return (
+        alt.Chart(
+            alt.Data(
+                values=chart_data
+            )
+        )
+        .mark_line(
+            point=True
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title="Session date",
+            ),
+            y=alt.Y(
+                "Planned load:Q",
+                title="Planned load (AU)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Session:N",
+                    title="Session",
+                ),
+                alt.Tooltip(
+                    "Planned load:Q",
+                    title="Planned load",
+                    format=".0f",
+                ),
+            ],
+        )
+        .properties(
+            height=360
+        )
+    )
 
 def _week_is_current(
     week,
@@ -376,18 +434,15 @@ def show_plan_page(
     )
 
     st.caption(
-        "Weekly planned training load across the "
-        "complete plan horizon."
+        "Planned load for each session on its exact "
+        "calendar date. Rest days are omitted."
     )
 
-    st.line_chart(
-        _progression_chart_data(
-            plan.progression
+    st.altair_chart(
+        _progression_chart(
+            plan.weeks
         ),
-        x="Week",
-        y="Planned load",
-        x_label="Week",
-        y_label="Planned load (AU)",
+        use_container_width=True,
     )
 
     st.divider()
