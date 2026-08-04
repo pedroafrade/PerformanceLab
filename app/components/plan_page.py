@@ -560,41 +560,6 @@ def show_plan_page(
 
     with main_column:
 
-        (
-            horizon_column,
-            load_column,
-            distance_column,
-            elevation_column,
-        ) = st.columns(4)
-
-        with horizon_column:
-
-            st.metric(
-                "Horizon",
-                summary["Horizon"],
-            )
-
-        with load_column:
-
-            st.metric(
-                "Planned load",
-                summary["Planned load"],
-            )
-
-        with distance_column:
-
-            st.metric(
-                "Max distance",
-                summary["Max distance"],
-            )
-
-        with elevation_column:
-
-            st.metric(
-                "Max elevation",
-                summary["Max elevation"],
-            )
-
         timeline_visible_start = (
             current_week.start_date
             if current_week is not None
@@ -630,6 +595,43 @@ def show_plan_page(
                     + timeline_html
                 ),
                 unsafe_allow_html=True,
+            )
+
+        st.divider()
+
+        (
+            horizon_column,
+            load_column,
+            distance_column,
+            elevation_column,
+        ) = st.columns(4)
+
+        with horizon_column:
+
+            st.metric(
+                "Horizon",
+                summary["Horizon"],
+            )
+
+        with load_column:
+
+            st.metric(
+                "Planned load",
+                summary["Planned load"],
+            )
+
+        with distance_column:
+
+            st.metric(
+                "Max distance",
+                summary["Max distance"],
+            )
+
+        with elevation_column:
+
+            st.metric(
+                "Max elevation",
+                summary["Max elevation"],
             )
 
         st.divider()
@@ -682,7 +684,7 @@ def show_plan_page(
                     ),
                     unsafe_allow_html=True,
                 )
-
+                
     with sidebar_column:
 
         with st.container(
