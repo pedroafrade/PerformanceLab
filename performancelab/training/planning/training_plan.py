@@ -12,6 +12,9 @@ from datetime import date, datetime, time, timedelta
 from performancelab.history import History
 
 from .planned_workout import PlannedWorkout
+from .plan_adaptation import (
+    TrainingPlanAdaptation,
+)
 from .workout_collection import WorkoutCollection
 
 from .workout_outcome import (
@@ -49,6 +52,11 @@ class TrainingPlan(WorkoutCollection):
                 float | None,
             ],
         ],
+        ...,
+    ] = ()
+
+    adaptations: tuple[
+        TrainingPlanAdaptation,
         ...,
     ] = ()
 
@@ -193,6 +201,26 @@ class TrainingPlan(WorkoutCollection):
             raise ValueError(
                 "reconciled_workout_signatures cannot "
                 "contain duplicate workout IDs."
+            )
+
+        if not isinstance(
+            self.adaptations,
+            tuple,
+        ):
+            raise TypeError(
+                "adaptations must be a tuple."
+            )
+
+        if not all(
+            isinstance(
+                adaptation,
+                TrainingPlanAdaptation,
+            )
+            for adaptation in self.adaptations
+        ):
+            raise TypeError(
+                "adaptations must contain "
+                "TrainingPlanAdaptation objects."
             )
         
         for event_id in self.competition_event_ids:
