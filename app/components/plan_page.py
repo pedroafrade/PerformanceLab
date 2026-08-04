@@ -68,27 +68,103 @@ def _plan_chart_data(
         if point.planned_load is not None
     ]
 
+def _plan_distance_chart_data(
+    plan,
+) -> list[dict]:
+    """
+    Builds weekly training-distance points and
+    individual race-distance points.
+
+    Race distance is excluded from the weekly total.
+    """
+
+    rows = []
+
+    for week in plan.weeks:
+
+        weekly_distance = sum(
+            (
+                workout.distance
+                or 0.0
+            )
+            for workout in week.workouts
+            if (
+                not workout.is_race
+                and workout.distance is not None
+            )
+        )
+
+        if weekly_distance > 0:
+
+            rows.append(
+                {
+                    "Date": (
+                        week.start_date
+                        .isoformat()
+                    ),
+                    "Distance": (
+                        weekly_distance
+                    ),
+                    "Series": (
+                        "Weekly training"
+                    ),
+                }
+            )
+
+        for workout in week.workouts:
+
+            if (
+                not workout.is_race
+                or workout.distance is None
+            ):
+                continue
+
+            rows.append(
+                {
+                    "Date": (
+                        workout.scheduled_at
+                        .date()
+                        .isoformat()
+                    ),
+                    "Distance": (
+                        workout.distance
+                    ),
+                    "Series": "Race",
+                }
+            )
+
+    return sorted(
+        rows,
+        key=lambda row: row["Date"],
+    )
 
 def _plan_chart(
-    chart_points,
+    plan,
 ):
     """
     Builds the planned-session chart.
 
-    Planned load uses the left axis.
-    Session distance uses the right axis.
+    Planned load is shown for every session.
+    Distance is shown as weekly training totals plus
+    individual race points.
     """
 
-    chart_data = (
+    load_data = (
         _plan_chart_data(
-            chart_points
+            plan.chart_points
         )
     )
 
-    base = (
+    distance_data = (
+        _plan_distance_chart_data(
+            plan
+        )
+    )
+
+    load_base = (
         alt.Chart(
             alt.Data(
-                values=chart_data
+                values=load_data
             )
         )
         .encode(
@@ -119,17 +195,12 @@ def _plan_chart(
                     title="Planned load",
                     format=".0f",
                 ),
-                alt.Tooltip(
-                    "Distance:Q",
-                    title="Distance",
-                    format=".1f",
-                ),
             ],
         )
     )
 
     load_line = (
-        base
+        load_base
         .mark_line()
         .encode(
             y=alt.Y(
@@ -143,7 +214,7 @@ def _plan_chart(
     )
 
     load_points = (
-        base
+        load_base
         .mark_point(
             filled=True,
             size=65,
@@ -173,16 +244,40 @@ def _plan_chart(
         )
     )
 
-    distance_data = (
-        base
-        .transform_filter(
-            "datum.Distance != null"
+    distance_base = (
+        alt.Chart(
+            alt.Data(
+                values=distance_data
+            )
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title=None,
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Series:N",
+                    title="Distance point",
+                ),
+            ],
         )
     )
 
     distance_line = (
-        distance_data
+        distance_base
         .mark_line(
+            interpolate="monotone",
             strokeDash=[
                 6,
                 4,
@@ -203,10 +298,10 @@ def _plan_chart(
     )
 
     distance_points = (
-        distance_data
+        distance_base
         .mark_point(
             filled=False,
-            size=50,
+            size=60,
         )
         .encode(
             y=alt.Y(
@@ -217,6 +312,20 @@ def _plan_chart(
                 ),
                 scale=alt.Scale(
                     zero=True
+                ),
+            ),
+            shape=alt.Shape(
+                "Series:N",
+                title="Distance point",
+                scale=alt.Scale(
+                    domain=[
+                        "Weekly training",
+                        "Race",
+                    ],
+                    range=[
+                        "circle",
+                        "diamond",
+                    ],
                 ),
             ),
         )
@@ -717,13 +826,13 @@ def show_plan_page(
         )
 
         st.caption(
-            "Planned load and distance for each session "
-            "on its exact calendar date. Rest days are omitted."
+            "Planned load by session, with weekly training "
+            "distance and races on their exact dates."
         )
 
         st.altair_chart(
             _plan_chart(
-                plan.chart_points
+                plan
             ),
             use_container_width=True,
         )
