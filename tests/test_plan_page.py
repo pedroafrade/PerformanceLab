@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 from app.components.plan_page import (
     _current_plan_week,
+    _plan_chart_data,
     _plan_summary_metrics,
-    _progression_chart_data,
     _week_duration_label,
     _status_label,
     _week_html,
@@ -237,76 +237,100 @@ def test_builds_plan_summary_metrics():
 
 def test_builds_planned_session_chart_data():
 
-    first_week = create_week()
-
-    second_workout = PlanWorkoutData(
-        scheduled_at=datetime(
-            2026,
-            8,
-            11,
-            8,
-            0,
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                4,
+            ),
+            title="Easy Run",
+            phase="Build",
+            planned_load=180.0,
+            distance=10.0,
+            is_race=False,
         ),
-        sport="Running",
-        title="LT2 Run",
-        duration=timedelta(
-            minutes=45,
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                11,
+            ),
+            title="LT2 Run",
+            phase="Peak",
+            planned_load=315.0,
+            distance=8.0,
+            is_race=False,
         ),
-        distance=8,
-        elevation_gain=50,
-        intensity="Hard",
-        phase="Peak",
-        planned_load=315.0,
-        is_race=False,
-        status="pending",
-        prescription_summary=None,
-        structure=(),
-    )
-
-    second_week = PlanWeekData(
-        start_date=date(
-            2026,
-            8,
-            10,
-        ),
-        end_date=date(
-            2026,
-            8,
-            16,
-        ),
-        phase="Peak",
-        planned_load=315.0,
-        workouts=(
-            second_workout,
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                13,
+            ),
+            title="Race",
+            phase="Race",
+            planned_load=900.0,
+            distance=25.0,
+            is_race=True,
         ),
     )
 
-    result = _progression_chart_data(
-        (
-            first_week,
-            second_week,
-        )
+    result = _plan_chart_data(
+        chart_points
     )
 
     assert result == [
         {
-            "Date": (
-                "2026-08-04T08:00:00"
-            ),
+            "Date": "2026-08-04",
             "Planned load": 180.0,
+            "Distance": 10.0,
             "Session": "Easy Run",
+            "Phase": "Build",
             "Session type": "Training",
         },
         {
-            "Date": (
-                "2026-08-11T08:00:00"
-            ),
+            "Date": "2026-08-11",
             "Planned load": 315.0,
+            "Distance": 8.0,
             "Session": "LT2 Run",
+            "Phase": "Peak",
             "Session type": "Training",
+        },
+        {
+            "Date": "2026-09-13",
+            "Planned load": 900.0,
+            "Distance": 25.0,
+            "Session": "Race",
+            "Phase": "Race",
+            "Session type": "Race",
         },
     ]
 
+
+def test_omits_chart_points_without_planned_load():
+
+    chart_point = SimpleNamespace(
+        day=date(
+            2026,
+            8,
+            4,
+        ),
+        title="Unloaded session",
+        phase="Build",
+        planned_load=None,
+        distance=10.0,
+        is_race=False,
+    )
+
+    assert (
+        _plan_chart_data(
+            (
+                chart_point,
+            )
+        )
+        == []
+    )
 
 def test_show_plan_page_exists():
 

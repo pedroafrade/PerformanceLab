@@ -39,37 +39,35 @@ def _status_label(
         .title()
     )
 
-def _progression_chart_data(
-    weeks,
+def _plan_chart_data(
+    chart_points,
 ) -> list[dict]:
     """
-    Converts planned sessions into chronological
-    chart points.
-
-    Rest days are omitted because they do not contain
-    a planned workout.
+    Converts session-level plan data into chart rows.
     """
 
     return [
         {
-            "Date": (
-                workout.scheduled_at
-                .isoformat()
-            ),
+            "Date": point.day.isoformat(),
             "Planned load": (
-                workout.planned_load
+                point.planned_load
             ),
-            "Session": workout.title,
+            "Distance": point.distance,
+            "Session": point.title,
+            "Phase": (
+                point.phase
+                or "Unassigned"
+            ),
             "Session type": (
                 "Race"
-                if workout.is_race
+                if point.is_race
                 else "Training"
             ),
         }
-        for week in weeks
-        for workout in week.workouts
-        if workout.planned_load is not None
+        for point in chart_points
+        if point.planned_load is not None
     ]
+
 
 def _plan_chart(
     chart_points,
@@ -77,70 +75,168 @@ def _plan_chart(
     """
     Builds the planned-session chart.
 
-    One point represents one planned workout.
+    Planned load uses the left axis.
+    Session distance uses the right axis.
     """
 
-    import altair as alt
-    import pandas as pd
-
-    rows = []
-
-    for point in chart_points:
-
-        if point.planned_load is None:
-            continue
-
-        rows.append(
-            {
-                "Date": point.day,
-                "Load": point.planned_load,
-                "Title": point.title,
-                "Phase": point.phase or "",
-            }
+    chart_data = (
+        _plan_chart_data(
+            chart_points
         )
-
-    if not rows:
-
-        return alt.Chart(
-            pd.DataFrame(
-                {
-                    "Date": [],
-                    "Load": [],
-                }
-            )
-        )
-
-    dataframe = pd.DataFrame(
-        rows
     )
 
-    return (
+    base = (
         alt.Chart(
-            dataframe
-        )
-        .mark_line(
-            point=True,
+            alt.Data(
+                values=chart_data
+            )
         )
         .encode(
             x=alt.X(
                 "Date:T",
                 title=None,
             ),
-            y=alt.Y(
-                "Load:Q",
-                title="Planned load",
-            ),
             tooltip=[
-                "Date:T",
-                "Title:N",
-                "Phase:N",
-                "Load:Q",
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Session:N",
+                    title="Session",
+                ),
+                alt.Tooltip(
+                    "Phase:N",
+                    title="Phase",
+                ),
+                alt.Tooltip(
+                    "Session type:N",
+                    title="Type",
+                ),
+                alt.Tooltip(
+                    "Planned load:Q",
+                    title="Planned load",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance",
+                    format=".1f",
+                ),
             ],
+        )
+    )
+
+    load_line = (
+        base
+        .mark_line()
+        .encode(
+            y=alt.Y(
+                "Planned load:Q",
+                title="Planned load (AU)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    load_points = (
+        base
+        .mark_point(
+            filled=True,
+            size=65,
+        )
+        .encode(
+            y=alt.Y(
+                "Planned load:Q",
+                title="Planned load (AU)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            shape=alt.Shape(
+                "Session type:N",
+                title="Session type",
+                scale=alt.Scale(
+                    domain=[
+                        "Training",
+                        "Race",
+                    ],
+                    range=[
+                        "circle",
+                        "diamond",
+                    ],
+                ),
+            ),
+        )
+    )
+
+    distance_data = (
+        base
+        .transform_filter(
+            "datum.Distance != null"
+        )
+    )
+
+    distance_line = (
+        distance_data
+        .mark_line(
+            strokeDash=[
+                6,
+                4,
+            ],
+        )
+        .encode(
+            y=alt.Y(
+                "Distance:Q",
+                title="Distance (km)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    distance_points = (
+        distance_data
+        .mark_point(
+            filled=False,
+            size=50,
+        )
+        .encode(
+            y=alt.Y(
+                "Distance:Q",
+                title="Distance (km)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    return (
+        alt.layer(
+            load_line,
+            load_points,
+            distance_line,
+            distance_points,
+        )
+        .resolve_scale(
+            y="independent"
         )
         .properties(
             height=300,
         )
     )
+
 def _plan_summary_metrics(
     plan,
 ) -> dict[str, str]:
@@ -621,8 +717,8 @@ def show_plan_page(
         )
 
         st.caption(
-            "Planned load for each session on its exact "
-            "calendar date. Rest days are omitted."
+            "Planned load and distance for each session "
+            "on its exact calendar date. Rest days are omitted."
         )
 
         st.altair_chart(
