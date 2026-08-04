@@ -46,13 +46,13 @@ def _duration_label(
 
 
 def _readiness_score_label(
-    value: int,
+    value: int | float,
 ) -> str:
     """
     Formats the daily recovery score.
     """
 
-    return f"{value}/100"
+    return f"{round(value)}/100"
 
 
 def _form_label(
@@ -176,7 +176,7 @@ def _session_step_html(
         "grid-template-columns:1.55rem minmax(0,1fr);"
         "align-items:center;"
         "gap:0.65rem;"
-        "padding:0.62rem 0.15rem;"
+        "padding:0.42rem 0.15rem;"
         "border-bottom:1px solid rgba(128,128,128,0.22);"
         "'>"
         "<span style='"
@@ -263,6 +263,94 @@ def _show_today_session(
         )
 
 
+def _guidance_item_html(
+    *,
+    index: int,
+    text: str,
+) -> str:
+    """
+    Builds one monochrome guidance row.
+    """
+
+    return (
+        "<div style='"
+        "display:grid;"
+        "grid-template-columns:1.35rem minmax(0,1fr);"
+        "gap:0.55rem;"
+        "padding:0.42rem 0;"
+        "align-items:start;"
+        "'>"
+        "<span style='"
+        "font-size:0.72rem;"
+        "font-weight:600;"
+        "line-height:1.45;"
+        "'>"
+        f"{index}"
+        "</span>"
+        "<span style='"
+        "font-size:0.82rem;"
+        "line-height:1.4;"
+        "'>"
+        f"{escape(text)}"
+        "</span>"
+        "</div>"
+    )
+
+
+def _show_guidance_card(
+    *,
+    title: str,
+    items: tuple[str, ...],
+) -> None:
+    """
+    Displays one compact daily-guidance card.
+    """
+
+    with st.container(
+        border=True
+    ):
+        st.markdown(
+            f"**{title}**"
+        )
+
+        content = "".join(
+            _guidance_item_html(
+                index=index,
+                text=item,
+            )
+            for index, item in enumerate(
+                items,
+                start=1,
+            )
+        )
+
+        st.html(
+            content
+        )
+
+
+def _apply_today_page_styles() -> None:
+    """
+    Reduces unused Streamlit spacing on the Today
+    page without changing other application pages.
+    """
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 2.25rem;
+            padding-bottom: 0.75rem;
+        }
+
+        div[data-testid="stMainBlockContainer"] h1 {
+            margin-bottom: 0;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def _show_daily_decision(
     today,
 ) -> None:
@@ -333,6 +421,8 @@ def show_today_page(
     Displays the athlete's daily decision page.
     """
 
+    _apply_today_page_styles()
+
     today = TodayPresenter(
         athlete
     ).build()
@@ -351,6 +441,26 @@ def show_today_page(
         today
     )
 
-    _show_today_session(
-        today.today_session
+    session_column, guidance_column = (
+        st.columns(
+            [1.7, 1],
+            gap="large",
+            vertical_alignment="top",
+        )
     )
+
+    with session_column:
+        _show_today_session(
+            today.today_session
+        )
+
+    with guidance_column:
+        _show_guidance_card(
+            title="Why this workout today",
+            items=today.guidance.reasons,
+        )
+
+        _show_guidance_card(
+            title="Attention during training",
+            items=today.guidance.cautions,
+        )

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from app.components.today_page import (
     _duration_label,
     _form_label,
+    _guidance_item_html,
     _readiness_score_label,
     _recent_load_label,
     _session_step_html,
@@ -169,11 +170,24 @@ def test_escapes_session_step():
     assert "Run &lt; controlled" in result
 
 
+def test_builds_monochrome_guidance_item():
+
+    result = _guidance_item_html(
+        index=1,
+        text="Recovery < expected",
+    )
+
+    assert ">1<" in result
+    assert "Recovery &lt; expected" in result
+    assert "color:" not in result
+    assert "background:" not in result
+
+
 def test_formats_daily_readiness():
 
     assert (
         _readiness_score_label(
-            72
+            72.3417269
         )
         == "72/100"
     )
