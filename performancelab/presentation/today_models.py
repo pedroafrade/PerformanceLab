@@ -6,6 +6,7 @@ Today presentation models.
 
 from dataclasses import dataclass
 from datetime import date
+
 from .activity_models import (
     ActivityListItemData,
 )
@@ -19,6 +20,7 @@ from .dashboard_models import (
     WeeklyPlanDayData,
 )
 
+
 @dataclass(frozen=True)
 class TodayReadinessData:
     """
@@ -30,6 +32,17 @@ class TodayReadinessData:
     recovery_status: str
     form: float
     recent_load: float
+
+
+@dataclass(frozen=True)
+class TodayGuidanceData:
+    """
+    Presentation-ready reasons and cautions for today.
+    """
+
+    reasons: tuple[str, ...]
+    cautions: tuple[str, ...]
+
 
 @dataclass(frozen=True)
 class TodayData:
@@ -50,8 +63,8 @@ class TodayData:
     )
 
     coach: CoachRecommendationData
-
     readiness: TodayReadinessData
+    guidance: TodayGuidanceData
 
     latest_activity: (
         LatestActivityCardData

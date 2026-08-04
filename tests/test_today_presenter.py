@@ -73,6 +73,13 @@ def test_builds_empty_today_context():
         result.next_event
         is None
     )
+    assert result.guidance.reasons == (
+        "No training session is planned today.",
+    )
+
+    assert result.guidance.cautions == (
+        "Use the day for recovery and preparation.",
+    )
 
 
 def test_exposes_today_and_next_workout():
@@ -92,6 +99,7 @@ def test_exposes_today_and_next_workout():
             minutes=45,
         ),
         intensity="Easy",
+        phase="Build",
     )
 
     athlete.training_plan.schedule(
@@ -129,6 +137,15 @@ def test_exposes_today_and_next_workout():
     assert (
         result.next_workout.title
         == "Easy Run"
+    )
+    assert (
+        "The session supports the Build phase."
+        in result.guidance.reasons
+    )
+
+    assert (
+        "Stay within the planned duration and intensity."
+        in result.guidance.cautions
     )
 
 
@@ -268,3 +285,8 @@ def test_exposes_immutable_daily_readiness():
         FrozenInstanceError
     ):
         result.readiness.form = 1.0
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        result.guidance.reasons = ()

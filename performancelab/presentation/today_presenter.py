@@ -13,19 +13,23 @@ from datetime import (
 from performancelab.athlete import (
     Athlete,
 )
+from performancelab.coaching import (
+    build_daily_training_guidance,
+)
 from performancelab.training.planning.planner import (
     WeeklyPlanBuilder,
 )
 
-from .dashboard import DashboardData
 from .activities_presenter import (
     ActivitiesPresenter,
 )
+from .dashboard import DashboardData
 from .planning_presenter import (
     PlanningPresenter,
 )
 from .today_models import (
     TodayData,
+    TodayGuidanceData,
     TodayReadinessData,
 )
 
@@ -88,6 +92,18 @@ class TodayPresenter:
             ),
             None,
         )
+
+        planned_workout = next(
+            (
+                workout
+                for workout
+                in self.athlete.training_plan
+                .for_day(reference_day)
+                if not workout.is_rest
+            ),
+            None,
+        )
+
         activities = ActivitiesPresenter(
             self.athlete.history,
             training_plan=(
@@ -103,6 +119,7 @@ class TodayPresenter:
             if activities
             else None
         )
+
         recovery = dashboard.recovery
         training_load = (
             dashboard.training_load
@@ -111,6 +128,13 @@ class TodayPresenter:
             self.athlete.analytics
             .training_state
         )
+        domain_guidance = (
+            build_daily_training_guidance(
+                training_state=training_state,
+                workout=planned_workout,
+            )
+        )
+
         return TodayData(
             reference_day=reference_day,
             today_session=today_session,
@@ -128,6 +152,14 @@ class TodayPresenter:
                 form=training_state.form,
                 recent_load=(
                     training_load.acute_load
+                ),
+            ),
+            guidance=TodayGuidanceData(
+                reasons=(
+                    domain_guidance.reasons
+                ),
+                cautions=(
+                    domain_guidance.cautions
                 ),
             ),
             latest_activity=(

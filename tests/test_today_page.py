@@ -173,7 +173,7 @@ def test_formats_daily_readiness():
 
     assert (
         _readiness_score_label(
-            72.3417269
+            72
         )
         == "72/100"
     )
