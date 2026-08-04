@@ -3,8 +3,10 @@ Tests for the complete training-plan page.
 """
 
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 
 from app.components.plan_page import (
+    _plan_summary_metrics,
     _progression_chart_data,
     _status_label,
     _week_html,
@@ -65,6 +67,42 @@ def create_week(
             workout,
         ),
     )
+
+def test_builds_plan_summary_metrics():
+
+    plan = SimpleNamespace(
+        weeks=(
+            SimpleNamespace(
+                planned_load=876.0
+            ),
+            SimpleNamespace(
+                planned_load=1035.0
+            ),
+        ),
+        progression=(
+            SimpleNamespace(
+                distance=38.0,
+                elevation_gain=950.0,
+            ),
+            SimpleNamespace(
+                distance=42.0,
+                elevation_gain=1100.0,
+            ),
+        ),
+    )
+
+    result = _plan_summary_metrics(
+        plan
+    )
+
+    assert result == {
+        "Horizon": "2 weeks",
+        "Planned load": "1911 AU",
+        "Max distance": "42 km/week",
+        "Max elevation": "1100 m/week",
+    }
+
+
 
 def test_builds_planned_session_chart_data():
 

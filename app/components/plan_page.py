@@ -159,6 +159,51 @@ def _progression_chart(
         height=360
     )
 
+def _plan_summary_metrics(
+    plan,
+) -> dict[str, str]:
+    """
+    Builds concise summary values for the complete plan.
+    """
+
+    total_load = sum(
+        week.planned_load
+        for week in plan.weeks
+    )
+
+    max_distance = max(
+        (
+            point.distance
+            for point in plan.progression
+        ),
+        default=0.0,
+    )
+
+    max_elevation = max(
+        (
+            point.elevation_gain
+            for point in plan.progression
+        ),
+        default=0.0,
+    )
+
+    return {
+        "Horizon": (
+            f"{len(plan.weeks)} weeks"
+        ),
+        "Planned load": (
+            f"{total_load:.0f} AU"
+        ),
+        "Max distance": (
+            f"{max_distance:.0f} km/week"
+        ),
+        "Max elevation": (
+            f"{max_elevation:.0f} m/week"
+        ),
+    }
+
+
+
 def _week_is_current(
     week,
     *,
@@ -434,46 +479,45 @@ def show_plan_page(
 
         return
 
-    total_load = sum(
-        week.planned_load
-        for week in plan.weeks
+    summary = (
+        _plan_summary_metrics(
+            plan
+        )
     )
 
-    horizon_column, weeks_column, load_column = (
-        st.columns(3)
-    )
+    (
+        horizon_column,
+        load_column,
+        distance_column,
+        elevation_column,
+    ) = st.columns(4)
 
     with horizon_column:
 
-        horizon = (
-            (
-                f"{plan.start_date.strftime('%d %b %Y')} – "
-                f"{plan.end_date.strftime('%d %b %Y')}"
-            )
-            if (
-                plan.start_date is not None
-                and plan.end_date is not None
-            )
-            else "—"
-        )
-
         st.metric(
-            "Plan horizon",
-            horizon,
-        )
-
-    with weeks_column:
-
-        st.metric(
-            "Training weeks",
-            len(plan.weeks),
+            "Horizon",
+            summary["Horizon"],
         )
 
     with load_column:
 
         st.metric(
             "Planned load",
-            f"{total_load:.0f} AU",
+            summary["Planned load"],
+        )
+
+    with distance_column:
+
+        st.metric(
+            "Max distance",
+            summary["Max distance"],
+        )
+
+    with elevation_column:
+
+        st.metric(
+            "Max elevation",
+            summary["Max elevation"],
         )
 
     st.divider()
