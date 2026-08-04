@@ -540,41 +540,6 @@ def show_plan_page(
         )
     )
 
-    (
-        horizon_column,
-        load_column,
-        distance_column,
-        elevation_column,
-    ) = st.columns(4)
-
-    with horizon_column:
-
-        st.metric(
-            "Horizon",
-            summary["Horizon"],
-        )
-
-    with load_column:
-
-        st.metric(
-            "Planned load",
-            summary["Planned load"],
-        )
-
-    with distance_column:
-
-        st.metric(
-            "Max distance",
-            summary["Max distance"],
-        )
-
-    with elevation_column:
-
-        st.metric(
-            "Max elevation",
-            summary["Max elevation"],
-        )
-
     current_week = (
         _current_plan_week(
             plan.weeks,
@@ -582,95 +547,178 @@ def show_plan_page(
         )
     )
 
-    if current_week is not None:
+    main_column, sidebar_column = (
+        st.columns(
+            [3, 1],
+            gap="large",
+        )
+    )
+
+    with main_column:
+
+        (
+            horizon_column,
+            load_column,
+            distance_column,
+            elevation_column,
+        ) = st.columns(4)
+
+        with horizon_column:
+
+            st.metric(
+                "Horizon",
+                summary["Horizon"],
+            )
+
+        with load_column:
+
+            st.metric(
+                "Planned load",
+                summary["Planned load"],
+            )
+
+        with distance_column:
+
+            st.metric(
+                "Max distance",
+                summary["Max distance"],
+            )
+
+        with elevation_column:
+
+            st.metric(
+                "Max elevation",
+                summary["Max elevation"],
+            )
+
+        if current_week is not None:
+
+            with st.container(
+                border=True
+            ):
+
+                (
+                    week_title_column,
+                    week_value_column,
+                ) = st.columns(
+                    [3, 2]
+                )
+
+                with week_title_column:
+
+                    st.markdown(
+                        "**Current week**"
+                    )
+
+                    st.caption(
+                        (
+                            f"{current_week.start_date.strftime('%d %b')} "
+                            "– "
+                            f"{current_week.end_date.strftime('%d %b')}"
+                        )
+                    )
+
+                with week_value_column:
+
+                    phase = (
+                        current_week.phase
+                        or "Unassigned"
+                    )
+
+                    st.markdown(
+                        (
+                            f"**{phase}** · "
+                            f"{len(current_week.workouts)} sessions · "
+                            f"{_week_duration_label(current_week)} · "
+                            f"{current_week.planned_load:.0f} AU"
+                        )
+                    )
+
+        st.divider()
+
+        st.subheader(
+            "Plan progression"
+        )
+
+        st.caption(
+            "Planned load for each session on its exact "
+            "calendar date. Rest days are omitted."
+        )
+
+        st.altair_chart(
+            _progression_chart(
+                plan.weeks
+            ),
+            use_container_width=True,
+        )
+
+        st.divider()
+
+        _plan_styles()
+
+        for week in plan.weeks:
+
+            phase = (
+                week.phase
+                or "Unassigned"
+            )
+
+            label = (
+                f"{week.start_date.strftime('%d %b')} – "
+                f"{week.end_date.strftime('%d %b')} · "
+                f"{phase} · "
+                f"{week.planned_load:.0f} AU"
+            )
+
+            with st.expander(
+                label,
+                expanded=_week_is_current(
+                    week,
+                    reference_day=today,
+                ),
+            ):
+
+                st.markdown(
+                    _week_html(
+                        week
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+    with sidebar_column:
 
         with st.container(
             border=True
         ):
 
-            week_title_column, week_value_column = (
-                st.columns(
-                    [3, 2]
-                )
+            st.markdown(
+                "**Current phase**"
             )
 
-            with week_title_column:
+            st.caption(
+                "Coming soon"
+            )
 
-                st.markdown(
-                    "**Current week**"
-                )
-
-                st.caption(
-                    (
-                        f"{current_week.start_date.strftime('%d %b')} "
-                        "– "
-                        f"{current_week.end_date.strftime('%d %b')}"
-                    )
-                )
-
-            with week_value_column:
-
-                phase = (
-                    current_week.phase
-                    or "Unassigned"
-                )
-
-                st.markdown(
-                    (
-                        f"**{phase}** · "
-                        f"{len(current_week.workouts)} sessions · "
-                        f"{_week_duration_label(current_week)} · "
-                        f"{current_week.planned_load:.0f} AU"
-                    )
-                )
-
-    st.divider()
-
-    st.subheader(
-        "Plan progression"
-    )
-
-    st.caption(
-        "Planned load for each session on its exact "
-        "calendar date. Rest days are omitted."
-    )
-
-    st.altair_chart(
-        _progression_chart(
-            plan.weeks
-        ),
-        use_container_width=True,
-    )
-
-    st.divider()
-
-    _plan_styles()
-
-    for week in plan.weeks:
-
-        phase = (
-            week.phase
-            or "Unassigned"
-        )
-
-        label = (
-            f"{week.start_date.strftime('%d %b')} – "
-            f"{week.end_date.strftime('%d %b')} · "
-            f"{phase} · "
-            f"{week.planned_load:.0f} AU"
-        )
-
-        with st.expander(
-            label,
-            expanded=_week_is_current(
-                week,
-                reference_day=today,
-            ),
+        with st.container(
+            border=True
         ):
 
             st.markdown(
-                _week_html(
-                    week
-                ),
-                unsafe_allow_html=True,
+                "**Current week**"
+            )
+
+            st.caption(
+                "Coming soon"
+            )
+
+        with st.container(
+            border=True
+        ):
+
+            st.markdown(
+                "**Latest adaptation**"
+            )
+
+            st.caption(
+                "Coming soon"
             )
