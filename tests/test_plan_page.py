@@ -119,23 +119,15 @@ def test_builds_planned_session_chart_data():
 
     assert result == [
         {
-            "Date": datetime(
-                2026,
-                8,
-                4,
-                8,
-                0,
+            "Date": (
+                "2026-08-04T08:00:00"
             ),
             "Planned load": 180.0,
             "Session": "Easy Run",
         },
         {
-            "Date": datetime(
-                2026,
-                8,
-                11,
-                8,
-                0,
+            "Date": (
+                "2026-08-11T08:00:00"
             ),
             "Planned load": 315.0,
             "Session": "LT2 Run",

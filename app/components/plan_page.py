@@ -45,8 +45,13 @@ def _progression_chart_data(
 
     return [
         {
-            "Date": workout.scheduled_at,
-            "Planned load": workout.planned_load,
+            "Date": (
+                workout.scheduled_at
+                .isoformat()
+            ),
+            "Planned load": (
+                workout.planned_load
+            ),
             "Session": workout.title,
         }
         for week in weeks
