@@ -28,6 +28,7 @@ from .calendar_presenter import (
 from .plan_models import (
     CompletePlanData,
     PlanCurrentPhaseData,
+    PlanPhaseData,
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,

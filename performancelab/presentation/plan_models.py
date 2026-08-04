@@ -58,6 +58,17 @@ class PlanWeekData:
         ...,
     ]
 
+@dataclass(frozen=True)
+class PlanPhaseData:
+    """
+    One continuous phase in the complete plan timeline.
+    """
+
+    name: str
+    start_date: date
+    end_date: date
+    is_current: bool
+
 
 @dataclass(frozen=True)
 class PlanCurrentPhaseData:
@@ -89,6 +100,10 @@ class CompletePlanData:
     ]
     progression: tuple[
         PlanProgressionPointData,
+        ...,
+    ]
+    phases: tuple[
+        PlanPhaseData,
         ...,
     ]
     current_phase: (

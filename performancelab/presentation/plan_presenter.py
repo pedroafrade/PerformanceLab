@@ -15,6 +15,7 @@ from performancelab.training.load import (
 from .plan_models import (
     CompletePlanData,
     PlanCurrentPhaseData,
+    PlanPhaseData,
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
@@ -100,6 +101,88 @@ class PlanPresenter:
                 "the current phase."
             ),
         )
+
+    @staticmethod
+    def _phase_timeline_data(
+        weeks,
+        *,
+        reference_day: date,
+    ) -> tuple[PlanPhaseData, ...]:
+        """
+        Groups consecutive plan weeks into phases.
+        """
+
+        if not weeks:
+            return ()
+
+        phases = []
+
+        phase_name = (
+            weeks[0].phase
+            or "Unassigned"
+        )
+
+        phase_start = (
+            weeks[0].start_date
+        )
+
+        phase_end = (
+            weeks[0].end_date
+        )
+
+        for week in weeks[1:]:
+
+            week_phase = (
+                week.phase
+                or "Unassigned"
+            )
+
+            if week_phase == phase_name:
+
+                phase_end = (
+                    week.end_date
+                )
+
+                continue
+
+            phases.append(
+                PlanPhaseData(
+                    name=phase_name,
+                    start_date=phase_start,
+                    end_date=phase_end,
+                    is_current=(
+                        phase_start
+                        <= reference_day
+                        <= phase_end
+                    ),
+                )
+            )
+
+            phase_name = week_phase
+            phase_start = (
+                week.start_date
+            )
+            phase_end = (
+                week.end_date
+            )
+
+        phases.append(
+            PlanPhaseData(
+                name=phase_name,
+                start_date=phase_start,
+                end_date=phase_end,
+                is_current=(
+                    phase_start
+                    <= reference_day
+                    <= phase_end
+                ),
+            )
+        )
+
+        return tuple(
+            phases
+        )
+
 
     @staticmethod
     def _current_phase_data(
@@ -391,6 +474,14 @@ class PlanPresenter:
             weeks=weeks_data,
             progression=tuple(
                 progression
+            ),
+            phases=(
+                self._phase_timeline_data(
+                    weeks_data,
+                    reference_day=(
+                        reference_day
+                    ),
+                )
             ),
             current_phase=(
                 self._current_phase_data(

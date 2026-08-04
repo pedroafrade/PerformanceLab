@@ -12,6 +12,7 @@ from performancelab.history import (
 )
 from performancelab.presentation import (
     PlanCurrentPhaseData,
+    PlanPhaseData,
     PlanPresenter,
     PlanProgressionPointData,
 )
@@ -608,3 +609,143 @@ def test_provides_fallback_phase_objective():
             "the current phase."
         )
     )
+
+def test_exposes_complete_phase_timeline():
+
+    build = planned_workout(
+        day=4,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=60,
+        phase="Build",
+    )
+
+    peak_one = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        phase="Peak",
+    )
+
+    peak_two = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            18,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        intensity="Easy to moderate",
+        phase="Peak",
+    )
+
+    taper = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            25,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Pre-Race Run",
+        duration=timedelta(
+            minutes=40,
+        ),
+        intensity="Easy",
+        phase="Taper",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                build,
+                peak_one,
+                peak_two,
+                taper,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            12,
+        )
+    )
+
+    assert result.phases == (
+        PlanPhaseData(
+            name="Build",
+            start_date=date(
+                2026,
+                8,
+                3,
+            ),
+            end_date=date(
+                2026,
+                8,
+                9,
+            ),
+            is_current=False,
+        ),
+        PlanPhaseData(
+            name="Peak",
+            start_date=date(
+                2026,
+                8,
+                10,
+            ),
+            end_date=date(
+                2026,
+                8,
+                23,
+            ),
+            is_current=True,
+        ),
+        PlanPhaseData(
+            name="Taper",
+            start_date=date(
+                2026,
+                8,
+                24,
+            ),
+            end_date=date(
+                2026,
+                8,
+                30,
+            ),
+            is_current=False,
+        ),
+    )
+
+
+def test_has_empty_phase_timeline_for_empty_plan():
+
+    result = PlanPresenter(
+        plan=TrainingPlan(),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            12,
+        )
+    )
+
+    assert result.phases == ()
