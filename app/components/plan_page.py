@@ -17,7 +17,10 @@ from .phase_timeline import (
     phase_timeline_from_phases_html,
     phase_timeline_styles,
 )
-
+from .summary_cards import (
+    summary_cards_html,
+    summary_cards_styles,
+)
 from .workout_table import (
     format_duration,
 )
@@ -599,40 +602,42 @@ def show_plan_page(
 
         st.divider()
 
-        (
-            horizon_column,
-            load_column,
-            distance_column,
-            elevation_column,
-        ) = st.columns(4)
-
-        with horizon_column:
-
-            st.metric(
-                "Horizon",
-                summary["Horizon"],
+        summary_html = (
+            summary_cards_html(
+                (
+                    (
+                        "calendar_month",
+                        "Horizon",
+                        summary["Horizon"],
+                    ),
+                    (
+                        "monitoring",
+                        "Planned load",
+                        summary["Planned load"],
+                    ),
+                    (
+                        "route",
+                        "Max distance",
+                        summary["Max distance"],
+                    ),
+                    (
+                        "terrain",
+                        "Max elevation",
+                        summary["Max elevation"],
+                    ),
+                )
             )
+        )
 
-        with load_column:
-
-            st.metric(
-                "Planned load",
-                summary["Planned load"],
-            )
-
-        with distance_column:
-
-            st.metric(
-                "Max distance",
-                summary["Max distance"],
-            )
-
-        with elevation_column:
-
-            st.metric(
-                "Max elevation",
-                summary["Max elevation"],
-            )
+        st.markdown(
+            (
+                "<style>"
+                + summary_cards_styles()
+                + "</style>"
+                + summary_html
+            ),
+            unsafe_allow_html=True,
+        )
 
         st.divider()
 
