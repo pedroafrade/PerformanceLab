@@ -13,6 +13,10 @@ import streamlit as st
 from performancelab.presentation import (
     PlanPresenter,
 )
+from .phase_timeline import (
+    phase_timeline_from_phases_html,
+    phase_timeline_styles,
+)
 
 from .workout_table import (
     format_duration,
@@ -589,6 +593,43 @@ def show_plan_page(
             st.metric(
                 "Max elevation",
                 summary["Max elevation"],
+            )
+
+        timeline_visible_start = (
+            current_week.start_date
+            if current_week is not None
+            else today
+        )
+
+        timeline_visible_end = (
+            current_week.end_date
+            if current_week is not None
+            else today
+        )
+
+        timeline_html = (
+            phase_timeline_from_phases_html(
+                phases=plan.phases,
+                current_date=today,
+                visible_start=(
+                    timeline_visible_start
+                ),
+                visible_end=(
+                    timeline_visible_end
+                ),
+            )
+        )
+
+        if timeline_html:
+
+            st.markdown(
+                (
+                    "<style>"
+                    + phase_timeline_styles()
+                    + "</style>"
+                    + timeline_html
+                ),
+                unsafe_allow_html=True,
             )
 
         st.divider()

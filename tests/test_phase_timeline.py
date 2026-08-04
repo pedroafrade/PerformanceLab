@@ -8,11 +8,12 @@ from datetime import date
 from types import SimpleNamespace
 
 from app.components.phase_timeline import (
+    phase_range_segments,
     phase_segments,
+    phase_timeline_from_phases_html,
     phase_timeline_html,
     phase_timeline_styles,
 )
-
 
 def phase_day(
     day: int,
@@ -148,3 +149,117 @@ def test_exposes_shared_timeline_styles():
         ".weekly-phase-dot-current"
         in styles
     )
+
+def test_expands_phase_ranges_into_daily_segments():
+
+    phases = (
+        SimpleNamespace(
+            name="Build",
+            start_date=date(
+                2026,
+                8,
+                3,
+            ),
+            end_date=date(
+                2026,
+                8,
+                4,
+            ),
+        ),
+        SimpleNamespace(
+            name="Race",
+            start_date=date(
+                2026,
+                8,
+                5,
+            ),
+            end_date=date(
+                2026,
+                8,
+                5,
+            ),
+        ),
+    )
+
+    assert phase_range_segments(
+        phases
+    ) == (
+        (
+            "Build",
+            (
+                date(2026, 8, 3),
+                date(2026, 8, 4),
+            ),
+        ),
+        (
+            "Race",
+            (
+                date(2026, 8, 5),
+            ),
+        ),
+    )
+
+
+def test_builds_timeline_from_phase_ranges():
+
+    phases = (
+        SimpleNamespace(
+            name="Build",
+            start_date=date(
+                2026,
+                8,
+                3,
+            ),
+            end_date=date(
+                2026,
+                8,
+                4,
+            ),
+        ),
+        SimpleNamespace(
+            name="Race",
+            start_date=date(
+                2026,
+                8,
+                5,
+            ),
+            end_date=date(
+                2026,
+                8,
+                5,
+            ),
+        ),
+    )
+
+    result = (
+        phase_timeline_from_phases_html(
+            phases=phases,
+            current_date=date(
+                2026,
+                8,
+                4,
+            ),
+            visible_start=date(
+                2026,
+                8,
+                3,
+            ),
+            visible_end=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+    )
+
+    assert "Build" in result
+    assert "Race" in result
+    assert (
+        "weekly-phase-dot-current"
+        in result
+    )
+    assert (
+        "weekly-phase-dot-race"
+        in result
+    )
+    assert "04 Aug 2026" in result

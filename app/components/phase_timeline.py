@@ -4,6 +4,7 @@ PerformanceLab
 Reusable training-plan phase timeline.
 """
 
+from datetime import timedelta
 from html import escape
 
 
@@ -57,20 +58,59 @@ def phase_segments(
     )
 
 
-def phase_timeline_html(
+def phase_range_segments(
+    phases,
+):
+    """
+    Expands phase date ranges into daily timeline
+    segments.
+    """
+
+    segments = []
+
+    for phase in phases:
+
+        days = []
+
+        current_day = (
+            phase.start_date
+        )
+
+        while current_day <= phase.end_date:
+
+            days.append(
+                current_day
+            )
+
+            current_day += timedelta(
+                days=1
+            )
+
+        segments.append(
+            (
+                str(
+                    phase.name
+                    or "Unassigned"
+                ).strip(),
+                tuple(days),
+            )
+        )
+
+    return tuple(
+        segments
+    )
+
+
+def _phase_timeline_from_segments_html(
     *,
-    timeline,
+    segments,
     current_date,
     visible_start,
     visible_end,
 ) -> str:
     """
-    Builds the full-plan phase progression.
+    Builds timeline HTML from prepared phase segments.
     """
-
-    segments = phase_segments(
-        timeline
-    )
 
     if not segments:
         return ""
@@ -137,6 +177,52 @@ def phase_timeline_html(
         f'{"".join(segment_html)}'
         "</div>"
         "</div>"
+    )
+
+
+def phase_timeline_html(
+    *,
+    timeline,
+    current_date,
+    visible_start,
+    visible_end,
+) -> str:
+    """
+    Builds a phase timeline from daily timeline data.
+    """
+
+    return (
+        _phase_timeline_from_segments_html(
+            segments=phase_segments(
+                timeline
+            ),
+            current_date=current_date,
+            visible_start=visible_start,
+            visible_end=visible_end,
+        )
+    )
+
+
+def phase_timeline_from_phases_html(
+    *,
+    phases,
+    current_date,
+    visible_start,
+    visible_end,
+) -> str:
+    """
+    Builds the same timeline from phase date ranges.
+    """
+
+    return (
+        _phase_timeline_from_segments_html(
+            segments=phase_range_segments(
+                phases
+            ),
+            current_date=current_date,
+            visible_start=visible_start,
+            visible_end=visible_end,
+        )
     )
 
 
