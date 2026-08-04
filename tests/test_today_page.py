@@ -8,10 +8,13 @@ from types import SimpleNamespace
 from app.components.today_page import (
     _activity_outcome_summary,
     _duration_label,
+    _form_label,
     _outcome_label,
     _today_session_metadata,
     _today_session_status,
     _today_session_title,
+    _readiness_score_label,
+    _recent_load_label,
     show_today_page,
 )
 
@@ -192,4 +195,34 @@ def test_summarises_missing_recent_activity():
             None
         )
         == "No recent activity is available."
+    )
+
+def test_formats_daily_readiness():
+
+    assert (
+        _readiness_score_label(
+            72
+        )
+        == "72/100"
+    )
+
+    assert (
+        _form_label(
+            22.3
+        )
+        == "+22.3"
+    )
+
+    assert (
+        _form_label(
+            -7.25
+        )
+        == "-7.2"
+    )
+
+    assert (
+        _recent_load_label(
+            234.94
+        )
+        == "234.9"
     )

@@ -21,12 +21,6 @@ from .dashboard.cards.latest_activity_card import (
 from .dashboard.cards.next_event_card import (
     next_event_card,
 )
-from .dashboard.cards.recovery_card import (
-    recovery_card,
-)
-from .dashboard.cards.training_load_card import (
-    training_load_card,
-)
 from .dashboard.widget import (
     dashboard_widget,
 )
@@ -62,6 +56,34 @@ def _duration_label(
 
     return f"{minutes} min"
 
+def _readiness_score_label(
+    value: int,
+) -> str:
+    """
+    Formats the daily recovery score.
+    """
+
+    return f"{value}/100"
+
+
+def _form_label(
+    value: float,
+) -> str:
+    """
+    Formats the current physiological form.
+    """
+
+    return f"{value:+.1f}"
+
+
+def _recent_load_label(
+    value: float,
+) -> str:
+    """
+    Formats the recent training load.
+    """
+
+    return f"{value:.1f}"
 
 def _today_session_title(
     session,
@@ -285,6 +307,72 @@ def _show_empty_state(
         message
     )
 
+def _show_daily_decision(
+    today,
+) -> None:
+    """
+    Displays the daily decision and the minimum
+    physiological context required to understand it.
+    """
+
+    with st.container(
+        border=True
+    ):
+
+        (
+            decision_column,
+            recovery_column,
+            form_column,
+            load_column,
+        ) = st.columns(
+            [3.4, 1, 1, 1],
+            gap="medium",
+            vertical_alignment="center",
+        )
+
+        with decision_column:
+
+            st.markdown(
+                f"### {today.coach.summary}"
+            )
+
+            st.caption(
+                today.coach.recommendation
+            )
+
+        with recovery_column:
+
+            st.metric(
+                label="Recovery",
+                value=_readiness_score_label(
+                    today.readiness
+                    .recovery_score
+                ),
+            )
+
+            st.caption(
+                today.readiness
+                .recovery_status
+            )
+
+        with form_column:
+
+            st.metric(
+                label="Form",
+                value=_form_label(
+                    today.readiness.form
+                ),
+            )
+
+        with load_column:
+
+            st.metric(
+                label="Recent load",
+                value=_recent_load_label(
+                    today.readiness
+                    .recent_load
+                ),
+            )
 
 def show_today_page(
     athlete,
@@ -307,11 +395,8 @@ def show_today_page(
         )
     )
 
-    st.info(
-        (
-            f"**{today.coach.summary}**\n\n"
-            f"{today.coach.recommendation}"
-        )
+    _show_daily_decision(
+        today
     )
 
     session_column, next_column = (
@@ -358,41 +443,6 @@ def show_today_page(
                     today.next_workout
                 )
 
-    st.markdown(
-        "### Current readiness"
-    )
-
-    recovery_column, load_column = (
-        st.columns(
-            2,
-            gap="large",
-            vertical_alignment="top",
-        )
-    )
-
-    with recovery_column:
-
-        with dashboard_widget(
-            title="Recovery",
-            icon=":material/favorite:",
-            divider=False,
-        ):
-
-            recovery_card(
-                today.recovery
-            )
-
-    with load_column:
-
-        with dashboard_widget(
-            title="Training load",
-            icon=":material/monitoring:",
-            divider=False,
-        ):
-
-            training_load_card(
-                today.training_load
-            )
 
     st.markdown(
         "### Recent context"
