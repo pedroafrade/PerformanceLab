@@ -21,6 +21,10 @@ from performancelab.presentation import (
     TodayData,
     TodayPresenter,
 )
+from performancelab.training.planning import (
+    TrainingPlanAdaptation,
+    WorkoutOutcomeStatus,
+)
 
 
 REFERENCE_DAY = date(
@@ -290,3 +294,75 @@ def test_exposes_immutable_daily_readiness():
         FrozenInstanceError
     ):
         result.guidance.reasons = ()
+
+def test_exposes_latest_plan_adaptation():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    adaptation = TrainingPlanAdaptation(
+        reconciled_on=date(
+            2026,
+            8,
+            4,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            4,
+        ),
+        workout_title="LT2 Run",
+        previous_duration=timedelta(
+            minutes=50,
+        ),
+        revised_duration=timedelta(
+            minutes=38,
+        ),
+        trigger_status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        load_difference=744.0,
+    )
+
+    athlete.training_plan.adaptations = (
+        adaptation,
+    )
+
+    result = TodayPresenter(
+        athlete
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        result.latest_adaptation
+        is not None
+    )
+    assert (
+        result.latest_adaptation
+        .workout_title
+        == "LT2 Run"
+    )
+    assert (
+        result.latest_adaptation
+        .previous_minutes
+        == 50
+    )
+    assert (
+        result.latest_adaptation
+        .revised_minutes
+        == 38
+    )
+    assert (
+        result.latest_adaptation
+        .reason
+        == (
+            "Completed load was higher "
+            "than planned."
+        )
+    )

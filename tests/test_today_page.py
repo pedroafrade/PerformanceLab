@@ -6,6 +6,7 @@ from datetime import timedelta
 from types import SimpleNamespace
 
 from app.components.today_page import (
+    _adaptation_change_label,
     _duration_label,
     _form_label,
     _guidance_item_html,
@@ -90,6 +91,21 @@ def test_formats_today_duration():
             )
         )
         == "45 min"
+    )
+
+
+def test_formats_latest_adaptation_change():
+
+    adaptation = SimpleNamespace(
+        previous_minutes=50,
+        revised_minutes=38,
+    )
+
+    assert (
+        _adaptation_change_label(
+            adaptation
+        )
+        == "50 min → 38 min"
     )
 
     assert (

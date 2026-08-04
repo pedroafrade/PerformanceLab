@@ -334,6 +334,47 @@ def _guidance_item_html(
     )
 
 
+def _adaptation_change_label(
+    adaptation,
+) -> str:
+    """
+    Formats the duration change of the latest adaptation.
+    """
+
+    return (
+        f"{adaptation.previous_minutes} min"
+        " → "
+        f"{adaptation.revised_minutes} min"
+    )
+
+
+def _show_latest_adaptation(
+    adaptation,
+) -> None:
+    """
+    Displays the latest persisted plan adaptation.
+    """
+
+    if adaptation is None:
+        return
+
+    with st.container(
+        border=True
+    ):
+        st.markdown(
+            "**Latest plan adaptation**"
+        )
+        st.caption(
+            adaptation.reason
+        )
+        st.markdown(
+            (
+                f"**{adaptation.workout_title}** · "
+                f"{_adaptation_change_label(adaptation)}"
+            )
+        )
+
+
 def _show_guidance_card(
     *,
     title: str,
@@ -500,4 +541,8 @@ def show_today_page(
         _show_guidance_card(
             title="Attention during training",
             items=today.guidance.cautions,
+        )
+
+        _show_latest_adaptation(
+            today.latest_adaptation
         )

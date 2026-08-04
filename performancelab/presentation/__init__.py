@@ -34,6 +34,7 @@ from .plan_presenter import (
     PlanPresenter,
 )
 from .today_models import (
+    TodayAdaptationData,
     TodayData,
     TodayGuidanceData,
     TodayReadinessData,
@@ -105,6 +106,7 @@ __all__ = [
     "PlanWorkoutData",
 
     # Today
+    "TodayAdaptationData",
     "TodayData",
     "TodayGuidanceData",
     "TodayPresenter",

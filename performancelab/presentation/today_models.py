@@ -45,6 +45,18 @@ class TodayGuidanceData:
 
 
 @dataclass(frozen=True)
+class TodayAdaptationData:
+    """
+    Presentation-ready summary of the latest plan change.
+    """
+
+    workout_title: str
+    previous_minutes: int
+    revised_minutes: int
+    reason: str
+
+
+@dataclass(frozen=True)
 class TodayData:
     """
     Presentation-ready daily athlete context.
@@ -65,6 +77,10 @@ class TodayData:
     coach: CoachRecommendationData
     readiness: TodayReadinessData
     guidance: TodayGuidanceData
+    latest_adaptation: (
+        TodayAdaptationData
+        | None
+    )
 
     latest_activity: (
         LatestActivityCardData

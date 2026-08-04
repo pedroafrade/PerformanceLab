@@ -16,6 +16,10 @@ from performancelab.athlete import (
 from performancelab.coaching import (
     build_daily_training_guidance,
 )
+from performancelab.training.planning import (
+    TrainingPlanAdaptation,
+    WorkoutOutcomeStatus,
+)
 from performancelab.training.planning.planner import (
     WeeklyPlanBuilder,
 )
@@ -28,6 +32,7 @@ from .planning_presenter import (
     PlanningPresenter,
 )
 from .today_models import (
+    TodayAdaptationData,
     TodayData,
     TodayGuidanceData,
     TodayReadinessData,
@@ -135,6 +140,14 @@ class TodayPresenter:
             )
         )
 
+        latest_adaptation = (
+            self.athlete.training_plan
+            .adaptations[-1]
+            if self.athlete.training_plan
+            .adaptations
+            else None
+        )
+
         return TodayData(
             reference_day=reference_day,
             today_session=today_session,
@@ -162,6 +175,14 @@ class TodayPresenter:
                     domain_guidance.cautions
                 ),
             ),
+            latest_adaptation=(
+                self._adaptation_data(
+                    latest_adaptation
+                )
+                if latest_adaptation
+                is not None
+                else None
+            ),
             latest_activity=(
                 dashboard.latest_activity
             ),
@@ -173,4 +194,72 @@ class TodayPresenter:
             next_event=(
                 dashboard.next_event
             ),
+        )
+
+    @staticmethod
+    def _adaptation_data(
+        adaptation: TrainingPlanAdaptation,
+    ) -> TodayAdaptationData:
+        """
+        Converts a domain adaptation into concise UI data.
+        """
+
+        return TodayAdaptationData(
+            workout_title=(
+                adaptation.workout_title
+            ),
+            previous_minutes=round(
+                adaptation.previous_duration
+                .total_seconds()
+                / 60
+            ),
+            revised_minutes=round(
+                adaptation.revised_duration
+                .total_seconds()
+                / 60
+            ),
+            reason=(
+                TodayPresenter
+                ._adaptation_reason(
+                    adaptation
+                )
+            ),
+        )
+
+    @staticmethod
+    def _adaptation_reason(
+        adaptation: TrainingPlanAdaptation,
+    ) -> str:
+        """
+        Explains which reconciled outcome changed the plan.
+        """
+
+        if (
+            adaptation.load_difference
+            is not None
+            and adaptation.load_difference > 0
+        ):
+            return (
+                "Completed load was higher than planned."
+            )
+
+        if (
+            adaptation.load_difference
+            is not None
+            and adaptation.load_difference < 0
+        ):
+            return (
+                "Completed load was lower than planned."
+            )
+
+        if (
+            adaptation.trigger_status
+            is WorkoutOutcomeStatus.MISSED
+        ):
+            return (
+                "A missed session changed future training."
+            )
+
+        return (
+            "A completed session changed future training."
         )
