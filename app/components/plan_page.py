@@ -71,101 +71,76 @@ def _progression_chart_data(
         if workout.planned_load is not None
     ]
 
-def _progression_chart(
-    weeks,
+def _plan_chart(
+    chart_points,
 ):
     """
-    Builds a session-level planned-load chart.
+    Builds the planned-session chart.
 
-    All sessions belong to the same chronological line.
-    Race points are highlighted separately.
+    One point represents one planned workout.
     """
 
-    chart_data = (
-        _progression_chart_data(
-            weeks
+    import altair as alt
+    import pandas as pd
+
+    rows = []
+
+    for point in chart_points:
+
+        if point.planned_load is None:
+            continue
+
+        rows.append(
+            {
+                "Date": point.day,
+                "Load": point.planned_load,
+                "Title": point.title,
+                "Phase": point.phase or "",
+            }
         )
+
+    if not rows:
+
+        return alt.Chart(
+            pd.DataFrame(
+                {
+                    "Date": [],
+                    "Load": [],
+                }
+            )
+        )
+
+    dataframe = pd.DataFrame(
+        rows
     )
 
-    base = (
+    return (
         alt.Chart(
-            alt.Data(
-                values=chart_data
-            )
+            dataframe
+        )
+        .mark_line(
+            point=True,
         )
         .encode(
             x=alt.X(
                 "Date:T",
-                title="Session date",
+                title=None,
             ),
             y=alt.Y(
-                "Planned load:Q",
-                title="Planned load (AU)",
-                scale=alt.Scale(
-                    zero=True
-                ),
+                "Load:Q",
+                title="Planned load",
             ),
             tooltip=[
-                alt.Tooltip(
-                    "Date:T",
-                    title="Date",
-                    format="%d %b %Y",
-                ),
-                alt.Tooltip(
-                    "Session:N",
-                    title="Session",
-                ),
-                alt.Tooltip(
-                    "Session type:N",
-                    title="Type",
-                ),
-                alt.Tooltip(
-                    "Planned load:Q",
-                    title="Planned load",
-                    format=".0f",
-                ),
+                "Date:T",
+                "Title:N",
+                "Phase:N",
+                "Load:Q",
             ],
         )
-    )
-
-    line = (
-        base
-        .mark_line(
-            point=False
+        .properties(
+            height=300,
         )
     )
-
-    points = (
-        base
-        .mark_point(
-            filled=True,
-            size=65,
-        )
-        .encode(
-            shape=alt.Shape(
-                "Session type:N",
-                title="Session type",
-                scale=alt.Scale(
-                    domain=[
-                        "Training",
-                        "Race",
-                    ],
-                    range=[
-                        "circle",
-                        "diamond",
-                    ],
-                ),
-            )
-        )
-    )
-
-    return (
-        line
-        + points
-    ).properties(
-        height=360
-    )
-
 def _plan_summary_metrics(
     plan,
 ) -> dict[str, str]:
@@ -651,8 +626,8 @@ def show_plan_page(
         )
 
         st.altair_chart(
-            _progression_chart(
-                plan.weeks
+            _plan_chart(
+                plan.chart_points
             ),
             use_container_width=True,
         )
