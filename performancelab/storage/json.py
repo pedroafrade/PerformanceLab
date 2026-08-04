@@ -31,6 +31,13 @@ from performancelab.training.planning.training_plan import (
     TrainingPlan,
 )
 
+from performancelab.training.planning.plan_adaptation import (
+    TrainingPlanAdaptation,
+)
+from performancelab.training.planning.workout_outcome import (
+    WorkoutOutcomeStatus,
+)
+
 from uuid import uuid4
 
 
@@ -523,6 +530,84 @@ def _planned_workout_from_dict(data):
 
     )
 
+# ======================================================
+# Training plan adaptation
+# ======================================================
+
+def _training_plan_adaptation_to_dict(
+    adaptation,
+):
+
+    return {
+        "reconciled_on": _serialize_date(
+            adaptation.reconciled_on
+        ),
+        "workout_day": _serialize_date(
+            adaptation.workout_day
+        ),
+        "workout_title": (
+            adaptation.workout_title
+        ),
+        "previous_duration": (
+            _serialize_duration(
+                adaptation.previous_duration
+            )
+        ),
+        "revised_duration": (
+            _serialize_duration(
+                adaptation.revised_duration
+            )
+        ),
+        "trigger_status": (
+            adaptation.trigger_status.value
+        ),
+        "load_difference": (
+            adaptation.load_difference
+        ),
+    }
+
+
+# ======================================================
+
+def _training_plan_adaptation_from_dict(
+    data,
+):
+
+    return TrainingPlanAdaptation(
+        reconciled_on=_deserialize_date(
+            data.get("reconciled_on")
+        ),
+        workout_day=_deserialize_date(
+            data.get("workout_day")
+        ),
+        workout_title=data.get(
+            "workout_title"
+        ),
+        previous_duration=(
+            _deserialize_duration(
+                data.get(
+                    "previous_duration"
+                )
+            )
+        ),
+        revised_duration=(
+            _deserialize_duration(
+                data.get(
+                    "revised_duration"
+                )
+            )
+        ),
+        trigger_status=(
+            WorkoutOutcomeStatus(
+                data.get(
+                    "trigger_status"
+                )
+            )
+        ),
+        load_difference=data.get(
+            "load_difference"
+        ),
+    )
 
 # ======================================================
 # Goal
@@ -777,7 +862,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 8,
+        "version": 9,
 
         "athlete": {
 
@@ -881,6 +966,16 @@ def athlete_to_dict(athlete):
                 in (
                     athlete.training_plan
                     .reconciled_workout_signatures
+                )
+            ],
+            
+            "adaptations": [
+                _training_plan_adaptation_to_dict(
+                    adaptation
+                )
+                for adaptation in (
+                    athlete.training_plan
+                    .adaptations
                 )
             ],
 
@@ -1059,6 +1154,18 @@ def athlete_from_dict(data):
                 for record in (
                     training_plan_data.get(
                         "reconciled_workout_signatures",
+                        [],
+                    )
+                )
+            ),
+
+            adaptations=tuple(
+                _training_plan_adaptation_from_dict(
+                    adaptation_data
+                )
+                for adaptation_data in (
+                    training_plan_data.get(
+                        "adaptations",
                         [],
                     )
                 )

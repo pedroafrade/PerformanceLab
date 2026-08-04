@@ -35,6 +35,8 @@ import performancelab.storage.json as json_storage
 from performancelab.training.planning import (
     PlannedWorkout,
     TrainingPlan,
+    TrainingPlanAdaptation,
+    WorkoutOutcomeStatus,
 )
 
 # ======================================================
@@ -227,7 +229,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 8
+    assert data["version"] == 9
 
     assert "id" in data["athlete"]
 
@@ -966,7 +968,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 8
+        == 9
     )
 
     assert (
@@ -1082,5 +1084,89 @@ def test_loads_plan_without_reconciliation_date():
     assert (
         loaded.training_plan
         .reconciled_workout_signatures
+        == ()
+    )
+
+def test_training_plan_adaptation_round_trip():
+
+    adaptation = TrainingPlanAdaptation(
+        reconciled_on=date(
+            2026,
+            8,
+            2,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            4,
+        ),
+        workout_title="LT2 Run",
+        previous_duration=timedelta(
+            minutes=50,
+        ),
+        revised_duration=timedelta(
+            minutes=38,
+        ),
+        trigger_status=(
+            WorkoutOutcomeStatus.SUBSTITUTE
+        ),
+        load_difference=744.0,
+    )
+
+    athlete = create_athlete()
+    athlete.training_plan = TrainingPlan(
+        adaptations=(
+            adaptation,
+        ),
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    assert data["version"] == 9
+
+    assert data["training_plan"][
+        "adaptations"
+    ] == [
+        {
+            "reconciled_on": "2026-08-02",
+            "workout_day": "2026-08-04",
+            "workout_title": "LT2 Run",
+            "previous_duration": 3000.0,
+            "revised_duration": 2280.0,
+            "trigger_status": "substitute",
+            "load_difference": 744.0,
+        }
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.adaptations
+        == (
+            adaptation,
+        )
+    )
+
+
+def test_loads_plan_without_adaptation_history():
+
+    data = athlete_to_dict(
+        create_athlete()
+    )
+
+    data["training_plan"].pop(
+        "adaptations"
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.training_plan.adaptations
         == ()
     )
