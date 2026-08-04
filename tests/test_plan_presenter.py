@@ -749,3 +749,84 @@ def test_has_empty_phase_timeline_for_empty_plan():
     )
 
     assert result.phases == ()
+
+def test_clips_first_plan_week_to_plan_horizon():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            2,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Easy",
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                2,
+            ),
+            end_date=date(
+                2026,
+                8,
+                9,
+            ),
+            workouts=[
+                workout,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        result.weeks[0].start_date
+        == date(
+            2026,
+            8,
+            2,
+        )
+    )
+
+    assert (
+        result.weeks[0].end_date
+        == date(
+            2026,
+            8,
+            2,
+        )
+    )
+
+    assert (
+        result.weeks[0].phase
+        == "Build"
+    )
+
+    assert (
+        result.phases[0].name
+        == "Build"
+    )
+
+    assert (
+        result.phases[0].start_date
+        == date(
+            2026,
+            8,
+            2,
+        )
+    )

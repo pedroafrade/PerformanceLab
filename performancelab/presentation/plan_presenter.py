@@ -372,8 +372,34 @@ class PlanPresenter:
                 )
                 for workout in planned_workouts
             )
+            displayed_week_start = (
+                max(
+                    week_start,
+                    self.plan.start_date,
+                )
+                if self.plan.start_date
+                is not None
+                else week_start
+            )
+
+            displayed_week_end = (
+                min(
+                    (
+                        week_start
+                        + timedelta(days=6)
+                    ),
+                    self.plan.end_date,
+                )
+                if self.plan.end_date
+                is not None
+                else (
+                    week_start
+                    + timedelta(days=6)
+                )
+            )
+
             phase = self.plan.phase_on(
-                week_start
+                displayed_week_start
             )
 
             weekly_load = (
@@ -428,12 +454,11 @@ class PlanPresenter:
 
             weeks.append(
                 PlanWeekData(
-                    start_date=week_start,
+                    start_date=(
+                        displayed_week_start
+                    ),
                     end_date=(
-                        week_start
-                        + timedelta(
-                            days=6
-                        )
+                        displayed_week_end
                     ),
                     phase=phase,
                     planned_load=(
