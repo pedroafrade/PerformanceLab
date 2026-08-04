@@ -6,8 +6,10 @@ from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 from app.components.plan_page import (
+    _current_plan_week,
     _plan_summary_metrics,
     _progression_chart_data,
+    _week_duration_label,
     _status_label,
     _week_html,
     _week_is_current,
@@ -67,6 +69,135 @@ def create_week(
             workout,
         ),
     )
+
+def test_finds_current_plan_week():
+
+    current = create_week()
+
+    future = PlanWeekData(
+        start_date=date(
+            2026,
+            8,
+            10,
+        ),
+        end_date=date(
+            2026,
+            8,
+            16,
+        ),
+        phase="Peak",
+        planned_load=315.0,
+        workouts=(),
+    )
+
+    result = _current_plan_week(
+        (
+            current,
+            future,
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert result is current
+
+
+def test_returns_none_outside_plan_weeks():
+
+    result = _current_plan_week(
+        (
+            create_week(),
+        ),
+        reference_day=date(
+            2026,
+            8,
+            20,
+        ),
+    )
+
+    assert result is None
+
+def test_formats_current_week_duration():
+
+    first = PlanWorkoutData(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            hours=1,
+            minutes=8,
+        ),
+        distance=10,
+        elevation_gain=100,
+        intensity="Hard",
+        phase="Peak",
+        planned_load=476.0,
+        is_race=False,
+        status="pending",
+        prescription_summary=None,
+        structure=(),
+    )
+
+    second = PlanWorkoutData(
+        scheduled_at=datetime(
+            2026,
+            8,
+            6,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            hours=2,
+        ),
+        distance=20,
+        elevation_gain=300,
+        intensity="Easy",
+        phase="Peak",
+        planned_load=360.0,
+        is_race=False,
+        status="pending",
+        prescription_summary=None,
+        structure=(),
+    )
+
+    week = PlanWeekData(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        phase="Peak",
+        planned_load=836.0,
+        workouts=(
+            first,
+            second,
+        ),
+    )
+
+    assert (
+        _week_duration_label(
+            week
+        )
+        == "3h08"
+    )
+
+
 
 def test_builds_plan_summary_metrics():
 
