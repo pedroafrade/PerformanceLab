@@ -591,49 +591,6 @@ def show_plan_page(
                 summary["Max elevation"],
             )
 
-        if current_week is not None:
-
-            with st.container(
-                border=True
-            ):
-
-                (
-                    week_title_column,
-                    week_value_column,
-                ) = st.columns(
-                    [3, 2]
-                )
-
-                with week_title_column:
-
-                    st.markdown(
-                        "**Current week**"
-                    )
-
-                    st.caption(
-                        (
-                            f"{current_week.start_date.strftime('%d %b')} "
-                            "– "
-                            f"{current_week.end_date.strftime('%d %b')}"
-                        )
-                    )
-
-                with week_value_column:
-
-                    phase = (
-                        current_week.phase
-                        or "Unassigned"
-                    )
-
-                    st.markdown(
-                        (
-                            f"**{phase}** · "
-                            f"{len(current_week.workouts)} sessions · "
-                            f"{_week_duration_label(current_week)} · "
-                            f"{current_week.planned_load:.0f} AU"
-                        )
-                    )
-
         st.divider()
 
         st.subheader(
@@ -707,9 +664,59 @@ def show_plan_page(
                 "**Current week**"
             )
 
-            st.caption(
-                "Coming soon"
-            )
+            if current_week is None:
+
+                st.caption(
+                    "No current plan week."
+                )
+
+            else:
+
+                phase = (
+                    current_week.phase
+                    or "Unassigned"
+                )
+
+                st.markdown(
+                    (
+                        f"### {current_week.start_date.strftime('%d %b')} "
+                        "– "
+                        f"{current_week.end_date.strftime('%d %b')}"
+                    )
+                )
+
+                st.caption(
+                    phase
+                )
+
+                sessions_column, duration_column = (
+                    st.columns(2)
+                )
+
+                with sessions_column:
+
+                    st.metric(
+                        "Sessions",
+                        len(
+                            current_week.workouts
+                        ),
+                    )
+
+                with duration_column:
+
+                    st.metric(
+                        "Duration",
+                        _week_duration_label(
+                            current_week
+                        ),
+                    )
+
+                st.metric(
+                    "Planned load",
+                    (
+                        f"{current_week.planned_load:.0f} AU"
+                    ),
+                )
 
         with st.container(
             border=True
