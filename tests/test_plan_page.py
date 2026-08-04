@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from app.components.plan_page import (
     _current_plan_week,
     _plan_chart_data,
-    _plan_distance_chart_data,
+    _plan_volume_chart_data,
     _plan_summary_metrics,
     _week_duration_label,
     _status_label,
@@ -285,7 +285,6 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-08-04",
             "Planned load": 180.0,
-            "Distance": 10.0,
             "Session": "Easy Run",
             "Phase": "Build",
             "Session type": "Training",
@@ -293,7 +292,6 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-08-11",
             "Planned load": 315.0,
-            "Distance": 8.0,
             "Session": "LT2 Run",
             "Phase": "Peak",
             "Session type": "Training",
@@ -301,7 +299,6 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-09-13",
             "Planned load": 900.0,
-            "Distance": 25.0,
             "Session": "Race",
             "Phase": "Race",
             "Session type": "Race",
@@ -431,7 +428,7 @@ def test_week_html_escapes_workout_title():
     assert "<script>" not in html
     assert "&lt;script&gt;" in html
 
-def test_aggregates_weekly_training_distance_and_races():
+def test_aggregates_weekly_training_volume_and_races():
 
     training_one = SimpleNamespace(
         scheduled_at=datetime(
@@ -442,6 +439,7 @@ def test_aggregates_weekly_training_distance_and_races():
             0,
         ),
         distance=10.0,
+        elevation_gain=300.0,
         is_race=False,
     )
 
@@ -454,6 +452,7 @@ def test_aggregates_weekly_training_distance_and_races():
             0,
         ),
         distance=8.0,
+        elevation_gain=200.0,
         is_race=False,
     )
 
@@ -466,10 +465,21 @@ def test_aggregates_weekly_training_distance_and_races():
             0,
         ),
         distance=42.0,
+        elevation_gain=1800.0,
         is_race=True,
     )
 
     plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            9,
+            7,
+        ),
+        end_date=date(
+            2026,
+            9,
+            20,
+        ),
         weeks=(
             SimpleNamespace(
                 start_date=date(
@@ -488,11 +498,24 @@ def test_aggregates_weekly_training_distance_and_races():
                     race,
                 ),
             ),
-        )
+            SimpleNamespace(
+                start_date=date(
+                    2026,
+                    9,
+                    14,
+                ),
+                end_date=date(
+                    2026,
+                    9,
+                    20,
+                ),
+                workouts=(),
+            ),
+        ),
     )
 
     result = (
-        _plan_distance_chart_data(
+        _plan_volume_chart_data(
             plan
         )
     )
@@ -501,59 +524,63 @@ def test_aggregates_weekly_training_distance_and_races():
         {
             "Date": "2026-09-07",
             "Distance": 18.0,
-            "Series": "Weekly training",
+            "Elevation": 500.0,
+            "Point type": "Weekly training",
         },
         {
             "Date": "2026-09-13",
             "Distance": 42.0,
-            "Series": "Race",
+            "Elevation": 1800.0,
+            "Point type": "Race",
+        },
+        {
+            "Date": "2026-09-20",
+            "Distance": 0.0,
+            "Elevation": 0.0,
+            "Point type": "Weekly training",
         },
     ]
-
-
-def test_omits_empty_weekly_distance_point():
-
-    race = SimpleNamespace(
-        scheduled_at=datetime(
-            2026,
-            9,
-            13,
-            8,
-            0,
-        ),
-        distance=42.0,
-        is_race=True,
-    )
+    
+def test_keeps_recovery_until_exact_plan_end():
 
     plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            2,
+        ),
+        end_date=date(
+            2026,
+            10,
+            4,
+        ),
         weeks=(
             SimpleNamespace(
                 start_date=date(
                     2026,
                     9,
-                    7,
+                    28,
                 ),
                 end_date=date(
                     2026,
-                    9,
-                    13,
+                    10,
+                    4,
                 ),
-                workouts=(
-                    race,
-                ),
+                workouts=(),
             ),
-        )
+        ),
     )
 
     assert (
-        _plan_distance_chart_data(
+        _plan_volume_chart_data(
             plan
         )
         == [
             {
-                "Date": "2026-09-13",
-                "Distance": 42.0,
-                "Series": "Race",
+                "Date": "2026-10-04",
+                "Distance": 0.0,
+                "Elevation": 0.0,
+                "Point type": "Weekly training",
             },
         ]
     )

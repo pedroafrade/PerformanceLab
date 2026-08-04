@@ -43,7 +43,7 @@ def _plan_chart_data(
     chart_points,
 ) -> list[dict]:
     """
-    Converts session-level plan data into chart rows.
+    Converts session-level planned load into chart rows.
     """
 
     return [
@@ -52,7 +52,6 @@ def _plan_chart_data(
             "Planned load": (
                 point.planned_load
             ),
-            "Distance": point.distance,
             "Session": point.title,
             "Phase": (
                 point.phase
@@ -68,19 +67,24 @@ def _plan_chart_data(
         if point.planned_load is not None
     ]
 
-def _plan_distance_chart_data(
+
+def _plan_volume_chart_data(
     plan,
 ) -> list[dict]:
     """
-    Builds weekly training-distance points and
-    individual race-distance points.
+    Builds weekly training volume plus individual races.
 
-    Race distance is excluded from the weekly total.
+    Race distance and elevation are excluded from weekly
+    training totals. Race points remain on their exact
+    dates, and the final recovery point is placed on the
+    exact end date of the plan.
     """
 
     rows = []
 
-    for week in plan.weeks:
+    for week_index, week in enumerate(
+        plan.weeks
+    ):
 
         weekly_distance = sum(
             (
@@ -88,35 +92,54 @@ def _plan_distance_chart_data(
                 or 0.0
             )
             for workout in week.workouts
-            if (
-                not workout.is_race
-                and workout.distance is not None
-            )
+            if not workout.is_race
         )
 
-        if weekly_distance > 0:
-
-            rows.append(
-                {
-                    "Date": (
-                        week.start_date
-                        .isoformat()
-                    ),
-                    "Distance": (
-                        weekly_distance
-                    ),
-                    "Series": (
-                        "Weekly training"
-                    ),
-                }
+        weekly_elevation = sum(
+            (
+                workout.elevation_gain
+                or 0.0
             )
+            for workout in week.workouts
+            if not workout.is_race
+        )
+
+        is_final_week = (
+            week_index
+            == len(plan.weeks) - 1
+        )
+
+        weekly_point_date = (
+            plan.end_date
+            if (
+                is_final_week
+                and plan.end_date
+                is not None
+            )
+            else week.start_date
+        )
+
+        rows.append(
+            {
+                "Date": (
+                    weekly_point_date
+                    .isoformat()
+                ),
+                "Distance": (
+                    weekly_distance
+                ),
+                "Elevation": (
+                    weekly_elevation
+                ),
+                "Point type": (
+                    "Weekly training"
+                ),
+            }
+        )
 
         for workout in week.workouts:
 
-            if (
-                not workout.is_race
-                or workout.distance is None
-            ):
+            if not workout.is_race:
                 continue
 
             rows.append(
@@ -128,49 +151,75 @@ def _plan_distance_chart_data(
                     ),
                     "Distance": (
                         workout.distance
+                        or 0.0
                     ),
-                    "Series": "Race",
+                    "Elevation": (
+                        workout.elevation_gain
+                        or 0.0
+                    ),
+                    "Point type": "Race",
                 }
             )
 
     return sorted(
         rows,
-        key=lambda row: row["Date"],
+        key=lambda row: (
+            row["Date"],
+            (
+                0
+                if row["Point type"]
+                == "Weekly training"
+                else 1
+            ),
+        ),
     )
 
-def _plan_chart(
+def _plan_chart_date_scale(
     plan,
 ):
     """
-    Builds the planned-session chart.
-
-    Planned load is shown for every session.
-    Distance is shown as weekly training totals plus
-    individual race points.
+    Returns the shared complete-plan date scale.
     """
 
-    load_data = (
+    if (
+        plan.start_date is None
+        or plan.end_date is None
+    ):
+        return alt.Scale()
+
+    return alt.Scale(
+        domain=[
+            plan.start_date.isoformat(),
+            plan.end_date.isoformat(),
+        ]
+    )
+
+def _planned_load_chart(
+    plan,
+):
+    """
+    Builds the session-level planned-load chart.
+    """
+
+    chart_data = (
         _plan_chart_data(
             plan.chart_points
         )
     )
 
-    distance_data = (
-        _plan_distance_chart_data(
-            plan
-        )
-    )
-
-    load_base = (
+    base = (
         alt.Chart(
             alt.Data(
-                values=load_data
+                values=chart_data
             )
         )
         .encode(
             x=alt.X(
                 "Date:T",
                 title=None,
+                scale=_plan_chart_date_scale(
+                    plan
+                ),
             ),
             tooltip=[
                 alt.Tooltip(
@@ -199,8 +248,8 @@ def _plan_chart(
         )
     )
 
-    load_line = (
-        load_base
+    line = (
+        base
         .mark_line()
         .encode(
             y=alt.Y(
@@ -213,8 +262,8 @@ def _plan_chart(
         )
     )
 
-    load_points = (
-        load_base
+    points = (
+        base
         .mark_point(
             filled=True,
             size=65,
@@ -229,7 +278,7 @@ def _plan_chart(
             ),
             shape=alt.Shape(
                 "Session type:N",
-                title="Session type",
+                title=None,
                 scale=alt.Scale(
                     domain=[
                         "Training",
@@ -240,20 +289,86 @@ def _plan_chart(
                         "diamond",
                     ],
                 ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
             ),
         )
     )
 
-    distance_base = (
+    return (
+        alt.layer(
+            line,
+            points,
+        )
+        .properties(
+            height=260,
+        )
+    )
+
+
+def _distance_elevation_chart(
+    plan,
+):
+    """
+    Builds the weekly distance and elevation chart.
+
+    Weekly training points and race points belong to
+    the same chronological curves.
+    """
+
+    chart_data = (
+        _plan_volume_chart_data(
+            plan
+        )
+    )
+
+    base = (
         alt.Chart(
             alt.Data(
-                values=distance_data
+                values=chart_data
             )
         )
         .encode(
             x=alt.X(
                 "Date:T",
                 title=None,
+                scale=_plan_chart_date_scale(
+                    plan
+                ),
+            ),
+        )
+    )
+
+    distance_line = (
+        base
+        .mark_line(
+            interpolate="monotone",
+        )
+        .encode(
+            y=alt.Y(
+                "Distance:Q",
+                title="Distance (km)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Distance",
+                        "Elevation",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
             ),
             tooltip=[
                 alt.Tooltip(
@@ -267,56 +382,53 @@ def _plan_chart(
                     format=".1f",
                 ),
                 alt.Tooltip(
-                    "Series:N",
-                    title="Distance point",
+                    "Elevation:Q",
+                    title="Elevation",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Point type:N",
+                    title="Point",
                 ),
             ],
         )
-    )
-
-    distance_line = (
-        distance_base
-        .mark_line(
-            interpolate="monotone",
-            strokeDash=[
-                6,
-                4,
-            ],
-        )
-        .encode(
-            y=alt.Y(
-                "Distance:Q",
-                title="Distance (km)",
-                axis=alt.Axis(
-                    orient="right",
-                ),
-                scale=alt.Scale(
-                    zero=True
-                ),
-            ),
+        .transform_calculate(
+            Metric="'Distance'"
         )
     )
 
     distance_points = (
-        distance_base
+        base
         .mark_point(
             filled=False,
-            size=60,
+            size=65,
         )
         .encode(
             y=alt.Y(
                 "Distance:Q",
                 title="Distance (km)",
-                axis=alt.Axis(
-                    orient="right",
-                ),
                 scale=alt.Scale(
                     zero=True
                 ),
             ),
+            color=alt.Color(
+                "Metric:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Distance",
+                        "Elevation",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
+            ),
             shape=alt.Shape(
-                "Series:N",
-                title="Distance point",
+                "Point type:N",
+                title=None,
                 scale=alt.Scale(
                     domain=[
                         "Weekly training",
@@ -327,22 +439,191 @@ def _plan_chart(
                         "diamond",
                     ],
                 ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
             ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Elevation:Q",
+                    title="Elevation",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Point type:N",
+                    title="Point",
+                ),
+            ],
+        )
+        .transform_calculate(
+            Metric="'Distance'"
+        )
+    )
+
+    elevation_line = (
+        base
+        .mark_line(
+            interpolate="monotone",
+            strokeDash=[
+                6,
+                4,
+            ],
+        )
+        .encode(
+            y=alt.Y(
+                "Elevation:Q",
+                title="Elevation (m D+)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Distance",
+                        "Elevation",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Elevation:Q",
+                    title="Elevation",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Point type:N",
+                    title="Point",
+                ),
+            ],
+        )
+        .transform_calculate(
+            Metric="'Elevation'"
+        )
+    )
+
+    elevation_points = (
+        base
+        .mark_point(
+            filled=False,
+            size=65,
+        )
+        .encode(
+            y=alt.Y(
+                "Elevation:Q",
+                title="Elevation (m D+)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Distance",
+                        "Elevation",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
+            ),
+            shape=alt.Shape(
+                "Point type:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Weekly training",
+                        "Race",
+                    ],
+                    range=[
+                        "circle",
+                        "diamond",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="bottom",
+                    direction="horizontal",
+                    columns=2,
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Elevation:Q",
+                    title="Elevation",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Point type:N",
+                    title="Point",
+                ),
+            ],
+        )
+        .transform_calculate(
+            Metric="'Elevation'"
         )
     )
 
     return (
         alt.layer(
-            load_line,
-            load_points,
             distance_line,
             distance_points,
+            elevation_line,
+            elevation_points,
         )
         .resolve_scale(
             y="independent"
         )
         .properties(
-            height=300,
+            height=260,
         )
     )
 
@@ -825,13 +1106,33 @@ def show_plan_page(
             "Plan progression"
         )
 
+        st.markdown(
+            "**Planned load**"
+        )
+
         st.caption(
-            "Planned load by session, with weekly training "
-            "distance and races on their exact dates."
+            "Planned load for each session on its exact "
+            "calendar date."
         )
 
         st.altair_chart(
-            _plan_chart(
+            _planned_load_chart(
+                plan
+            ),
+            use_container_width=True,
+        )
+
+        st.markdown(
+            "**Distance and elevation**"
+        )
+
+        st.caption(
+            "Weekly training totals, with races shown on "
+            "their exact dates. Recovery weeks remain visible."
+        )
+
+        st.altair_chart(
+            _distance_elevation_chart(
                 plan
             ),
             use_container_width=True,
