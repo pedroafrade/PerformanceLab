@@ -1,12 +1,16 @@
 """
 Tests for the Today presenter.
 """
+import pytest
 
 from datetime import (
     date,
     datetime,
     time,
     timedelta,
+)
+from dataclasses import (
+    FrozenInstanceError,
 )
 
 from performancelab import (
@@ -222,3 +226,45 @@ def test_completed_today_moves_to_next_workout():
         .planned_title
         == "Easy Run"
     )
+
+def test_exposes_immutable_daily_readiness():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    result = TodayPresenter(
+        athlete
+    ).build(
+        reference_day=(
+            REFERENCE_DAY
+        )
+    )
+
+    assert (
+        result.readiness.recovery_score
+        == result.recovery.score
+    )
+
+    assert (
+        result.readiness.recovery_status
+        == result.recovery.status
+    )
+
+    assert (
+        result.readiness.form
+        == athlete.analytics
+        .training_state
+        .form
+    )
+
+    assert (
+        result.readiness.recent_load
+        == result.training_load
+        .acute_load
+    )
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        result.readiness.form = 1.0

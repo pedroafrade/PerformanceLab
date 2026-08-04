@@ -24,7 +24,10 @@ from .activities_presenter import (
 from .planning_presenter import (
     PlanningPresenter,
 )
-from .today_models import TodayData
+from .today_models import (
+    TodayData,
+    TodayReadinessData,
+)
 
 
 class TodayPresenter:
@@ -100,6 +103,14 @@ class TodayPresenter:
             if activities
             else None
         )
+        recovery = dashboard.recovery
+        training_load = (
+            dashboard.training_load
+        )
+        training_state = (
+            self.athlete.analytics
+            .training_state
+        )
         return TodayData(
             reference_day=reference_day,
             today_session=today_session,
@@ -107,18 +118,26 @@ class TodayPresenter:
                 planning.next_workout
             ),
             coach=planning.coach,
+            readiness=TodayReadinessData(
+                recovery_score=(
+                    recovery.score
+                ),
+                recovery_status=(
+                    recovery.status
+                ),
+                form=training_state.form,
+                recent_load=(
+                    training_load.acute_load
+                ),
+            ),
             latest_activity=(
                 dashboard.latest_activity
             ),
             latest_activity_summary=(
                 latest_activity_summary
             ),
-            recovery=(
-                dashboard.recovery
-            ),
-            training_load=(
-                dashboard.training_load
-            ),
+            recovery=recovery,
+            training_load=training_load,
             next_event=(
                 dashboard.next_event
             ),

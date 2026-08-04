@@ -19,6 +19,17 @@ from .dashboard_models import (
     WeeklyPlanDayData,
 )
 
+@dataclass(frozen=True)
+class TodayReadinessData:
+    """
+    Presentation-ready physiological context for
+    the daily training decision.
+    """
+
+    recovery_score: int
+    recovery_status: str
+    form: float
+    recent_load: float
 
 @dataclass(frozen=True)
 class TodayData:
@@ -39,6 +50,8 @@ class TodayData:
     )
 
     coach: CoachRecommendationData
+
+    readiness: TodayReadinessData
 
     latest_activity: (
         LatestActivityCardData
