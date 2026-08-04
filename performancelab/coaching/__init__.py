@@ -33,6 +33,10 @@ from .review import (
 )
 
 from .draft_slot import DraftTrainingSlot
+from .daily_guidance import (
+    DailyTrainingGuidance,
+    build_daily_training_guidance,
+)
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
 from .structure_generator import WeekStructureGenerator
@@ -84,6 +88,8 @@ __all__ = [
     # Generator
     "SessionPurpose",
     "DraftTrainingSlot",
+    "DailyTrainingGuidance",
+    "build_daily_training_guidance",
     "WeekStructureGenerator",
     "CoachReviewer",
 
