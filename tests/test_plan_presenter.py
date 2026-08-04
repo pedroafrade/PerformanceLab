@@ -11,6 +11,7 @@ from performancelab.history import (
     History,
 )
 from performancelab.presentation import (
+    PlanChartPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
     PlanPresenter,
@@ -830,3 +831,130 @@ def test_clips_first_plan_week_to_plan_horizon():
             2,
         )
     )
+
+def test_exposes_session_level_plan_chart_data():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        distance=18.0,
+        elevation_gain=650.0,
+        intensity="Easy to moderate",
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                workout,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert len(
+        result.chart_points
+    ) == 1
+
+    chart_point = (
+        result.chart_points[0]
+    )
+
+    assert isinstance(
+        chart_point,
+        PlanChartPointData,
+    )
+
+    assert (
+        chart_point.day
+        == date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    assert (
+        chart_point.title
+        == "Long Run"
+    )
+
+    assert (
+        chart_point.phase
+        == "Build"
+    )
+
+    assert (
+        chart_point.distance
+        == 18.0
+    )
+
+    assert (
+        chart_point.elevation_gain
+        == 650.0
+    )
+
+    assert (
+        chart_point.is_race
+        is False
+    )
+
+    assert (
+        chart_point.status
+        == "pending"
+    )
+
+    assert (
+        chart_point.planned_load
+        is not None
+    )
+
+
+def test_plan_chart_data_is_immutable():
+
+    workout = planned_workout(
+        day=4,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=60,
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                workout,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            4,
+        )
+    )
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+
+        result.chart_points[
+            0
+        ].title = "Changed"

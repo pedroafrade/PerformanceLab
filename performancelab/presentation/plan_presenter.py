@@ -14,6 +14,7 @@ from performancelab.training.load import (
 
 from .plan_models import (
     CompletePlanData,
+    PlanChartPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
     PlanProgressionPointData,
@@ -491,12 +492,34 @@ class PlanPresenter:
             weeks
         )
 
+        chart_points = tuple(
+            PlanChartPointData(
+                day=(
+                    workout.scheduled_at.date()
+                ),
+                title=workout.title,
+                phase=workout.phase,
+                planned_load=(
+                    workout.planned_load
+                ),
+                distance=workout.distance,
+                elevation_gain=(
+                    workout.elevation_gain
+                ),
+                is_race=workout.is_race,
+                status=workout.status,
+            )
+            for week in weeks_data
+            for workout in week.workouts
+        )
+
         return CompletePlanData(
             plan_id=self.plan.plan_id,
             start_date=self.plan.start_date,
             end_date=self.plan.end_date,
             reference_day=reference_day,
             weeks=weeks_data,
+            chart_points=chart_points,
             progression=tuple(
                 progression
             ),

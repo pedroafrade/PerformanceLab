@@ -28,6 +28,21 @@ class PlanWorkoutData:
     prescription_summary: str | None
     structure: tuple[str, ...]
 
+@dataclass(frozen=True)
+class PlanChartPointData:
+    """
+    One session-level point prepared for the plan chart.
+    """
+
+    day: date
+    title: str
+    phase: str | None
+    planned_load: float | None
+    distance: float | None
+    elevation_gain: float | None
+    is_race: bool
+    status: str
+
 
 @dataclass(frozen=True)
 class PlanProgressionPointData:
@@ -96,6 +111,10 @@ class CompletePlanData:
 
     weeks: tuple[
         PlanWeekData,
+        ...,
+    ]
+    chart_points: tuple[
+        PlanChartPointData,
         ...,
     ]
     progression: tuple[
