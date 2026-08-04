@@ -12,6 +12,7 @@ from performancelab.history import (
 )
 from performancelab.presentation import (
     PlanPresenter,
+    PlanProgressionPointData,
 )
 from performancelab.training.planning import (
     PlannedWorkout,
@@ -242,6 +243,7 @@ def test_empty_plan_has_no_weeks():
     )
 
     assert result.weeks == ()
+    assert result.progression == ()
 
 
 def test_complete_plan_data_is_immutable():
@@ -261,3 +263,96 @@ def test_complete_plan_data_is_immutable():
         FrozenInstanceError
     ):
         result.weeks = ()
+
+def test_builds_immutable_plan_progression():
+
+    first = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        distance=10.0,
+        elevation_gain=200.0,
+        intensity="Easy",
+        phase="Build",
+    )
+
+    second = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            6,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        distance=15.0,
+        elevation_gain=400.0,
+        intensity="Easy to moderate",
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                first,
+                second,
+            ]
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            3,
+        )
+    )
+
+    assert len(
+        result.progression
+    ) == 1
+
+    point = result.progression[0]
+
+    assert isinstance(
+        point,
+        PlanProgressionPointData,
+    )
+    assert (
+        point.week_start
+        == date(2026, 8, 3)
+    )
+    assert point.phase == "Build"
+    assert (
+        point.duration_minutes
+        == pytest.approx(150.0)
+    )
+    assert (
+        point.distance
+        == pytest.approx(25.0)
+    )
+    assert (
+        point.elevation_gain
+        == pytest.approx(600.0)
+    )
+    assert (
+        point.planned_load
+        > 0
+    )
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        point.distance = 30.0

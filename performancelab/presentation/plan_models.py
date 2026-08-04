@@ -26,6 +26,18 @@ class PlanWorkoutData:
     prescription_summary: str | None
     structure: tuple[str, ...]
 
+@dataclass(frozen=True)
+class PlanProgressionPointData:
+    """
+    One weekly point in the plan progression overview.
+    """
+
+    week_start: date
+    phase: str | None
+    planned_load: float
+    duration_minutes: float
+    distance: float
+    elevation_gain: float
 
 @dataclass(frozen=True)
 class PlanWeekData:
@@ -56,5 +68,9 @@ class CompletePlanData:
 
     weeks: tuple[
         PlanWeekData,
+        ...,
+    ]
+    progression: tuple[
+        PlanProgressionPointData,
         ...,
     ]

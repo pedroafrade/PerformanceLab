@@ -13,6 +13,7 @@ from performancelab.training.load import (
 
 from .plan_models import (
     CompletePlanData,
+    PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
 )
@@ -89,6 +90,7 @@ class PlanPresenter:
             )
 
         weeks = []
+        progression = []
 
         for week_start in sorted(
             workouts_by_week
@@ -136,25 +138,93 @@ class PlanPresenter:
                 )
                 for workout in planned_workouts
             )
+            phase = self.plan.phase_on(
+                week_start
+            )
+
+            weekly_load = (
+                planned_weekly_load(
+                    planned_workouts
+                )
+            )
+
+            duration_minutes = sum(
+                (
+                    workout.duration
+                    .total_seconds()
+                    / 60
+                )
+                for workout
+                in planned_workouts
+                if workout.duration
+                is not None
+            )
+
+            distance = sum(
+                float(
+                    workout.distance
+                )
+                for workout
+                in planned_workouts
+                if isinstance(
+                    workout.distance,
+                    (int, float),
+                )
+                and not isinstance(
+                    workout.distance,
+                    bool,
+                )
+            )
+
+            elevation_gain = sum(
+                float(
+                    workout.elevation_gain
+                )
+                for workout
+                in planned_workouts
+                if isinstance(
+                    workout.elevation_gain,
+                    (int, float),
+                )
+                and not isinstance(
+                    workout.elevation_gain,
+                    bool,
+                )
+            )
 
             weeks.append(
                 PlanWeekData(
                     start_date=week_start,
                     end_date=(
                         week_start
-                        + timedelta(days=6)
-                    ),
-                    phase=(
-                        self.plan.phase_on(
-                            week_start
+                        + timedelta(
+                            days=6
                         )
                     ),
+                    phase=phase,
                     planned_load=(
-                        planned_weekly_load(
-                            planned_workouts
-                        )
+                        weekly_load
                     ),
-                    workouts=workout_data,
+                    workouts=(
+                        workout_data
+                    ),
+                )
+            )
+
+            progression.append(
+                PlanProgressionPointData(
+                    week_start=week_start,
+                    phase=phase,
+                    planned_load=(
+                        weekly_load
+                    ),
+                    duration_minutes=(
+                        duration_minutes
+                    ),
+                    distance=distance,
+                    elevation_gain=(
+                        elevation_gain
+                    ),
                 )
             )
 
@@ -164,4 +234,7 @@ class PlanPresenter:
             end_date=self.plan.end_date,
             reference_day=reference_day,
             weeks=tuple(weeks),
+            progression=tuple(
+                progression
+            ),
         )
