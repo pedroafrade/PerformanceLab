@@ -113,7 +113,9 @@ class AthleteAnalytics:
 
             self.history
 
-        ).build()
+        ).build(
+            end_date=date.today(),
+        )
 
     # ======================================================
     # Performance Management

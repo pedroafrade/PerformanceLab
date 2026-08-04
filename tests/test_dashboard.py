@@ -105,11 +105,13 @@ def test_dashboard_with_training():
 
     athlete = Athlete(name="Pedro")
 
+    today = date.today()
+
     athlete.history.add(
 
         create_workout(
 
-            date(2026, 7, 1),
+            today - timedelta(days=4),
 
             timedelta(hours=1),
 
@@ -123,7 +125,7 @@ def test_dashboard_with_training():
 
         create_workout(
 
-            date(2026, 7, 3),
+            today - timedelta(days=2),
 
             timedelta(hours=1),
 
@@ -159,11 +161,15 @@ def test_dashboard_with_training():
 
     assert data["performance"].dates == [
 
-        date(2026, 7, 1),
+        today - timedelta(days=4),
 
-        date(2026, 7, 2),
+        today - timedelta(days=3),
 
-        date(2026, 7, 3),
+        today - timedelta(days=2),
+
+        today - timedelta(days=1),
+
+        today,
 
     ]
 
@@ -175,26 +181,29 @@ def test_dashboard_with_training():
 
         360,
 
+        0.0,
+
+        0.0,
+
     ]
 
     assert len(
 
         data["performance"].ctl
 
-    ) == 3
+    ) == 5
 
     assert len(
 
         data["performance"].atl
 
-    ) == 3
+    ) == 5
 
     assert len(
 
         data["performance"].tsb
 
-    ) == 3
-
+    ) == 5
 
 # ======================================================
 
@@ -206,7 +215,7 @@ def test_performance_series_have_same_length():
 
         create_workout(
 
-            date(2026, 7, 1),
+            date.today() - timedelta(days=4),
 
             timedelta(hours=1),
 
@@ -220,7 +229,7 @@ def test_performance_series_have_same_length():
 
         create_workout(
 
-            date(2026, 7, 5),
+            date.today(),
 
             timedelta(hours=2),
 

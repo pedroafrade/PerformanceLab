@@ -48,13 +48,14 @@ def test_builds_immutable_development_series():
         name="Pedro"
     )
 
+    today = date.today()
+
     athlete.history.add(
         create_workout(
             sport="Running",
-            workout_date=date(
-                2026,
-                8,
-                1,
+            workout_date=(
+                today
+                - timedelta(days=3)
             ),
             distance=10.0,
             elevation_gain=0.0,
@@ -69,10 +70,9 @@ def test_builds_immutable_development_series():
     athlete.history.add(
         create_workout(
             sport="Running",
-            workout_date=date(
-                2026,
-                8,
-                3,
+            workout_date=(
+                today
+                - timedelta(days=2)
             ),
             distance=15.0,
             elevation_gain=0.0,
@@ -89,15 +89,17 @@ def test_builds_immutable_development_series():
     ).build()
 
     assert result.dates == (
-        date(2026, 8, 1),
-        date(2026, 8, 2),
-        date(2026, 8, 3),
+        today - timedelta(days=3),
+        today - timedelta(days=2),
+        today - timedelta(days=1),
+        today,
     )
 
     assert result.daily_load == (
         300,
-        0.0,
         630,
+        0.0,
+        0.0,
     )
 
     assert isinstance(
@@ -113,9 +115,9 @@ def test_builds_immutable_development_series():
         tuple,
     )
 
-    assert len(result.fitness) == 3
-    assert len(result.fatigue) == 3
-    assert len(result.form) == 3
+    assert len(result.fitness) == 4
+    assert len(result.fatigue) == 4
+    assert len(result.form) == 4
 
     assert (
         result.current_fitness
@@ -129,7 +131,6 @@ def test_builds_immutable_development_series():
         result.current_form
         == result.form[-1]
     )
-
 
 def test_exposes_recovery_and_load_guidance():
 

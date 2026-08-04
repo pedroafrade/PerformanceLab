@@ -517,13 +517,15 @@ def test_performance_management():
 
     athlete = Athlete(name="Pedro")
 
+    today = date.today()
+
     athlete.history.add(
 
         create_workout(
 
             "Running",
 
-            date(2026, 7, 1),
+            today - timedelta(days=4),
 
             10,
 
@@ -543,7 +545,7 @@ def test_performance_management():
 
             "Running",
 
-            date(2026, 7, 3),
+            today - timedelta(days=2),
 
             12,
 
@@ -567,7 +569,13 @@ def test_performance_management():
 
         360,
 
+        0.0,
+
+        0.0,
+
     ]
+
+    assert analytics.daily_loads.dates[-1] == today
 
     assert analytics.pmc is not None
 
@@ -594,7 +602,7 @@ def test_performance_management():
         float,
 
     )
-
+    
 # ======================================================
 
 def test_current_training_loads_feed_training_state():
