@@ -702,6 +702,24 @@ class WorkoutGenerator:
         )
 
     # ======================================================
+    @classmethod
+    def _vo2max_work_minutes(
+        cls,
+        *,
+        template: WorkoutTemplate,
+    ) -> int | None:
+        """
+        Selects the VO2max work dose from the template.
+        """
+
+        dose = template.dose
+
+        if dose is None:
+            return None
+
+        return dose.target_work_minutes
+
+    # ======================================================
 
     @classmethod
     def _prescribed_session_duration_minutes(
@@ -737,15 +755,76 @@ class WorkoutGenerator:
             )
         )
 
-        if not is_threshold:
-            return requested_duration_minutes
-
-        prescribed_duration = (
-            cls._threshold_session_duration_minutes(
-                template=template,
-                coach_context=coach_context,
+        is_vo2max = (
+            template.purpose
+            is SessionPurpose.INTENSITY
+            and (
+                "vo₂" in normalized_title
+                or "vo2" in normalized_title
             )
         )
+
+        if not (
+            is_threshold
+            or is_vo2max
+        ):
+            return requested_duration_minutes
+
+        if is_threshold:
+
+            prescribed_duration = (
+                cls._threshold_session_duration_minutes(
+                    template=template,
+                    coach_context=coach_context,
+                )
+            )
+
+        else:
+
+            work_minutes = (
+                cls._vo2max_work_minutes(
+                    template=template,
+                )
+            )
+
+            if work_minutes is None:
+                prescribed_duration = None
+
+            else:
+
+                repetition_minutes = min(
+                    3,
+                    template.dose.maximum_repetition_minutes
+                    if template.dose is not None
+                    and template.dose.maximum_repetition_minutes
+                    is not None
+                    else 3,
+                )
+
+                repetitions = max(
+                    1,
+                    work_minutes // repetition_minutes,
+                )
+
+                recovery_minutes = (
+                    template.dose.recovery_minutes
+                    if template.dose is not None
+                    and template.dose.recovery_minutes
+                    is not None
+                    else 2
+                )
+
+                recovery_total = (
+                    (repetitions - 1)
+                    * recovery_minutes
+                )
+
+                prescribed_duration = (
+                    12
+                    + repetitions * repetition_minutes
+                    + recovery_total
+                    + 8
+                )
 
         if prescribed_duration is None:
             return requested_duration_minutes
@@ -1800,6 +1879,11 @@ class WorkoutGenerator:
             or "threshold" in normalized_title
         )
 
+        is_vo2max = (
+            "vo₂" in normalized_title
+            or "vo2" in normalized_title
+        )
+
         if is_threshold:
 
             warm_up_minutes = 10
@@ -1811,6 +1895,21 @@ class WorkoutGenerator:
                 )
                 else 5
             )
+
+            available_minutes = max(
+                1,
+                duration_minutes
+                - warm_up_minutes
+                - cool_down_minutes,
+            )
+
+        elif (
+            is_vo2max
+            and template.dose is not None
+        ):
+
+            warm_up_minutes = 12
+            cool_down_minutes = 8
 
             available_minutes = max(
                 1,
@@ -1853,7 +1952,8 @@ class WorkoutGenerator:
                 main_steps,
                 complementary_minutes,
             ) = cls._vo2max_steps(
-                available_minutes
+                available_minutes=available_minutes,
+                template=template,
             )
 
         elif "tempo" in normalized_title:
@@ -1907,7 +2007,10 @@ class WorkoutGenerator:
             )
 
         if (
-            not is_threshold
+            not (
+                is_threshold
+                or is_vo2max
+            )
             or template.dose is None
         ):
 
@@ -2045,29 +2148,91 @@ class WorkoutGenerator:
 
     @staticmethod
     def _vo2max_steps(
+        *,
         available_minutes: int,
+        template: WorkoutTemplate,
     ) -> tuple[tuple[str, ...], int]:
         """
-        Builds VO2max repetitions and reports the remaining
-        minutes for warm-up and cool-down.
+        Builds VO2max repetitions within the template dose.
         """
 
-        repetitions = max(
-            4,
-            min(
-                6,
-                available_minutes // 5,
-            ),
-        )
+        dose = template.dose
 
         effort_minutes = 3
-        recovery_minutes = 2
+        recovery_minutes = (
+            dose.recovery_minutes
+            if (
+                dose is not None
+                and dose.recovery_minutes is not None
+            )
+            else 2
+        )
+
+        if (
+            dose is not None
+            and dose.maximum_repetition_minutes
+            is not None
+        ):
+            effort_minutes = min(
+                effort_minutes,
+                dose.maximum_repetition_minutes,
+            )
+
+        target_work_minutes = (
+            dose.target_work_minutes
+            if dose is not None
+            else 18
+        )
+
+        maximum_work_minutes = (
+            dose.maximum_work_minutes
+            if dose is not None
+            else target_work_minutes
+        )
+
+        selected_work_minutes = min(
+            target_work_minutes,
+            maximum_work_minutes,
+        )
+
+        repetitions = max(
+            1,
+            selected_work_minutes
+            // effort_minutes,
+        )
+
+        recovery_total = (
+            max(0, repetitions - 1)
+            * recovery_minutes
+        )
 
         prescribed_minutes = (
             repetitions * effort_minutes
-            + (repetitions - 1)
-            * recovery_minutes
+            + recovery_total
         )
+
+        if prescribed_minutes > available_minutes:
+            repetitions = max(
+                1,
+                (
+                    available_minutes
+                    + recovery_minutes
+                )
+                // (
+                    effort_minutes
+                    + recovery_minutes
+                ),
+            )
+
+            recovery_total = (
+                max(0, repetitions - 1)
+                * recovery_minutes
+            )
+
+            prescribed_minutes = (
+                repetitions * effort_minutes
+                + recovery_total
+            )
 
         complementary_minutes = max(
             0,

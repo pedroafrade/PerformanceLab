@@ -839,7 +839,7 @@ def test_lt2_workout_has_prescription_summary():
         == "3×8 min at LT2 (177 bpm)"
     )
 
-def test_vo2max_workout_distributes_complementary_time():
+def test_vo2max_workout_respects_template_dose():
 
     structure = (
         WorkoutGenerator._intensity_structure(
@@ -848,19 +848,19 @@ def test_vo2max_workout_distributes_complementary_time():
                     "Road Running"
                 )
             ),
-            duration_minutes=70,
+            duration_minutes=48,
             coach_context=SimpleNamespace(),
         )
     )
 
     assert structure == (
-        "Warm up 25 min",
+        "Warm up 12 min",
         "6×3 min at VO₂max effort",
         (
             "Recover 2 min easy "
             "between repetitions"
         ),
-        "Cool down 17 min",
+        "Cool down 8 min",
     )
 
 def test_speed_workout_distributes_complementary_time():
@@ -1761,3 +1761,46 @@ def test_threshold_repetition_never_exceeds_dose_limit():
     )
 
     assert "3×32 min" not in steps[0]
+
+def test_caps_vo2max_session_duration():
+
+    coach_context = SimpleNamespace(
+        athlete=SimpleNamespace(),
+        training_state=SimpleNamespace(
+            should_reduce_volume=False,
+        ),
+    )
+
+    result = (
+        WorkoutGenerator
+        ._prescribed_session_duration_minutes(
+            template=VO2MAX_TEMPLATE,
+            requested_duration_minutes=120,
+            coach_context=coach_context,
+        )
+    )
+
+    assert result == 48
+
+def test_vo2max_repetition_respects_template_limit():
+
+    steps, complementary_minutes = (
+        WorkoutGenerator
+        ._vo2max_steps(
+            available_minutes=80,
+            template=VO2MAX_TEMPLATE,
+        )
+    )
+
+    assert steps == (
+        "6×3 min at VO₂max effort",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+    )
+
+    assert complementary_minutes == 52
+    assert "5 min" not in steps[0]
+    assert "6 min" not in steps[0]
+
