@@ -776,7 +776,7 @@ def test_builds_sport_specific_long_title():
     assert title == "Long Run"
 
 
-def test_threshold_workout_structure_matches_duration():
+def test_threshold_workout_structure_respects_dose():
 
     structure = (
         WorkoutGenerator._intensity_structure(
@@ -790,20 +790,23 @@ def test_threshold_workout_structure_matches_duration():
                 athlete=SimpleNamespace(
                     threshold_hr=177,
                 ),
+                training_state=SimpleNamespace(
+                    should_reduce_volume=False,
+                ),
             ),
         )
     )
 
     assert structure == (
-        "Warm up 16 min",
-        "3×13 min at LT2 (177 bpm)",
+        "Warm up 10 min",
+        "3×8 min at LT2 (177 bpm)",
         (
             "Recover 2 min easy "
             "between repetitions"
         ),
-        "Cool down 11 min",
+        "Cool down 5 min",
     )
-
+    
 def test_lt2_workout_has_prescription_summary():
 
     workout = WorkoutGenerator()._build_workout(
@@ -833,7 +836,7 @@ def test_lt2_workout_has_prescription_summary():
 
     assert (
         workout.prescription_summary
-        == "3×13 min at LT2 (177 bpm)"
+        == "3×8 min at LT2 (177 bpm)"
     )
 
 def test_vo2max_workout_distributes_complementary_time():
@@ -1629,3 +1632,132 @@ def test_finds_both_events_by_their_exact_dates():
         )
         is second_event
     )
+
+def test_caps_normal_threshold_session_from_template_dose():
+
+    coach_context = SimpleNamespace(
+        training_state=SimpleNamespace(
+            should_reduce_volume=False,
+        )
+    )
+
+    result = (
+        WorkoutGenerator
+        ._prescribed_session_duration_minutes(
+            template=THRESHOLD_TEMPLATE,
+            requested_duration_minutes=125,
+            coach_context=coach_context,
+        )
+    )
+
+    assert result == 43
+
+
+def test_reduces_threshold_session_after_high_recent_load():
+
+    coach_context = SimpleNamespace(
+        training_state=SimpleNamespace(
+            should_reduce_volume=True,
+        )
+    )
+
+    result = (
+        WorkoutGenerator
+        ._prescribed_session_duration_minutes(
+            template=THRESHOLD_TEMPLATE,
+            requested_duration_minutes=125,
+            coach_context=coach_context,
+        )
+    )
+
+    assert result == 38
+
+
+def test_reduced_threshold_dose_builds_three_by_seven():
+
+    coach_context = SimpleNamespace(
+        athlete=SimpleNamespace(
+            threshold_hr=None,
+        ),
+        training_state=SimpleNamespace(
+            should_reduce_volume=True,
+        ),
+    )
+
+    structure = (
+        WorkoutGenerator
+        ._intensity_structure(
+            template=THRESHOLD_TEMPLATE,
+            duration_minutes=38,
+            coach_context=coach_context,
+        )
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        "3×7 min at LT2 (RPE 7–8/10)",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+        "Cool down 3 min",
+    )
+
+
+def test_normal_threshold_dose_builds_three_by_eight():
+
+    coach_context = SimpleNamespace(
+        athlete=SimpleNamespace(
+            threshold_hr=None,
+        ),
+        training_state=SimpleNamespace(
+            should_reduce_volume=False,
+        ),
+    )
+
+    structure = (
+        WorkoutGenerator
+        ._intensity_structure(
+            template=THRESHOLD_TEMPLATE,
+            duration_minutes=43,
+            coach_context=coach_context,
+        )
+    )
+
+    assert structure == (
+        "Warm up 10 min",
+        "3×8 min at LT2 (RPE 7–8/10)",
+        (
+            "Recover 2 min easy "
+            "between repetitions"
+        ),
+        "Cool down 5 min",
+    )
+
+
+def test_threshold_repetition_never_exceeds_dose_limit():
+
+    coach_context = SimpleNamespace(
+        athlete=SimpleNamespace(
+            threshold_hr=177,
+        ),
+        training_state=SimpleNamespace(
+            should_reduce_volume=False,
+        ),
+    )
+
+    steps, _ = (
+        WorkoutGenerator
+        ._threshold_steps(
+            available_minutes=100,
+            sport="running",
+            coach_context=coach_context,
+            template=THRESHOLD_TEMPLATE,
+        )
+    )
+
+    assert steps[0].startswith(
+        "3×8 min at LT2"
+    )
+
+    assert "3×32 min" not in steps[0]

@@ -370,6 +370,14 @@ class WorkoutGenerator:
                 "training slots must have a positive duration"
             )
 
+        duration_minutes = (
+            self._prescribed_session_duration_minutes(
+                template=template,
+                requested_duration_minutes=duration_minutes,
+                coach_context=coach_context,
+            )
+        )
+
         structure = self._prescribed_structure(
             template=template,
             duration_minutes=duration_minutes,
@@ -568,6 +576,183 @@ class WorkoutGenerator:
 
         return (
             f"{minutes}:{seconds:02d}/km"
+        )
+
+    # ======================================================
+    @staticmethod
+    def _should_reduce_threshold_dose(
+        coach_context: CoachContext,
+    ) -> bool:
+        """
+        Returns whether recent physiological load requires
+        a reduced threshold dose.
+        """
+
+        training_state = getattr(
+            coach_context,
+            "training_state",
+            None,
+        )
+
+        if training_state is None:
+            return False
+
+        return bool(
+            getattr(
+                training_state,
+                "should_reduce_volume",
+                False,
+            )
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _threshold_work_minutes(
+        cls,
+        *,
+        template: WorkoutTemplate,
+        coach_context: CoachContext,
+    ) -> int | None:
+        """
+        Selects the LT2 work dose from the template.
+
+        A reduced dose uses 21 minutes, producing 3×7 min
+        for the current threshold template.
+        """
+
+        dose = template.dose
+
+        if dose is None:
+            return None
+
+        if cls._should_reduce_threshold_dose(
+            coach_context
+        ):
+            reduced_target = (
+                dose.target_work_minutes
+                - 3
+            )
+
+            return max(
+                dose.minimum_work_minutes,
+                reduced_target,
+            )
+
+        return dose.target_work_minutes
+
+    # ======================================================
+
+    @classmethod
+    def _threshold_session_duration_minutes(
+        cls,
+        *,
+        template: WorkoutTemplate,
+        coach_context: CoachContext,
+    ) -> int | None:
+        """
+        Calculates the complete LT2 session duration.
+
+        The duration includes warm-up, LT2 repetitions,
+        recoveries and cool-down.
+        """
+
+        work_minutes = (
+            cls._threshold_work_minutes(
+                template=template,
+                coach_context=coach_context,
+            )
+        )
+
+        if work_minutes is None:
+            return None
+
+        dose = template.dose
+
+        if dose is None:
+            return None
+
+        repetitions = 3
+
+        recovery_minutes = (
+            dose.recovery_minutes
+            or 2
+        )
+
+        recovery_total = (
+            recovery_minutes
+            * (repetitions - 1)
+        )
+
+        warm_up_minutes = 10
+
+        cool_down_minutes = (
+            3
+            if cls._should_reduce_threshold_dose(
+                coach_context
+            )
+            else 5
+        )
+
+        return (
+            warm_up_minutes
+            + work_minutes
+            + recovery_total
+            + cool_down_minutes
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _prescribed_session_duration_minutes(
+        cls,
+        *,
+        template: WorkoutTemplate,
+        requested_duration_minutes: int | None,
+        coach_context: CoachContext,
+    ) -> int | None:
+        """
+        Caps duration-based planning with the workout's
+        physiological dose.
+
+        Sessions without a quantitative dose retain their
+        requested duration.
+        """
+
+        if requested_duration_minutes is None:
+            return None
+
+        normalized_title = (
+            template.title
+            .strip()
+            .lower()
+        )
+
+        is_threshold = (
+            template.purpose
+            is SessionPurpose.INTENSITY
+            and (
+                "lt2" in normalized_title
+                or "threshold" in normalized_title
+            )
+        )
+
+        if not is_threshold:
+            return requested_duration_minutes
+
+        prescribed_duration = (
+            cls._threshold_session_duration_minutes(
+                template=template,
+                coach_context=coach_context,
+            )
+        )
+
+        if prescribed_duration is None:
+            return requested_duration_minutes
+
+        return min(
+            requested_duration_minutes,
+            prescribed_duration,
         )
 
     # ======================================================
@@ -1606,15 +1791,44 @@ class WorkoutGenerator:
                 cool_down_minutes=5,
             )
 
-        (
-            warm_up_minutes,
-            cool_down_minutes,
-            available_minutes,
-        ) = cls._intensity_timing(
-            duration_minutes
+        normalized_title = (
+            template.title.lower()
         )
 
-        normalized_title = template.title.lower()
+        is_threshold = (
+            "lt2" in normalized_title
+            or "threshold" in normalized_title
+        )
+
+        if is_threshold:
+
+            warm_up_minutes = 10
+
+            cool_down_minutes = (
+                3
+                if cls._should_reduce_threshold_dose(
+                    coach_context
+                )
+                else 5
+            )
+
+            available_minutes = max(
+                1,
+                duration_minutes
+                - warm_up_minutes
+                - cool_down_minutes,
+            )
+
+        else:
+
+            (
+                warm_up_minutes,
+                cool_down_minutes,
+                available_minutes,
+            ) = cls._intensity_timing(
+                duration_minutes
+            )
+
         complementary_minutes = 0
 
         if (
@@ -1628,6 +1842,7 @@ class WorkoutGenerator:
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
+                template=template,
             )
 
         elif (
@@ -1688,17 +1903,23 @@ class WorkoutGenerator:
                 available_minutes=available_minutes,
                 sport=template.sport,
                 coach_context=coach_context,
+                template=template,
             )
 
-        (
-            warm_up_extension,
-            cool_down_extension,
-        ) = cls._split_complementary_minutes(
-            complementary_minutes
-        )
+        if (
+            not is_threshold
+            or template.dose is None
+        ):
 
-        warm_up_minutes += warm_up_extension
-        cool_down_minutes += cool_down_extension
+            (
+                warm_up_extension,
+                cool_down_extension,
+            ) = cls._split_complementary_minutes(
+                complementary_minutes
+            )
+
+            warm_up_minutes += warm_up_extension
+            cool_down_minutes += cool_down_extension
 
         return (
             f"Warm up {warm_up_minutes} min",
@@ -1715,29 +1936,82 @@ class WorkoutGenerator:
         available_minutes: int,
         sport: str | None,
         coach_context: CoachContext,
+        template: WorkoutTemplate,
     ) -> tuple[tuple[str, ...], int]:
         """
-        Builds threshold repetitions and returns any unused
-        minutes so they can extend the cool-down.
+        Builds threshold repetitions within the template's
+        quantitative physiological dose.
         """
 
         repetitions = 3
-        recovery_minutes = 2
+
+        dose = template.dose
+
+        recovery_minutes = (
+            dose.recovery_minutes
+            if (
+                dose is not None
+                and dose.recovery_minutes
+                is not None
+            )
+            else 2
+        )
+
+        recovery_total = (
+            recovery_minutes
+            * (repetitions - 1)
+        )
+
+        available_work_minutes = max(
+            0,
+            available_minutes
+            - recovery_total,
+        )
+
+        selected_work_minutes = (
+            cls._threshold_work_minutes(
+                template=template,
+                coach_context=coach_context,
+            )
+        )
+
+        if selected_work_minutes is None:
+
+            selected_work_minutes = (
+                available_work_minutes
+            )
+
+        selected_work_minutes = min(
+            selected_work_minutes,
+            available_work_minutes,
+        )
+
+        if dose is not None:
+
+            selected_work_minutes = min(
+                selected_work_minutes,
+                dose.maximum_work_minutes,
+            )
 
         work_minutes = max(
-            4,
-            (
-                available_minutes
-                - recovery_minutes
-                * (repetitions - 1)
-            )
+            1,
+            selected_work_minutes
             // repetitions,
         )
 
+        if (
+            dose is not None
+            and dose.maximum_repetition_minutes
+            is not None
+        ):
+            work_minutes = min(
+                work_minutes,
+                dose.maximum_repetition_minutes,
+            )
+
         prescribed_minutes = (
             repetitions * work_minutes
-            + recovery_minutes
-            * (repetitions - 1)
+            + recovery_total
         )
 
         unused_minutes = max(
@@ -1762,7 +2036,10 @@ class WorkoutGenerator:
             ),
         )
 
-        return steps, unused_minutes
+        return (
+            steps,
+            unused_minutes,
+        )
 
     # ======================================================
 
