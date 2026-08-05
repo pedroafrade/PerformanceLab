@@ -304,7 +304,7 @@ def _planned_load_chart(
             points,
         )
         .properties(
-            height=175,
+            height=145,
         )
     )
 
@@ -623,7 +623,7 @@ def _distance_elevation_chart(
             y="independent"
         )
         .properties(
-            height=175,
+            height=160,
         )
     )
 
@@ -1107,11 +1107,11 @@ def _sidebar_styles() -> str:
 .plan-sidebar-stack {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.65rem;
 }
 
 .plan-sidebar-card {
-    padding: 1rem;
+    padding: 0.8rem;
     border: 1px solid rgba(128, 128, 128, 0.25);
     border-radius: 0.7rem;
     background: rgba(128, 128, 128, 0.018);
@@ -1121,8 +1121,8 @@ def _sidebar_styles() -> str:
 .plan-sidebar-heading {
     display: flex;
     align-items: center;
-    gap: 0.45rem;
-    margin-bottom: 1rem;
+    gap: 0.4rem;
+    margin-bottom: 0.7rem;
     font-size: 0.82rem;
     font-weight: 700;
     line-height: 1.1;
@@ -1147,20 +1147,20 @@ def _sidebar_styles() -> str:
 }
 
 .plan-sidebar-date-range {
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.6rem;
     font-size: 0.72rem;
     opacity: 0.6;
 }
 
 .plan-sidebar-objective {
     margin: 0;
-    font-size: 0.84rem;
-    line-height: 1.5;
+    font-size: 0.8rem;
+    line-height: 1.4;
 }
 
 .plan-sidebar-divider {
     height: 1px;
-    margin: 1rem 0 0.85rem 0;
+    margin: 0.7rem 0 0.6rem 0;
     background: rgba(128, 128, 128, 0.17);
 }
 
@@ -1199,7 +1199,7 @@ def _sidebar_styles() -> str:
     flex-wrap: wrap;
     align-items: center;
     gap: 0.3rem;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.65rem;
     font-size: 0.72rem;
     opacity: 0.72;
 }
@@ -1220,8 +1220,8 @@ def _sidebar_styles() -> str:
         minmax(0, 2fr);
     gap: 0.45rem;
     align-items: center;
-    min-height: 2.45rem;
-    padding: 0.45rem 0.55rem;
+    min-height: 2.1rem;
+    padding: 0.35rem 0.5rem;
     box-sizing: border-box;
 }
 
@@ -1366,29 +1366,28 @@ def _plan_styles() -> None:
         """,
         unsafe_allow_html=True,
     )
-
 def _compact_plan_layout_styles() -> None:
     """
-    Reduces unused vertical space on the plan page.
+    Balances compactness and readability on the plan page.
     """
 
     st.markdown(
         """
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 1rem;
+            padding-top: 2.4rem;
             padding-bottom: 1rem;
         }
 
         div[data-testid="stMainBlockContainer"] h1 {
             margin-top: 0;
-            margin-bottom: 0.15rem;
-            line-height: 1.05;
+            margin-bottom: 0.2rem;
+            line-height: 1.2;
         }
 
         div[data-testid="stMainBlockContainer"] h2,
         div[data-testid="stMainBlockContainer"] h3 {
-            margin-top: 0.25rem;
+            margin-top: 0.3rem;
             margin-bottom: 0.25rem;
         }
 
@@ -1397,17 +1396,9 @@ def _compact_plan_layout_styles() -> None:
             margin-bottom: 0.35rem;
         }
 
-        div[data-testid="stVerticalBlock"] {
-            gap: 0.45rem;
-        }
-
-        div[data-testid="stHorizontalBlock"] {
-            gap: 0.75rem;
-        }
-
         div[data-testid="stDivider"] {
-            margin-top: 0.2rem;
-            margin-bottom: 0.2rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
         }
 
         div[data-testid="stCaptionContainer"] {
@@ -1415,31 +1406,52 @@ def _compact_plan_layout_styles() -> None:
         }
 
         div[data-testid="stAltairChart"] {
-            margin-top: -0.25rem;
-            margin-bottom: -0.2rem;
+            margin-top: -0.2rem;
+            margin-bottom: -0.15rem;
+        }
+
+        button[kind="primary"] {
+            min-height: 2.45rem;
+            white-space: nowrap;
         }
 
         .plan-progression-heading {
-            margin: 0.15rem 0 0.2rem 0;
+            margin: 0.2rem 0 0.15rem 0;
+        }
+
+        .plan-progression-heading h3 {
+            margin: 0;
+        }
+
+        .plan-chart-block {
+            margin-top: 0.15rem;
         }
 
         .plan-chart-heading {
-            margin: 0 0 0.1rem 0;
+            margin: 0 0 0.05rem 0;
             font-size: 0.78rem;
             font-weight: 700;
         }
 
         .plan-chart-caption {
-            margin: 0 0 0.15rem 0;
-            font-size: 0.65rem;
-            line-height: 1.25;
+            margin: 0 0 0.05rem 0;
+            font-size: 0.64rem;
+            line-height: 1.2;
             opacity: 0.62;
         }
 
         .plan-weeks-heading {
-            margin: 0.25rem 0 0.15rem 0;
+            margin: 0.35rem 0 0.15rem 0;
             font-size: 1rem;
             font-weight: 700;
+        }
+
+        div[data-testid="stExpander"] {
+            margin-bottom: 0.2rem;
+        }
+
+        div[data-testid="stExpander"] details summary {
+            min-height: 2.25rem;
         }
         </style>
         """,
@@ -1461,7 +1473,8 @@ def show_plan_page(
 
     title_column, action_column = (
         st.columns(
-            [5, 1]
+            [4.5, 1.5],
+            gap="medium",
         )
     )
 
@@ -1477,8 +1490,6 @@ def show_plan_page(
         )
 
     with action_column:
-
-        st.write("")
 
         st.button(
             "Generate plan",
@@ -1523,8 +1534,8 @@ def show_plan_page(
 
     main_column, sidebar_column = (
         st.columns(
-            [3, 1],
-            gap="large",
+            [3.4, 1],
+            gap="medium",
         )
     )
 
@@ -1613,54 +1624,47 @@ def show_plan_page(
             unsafe_allow_html=True,
         )
 
-        load_chart_column, volume_chart_column = (
-            st.columns(
-                2,
-                gap="medium",
-            )
+        st.markdown(
+            (
+                '<div class="plan-chart-block">'
+                '<div class="plan-chart-heading">'
+                "Planned load"
+                "</div>"
+                '<div class="plan-chart-caption">'
+                "Load for each session on its exact date."
+                "</div>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
         )
 
-        with load_chart_column:
+        st.altair_chart(
+            _planned_load_chart(
+                plan
+            ),
+            use_container_width=True,
+        )
 
-            st.markdown(
-                (
-                    '<div class="plan-chart-heading">'
-                    "Planned load"
-                    "</div>"
-                    '<div class="plan-chart-caption">'
-                    "Load for each session on its exact date."
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
-            )
+        st.markdown(
+            (
+                '<div class="plan-chart-block">'
+                '<div class="plan-chart-heading">'
+                "Distance and elevation"
+                "</div>"
+                '<div class="plan-chart-caption">'
+                "Weekly totals and races on exact dates."
+                "</div>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
+        )
 
-            st.altair_chart(
-                _planned_load_chart(
-                    plan
-                ),
-                use_container_width=True,
-            )
-
-        with volume_chart_column:
-
-            st.markdown(
-                (
-                    '<div class="plan-chart-heading">'
-                    "Distance and elevation"
-                    "</div>"
-                    '<div class="plan-chart-caption">'
-                    "Weekly totals and races on exact dates."
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
-            )
-
-            st.altair_chart(
-                _distance_elevation_chart(
-                    plan
-                ),
-                use_container_width=True,
-            )
+        st.altair_chart(
+            _distance_elevation_chart(
+                plan
+            ),
+            use_container_width=True,
+        )
 
         st.markdown(
             (
@@ -1689,10 +1693,7 @@ def show_plan_page(
 
             with st.expander(
                 label,
-                expanded=_week_is_current(
-                    week,
-                    reference_day=today,
-                ),
+                expanded=False,
             ):
 
                 st.markdown(
