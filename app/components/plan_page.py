@@ -304,7 +304,7 @@ def _planned_load_chart(
             points,
         )
         .properties(
-            height=260,
+            height=175,
         )
     )
 
@@ -623,7 +623,7 @@ def _distance_elevation_chart(
             y="independent"
         )
         .properties(
-            height=260,
+            height=175,
         )
     )
 
@@ -1367,6 +1367,84 @@ def _plan_styles() -> None:
         unsafe_allow_html=True,
     )
 
+def _compact_plan_layout_styles() -> None:
+    """
+    Reduces unused vertical space on the plan page.
+    """
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        div[data-testid="stMainBlockContainer"] h1 {
+            margin-top: 0;
+            margin-bottom: 0.15rem;
+            line-height: 1.05;
+        }
+
+        div[data-testid="stMainBlockContainer"] h2,
+        div[data-testid="stMainBlockContainer"] h3 {
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        div[data-testid="stMainBlockContainer"] p {
+            margin-top: 0.15rem;
+            margin-bottom: 0.35rem;
+        }
+
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.45rem;
+        }
+
+        div[data-testid="stHorizontalBlock"] {
+            gap: 0.75rem;
+        }
+
+        div[data-testid="stDivider"] {
+            margin-top: 0.2rem;
+            margin-bottom: 0.2rem;
+        }
+
+        div[data-testid="stCaptionContainer"] {
+            margin-bottom: 0.15rem;
+        }
+
+        div[data-testid="stAltairChart"] {
+            margin-top: -0.25rem;
+            margin-bottom: -0.2rem;
+        }
+
+        .plan-progression-heading {
+            margin: 0.15rem 0 0.2rem 0;
+        }
+
+        .plan-chart-heading {
+            margin: 0 0 0.1rem 0;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .plan-chart-caption {
+            margin: 0 0 0.15rem 0;
+            font-size: 0.65rem;
+            line-height: 1.25;
+            opacity: 0.62;
+        }
+
+        .plan-weeks-heading {
+            margin: 0.25rem 0 0.15rem 0;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def show_plan_page(
     athlete,
@@ -1378,6 +1456,8 @@ def show_plan_page(
     """
 
     today = date.today()
+
+    _compact_plan_layout_styles()
 
     title_column, action_column = (
         st.columns(
@@ -1487,8 +1567,6 @@ def show_plan_page(
                 unsafe_allow_html=True,
             )
 
-        st.divider()
-
         summary_html = (
             summary_cards_html(
                 (
@@ -1526,45 +1604,72 @@ def show_plan_page(
             unsafe_allow_html=True,
         )
 
-        st.divider()
-
-        st.subheader(
-            "Plan progression"
+        st.markdown(
+            (
+                '<div class="plan-progression-heading">'
+                "<h3>Plan progression</h3>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
         )
+
+        load_chart_column, volume_chart_column = (
+            st.columns(
+                2,
+                gap="medium",
+            )
+        )
+
+        with load_chart_column:
+
+            st.markdown(
+                (
+                    '<div class="plan-chart-heading">'
+                    "Planned load"
+                    "</div>"
+                    '<div class="plan-chart-caption">'
+                    "Load for each session on its exact date."
+                    "</div>"
+                ),
+                unsafe_allow_html=True,
+            )
+
+            st.altair_chart(
+                _planned_load_chart(
+                    plan
+                ),
+                use_container_width=True,
+            )
+
+        with volume_chart_column:
+
+            st.markdown(
+                (
+                    '<div class="plan-chart-heading">'
+                    "Distance and elevation"
+                    "</div>"
+                    '<div class="plan-chart-caption">'
+                    "Weekly totals and races on exact dates."
+                    "</div>"
+                ),
+                unsafe_allow_html=True,
+            )
+
+            st.altair_chart(
+                _distance_elevation_chart(
+                    plan
+                ),
+                use_container_width=True,
+            )
 
         st.markdown(
-            "**Planned load**"
-        )
-
-        st.caption(
-            "Planned load for each session on its exact "
-            "calendar date."
-        )
-
-        st.altair_chart(
-            _planned_load_chart(
-                plan
+            (
+                '<div class="plan-weeks-heading">'
+                "Plan weeks"
+                "</div>"
             ),
-            use_container_width=True,
+            unsafe_allow_html=True,
         )
-
-        st.markdown(
-            "**Distance and elevation**"
-        )
-
-        st.caption(
-            "Weekly training totals, with races shown on "
-            "their exact dates. Recovery weeks remain visible."
-        )
-
-        st.altair_chart(
-            _distance_elevation_chart(
-                plan
-            ),
-            use_container_width=True,
-        )
-
-        st.divider()
 
         _plan_styles()
 

@@ -466,8 +466,8 @@ def phase_timeline_styles() -> str:
 
     return """
 .weekly-phase-timeline {
-    margin: 0 0 0.6rem 0;
-    padding: 0.8rem 0.9rem 0.65rem 0.9rem;
+    margin: 0 0 0.25rem 0;
+    padding: 0.45rem 0.7rem 0.35rem 0.7rem;
     border: 1px solid rgba(128, 128, 128, 0.22);
     border-radius: 0.7rem;
     background: rgba(128, 128, 128, 0.025);
@@ -482,8 +482,8 @@ def phase_timeline_styles() -> str:
 
 .weekly-phase-segment {
     min-width: 0;
-    padding: 0 0.35rem 0.55rem 0.35rem;
-    border-bottom: 3px solid transparent;
+    padding: 0 0.3rem 0.3rem 0.3rem;
+    border-bottom: 2px solid transparent;
     text-align: center;
     box-sizing: border-box;
 }
@@ -497,7 +497,7 @@ def phase_timeline_styles() -> str:
 }
 
 .weekly-phase-heading {
-    min-height: 2.3rem;
+    min-height: 1.75rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -505,9 +505,9 @@ def phase_timeline_styles() -> str:
 
 .weekly-phase-label {
     overflow: hidden;
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1;
     opacity: 0.88;
     text-overflow: ellipsis;
     text-transform: capitalize;
@@ -520,10 +520,10 @@ def phase_timeline_styles() -> str:
 }
 
 .weekly-phase-range {
-    margin-top: 0.25rem;
+    margin-top: 0.18rem;
     overflow: hidden;
-    font-size: 0.62rem;
-    line-height: 1.1;
+    font-size: 0.56rem;
+    line-height: 1;
     opacity: 0.58;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -531,13 +531,13 @@ def phase_timeline_styles() -> str:
 
 .weekly-phase-track {
     position: relative;
-    min-height: 0.7rem;
-    padding-top: 0.25rem;
+    min-height: 0.55rem;
+    padding-top: 0.15rem;
 }
 
 .weekly-phase-track-line {
     position: absolute;
-    top: 0.52rem;
+    top: 0.39rem;
     left: 0;
     right: 0;
     height: 1px;
@@ -550,15 +550,15 @@ def phase_timeline_styles() -> str:
     display: flex;
     align-items: center;
     justify-content: space-around;
-    min-height: 0.55rem;
+    min-height: 0.45rem;
     gap: 1px;
 }
 
 .weekly-phase-dot {
     display: inline-block;
     flex: 0 0 auto;
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     border: 1px solid currentColor;
     border-radius: 50%;
     background: var(--background-color);
@@ -571,23 +571,23 @@ def phase_timeline_styles() -> str:
 }
 
 .weekly-phase-dot-current {
-    width: 9px;
-    height: 9px;
+    width: 7px;
+    height: 7px;
     border: 2px solid #ff4b4b;
     background: var(--background-color);
     opacity: 1;
 }
 
 .weekly-phase-dot-race {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-width: 2px;
     opacity: 0.85;
 }
 
 .weekly-phase-dot-race.weekly-phase-dot-current {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-color: #ff4b4b;
     opacity: 1;
 }
@@ -596,11 +596,11 @@ def phase_timeline_styles() -> str:
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    margin-top: 0.5rem;
-    padding-top: 0.45rem;
+    margin-top: 0.28rem;
+    padding-top: 0.28rem;
     border-top: 1px solid rgba(128, 128, 128, 0.14);
-    font-size: 0.68rem;
-    line-height: 1.2;
+    font-size: 0.6rem;
+    line-height: 1.1;
 }
 
 .weekly-phase-current-summary {
@@ -620,7 +620,7 @@ def phase_timeline_styles() -> str:
 
     .weekly-phase-footer {
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.2rem;
     }
 
     .weekly-phase-next-summary {
