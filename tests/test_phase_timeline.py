@@ -263,3 +263,193 @@ def test_builds_timeline_from_phase_ranges():
         in result
     )
     assert "04 Aug 2026" in result
+
+def test_timeline_shows_phase_date_ranges():
+
+    phases = (
+        SimpleNamespace(
+            name="Build",
+            start_date=date(
+                2026,
+                8,
+                3,
+            ),
+            end_date=date(
+                2026,
+                8,
+                16,
+            ),
+        ),
+        SimpleNamespace(
+            name="Race",
+            start_date=date(
+                2026,
+                9,
+                13,
+            ),
+            end_date=date(
+                2026,
+                9,
+                13,
+            ),
+        ),
+    )
+
+    result = (
+        phase_timeline_from_phases_html(
+            phases=phases,
+            current_date=date(
+                2026,
+                8,
+                10,
+            ),
+            visible_start=date(
+                2026,
+                8,
+                10,
+            ),
+            visible_end=date(
+                2026,
+                8,
+                16,
+            ),
+        )
+    )
+
+    assert "03 – 16 Aug" in result
+    assert "13 Sep 2026" in result
+
+
+def test_timeline_marks_current_phase():
+
+    phases = (
+        SimpleNamespace(
+            name="Build",
+            start_date=date(
+                2026,
+                8,
+                3,
+            ),
+            end_date=date(
+                2026,
+                8,
+                16,
+            ),
+        ),
+        SimpleNamespace(
+            name="Peak",
+            start_date=date(
+                2026,
+                8,
+                17,
+            ),
+            end_date=date(
+                2026,
+                9,
+                6,
+            ),
+        ),
+    )
+
+    result = (
+        phase_timeline_from_phases_html(
+            phases=phases,
+            current_date=date(
+                2026,
+                8,
+                20,
+            ),
+            visible_start=date(
+                2026,
+                8,
+                17,
+            ),
+            visible_end=date(
+                2026,
+                8,
+                23,
+            ),
+        )
+    )
+
+    assert (
+        "weekly-phase-segment-current"
+        in result
+    )
+
+    assert "Peak · week 1 of 3" in result
+
+
+def test_timeline_shows_next_phase_countdown():
+
+    phases = (
+        SimpleNamespace(
+            name="Peak",
+            start_date=date(
+                2026,
+                8,
+                17,
+            ),
+            end_date=date(
+                2026,
+                9,
+                6,
+            ),
+        ),
+        SimpleNamespace(
+            name="Taper",
+            start_date=date(
+                2026,
+                9,
+                7,
+            ),
+            end_date=date(
+                2026,
+                9,
+                12,
+            ),
+        ),
+    )
+
+    result = (
+        phase_timeline_from_phases_html(
+            phases=phases,
+            current_date=date(
+                2026,
+                8,
+                26,
+            ),
+            visible_start=date(
+                2026,
+                8,
+                24,
+            ),
+            visible_end=date(
+                2026,
+                8,
+                30,
+            ),
+        )
+    )
+
+    assert (
+        "Next phase: Taper in 12 days"
+        in result
+    )
+
+
+def test_timeline_styles_current_phase():
+
+    styles = (
+        phase_timeline_styles()
+    )
+
+    assert (
+        ".weekly-phase-segment-current"
+        in styles
+    )
+
+    assert (
+        ".weekly-phase-footer"
+        in styles
+    )
