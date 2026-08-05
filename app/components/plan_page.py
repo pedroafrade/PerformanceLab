@@ -841,6 +841,432 @@ def _week_html(
 
     return "".join(parts)
 
+def _sidebar_phase_html(
+    current_phase,
+) -> str:
+    """
+    Builds the current-phase sidebar card.
+    """
+
+    if current_phase is None:
+        return (
+            '<section class="plan-sidebar-card">'
+            '<div class="plan-sidebar-heading">'
+            '<span class="plan-sidebar-icon">◎</span>'
+            "<span>Current phase</span>"
+            "</div>"
+            '<p class="plan-sidebar-empty">'
+            "No current phase."
+            "</p>"
+            "</section>"
+        )
+
+    phase_name = escape(
+        str(
+            current_phase.name
+            or "Unassigned"
+        )
+    )
+
+    objective = escape(
+        str(
+            current_phase.objective
+            or ""
+        )
+    )
+
+    date_range = (
+        f"{current_phase.start_date.strftime('%d %b')} "
+        "– "
+        f"{current_phase.end_date.strftime('%d %b')}"
+    )
+
+    weeks_remaining = max(
+        0,
+        int(
+            current_phase.weeks_remaining
+        ),
+    )
+
+    weeks_label = (
+        "week remaining"
+        if weeks_remaining == 1
+        else "weeks remaining"
+    )
+
+    return (
+        '<section class="plan-sidebar-card '
+        'plan-sidebar-phase-card">'
+        '<div class="plan-sidebar-heading">'
+        '<span class="plan-sidebar-icon">◎</span>'
+        "<span>Current phase</span>"
+        "</div>"
+        '<div class="plan-sidebar-phase-name">'
+        f"{phase_name}"
+        "</div>"
+        '<div class="plan-sidebar-date-range">'
+        f"{escape(date_range)}"
+        "</div>"
+        '<p class="plan-sidebar-objective">'
+        f"{objective}"
+        "</p>"
+        '<div class="plan-sidebar-divider"></div>'
+        '<div class="plan-sidebar-remaining">'
+        '<span class="plan-sidebar-remaining-value">'
+        f"{weeks_remaining}"
+        "</span>"
+        '<span class="plan-sidebar-remaining-label">'
+        f"{weeks_label}"
+        "</span>"
+        "</div>"
+        "</section>"
+    )
+
+
+def _sidebar_session_marker_class(
+    workout,
+) -> str:
+    """
+    Returns the visual marker class for one workout.
+    """
+
+    if workout.is_race:
+        return "race"
+
+    intensity = (
+        str(
+            workout.intensity
+            or ""
+        )
+        .strip()
+        .lower()
+    )
+
+    title = (
+        str(
+            workout.title
+            or ""
+        )
+        .strip()
+        .lower()
+    )
+
+    if (
+        intensity
+        in {
+            "hard",
+            "very hard",
+            "moderately hard",
+        }
+        or "lt2" in title
+        or "tempo" in title
+        or "vo₂" in title
+        or "vo2" in title
+        or "hill" in title
+        or "speed" in title
+    ):
+        return "quality"
+
+    return "aerobic"
+
+
+def _sidebar_week_html(
+    week,
+) -> str:
+    """
+    Builds the current-week sidebar card.
+    """
+
+    if week is None:
+        return (
+            '<section class="plan-sidebar-card">'
+            '<div class="plan-sidebar-heading">'
+            '<span class="plan-sidebar-icon">▣</span>'
+            "<span>Current week</span>"
+            "</div>"
+            '<p class="plan-sidebar-empty">'
+            "No current plan week."
+            "</p>"
+            "</section>"
+        )
+
+    phase = escape(
+        str(
+            week.phase
+            or "Unassigned"
+        )
+    )
+
+    date_range = (
+        f"{week.start_date.strftime('%d %b')} "
+        "– "
+        f"{week.end_date.strftime('%d %b')}"
+    )
+
+    session_count = len(
+        week.workouts
+    )
+
+    duration = escape(
+        _week_duration_label(
+            week
+        )
+    )
+
+    planned_load = (
+        f"{week.planned_load:.0f} AU"
+    )
+
+    session_rows = []
+
+    for workout in week.workouts:
+
+        marker_class = (
+            _sidebar_session_marker_class(
+                workout
+            )
+        )
+
+        day_label = (
+            workout.scheduled_at
+            .strftime("%a %d")
+            .upper()
+        )
+
+        title = escape(
+            str(
+                workout.title
+                or "Planned workout"
+            )
+        )
+
+        session_rows.append(
+            (
+                '<div class="plan-sidebar-session">'
+                '<span class="plan-sidebar-session-marker '
+                f'{marker_class}"></span>'
+                '<span class="plan-sidebar-session-day">'
+                f"{escape(day_label)}"
+                "</span>"
+                '<span class="plan-sidebar-session-title">'
+                f"{title}"
+                "</span>"
+                "</div>"
+            )
+        )
+
+    sessions_html = "".join(
+        session_rows
+    )
+
+    session_label = (
+        "session"
+        if session_count == 1
+        else "sessions"
+    )
+
+    return (
+        '<section class="plan-sidebar-card '
+        'plan-sidebar-week-card">'
+        '<div class="plan-sidebar-heading">'
+        '<span class="plan-sidebar-icon">▣</span>'
+        "<span>Current week</span>"
+        "</div>"
+        '<div class="plan-sidebar-week-range">'
+        f"{escape(date_range)}"
+        "</div>"
+        '<div class="plan-sidebar-week-phase">'
+        f"{phase}"
+        "</div>"
+        '<div class="plan-sidebar-week-summary">'
+        "<span>"
+        f"{session_count} {session_label}"
+        "</span>"
+        "<span>·</span>"
+        "<span>"
+        f"{duration}"
+        "</span>"
+        "<span>·</span>"
+        "<span>"
+        f"{escape(planned_load)}"
+        "</span>"
+        "</div>"
+        '<div class="plan-sidebar-sessions">'
+        f"{sessions_html}"
+        "</div>"
+        "</section>"
+    )
+
+
+def _sidebar_styles() -> str:
+    """
+    Returns the styles for the plan sidebar cards.
+    """
+
+    return """
+.plan-sidebar-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.plan-sidebar-card {
+    padding: 1rem;
+    border: 1px solid rgba(128, 128, 128, 0.25);
+    border-radius: 0.7rem;
+    background: rgba(128, 128, 128, 0.018);
+    box-sizing: border-box;
+}
+
+.plan-sidebar-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.plan-sidebar-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.plan-sidebar-phase-name {
+    margin-bottom: 0.4rem;
+    color: #ff4b4b;
+    font-size: 1.55rem;
+    font-weight: 750;
+    line-height: 1.05;
+}
+
+.plan-sidebar-date-range {
+    margin-bottom: 0.85rem;
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.plan-sidebar-objective {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.plan-sidebar-divider {
+    height: 1px;
+    margin: 1rem 0 0.85rem 0;
+    background: rgba(128, 128, 128, 0.17);
+}
+
+.plan-sidebar-remaining {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+}
+
+.plan-sidebar-remaining-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.plan-sidebar-remaining-label {
+    font-size: 0.7rem;
+    opacity: 0.62;
+}
+
+.plan-sidebar-week-range {
+    margin-bottom: 0.35rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.plan-sidebar-week-phase {
+    margin-bottom: 0.7rem;
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.plan-sidebar-week-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.9rem;
+    font-size: 0.72rem;
+    opacity: 0.72;
+}
+
+.plan-sidebar-sessions {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(128, 128, 128, 0.17);
+    border-radius: 0.55rem;
+    overflow: hidden;
+}
+
+.plan-sidebar-session {
+    display: grid;
+    grid-template-columns:
+        0.55rem
+        minmax(3.2rem, 0.8fr)
+        minmax(0, 2fr);
+    gap: 0.45rem;
+    align-items: center;
+    min-height: 2.45rem;
+    padding: 0.45rem 0.55rem;
+    box-sizing: border-box;
+}
+
+.plan-sidebar-session + .plan-sidebar-session {
+    border-top: 1px solid rgba(128, 128, 128, 0.12);
+}
+
+.plan-sidebar-session-marker {
+    display: inline-block;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: #4f86f7;
+}
+
+.plan-sidebar-session-marker.quality {
+    background: #ff4b4b;
+}
+
+.plan-sidebar-session-marker.race {
+    border-radius: 1px;
+    background: #ff4b4b;
+    transform: rotate(45deg);
+}
+
+.plan-sidebar-session-day {
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.plan-sidebar-session-title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.74rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plan-sidebar-empty {
+    margin: 0;
+    font-size: 0.78rem;
+    opacity: 0.6;
+}
+"""
 
 def _plan_styles() -> None:
     """
@@ -1173,117 +1599,34 @@ def show_plan_page(
                 
     with sidebar_column:
 
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                "**Current phase**"
+        sidebar_html = (
+            '<div class="plan-sidebar-stack">'
+            + _sidebar_phase_html(
+                plan.current_phase
             )
-
-            if plan.current_phase is None:
-
-                st.caption(
-                    "No current phase."
-                )
-
-            else:
-
-                current_phase = (
-                    plan.current_phase
-                )
-
-                st.markdown(
-                    f"### {current_phase.name}"
-                )
-
-                st.caption(
-                    (
-                        f"{current_phase.start_date.strftime('%d %b')} "
-                        "– "
-                        f"{current_phase.end_date.strftime('%d %b')}"
-                    )
-                )
-
-                st.write(
-                    current_phase.objective
-                )
-
-                st.metric(
-                    "Weeks remaining",
-                    current_phase.weeks_remaining,
-                )
-
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                "**Current week**"
+            + _sidebar_week_html(
+                current_week
             )
-
-            if current_week is None:
-
-                st.caption(
-                    "No current plan week."
-                )
-
-            else:
-
-                phase = (
-                    current_week.phase
-                    or "Unassigned"
-                )
-
-                st.markdown(
-                    (
-                        f"### {current_week.start_date.strftime('%d %b')} "
-                        "– "
-                        f"{current_week.end_date.strftime('%d %b')}"
-                    )
-                )
-
-                st.caption(
-                    phase
-                )
-
-                sessions_column, duration_column = (
-                    st.columns(2)
-                )
-
-                with sessions_column:
-
-                    st.metric(
-                        "Sessions",
-                        len(
-                            current_week.workouts
-                        ),
-                    )
-
-                with duration_column:
-
-                    st.metric(
-                        "Duration",
-                        _week_duration_label(
-                            current_week
-                        ),
-                    )
-
-                st.metric(
-                    "Planned load",
-                    (
-                        f"{current_week.planned_load:.0f} AU"
-                    ),
-                )
-
-        with st.container(
-            border=True
-        ):
-
-            st.markdown(
-                "**Latest adaptation**"
-            )
-
-            st.caption(
+            + (
+                '<section class="plan-sidebar-card">'
+                '<div class="plan-sidebar-heading">'
+                '<span class="plan-sidebar-icon">↻</span>'
+                "<span>Latest adaptation</span>"
+                "</div>"
+                '<p class="plan-sidebar-empty">'
                 "Coming soon"
+                "</p>"
+                "</section>"
             )
+            + "</div>"
+        )
+
+        st.markdown(
+            (
+                "<style>"
+                + _sidebar_styles()
+                + "</style>"
+                + sidebar_html
+            ),
+            unsafe_allow_html=True,
+        )

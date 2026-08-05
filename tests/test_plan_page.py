@@ -10,11 +10,14 @@ from app.components.plan_page import (
     _plan_chart_data,
     _plan_volume_chart_data,
     _plan_summary_metrics,
+    _sidebar_phase_html,
+    _sidebar_session_marker_class,
+    _sidebar_week_html,
     _week_duration_label,
     _status_label,
     _week_html,
     _week_is_current,
-    show_plan_page,
+     show_plan_page,
 )
 from performancelab.presentation import (
     PlanWeekData,
@@ -583,4 +586,139 @@ def test_keeps_recovery_until_exact_plan_end():
                 "Point type": "Weekly training",
             },
         ]
+    )
+
+def test_builds_current_phase_sidebar_card():
+
+    phase = SimpleNamespace(
+        name="Peak",
+        objective=(
+            "Increase race-specific endurance "
+            "and key-session quality."
+        ),
+        start_date=date(
+            2026,
+            8,
+            17,
+        ),
+        end_date=date(
+            2026,
+            9,
+            6,
+        ),
+        weeks_remaining=2,
+    )
+
+    result = (
+        _sidebar_phase_html(
+            phase
+        )
+    )
+
+    assert "Current phase" in result
+    assert "Peak" in result
+
+    assert (
+        "Increase race-specific endurance"
+        in result
+    )
+
+    assert "17 Aug – 06 Sep" in result
+    assert "2" in result
+    assert "weeks remaining" in result
+
+
+def test_builds_empty_phase_sidebar_card():
+
+    result = (
+        _sidebar_phase_html(
+            None
+        )
+    )
+
+    assert "Current phase" in result
+    assert "No current phase." in result
+
+
+def test_builds_current_week_sidebar_card():
+
+    week = create_week()
+
+    result = (
+        _sidebar_week_html(
+            week
+        )
+    )
+
+    assert "Current week" in result
+    assert "03 Aug – 09 Aug" in result
+    assert "Build" in result
+    assert "1 session" in result
+    assert "1h" in result
+    assert "180 AU" in result
+    assert "TUE 04" in result
+    assert "Easy Run" in result
+
+
+def test_builds_empty_week_sidebar_card():
+
+    result = (
+        _sidebar_week_html(
+            None
+        )
+    )
+
+    assert "Current week" in result
+
+    assert (
+        "No current plan week."
+        in result
+    )
+
+
+def test_marks_quality_session_in_sidebar():
+
+    workout = SimpleNamespace(
+        is_race=False,
+        intensity="Hard",
+        title="LT2 Run",
+    )
+
+    assert (
+        _sidebar_session_marker_class(
+            workout
+        )
+        == "quality"
+    )
+
+
+def test_marks_race_session_in_sidebar():
+
+    workout = SimpleNamespace(
+        is_race=True,
+        intensity="Race effort",
+        title="Race",
+    )
+
+    assert (
+        _sidebar_session_marker_class(
+            workout
+        )
+        == "race"
+    )
+
+
+def test_marks_easy_session_as_aerobic():
+
+    workout = SimpleNamespace(
+        is_race=False,
+        intensity="Easy",
+        title="Easy Run",
+    )
+
+    assert (
+        _sidebar_session_marker_class(
+            workout
+        )
+        == "aerobic"
     )
