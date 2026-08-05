@@ -290,9 +290,14 @@ def _planned_load_chart(
                     ],
                 ),
                 legend=alt.Legend(
-                    orient="bottom",
+                    orient="top",
                     direction="horizontal",
                     columns=2,
+                    title=None,
+                    labelFontSize=9,
+                    symbolSize=55,
+                    offset=2,
+                    padding=0,
                 ),
             ),
         )
@@ -304,7 +309,13 @@ def _planned_load_chart(
             points,
         )
         .properties(
-            height=145,
+            height=115,
+        )
+        .configure_axis(
+            labelFontSize=9,
+            titleFontSize=10,
+            labelPadding=3,
+            titlePadding=6,
         )
     )
 
@@ -365,9 +376,14 @@ def _distance_elevation_chart(
                     ],
                 ),
                 legend=alt.Legend(
-                    orient="bottom",
+                    orient="top",
                     direction="horizontal",
                     columns=2,
+                    title=None,
+                    labelFontSize=9,
+                    symbolSize=55,
+                    offset=2,
+                    padding=0,
                 ),
             ),
             tooltip=[
@@ -420,11 +436,7 @@ def _distance_elevation_chart(
                         "Elevation",
                     ],
                 ),
-                legend=alt.Legend(
-                    orient="bottom",
-                    direction="horizontal",
-                    columns=2,
-                ),
+                legend=None,
             ),
             shape=alt.Shape(
                 "Point type:N",
@@ -440,9 +452,14 @@ def _distance_elevation_chart(
                     ],
                 ),
                 legend=alt.Legend(
-                    orient="bottom",
+                    orient="top",
                     direction="horizontal",
                     columns=2,
+                    title=None,
+                    labelFontSize=9,
+                    symbolSize=55,
+                    offset=2,
+                    padding=0,
                 ),
             ),
             tooltip=[
@@ -502,9 +519,14 @@ def _distance_elevation_chart(
                     ],
                 ),
                 legend=alt.Legend(
-                    orient="bottom",
+                    orient="top",
                     direction="horizontal",
                     columns=2,
+                    title=None,
+                    labelFontSize=9,
+                    symbolSize=55,
+                    offset=2,
+                    padding=0,
                 ),
             ),
             tooltip=[
@@ -560,11 +582,7 @@ def _distance_elevation_chart(
                         "Elevation",
                     ],
                 ),
-                legend=alt.Legend(
-                    orient="bottom",
-                    direction="horizontal",
-                    columns=2,
-                ),
+                legend=None,
             ),
             shape=alt.Shape(
                 "Point type:N",
@@ -580,9 +598,14 @@ def _distance_elevation_chart(
                     ],
                 ),
                 legend=alt.Legend(
-                    orient="bottom",
+                    orient="top",
                     direction="horizontal",
                     columns=2,
+                    title=None,
+                    labelFontSize=9,
+                    symbolSize=55,
+                    offset=2,
+                    padding=0,
                 ),
             ),
             tooltip=[
@@ -623,7 +646,13 @@ def _distance_elevation_chart(
             y="independent"
         )
         .properties(
-            height=160,
+            height=125,
+        )
+        .configure_axis(
+            labelFontSize=9,
+            titleFontSize=10,
+            labelPadding=3,
+            titlePadding=6,
         )
     )
 
@@ -1406,8 +1435,8 @@ def _compact_plan_layout_styles() -> None:
         }
 
         div[data-testid="stAltairChart"] {
-            margin-top: -0.2rem;
-            margin-bottom: -0.15rem;
+            margin-top: -0.45rem;
+            margin-bottom: -0.45rem;
         }
 
         button[kind="primary"] {
@@ -1416,15 +1445,18 @@ def _compact_plan_layout_styles() -> None:
         }
 
         .plan-progression-heading {
-            margin: 0.2rem 0 0.15rem 0;
+            margin: 0.15rem 0 0.05rem 0;
         }
 
         .plan-progression-heading h3 {
             margin: 0;
+            font-size: 1.35rem;
+            line-height: 1.1;
         }
 
         .plan-chart-block {
-            margin-top: 0.15rem;
+            margin-top: 0;
+            margin-bottom: -0.15rem;
         }
 
         .plan-chart-heading {
@@ -1441,7 +1473,7 @@ def _compact_plan_layout_styles() -> None:
         }
 
         .plan-weeks-heading {
-            margin: 0.35rem 0 0.15rem 0;
+            margin: 0.1rem 0 0.1rem 0;
             font-size: 1rem;
             font-weight: 700;
         }
@@ -1652,7 +1684,7 @@ def show_plan_page(
                 "Distance and elevation"
                 "</div>"
                 '<div class="plan-chart-caption">'
-                "Weekly totals and races on exact dates."
+                "Weekly totals · diamonds mark races."
                 "</div>"
                 "</div>"
             ),
