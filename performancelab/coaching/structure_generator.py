@@ -672,6 +672,16 @@ class WeekStructureGenerator:
         )
 
         remaining = (
+            self._allocate_intensity_session_minutes(
+                durations=durations,
+                capacities=capacities,
+                purposes=purposes,
+                strategy_plan=strategy_plan,
+                remaining=remaining,
+            )
+        )
+
+        remaining = (
             self._allocate_recovery_session_minutes(
                 durations=durations,
                 capacities=capacities,
@@ -702,7 +712,11 @@ class WeekStructureGenerator:
         for weekday, purpose in purposes.items():
 
             if (
-                purpose is SessionPurpose.LONG
+                purpose
+                in {
+                    SessionPurpose.INTENSITY,
+                    SessionPurpose.LONG,
+                }
                 and durations[weekday] > 0
             ):
                 capacities[weekday] = (
@@ -745,6 +759,56 @@ class WeekStructureGenerator:
             0,
             min(candidates),
         )
+
+    # ======================================================
+    @staticmethod
+    def _allocate_intensity_session_minutes(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+        strategy_plan: StrategyPlan,
+        remaining: int,
+    ) -> int:
+        """
+        Gives intensity sessions a controlled duration.
+
+        Physiological work is defined later by the workout
+        template and its StimulusDose. Weekly volume must
+        not expand a quality session until it fills all
+        available time.
+        """
+
+        if strategy_plan.phase == "Taper":
+            return remaining
+
+        intensity_days = [
+            weekday
+            for weekday, purpose
+            in purposes.items()
+            if purpose is SessionPurpose.INTENSITY
+        ]
+
+        for weekday in intensity_days:
+
+            if remaining <= 0:
+                break
+
+            target_duration = 45
+
+            duration = min(
+                target_duration,
+                capacities[weekday],
+                remaining,
+            )
+
+            durations[weekday] = duration
+            remaining -= duration
+
+        return remaining
 
     # ======================================================
 
@@ -962,10 +1026,11 @@ class WeekStructureGenerator:
         remaining: int,
     ) -> None:
         """
-        Distributes minutes using small rounds.
+        Distributes remaining minutes using small rounds.
 
-        Intensity sessions receive priority over easy sessions once
-        the long-session allocation is complete.
+        Intensity and long-session capacities have already
+        been fixed. The remaining volume is therefore
+        absorbed by eligible aerobic sessions.
         """
 
         ordered_days = sorted(
@@ -1013,12 +1078,12 @@ class WeekStructureGenerator:
         purpose: SessionPurpose,
     ) -> int:
         priorities = {
-            SessionPurpose.INTENSITY: 0,
-            SessionPurpose.EASY: 1,
-            SessionPurpose.TECHNIQUE: 2,
-            SessionPurpose.PRE_RACE: 2,
-            SessionPurpose.CROSS_TRAINING: 3,
-            SessionPurpose.RECOVERY: 4,
+            SessionPurpose.EASY: 0,
+            SessionPurpose.TECHNIQUE: 1,
+            SessionPurpose.PRE_RACE: 1,
+            SessionPurpose.CROSS_TRAINING: 2,
+            SessionPurpose.RECOVERY: 3,
+            SessionPurpose.INTENSITY: 4,
             SessionPurpose.LONG: 5,
             SessionPurpose.RACE: 6,
         }

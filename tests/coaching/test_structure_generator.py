@@ -753,10 +753,15 @@ def test_long_session_does_not_exceed_requested_duration(
         == 120
     )
 
+    # The long session remains at 120 minutes.
+    # The two intensity sessions are capped at 45 minutes,
+    # so this session mix cannot absorb the full 240-minute
+    # weekly target without inflating quality sessions.
+
     assert sum(
         slot.duration_minutes or 0
         for slot in slots
-    ) == 240
+    ) == 210
 
 def test_post_race_week_progresses_from_recovery_to_easy(
     strategy_plan: StrategyPlan,
@@ -960,3 +965,131 @@ def test_consolidates_normal_taper_sessions(
         45,
         60,
     ]
+
+def test_intensity_session_has_controlled_weekly_duration(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        target_sessions=4,
+        target_weekly_minutes=210,
+        intensity_sessions=1,
+        long_sessions=0,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    intensity = next(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.INTENSITY
+        )
+    )
+
+    assert intensity.duration_minutes == 45
+
+    assert sum(
+        slot.duration_minutes or 0
+        for slot in slots
+    ) == 210
+
+
+def test_extra_weekly_minutes_go_to_easy_sessions(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        target_sessions=4,
+        target_weekly_minutes=240,
+        intensity_sessions=1,
+        long_sessions=0,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    intensity = next(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.INTENSITY
+        )
+    )
+
+    easy_sessions = tuple(
+        slot
+        for slot in slots
+        if slot.purpose is SessionPurpose.EASY
+    )
+
+    assert intensity.duration_minutes == 45
+
+    assert easy_sessions
+
+    assert any(
+        (
+            slot.duration_minutes
+            or 0
+        )
+        > 45
+        for slot in easy_sessions
+    )
+
+
+def test_taper_keeps_existing_intensity_allocation(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    taper_plan = replace(
+        strategy_plan,
+        strategy="TaperStrategy",
+        phase="Taper",
+        target_sessions=3,
+        target_weekly_minutes=160,
+        intensity_sessions=1,
+        long_sessions=0,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=taper_plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    intensity = next(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.INTENSITY
+        )
+    )
+
+    assert intensity.duration_minutes == 40
