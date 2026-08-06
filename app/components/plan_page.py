@@ -4,7 +4,7 @@ PerformanceLab
 Complete training-plan page.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from html import escape
 
 import altair as alt
@@ -276,31 +276,55 @@ def _planned_load_chart_series(
         positioned_races,
     )
 
-def _planned_load_average(
+def _weekly_planned_load_average_data(
     chart_points,
-) -> float | None:
+) -> list[dict]:
     """
-    Returns mean planned load across all sessions.
+    Builds one mean planned-load point per calendar week.
 
-    The calculation includes both training sessions
-    and races, using their real planned-load values.
+    Weekly averages include the real load of both training
+    sessions and races.
     """
 
-    planned_loads = [
-        float(
-            point.planned_load
+    weekly_loads = {}
+
+    for point in chart_points:
+
+        if point.planned_load is None:
+            continue
+
+        week_start = (
+            point.day
+            - timedelta(
+                days=point.day.weekday()
+            )
         )
-        for point in chart_points
-        if point.planned_load is not None
+
+        weekly_loads.setdefault(
+            week_start,
+            [],
+        ).append(
+            float(
+                point.planned_load
+            )
+        )
+
+    return [
+        {
+            "Date": week_start.isoformat(),
+            "Weekly average load": (
+                sum(loads)
+                / len(loads)
+            ),
+            "Session count": len(
+                loads
+            ),
+        }
+        for week_start, loads
+        in sorted(
+            weekly_loads.items()
+        )
     ]
-
-    if not planned_loads:
-        return None
-
-    return (
-        sum(planned_loads)
-        / len(planned_loads)
-    )
 
 def _planned_load_chart(
     plan,
@@ -320,8 +344,8 @@ def _planned_load_chart(
         plan.chart_points
     )
 
-    average_load = (
-        _planned_load_average(
+    weekly_average_data = (
+        _weekly_planned_load_average_data(
             plan.chart_points
         )
     )
@@ -466,59 +490,63 @@ def _planned_load_chart(
             ),
         )
     )
-    average_layers = []
-
-    if average_load is not None:
-
-        average_rule = (
-            alt.Chart(
-                alt.Data(
-                    values=[
-                        {
-                            "Average load": (
-                                average_load
-                            ),
-                        },
-                    ]
-                )
+    weekly_average_line = (
+        alt.Chart(
+            alt.Data(
+                values=weekly_average_data
             )
-            .mark_rule(
-                strokeDash=[
-                    5,
-                    4,
-                ],
-                strokeWidth=1,
-                opacity=0.3,
-            )
-            .encode(
-                y=alt.Y(
-                    "Average load:Q",
-                    title="Planned load (AU)",
-                    scale=alt.Scale(
-                        zero=True
-                    ),
+        )
+        .mark_line(
+            interpolate="monotone",
+            strokeDash=[
+                5,
+                4,
+            ],
+            strokeWidth=1.2,
+            opacity=0.3,
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title=None,
+                scale=_plan_chart_date_scale(
+                    plan
                 ),
-                tooltip=[
-                    alt.Tooltip(
-                        "Average load:Q",
-                        title="Average load",
-                        format=".0f",
-                    ),
-                ],
-            )
+            ),
+            y=alt.Y(
+                "Weekly average load:Q",
+                title="Planned load (AU)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Week starting",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Weekly average load:Q",
+                    title="Weekly average",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Session count:Q",
+                    title="Sessions",
+                    format=".0f",
+                ),
+            ],
         )
-
-        average_layers.append(
-            average_rule
-        )
+    )
 
     return (
         alt.layer(
+            weekly_average_line,
             training_line,
             training_points,
             race_rules,
             race_points,
-            *average_layers,
         )
         .properties(
             height=115,
@@ -1878,7 +1906,7 @@ def show_plan_page(
                 "Planned load"
                 "</div>"
                 '<div class="plan-chart-caption">'
-                "Training load curve · diamonds mark races."
+                "Session load · dashed curve shows weekly average."
                 "</div>"
                 "</div>"
             ),

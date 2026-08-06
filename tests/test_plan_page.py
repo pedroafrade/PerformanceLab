@@ -10,7 +10,7 @@ from app.components.plan_page import (
     _plan_chart_data,
     _plan_volume_chart_data,
     _plan_summary_metrics,
-    _planned_load_average,
+    _weekly_planned_load_average_data,
     _planned_load_chart_series,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -929,64 +929,162 @@ def test_builds_plural_week_summary():
         "  ·  720 AU"
     )
 
-def test_calculates_planned_load_average_including_races():
+def test_calculates_weekly_planned_load_averages():
 
     chart_points = (
         SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                3,
+            ),
             planned_load=100.0,
         ),
         SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                5,
+            ),
             planned_load=200.0,
         ),
         SimpleNamespace(
-            planned_load=900.0,
-        ),
-    )
-
-    result = (
-        _planned_load_average(
-            chart_points
-        )
-    )
-
-    assert result == 400.0
-
-
-def test_ignores_missing_load_when_calculating_average():
-
-    chart_points = (
-        SimpleNamespace(
-            planned_load=100.0,
-        ),
-        SimpleNamespace(
-            planned_load=None,
-        ),
-        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                10,
+            ),
             planned_load=300.0,
         ),
     )
 
     result = (
-        _planned_load_average(
+        _weekly_planned_load_average_data(
             chart_points
         )
     )
 
-    assert result == 200.0
+    assert result == [
+        {
+            "Date": "2026-08-03",
+            "Weekly average load": 150.0,
+            "Session count": 2,
+        },
+        {
+            "Date": "2026-08-10",
+            "Weekly average load": 300.0,
+            "Session count": 1,
+        },
+    ]
 
 
-def test_returns_no_average_without_load_values():
+def test_weekly_average_includes_race_load():
 
     chart_points = (
         SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                21,
+            ),
+            planned_load=100.0,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                23,
+            ),
+            planned_load=200.0,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                27,
+            ),
+            planned_load=2200.0,
+        ),
+    )
+
+    result = (
+        _weekly_planned_load_average_data(
+            chart_points
+        )
+    )
+
+    assert result == [
+        {
+            "Date": "2026-09-21",
+            "Weekly average load": (
+                2500.0 / 3
+            ),
+            "Session count": 3,
+        },
+    ]
+
+
+def test_weekly_average_ignores_missing_load():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                3,
+            ),
+            planned_load=100.0,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                5,
+            ),
+            planned_load=None,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                7,
+            ),
+            planned_load=300.0,
+        ),
+    )
+
+    result = (
+        _weekly_planned_load_average_data(
+            chart_points
+        )
+    )
+
+    assert result == [
+        {
+            "Date": "2026-08-03",
+            "Weekly average load": 200.0,
+            "Session count": 2,
+        },
+    ]
+
+
+def test_returns_empty_weekly_average_without_load():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                3,
+            ),
             planned_load=None,
         ),
     )
 
     result = (
-        _planned_load_average(
+        _weekly_planned_load_average_data(
             chart_points
         )
     )
 
-    assert result is None
+    assert result == []
