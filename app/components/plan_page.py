@@ -289,9 +289,23 @@ def _weekly_planned_load_curve_data(
     anchors on the previous and following days.
     """
 
+    valid_points = [
+        point
+        for point in chart_points
+        if point.planned_load is not None
+    ]
+
+    if not valid_points:
+        return []
+
+    first_curve_day = min(
+        point.day
+        for point in valid_points
+    )
+
     weeks = {}
 
-    for point in chart_points:
+    for point in valid_points:
 
         if point.planned_load is None:
             continue
@@ -378,8 +392,13 @@ def _weekly_planned_load_curve_data(
             week_data["training_load"]
         )
 
+        weekly_point_day = max(
+            week_start,
+            first_curve_day,
+        )
+
         add_row(
-            day=week_start,
+            day=weekly_point_day,
             load=training_load,
             point_type="Weekly training",
             label="Weekly training load",
@@ -560,7 +579,10 @@ def _planned_load_chart(
         .encode(
             y=alt.Y(
                 "Planned load:Q",
-                axis=None,
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
                 scale=alt.Scale(
                     zero=True
                 ),
@@ -629,7 +651,10 @@ def _planned_load_chart(
         .encode(
             y=alt.Y(
                 "Marker load:Q",
-                axis=None,
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
                 scale=alt.Scale(
                     zero=True
                 ),

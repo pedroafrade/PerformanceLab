@@ -1039,7 +1039,7 @@ def test_builds_isolated_race_peak():
 
     assert result == [
         {
-            "Date": "2026-09-07",
+            "Date": "2026-09-08",
             "Weekly load": 160.0,
             "Point type": "Weekly training",
             "Label": "Weekly training load",
@@ -1118,7 +1118,7 @@ def test_uses_next_week_load_after_sunday_race():
 
     assert result == [
         {
-            "Date": "2026-09-21",
+            "Date": "2026-09-22",
             "Weekly load": 160.0,
             "Point type": "Weekly training",
             "Label": "Weekly training load",
@@ -1179,6 +1179,62 @@ def test_weekly_load_curve_ignores_missing_load():
         {
             "Date": "2026-08-03",
             "Weekly load": 100.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
+        },
+    ]
+
+def test_weekly_curve_starts_on_first_session_date():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                7,
+            ),
+            title="Easy Run",
+            planned_load=100.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                9,
+            ),
+            title="Long Run",
+            planned_load=200.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                11,
+            ),
+            title="LT2 Run",
+            planned_load=300.0,
+            is_race=False,
+        ),
+    )
+
+    result = (
+        _weekly_planned_load_curve_data(
+            chart_points
+        )
+    )
+
+    assert result == [
+        {
+            "Date": "2026-08-07",
+            "Weekly load": 300.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
+        },
+        {
+            "Date": "2026-08-10",
+            "Weekly load": 300.0,
             "Point type": "Weekly training",
             "Label": "Weekly training load",
         },
