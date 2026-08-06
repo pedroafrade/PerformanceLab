@@ -27,6 +27,7 @@ from .calendar_presenter import (
 
 from .plan_models import (
     CompletePlanData,
+    PlanAdaptationData,
     PlanChartPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
@@ -105,6 +106,7 @@ __all__ = [
 
     # Complete plan
     "CompletePlanData",
+    "PlanAdaptationData",
     "PlanChartPointData",
     "PlanCurrentPhaseData",
     "PlanProgressionPointData",

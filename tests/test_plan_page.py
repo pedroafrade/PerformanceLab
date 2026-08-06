@@ -12,6 +12,7 @@ from app.components.plan_page import (
     _plan_summary_metrics,
     _weekly_planned_load_curve_data,
     _planned_load_chart_series,
+    _sidebar_adaptation_html,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
     _sidebar_week_html,
@@ -1239,3 +1240,102 @@ def test_weekly_curve_starts_on_first_session_date():
             "Label": "Weekly training load",
         },
     ]
+
+def test_builds_latest_adaptation_sidebar_card():
+
+    adaptation = SimpleNamespace(
+        reconciled_on=date(
+            2026,
+            8,
+            5,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            6,
+        ),
+        workout_title="LT2 Run",
+        previous_minutes=50,
+        revised_minutes=38,
+        reason=(
+            "Completed load was higher than planned."
+        ),
+    )
+
+    result = (
+        _sidebar_adaptation_html(
+            adaptation,
+            reference_day=date(
+                2026,
+                8,
+                7,
+            ),
+        )
+    )
+
+    assert "Latest adaptation" in result
+    assert "2 days ago" in result
+    assert "LT2 Run" in result
+    assert "50 → 38 min" in result
+    assert "Applied" in result
+
+    assert (
+        "Completed load was higher than planned."
+        in result
+    )
+
+
+def test_builds_empty_adaptation_sidebar_card():
+
+    result = (
+        _sidebar_adaptation_html(
+            None,
+            reference_day=date(
+                2026,
+                8,
+                7,
+            ),
+        )
+    )
+
+    assert "Latest adaptation" in result
+
+    assert (
+        "No adaptations applied yet."
+        in result
+    )
+
+
+def test_labels_today_adaptation():
+
+    adaptation = SimpleNamespace(
+        reconciled_on=date(
+            2026,
+            8,
+            7,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            8,
+        ),
+        workout_title="Long Run",
+        previous_minutes=90,
+        revised_minutes=75,
+        reason=(
+            "Completed load was higher than planned."
+        ),
+    )
+
+    result = (
+        _sidebar_adaptation_html(
+            adaptation,
+            reference_day=date(
+                2026,
+                8,
+                7,
+            ),
+        )
+    )
+
+    assert "Today" in result

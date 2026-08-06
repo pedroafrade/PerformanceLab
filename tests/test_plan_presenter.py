@@ -11,6 +11,7 @@ from performancelab.history import (
     History,
 )
 from performancelab.presentation import (
+    PlanAdaptationData,
     PlanChartPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
@@ -20,6 +21,8 @@ from performancelab.presentation import (
 from performancelab.training.planning import (
     PlannedWorkout,
     TrainingPlan,
+    TrainingPlanAdaptation,
+    WorkoutOutcomeStatus,
 )
 from performancelab.workout import (
     Workout,
@@ -958,3 +961,109 @@ def test_plan_chart_data_is_immutable():
         result.chart_points[
             0
         ].title = "Changed"
+
+def test_exposes_latest_plan_adaptation():
+
+    older = TrainingPlanAdaptation(
+        reconciled_on=date(
+            2026,
+            8,
+            3,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            5,
+        ),
+        workout_title="Easy Run",
+        previous_duration=timedelta(
+            minutes=60,
+        ),
+        revised_duration=timedelta(
+            minutes=50,
+        ),
+        trigger_status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        load_difference=-40.0,
+    )
+
+    latest = TrainingPlanAdaptation(
+        reconciled_on=date(
+            2026,
+            8,
+            5,
+        ),
+        workout_day=date(
+            2026,
+            8,
+            6,
+        ),
+        workout_title="LT2 Run",
+        previous_duration=timedelta(
+            minutes=50,
+        ),
+        revised_duration=timedelta(
+            minutes=38,
+        ),
+        trigger_status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        load_difference=120.0,
+    )
+
+    plan = TrainingPlan(
+        adaptations=(
+            older,
+            latest,
+        ),
+    )
+
+    result = PlanPresenter(
+        plan=plan,
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            7,
+        )
+    )
+
+    assert result.latest_adaptation == (
+        PlanAdaptationData(
+            reconciled_on=date(
+                2026,
+                8,
+                5,
+            ),
+            workout_day=date(
+                2026,
+                8,
+                6,
+            ),
+            workout_title="LT2 Run",
+            previous_minutes=50,
+            revised_minutes=38,
+            reason=(
+                "Completed load was higher "
+                "than planned."
+            ),
+        )
+    )
+
+
+def test_has_no_latest_adaptation():
+
+    result = PlanPresenter(
+        plan=TrainingPlan(),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            7,
+        )
+    )
+
+    assert result.latest_adaptation is None

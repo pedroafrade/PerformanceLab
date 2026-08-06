@@ -97,6 +97,18 @@ class PlanCurrentPhaseData:
     end_date: date
     weeks_remaining: int
 
+@dataclass(frozen=True)
+class PlanAdaptationData:
+    """
+    Presentation-ready summary of one plan adaptation.
+    """
+
+    reconciled_on: date
+    workout_day: date
+    workout_title: str
+    previous_minutes: int
+    revised_minutes: int
+    reason: str
 
 @dataclass(frozen=True)
 class CompletePlanData:
@@ -129,3 +141,8 @@ class CompletePlanData:
         PlanCurrentPhaseData
         | None
     )
+
+    latest_adaptation: (
+        PlanAdaptationData
+        | None
+    ) = None

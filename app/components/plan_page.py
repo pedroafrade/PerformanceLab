@@ -1518,6 +1518,88 @@ def _sidebar_week_html(
         "</section>"
     )
 
+def _sidebar_adaptation_html(
+    adaptation,
+    *,
+    reference_day: date,
+) -> str:
+    """
+    Builds the latest-adaptation sidebar card.
+    """
+
+    if adaptation is None:
+        return (
+            '<section class="plan-sidebar-card">'
+            '<div class="plan-sidebar-heading">'
+            '<span class="plan-sidebar-icon">↻</span>'
+            "<span>Latest adaptation</span>"
+            "</div>"
+            '<p class="plan-sidebar-empty">'
+            "No adaptations applied yet."
+            "</p>"
+            "</section>"
+        )
+
+    days_ago = max(
+        0,
+        (
+            reference_day
+            - adaptation.reconciled_on
+        ).days,
+    )
+
+    if days_ago == 0:
+        date_label = "Today"
+    elif days_ago == 1:
+        date_label = "1 day ago"
+    else:
+        date_label = f"{days_ago} days ago"
+
+    workout_title = escape(
+        str(
+            adaptation.workout_title
+            or "Planned workout"
+        )
+    )
+
+    reason = escape(
+        str(
+            adaptation.reason
+            or ""
+        )
+    )
+
+    change_label = (
+        f"{adaptation.previous_minutes}"
+        " → "
+        f"{adaptation.revised_minutes} min"
+    )
+
+    return (
+        '<section class="plan-sidebar-card '
+        'plan-sidebar-adaptation-card">'
+        '<div class="plan-sidebar-heading">'
+        '<span class="plan-sidebar-icon">↻</span>'
+        "<span>Latest adaptation</span>"
+        "</div>"
+        '<div class="plan-sidebar-adaptation-context">'
+        f"<span>{escape(date_label)}</span>"
+        "<span>·</span>"
+        f"<span>{reason}</span>"
+        "</div>"
+        '<div class="plan-sidebar-adaptation-change">'
+        '<span class="plan-sidebar-adaptation-title">'
+        f"{workout_title}"
+        "</span>"
+        '<span class="plan-sidebar-adaptation-duration">'
+        f"{escape(change_label)}"
+        "</span>"
+        '<span class="plan-sidebar-adaptation-status">'
+        "Applied"
+        "</span>"
+        "</div>"
+        "</section>"
+    )
 
 def _sidebar_styles() -> str:
     """
@@ -1679,6 +1761,51 @@ def _sidebar_styles() -> str:
     overflow: hidden;
     font-size: 0.74rem;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plan-sidebar-adaptation-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    margin-bottom: 0.7rem;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    opacity: 0.62;
+}
+
+.plan-sidebar-adaptation-change {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.plan-sidebar-adaptation-title {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.76rem;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plan-sidebar-adaptation-duration {
+    font-size: 0.72rem;
+    white-space: nowrap;
+    opacity: 0.78;
+}
+
+.plan-sidebar-adaptation-status {
+    padding: 0.2rem 0.38rem;
+    border-radius: 0.35rem;
+    background: rgba(57, 169, 107, 0.14);
+    font-size: 0.62rem;
+    font-weight: 700;
     white-space: nowrap;
 }
 
@@ -2168,16 +2295,9 @@ def show_plan_page(
             + _sidebar_week_html(
                 current_week
             )
-            + (
-                '<section class="plan-sidebar-card">'
-                '<div class="plan-sidebar-heading">'
-                '<span class="plan-sidebar-icon">↻</span>'
-                "<span>Latest adaptation</span>"
-                "</div>"
-                '<p class="plan-sidebar-empty">'
-                "Coming soon"
-                "</p>"
-                "</section>"
+            + _sidebar_adaptation_html(
+                plan.latest_adaptation,
+                reference_day=plan.reference_day,
             )
             + "</div>"
         )

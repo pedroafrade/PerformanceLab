@@ -11,9 +11,13 @@ from performancelab.training.load import (
     planned_weekly_load,
     planned_workout_load,
 )
-
+from performancelab.training.planning import (
+    TrainingPlanAdaptation,
+    WorkoutOutcomeStatus,
+)
 from .plan_models import (
     CompletePlanData,
+    PlanAdaptationData,
     PlanChartPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
@@ -277,6 +281,111 @@ class PlanPresenter:
             ),
         )
 
+    @staticmethod
+    def _adaptation_reason(
+        adaptation: TrainingPlanAdaptation,
+    ) -> str:
+        """
+        Explains why a future session was adapted.
+        """
+
+        if (
+            adaptation.load_difference
+            is not None
+            and adaptation.load_difference > 0
+        ):
+            return (
+                "Completed load was higher than planned."
+            )
+
+        if (
+            adaptation.load_difference
+            is not None
+            and adaptation.load_difference < 0
+        ):
+            return (
+                "Completed load was lower than planned."
+            )
+
+        if (
+            adaptation.trigger_status
+            is WorkoutOutcomeStatus.MISSED
+        ):
+            return (
+                "A missed session changed future training."
+            )
+
+        if (
+            adaptation.trigger_status
+            is WorkoutOutcomeStatus.SUBSTITUTE
+        ):
+            return (
+                "A substitute activity changed future training."
+            )
+
+        return (
+            "A modified session changed future training."
+        )
+
+
+    @staticmethod
+    def _adaptation_data(
+        adaptation: TrainingPlanAdaptation,
+    ) -> PlanAdaptationData:
+        """
+        Converts one domain adaptation into UI data.
+        """
+
+        return PlanAdaptationData(
+            reconciled_on=(
+                adaptation.reconciled_on
+            ),
+            workout_day=(
+                adaptation.workout_day
+            ),
+            workout_title=(
+                adaptation.workout_title
+            ),
+            previous_minutes=round(
+                adaptation.previous_duration
+                .total_seconds()
+                / 60
+            ),
+            revised_minutes=round(
+                adaptation.revised_duration
+                .total_seconds()
+                / 60
+            ),
+            reason=(
+                PlanPresenter
+                ._adaptation_reason(
+                    adaptation
+                )
+            ),
+        )
+
+
+    def _latest_adaptation_data(
+        self,
+    ) -> PlanAdaptationData | None:
+        """
+        Returns the most recently reconciled adaptation.
+        """
+
+        if not self.plan.adaptations:
+            return None
+
+        latest = max(
+            self.plan.adaptations,
+            key=lambda adaptation: (
+                adaptation.reconciled_on,
+                adaptation.workout_day,
+            ),
+        )
+
+        return self._adaptation_data(
+            latest
+        )
 
     def build(
         self,
@@ -538,5 +647,8 @@ class PlanPresenter:
                         reference_day
                     ),
                 )
+            ),
+            latest_adaptation=(
+                self._latest_adaptation_data()
             ),
         )
