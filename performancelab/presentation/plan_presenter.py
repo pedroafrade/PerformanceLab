@@ -6,6 +6,7 @@ Complete training-plan presenter.
 
 from collections import defaultdict
 from datetime import date, timedelta
+import re
 
 from performancelab.training.load import (
     planned_weekly_load,
@@ -438,24 +439,87 @@ class PlanPresenter:
             latest
         )
     @staticmethod
+    def _target_event_title(
+        workout,
+    ) -> str:
+        """
+        Returns the most specific available race name.
+        """
+
+        title = (
+            PlanPresenter
+            ._repair_text_encoding(
+                workout.title
+            )
+            .strip()
+        )
+
+        if (
+            title
+            and title.lower()
+            not in {
+                "race",
+                "competition",
+                "event",
+            }
+        ):
+            return title
+
+        objective = (
+            PlanPresenter
+            ._repair_text_encoding(
+                workout.objective
+            )
+            .strip()
+        )
+
+        match = re.search(
+            (
+                r"Perform effectively at "
+                r"(.+?)(?:\.|$)"
+            ),
+            objective,
+            flags=re.IGNORECASE,
+        )
+
+        if match is not None:
+
+            event_title = (
+                match.group(1)
+                .strip()
+            )
+
+            print("OBJECTIVE:", repr(workout.objective))
+            print("EVENT:", repr(event_title))
+
+            if event_title:
+                return event_title
+
+        return title or "Race"
+
+
     def _target_event_data(
-        weeks,
+        self,
     ) -> tuple[
         str | None,
         date | None,
     ]:
         """
-        Returns the final race in the presented plan.
-
-        The latest race is treated as the principal target
-        event when a plan contains more than one race.
+        Returns the final race in the domain plan.
         """
 
         races = tuple(
             workout
-            for week in weeks
-            for workout in week.workouts
-            if workout.is_race
+            for workout in self.plan
+            if (
+                str(
+                    workout.intensity
+                    or ""
+                )
+                .strip()
+                .lower()
+                == "race effort"
+            )
         )
 
         if not races:
@@ -472,7 +536,9 @@ class PlanPresenter:
         )
 
         return (
-            target_event.title,
+            self._target_event_title(
+                target_event
+            ),
             target_event.scheduled_at.date(),
         )
     
@@ -713,9 +779,7 @@ class PlanPresenter:
         (
             target_event_title,
             target_event_date,
-        ) = self._target_event_data(
-            weeks_data
-        )
+        ) = self._target_event_data()
         return CompletePlanData(
             plan_id=self.plan.plan_id,
             start_date=self.plan.start_date,
@@ -752,3 +816,46 @@ class PlanPresenter:
                 self._latest_adaptation_data()
             ),
         )
+
+    @staticmethod
+    def _repair_text_encoding(
+        value: str | None,
+    ) -> str:
+        """
+        Repairs common UTF-8 mojibake in persisted text.
+        """
+
+        text = str(
+            value
+            or ""
+        )
+
+        if not text:
+            return text
+
+        mojibake_markers = (
+            "Ã",
+            "Â",
+            "â€",
+            "â€“",
+            "â€”",
+        )
+
+        if not any(
+            marker in text
+            for marker in mojibake_markers
+        ):
+            return text
+
+        try:
+            return (
+                text
+                .encode("latin-1")
+                .decode("utf-8")
+            )
+
+        except (
+            UnicodeEncodeError,
+            UnicodeDecodeError,
+        ):
+            return text

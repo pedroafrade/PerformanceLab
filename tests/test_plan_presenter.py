@@ -1210,11 +1210,16 @@ def test_exposes_final_race_as_target_event():
             0,
         ),
         sport="Trail Running",
-        title="III Trail Pé Firme",
+        title="Race",
         duration=timedelta(
             minutes=201,
         ),
         intensity="Race effort",
+        objective=(
+            "Execute the planned race strategy. "
+            "Perform effectively at "
+            "III Trail PÃ© Firme."
+        ),
         phase="Race",
     )
 
@@ -1340,4 +1345,108 @@ def test_has_no_target_event_without_races():
     assert (
         result.target_event_date
         is None
+    )
+
+def test_prefers_specific_race_title():
+
+    race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+            8,
+            0,
+        ),
+        sport="Road Running",
+        title="Sealand 10K",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        objective=(
+            "Perform effectively at Sealand."
+        ),
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                race,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.target_event_title
+        == "Sealand 10K"
+    )
+def test_uses_generic_race_title_without_event_name():
+
+    race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+            8,
+            0,
+        ),
+        sport="Road Running",
+        title="Race",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        objective=(
+            "Execute the planned competition."
+        ),
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                race,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.target_event_title
+        == "Race"
+    )
+
+def test_repairs_utf8_mojibake():
+
+    assert (
+        PlanPresenter
+        ._repair_text_encoding(
+            "III Trail PÃ© Firme"
+        )
+        == "III Trail Pé Firme"
+    )
+
+
+def test_keeps_valid_unicode_unchanged():
+
+    assert (
+        PlanPresenter
+        ._repair_text_encoding(
+            "III Trail Pé Firme"
+        )
+        == "III Trail Pé Firme"
     )
