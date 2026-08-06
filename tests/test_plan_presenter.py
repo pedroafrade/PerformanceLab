@@ -1450,3 +1450,50 @@ def test_keeps_valid_unicode_unchanged():
         )
         == "III Trail Pé Firme"
     )
+
+def test_uses_resolved_event_name_for_race_workout():
+
+    race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Race",
+        duration=timedelta(
+            minutes=201,
+        ),
+        distance=23.0,
+        elevation_gain=950.0,
+        intensity="Race effort",
+        objective=(
+            "Perform effectively at "
+            "III Trail Pé Firme."
+        ),
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                race,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.weeks[0]
+        .workouts[0]
+        .title
+        == "III Trail Pé Firme"
+    )

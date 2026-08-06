@@ -1175,6 +1175,73 @@ def _week_html(
         '<div class="complete-plan-week">'
     ]
 
+    race_workouts = tuple(
+        workout
+        for workout in week.workouts
+        if workout.is_race
+    )
+
+    for race in race_workouts:
+
+        race_title = escape(
+            str(
+                race.title
+                or "Target event"
+            )
+        )
+
+        race_date = (
+            race.scheduled_at
+            .strftime("%d %b")
+        )
+
+        race_details = [
+            race_date
+        ]
+
+        distance = getattr(
+            race,
+            "distance",
+            None,
+        )
+
+        if distance is not None:
+
+            race_details.append(
+                f"{distance:g} km"
+            )
+
+        elevation_gain = getattr(
+            race,
+            "elevation_gain",
+            None,
+        )
+
+        if elevation_gain is not None:
+
+            race_details.append(
+                f"+{elevation_gain:g} m"
+            )
+
+        parts.append(
+            (
+                '<section class="complete-plan-event">'
+                '<div class="complete-plan-event-label">'
+                '<span class="complete-plan-event-icon">'
+                "◆"
+                "</span>"
+                "<span>Target event</span>"
+                "</div>"
+                '<div class="complete-plan-event-title">'
+                f"{race_title}"
+                "</div>"
+                '<div class="complete-plan-event-details">'
+                f"{escape(' · '.join(race_details))}"
+                "</div>"
+                "</section>"
+            )
+        )
+
     for workout in week.workouts:
 
         normalized_status = (
@@ -1994,7 +2061,79 @@ def _plan_styles() -> None:
             min-height: 0.38rem;
             flex: 0 0 0.38rem;
         }
+        .complete-plan-event {
+            display: grid;
+            grid-template-columns:
+                minmax(110px, 0.8fr)
+                minmax(180px, 2fr)
+                auto;
+            gap: 0.7rem;
+            align-items: center;
+            min-height: 3rem;
+            padding: 0.5rem 0.65rem;
+            border: 1px solid rgba(128, 128, 128, 0.22);
+            border-radius: 0.55rem;
+            background: rgba(128, 128, 128, 0.04);
+            box-sizing: border-box;
+        }
 
+        .complete-plan-event-label {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 0.65;
+            white-space: nowrap;
+        }
+
+        .complete-plan-event-icon {
+            display: inline-block;
+            font-size: 0.58rem;
+            transform: rotate(45deg);
+        }
+
+        .complete-plan-event-title {
+            min-width: 0;
+            overflow: hidden;
+            font-size: 0.8rem;
+            font-weight: 750;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .complete-plan-event-details {
+            justify-self: end;
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.72;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 820px) {
+            .complete-plan-event {
+                grid-template-columns:
+                    minmax(0, 1fr)
+                    auto;
+                grid-template-areas:
+                    "label details"
+                    "title title";
+                gap: 0.25rem 0.5rem;
+            }
+
+            .complete-plan-event-label {
+                grid-area: label;
+            }
+
+            .complete-plan-event-title {
+                grid-area: title;
+            }
+
+            .complete-plan-event-details {
+                grid-area: details;
+            }
+        }
 
         .complete-plan-session {
             position: relative;

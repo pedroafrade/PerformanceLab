@@ -1539,3 +1539,80 @@ def test_uses_generic_caption_without_event_date():
             "through the target event and recovery."
         )
     )
+
+def test_builds_event_information_in_plan_week():
+
+    race = PlanWorkoutData(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="III Trail Pé Firme",
+        duration=timedelta(
+            minutes=201,
+        ),
+        distance=23.0,
+        elevation_gain=950.0,
+        intensity="Race effort",
+        phase="Race",
+        planned_load=2200.0,
+        is_race=True,
+        status="pending",
+        prescription_summary=(
+            "Execute the planned competition."
+        ),
+        structure=(),
+    )
+
+    week = PlanWeekData(
+        start_date=date(
+            2026,
+            9,
+            21,
+        ),
+        end_date=date(
+            2026,
+            9,
+            27,
+        ),
+        phase="Race",
+        planned_load=2200.0,
+        workouts=(
+            race,
+        ),
+    )
+
+    result = _week_html(
+        week
+    )
+
+    assert (
+        "complete-plan-event"
+        in result
+    )
+
+    assert "Target event" in result
+    assert "III Trail Pé Firme" in result
+    assert "27 Sep" in result
+    assert "23 km" in result
+    assert "+950 m" in result
+
+def test_does_not_build_event_information_without_race():
+
+    result = _week_html(
+        create_week()
+    )
+
+    assert (
+        "complete-plan-event"
+        not in result
+    )
+
+    assert (
+        "Target event"
+        not in result
+    )

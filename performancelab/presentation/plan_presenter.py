@@ -601,8 +601,22 @@ class PlanPresenter:
                     ),
                     sport=workout.sport,
                     title=(
-                        workout.title
-                        or "Planned workout"
+                        self._target_event_title(
+                            workout
+                        )
+                        if (
+                            str(
+                                workout.intensity
+                                or ""
+                            )
+                            .strip()
+                            .lower()
+                            == "race effort"
+                        )
+                        else (
+                            workout.title
+                            or "Planned workout"
+                        )
                     ),
                     duration=workout.duration,
                     distance=workout.distance,
