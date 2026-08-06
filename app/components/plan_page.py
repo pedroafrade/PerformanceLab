@@ -1177,16 +1177,30 @@ def _week_html(
 
     for workout in week.workouts:
 
-        status = (
+        normalized_status = (
             str(
                 workout.status
                 or "pending"
             )
-            .replace("_", "-")
+            .strip()
+            .lower()
+            .replace(
+                "_",
+                "-",
+            )
+        )
+
+        status_label = escape(
+            _status_label(
+                workout.status
+            )
         )
 
         title = escape(
-            workout.title
+            str(
+                workout.title
+                or "Planned workout"
+            )
         )
 
         sport = escape(
@@ -1209,23 +1223,60 @@ def _week_html(
             )
         )
 
+        planned_load = (
+            (
+                f"{workout.planned_load:.0f} AU"
+            )
+            if workout.planned_load is not None
+            else "—"
+        )
+
         prescription = (
             escape(
-                workout.prescription_summary
+                str(
+                    workout.prescription_summary
+                )
             )
             if workout.prescription_summary
             else ""
         )
 
+        marker_class = (
+            _sidebar_session_marker_class(
+                workout
+            )
+        )
+
+        day_name = (
+            workout.scheduled_at
+            .strftime("%a")
+            .upper()
+        )
+
+        day_number = (
+            workout.scheduled_at
+            .strftime("%d")
+        )
+
         parts.append(
             (
-                '<div class="complete-plan-session '
-                f'status-{escape(status)}">'
+                '<article class="complete-plan-session '
+                f'status-{escape(normalized_status)}">'
                 '<div class="complete-plan-session-date">'
-                f"{workout.scheduled_at.strftime('%a %d')}"
+                '<span class="complete-plan-session-day">'
+                f"{escape(day_name)}"
+                "</span>"
+                '<span class="complete-plan-session-day-number">'
+                f"{escape(day_number)}"
+                "</span>"
                 "</div>"
+                '<span class="complete-plan-session-marker '
+                f'{escape(marker_class)}"></span>'
                 '<div class="complete-plan-session-main">'
-                f"<strong>{title}</strong>"
+                '<div class="complete-plan-session-title">'
+                f"{title}"
+                "</div>"
+                '<div class="complete-plan-session-context">'
                 f"<span>{sport}</span>"
             )
         )
@@ -1234,6 +1285,9 @@ def _week_html(
 
             parts.append(
                 (
+                    '<span class="complete-plan-session-separator">'
+                    "·"
+                    "</span>"
                     '<span class="complete-plan-prescription">'
                     f"{prescription}"
                     "</span>"
@@ -1243,16 +1297,36 @@ def _week_html(
         parts.append(
             (
                 "</div>"
-                '<div class="complete-plan-session-value">'
+                "</div>"
+                '<div class="complete-plan-session-metric">'
+                '<span class="complete-plan-session-metric-label">'
+                "Duration"
+                "</span>"
+                '<span class="complete-plan-session-metric-value">'
                 f"{duration}"
+                "</span>"
                 "</div>"
-                '<div class="complete-plan-session-value">'
+                '<div class="complete-plan-session-metric">'
+                '<span class="complete-plan-session-metric-label">'
+                "Load"
+                "</span>"
+                '<span class="complete-plan-session-metric-value">'
+                f"{escape(planned_load)}"
+                "</span>"
+                "</div>"
+                '<div class="complete-plan-session-metric">'
+                '<span class="complete-plan-session-metric-label">'
+                "Intensity"
+                "</span>"
+                '<span class="complete-plan-session-metric-value">'
                 f"{intensity}"
+                "</span>"
                 "</div>"
-                '<div class="complete-plan-session-status">'
-                f"{escape(_status_label(workout.status))}"
+                '<div class="complete-plan-session-status '
+                f'status-{escape(normalized_status)}">'
+                f"{status_label}"
                 "</div>"
-                "</div>"
+                "</article>"
             )
         )
 
@@ -1260,7 +1334,9 @@ def _week_html(
         "</div>"
     )
 
-    return "".join(parts)
+    return "".join(
+        parts
+    )
 
 def _sidebar_phase_html(
     current_phase,
@@ -1901,86 +1977,226 @@ def _plan_styles() -> None:
         .complete-plan-week {
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
-            padding-top: 0.15rem;
+            gap: 0.32rem;
+            padding-top: 0.12rem;
         }
 
         .complete-plan-session {
+            position: relative;
             display: grid;
             grid-template-columns:
-                minmax(64px, 0.65fr)
-                minmax(220px, 3.2fr)
-                minmax(72px, 0.7fr)
-                minmax(95px, 0.9fr)
-                minmax(78px, 0.75fr);
-            gap: 0.55rem;
+                3.4rem
+                0.5rem
+                minmax(220px, 3fr)
+                minmax(62px, 0.7fr)
+                minmax(62px, 0.7fr)
+                minmax(90px, 0.95fr)
+                minmax(76px, 0.75fr);
+            gap: 0.58rem;
             align-items: center;
-            padding: 0.5rem 0.65rem;
-            border: 1px solid rgba(128, 128, 128, 0.22);
-            border-left: 4px solid #4f86f7;
-            border-radius: 0.5rem;
-            background: var(--background-color);
+            min-height: 3.65rem;
+            padding: 0.48rem 0.62rem;
+            border: 1px solid rgba(128, 128, 128, 0.19);
+            border-radius: 0.55rem;
+            background: rgba(128, 128, 128, 0.014);
+            box-sizing: border-box;
         }
 
-        .complete-plan-session.status-equivalent {
-            border-left-color: #39a96b;
-        }
-
-        .complete-plan-session.status-modified,
-        .complete-plan-session.status-substitute {
-            border-left-color: #d28b27;
-        }
-
-        .complete-plan-session.status-missed {
-            border-left-color: #e05a5a;
-            opacity: 0.72;
+        .complete-plan-session:hover {
+            border-color: rgba(128, 128, 128, 0.32);
+            background: rgba(128, 128, 128, 0.03);
         }
 
         .complete-plan-session-date {
-            font-size: 0.76rem;
-            font-weight: 700;
-            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.04rem;
+            line-height: 1;
+        }
+
+        .complete-plan-session-day {
+            font-size: 0.61rem;
+            font-weight: 750;
+            letter-spacing: 0.025em;
+            opacity: 0.62;
+        }
+
+        .complete-plan-session-day-number {
+            font-size: 0.92rem;
+            font-weight: 750;
+        }
+
+        .complete-plan-session-marker {
+            display: inline-block;
+            width: 0.43rem;
+            height: 0.43rem;
+            border-radius: 50%;
+            background: #4f86f7;
+        }
+
+        .complete-plan-session-marker.quality {
+            background: #ff4b4b;
+        }
+
+        .complete-plan-session-marker.race {
+            border-radius: 1px;
+            background: #ff4b4b;
+            transform: rotate(45deg);
         }
 
         .complete-plan-session-main {
             min-width: 0;
             display: flex;
             flex-direction: column;
-            gap: 0.12rem;
+            gap: 0.16rem;
         }
 
-        .complete-plan-session-main strong,
-        .complete-plan-session-main span {
+        .complete-plan-session-title {
             overflow: hidden;
+            font-size: 0.8rem;
+            font-weight: 700;
+            line-height: 1.15;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .complete-plan-session-main span,
-        .complete-plan-session-value {
-            color: rgba(128, 128, 128, 0.95);
-            font-size: 0.76rem;
+        .complete-plan-session-context {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.28rem;
+            overflow: hidden;
+            font-size: 0.66rem;
+            line-height: 1.15;
+            opacity: 0.62;
+            white-space: nowrap;
+        }
+
+        .complete-plan-session-context span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .complete-plan-session-separator {
+            flex: 0 0 auto;
         }
 
         .complete-plan-prescription {
-            color: inherit !important;
+            color: inherit;
+        }
+
+        .complete-plan-session-metric {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.11rem;
+        }
+
+        .complete-plan-session-metric-label {
+            overflow: hidden;
+            font-size: 0.56rem;
+            line-height: 1;
+            opacity: 0.48;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .complete-plan-session-metric-value {
+            overflow: hidden;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.15;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .complete-plan-session-status {
-            font-size: 0.72rem;
+            justify-self: end;
+            padding: 0.21rem 0.4rem;
+            border: 1px solid rgba(128, 128, 128, 0.17);
+            border-radius: 999px;
+            font-size: 0.61rem;
             font-weight: 700;
-            text-align: right;
+            line-height: 1;
+            white-space: nowrap;
         }
 
-        @media (max-width: 900px) {
+        .complete-plan-session-status.status-equivalent {
+            border-color: rgba(57, 169, 107, 0.3);
+            background: rgba(57, 169, 107, 0.1);
+        }
+
+        .complete-plan-session-status.status-modified,
+        .complete-plan-session-status.status-substitute {
+            border-color: rgba(210, 139, 39, 0.3);
+            background: rgba(210, 139, 39, 0.1);
+        }
+
+        .complete-plan-session-status.status-missed {
+            border-color: rgba(224, 90, 90, 0.3);
+            background: rgba(224, 90, 90, 0.1);
+        }
+
+        .complete-plan-session.status-missed {
+            opacity: 0.68;
+        }
+
+        @media (max-width: 1050px) {
             .complete-plan-session {
                 grid-template-columns:
-                    minmax(60px, 0.7fr)
-                    minmax(160px, 2fr)
-                    minmax(80px, 0.8fr);
+                    3.2rem
+                    0.5rem
+                    minmax(170px, 2fr)
+                    repeat(3, minmax(58px, 0.7fr))
+                    minmax(70px, 0.7fr);
+            }
+        }
+
+        @media (max-width: 820px) {
+            .complete-plan-session {
+                grid-template-columns:
+                    3rem
+                    0.5rem
+                    minmax(0, 1fr)
+                    auto;
+                grid-template-areas:
+                    "date marker main status"
+                    "date marker metrics metrics";
+                row-gap: 0.38rem;
             }
 
-            .complete-plan-session-value {
+            .complete-plan-session-date {
+                grid-area: date;
+            }
+
+            .complete-plan-session-marker {
+                grid-area: marker;
+            }
+
+            .complete-plan-session-main {
+                grid-area: main;
+            }
+
+            .complete-plan-session-status {
+                grid-area: status;
+            }
+
+            .complete-plan-session-metric {
+                display: inline-flex;
+                flex-direction: row;
+                align-items: baseline;
+                gap: 0.2rem;
+            }
+
+            .complete-plan-session-metric:nth-of-type(1) {
+                grid-area: metrics;
+                justify-self: start;
+            }
+
+            .complete-plan-session-metric:nth-of-type(2),
+            .complete-plan-session-metric:nth-of-type(3) {
                 display: none;
             }
         }

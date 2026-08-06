@@ -387,10 +387,51 @@ def test_week_html_contains_workout():
     )
 
     assert "Easy Run" in html
+    assert "Running" in html
     assert "60 min easy" in html
     assert "1h 00m" in html
-    assert "status-modified" in html
+    assert "180 AU" in html
+    assert "Easy" in html
     assert "Modified" in html
+
+    assert (
+        "complete-plan-session-date"
+        in html
+    )
+
+    assert (
+        "complete-plan-session-marker"
+        in html
+    )
+
+    assert (
+        "complete-plan-session-title"
+        in html
+    )
+
+    assert (
+        "complete-plan-session-context"
+        in html
+    )
+
+    assert (
+        "complete-plan-session-metric"
+        in html
+    )
+
+    assert (
+        "complete-plan-session-status"
+        in html
+    )
+
+    assert "Duration" in html
+    assert "Load" in html
+    assert "Intensity" in html
+
+    assert (
+        "status-modified"
+        in html
+    )
 
 
 def test_week_html_escapes_workout_title():
@@ -1347,3 +1388,83 @@ def test_labels_today_adaptation():
     )
 
     assert "Today" in result
+
+def test_builds_week_session_without_planned_load():
+
+    workout = SimpleNamespace(
+        scheduled_at=datetime(
+            2026,
+            8,
+            5,
+            8,
+            0,
+        ),
+        title="Easy Run",
+        sport="Road Running",
+        duration=timedelta(
+            minutes=40,
+        ),
+        intensity="Easy",
+        planned_load=None,
+        prescription_summary=None,
+        status="pending",
+        is_race=False,
+    )
+
+    week = SimpleNamespace(
+        workouts=(
+            workout,
+        ),
+    )
+
+    result = _week_html(
+        week
+    )
+
+    assert "Easy Run" in result
+    assert "Road Running" in result
+    assert "Pending" in result
+    assert ">—<" in result
+
+def test_builds_race_marker_in_plan_week_row():
+
+    workout = SimpleNamespace(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+            8,
+            0,
+        ),
+        title="III Trail Pé Firme",
+        sport="Trail Running",
+        duration=timedelta(
+            minutes=201,
+        ),
+        intensity="Race effort",
+        planned_load=2200.0,
+        prescription_summary=(
+            "Execute the planned competition."
+        ),
+        status="pending",
+        is_race=True,
+    )
+
+    week = SimpleNamespace(
+        workouts=(
+            workout,
+        ),
+    )
+
+    result = _week_html(
+        week
+    )
+
+    assert (
+        'complete-plan-session-marker race'
+        in result
+    )
+
+    assert "III Trail Pé Firme" in result
+    assert "2200 AU" in result
+    assert "Race effort" in result
