@@ -10,7 +10,7 @@ from app.components.plan_page import (
     _plan_chart_data,
     _plan_volume_chart_data,
     _plan_summary_metrics,
-    _weekly_planned_load_average_data,
+    _weekly_planned_load_curve_data,
     _planned_load_chart_series,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -929,7 +929,7 @@ def test_builds_plural_week_summary():
         "  ·  720 AU"
     )
 
-def test_calculates_weekly_planned_load_averages():
+def test_builds_weekly_training_load_curve():
 
     chart_points = (
         SimpleNamespace(
@@ -938,7 +938,9 @@ def test_calculates_weekly_planned_load_averages():
                 8,
                 3,
             ),
+            title="Easy Run",
             planned_load=100.0,
+            is_race=False,
         ),
         SimpleNamespace(
             day=date(
@@ -946,7 +948,9 @@ def test_calculates_weekly_planned_load_averages():
                 8,
                 5,
             ),
+            title="LT2 Run",
             planned_load=200.0,
+            is_race=False,
         ),
         SimpleNamespace(
             day=date(
@@ -954,12 +958,14 @@ def test_calculates_weekly_planned_load_averages():
                 8,
                 10,
             ),
+            title="Long Run",
             planned_load=300.0,
+            is_race=False,
         ),
     )
 
     result = (
-        _weekly_planned_load_average_data(
+        _weekly_planned_load_curve_data(
             chart_points
         )
     )
@@ -967,35 +973,120 @@ def test_calculates_weekly_planned_load_averages():
     assert result == [
         {
             "Date": "2026-08-03",
-            "Weekly average load": 150.0,
-            "Session count": 2,
+            "Weekly load": 300.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
         },
         {
             "Date": "2026-08-10",
-            "Weekly average load": 300.0,
-            "Session count": 1,
+            "Weekly load": 300.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
         },
     ]
 
 
-def test_weekly_average_includes_race_load():
+def test_builds_isolated_race_peak():
 
     chart_points = (
         SimpleNamespace(
             day=date(
                 2026,
                 9,
-                21,
+                8,
             ),
-            planned_load=100.0,
+            title="Pre-race Run",
+            planned_load=120.0,
+            is_race=False,
         ),
         SimpleNamespace(
             day=date(
                 2026,
                 9,
-                23,
+                12,
             ),
-            planned_load=200.0,
+            title="Shakeout Run",
+            planned_load=40.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                13,
+            ),
+            title="Sealand",
+            planned_load=900.0,
+            is_race=True,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                15,
+            ),
+            title="Recovery Run",
+            planned_load=80.0,
+            is_race=False,
+        ),
+    )
+
+    result = (
+        _weekly_planned_load_curve_data(
+            chart_points
+        )
+    )
+
+    assert result == [
+        {
+            "Date": "2026-09-07",
+            "Weekly load": 160.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
+        },
+        {
+            "Date": "2026-09-12",
+            "Weekly load": 160.0,
+            "Point type": "Pre-race anchor",
+            "Label": "Weekly training load",
+        },
+        {
+            "Date": "2026-09-13",
+            "Weekly load": 1060.0,
+            "Point type": "Race peak",
+            "Label": "Sealand",
+        },
+        {
+            "Date": "2026-09-14",
+            "Weekly load": 80.0,
+            "Point type": "Post-race anchor",
+            "Label": "Following weekly training load",
+        },
+    ]
+
+
+def test_uses_next_week_load_after_sunday_race():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                22,
+            ),
+            title="Pre-race Run",
+            planned_load=120.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                26,
+            ),
+            title="Shakeout Run",
+            planned_load=40.0,
+            is_race=False,
         ),
         SimpleNamespace(
             day=date(
@@ -1003,12 +1094,24 @@ def test_weekly_average_includes_race_load():
                 9,
                 27,
             ),
+            title="III Trail Pé Firme",
             planned_load=2200.0,
+            is_race=True,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                29,
+            ),
+            title="Recovery Run",
+            planned_load=60.0,
+            is_race=False,
         ),
     )
 
     result = (
-        _weekly_planned_load_average_data(
+        _weekly_planned_load_curve_data(
             chart_points
         )
     )
@@ -1016,15 +1119,32 @@ def test_weekly_average_includes_race_load():
     assert result == [
         {
             "Date": "2026-09-21",
-            "Weekly average load": (
-                2500.0 / 3
-            ),
-            "Session count": 3,
+            "Weekly load": 160.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
+        },
+        {
+            "Date": "2026-09-26",
+            "Weekly load": 160.0,
+            "Point type": "Pre-race anchor",
+            "Label": "Weekly training load",
+        },
+        {
+            "Date": "2026-09-27",
+            "Weekly load": 2360.0,
+            "Point type": "Race peak",
+            "Label": "III Trail Pé Firme",
+        },
+        {
+            "Date": "2026-09-28",
+            "Weekly load": 60.0,
+            "Point type": "Post-race anchor",
+            "Label": "Following weekly training load",
         },
     ]
 
 
-def test_weekly_average_ignores_missing_load():
+def test_weekly_load_curve_ignores_missing_load():
 
     chart_points = (
         SimpleNamespace(
@@ -1033,7 +1153,9 @@ def test_weekly_average_ignores_missing_load():
                 8,
                 3,
             ),
+            title="Easy Run",
             planned_load=100.0,
+            is_race=False,
         ),
         SimpleNamespace(
             day=date(
@@ -1041,20 +1163,14 @@ def test_weekly_average_ignores_missing_load():
                 8,
                 5,
             ),
+            title="Unknown Run",
             planned_load=None,
-        ),
-        SimpleNamespace(
-            day=date(
-                2026,
-                8,
-                7,
-            ),
-            planned_load=300.0,
+            is_race=False,
         ),
     )
 
     result = (
-        _weekly_planned_load_average_data(
+        _weekly_planned_load_curve_data(
             chart_points
         )
     )
@@ -1062,29 +1178,8 @@ def test_weekly_average_ignores_missing_load():
     assert result == [
         {
             "Date": "2026-08-03",
-            "Weekly average load": 200.0,
-            "Session count": 2,
+            "Weekly load": 100.0,
+            "Point type": "Weekly training",
+            "Label": "Weekly training load",
         },
     ]
-
-
-def test_returns_empty_weekly_average_without_load():
-
-    chart_points = (
-        SimpleNamespace(
-            day=date(
-                2026,
-                8,
-                3,
-            ),
-            planned_load=None,
-        ),
-    )
-
-    result = (
-        _weekly_planned_load_average_data(
-            chart_points
-        )
-    )
-
-    assert result == []

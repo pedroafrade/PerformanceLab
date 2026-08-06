@@ -276,17 +276,20 @@ def _planned_load_chart_series(
         positioned_races,
     )
 
-def _weekly_planned_load_average_data(
+
+def _weekly_planned_load_curve_data(
     chart_points,
 ) -> list[dict]:
     """
-    Builds one mean planned-load point per calendar week.
+    Builds a weekly planned-load curve with isolated
+    race peaks.
 
-    Weekly averages include the real load of both training
-    sessions and races.
+    The normal weekly value contains training load only.
+    Each race produces a peak on its exact date, with
+    anchors on the previous and following days.
     """
 
-    weekly_loads = {}
+    weeks = {}
 
     for point in chart_points:
 
@@ -300,29 +303,169 @@ def _weekly_planned_load_average_data(
             )
         )
 
-        weekly_loads.setdefault(
+        week_data = weeks.setdefault(
             week_start,
-            [],
-        ).append(
-            float(
+            {
+                "training_load": 0.0,
+                "races": [],
+            },
+        )
+
+        if point.is_race:
+
+            week_data["races"].append(
+                {
+                    "day": point.day,
+                    "load": float(
+                        point.planned_load
+                    ),
+                    "title": (
+                        point.title
+                        or "Race"
+                    ),
+                }
+            )
+
+        else:
+
+            week_data["training_load"] += float(
                 point.planned_load
             )
+
+    weekly_training_loads = {
+        week_start: week_data["training_load"]
+        for week_start, week_data
+        in weeks.items()
+    }
+
+    rows_by_date = {}
+
+    def add_row(
+        *,
+        day,
+        load,
+        point_type,
+        label,
+        priority,
+    ) -> None:
+
+        existing = rows_by_date.get(
+            day
         )
+
+        if (
+            existing is not None
+            and existing["_priority"]
+            > priority
+        ):
+            return
+
+        rows_by_date[day] = {
+            "Date": day.isoformat(),
+            "Weekly load": float(
+                load
+            ),
+            "Point type": point_type,
+            "Label": label,
+            "_priority": priority,
+        }
+
+    for week_start, week_data in sorted(
+        weeks.items()
+    ):
+
+        training_load = (
+            week_data["training_load"]
+        )
+
+        add_row(
+            day=week_start,
+            load=training_load,
+            point_type="Weekly training",
+            label="Weekly training load",
+            priority=1,
+        )
+
+        for race in sorted(
+            week_data["races"],
+            key=lambda item: item["day"],
+        ):
+
+            race_day = race["day"]
+
+            day_before = (
+                race_day
+                - timedelta(
+                    days=1
+                )
+            )
+
+            day_after = (
+                race_day
+                + timedelta(
+                    days=1
+                )
+            )
+
+            if day_before >= week_start:
+
+                add_row(
+                    day=day_before,
+                    load=training_load,
+                    point_type="Pre-race anchor",
+                    label="Weekly training load",
+                    priority=2,
+                )
+
+            add_row(
+                day=race_day,
+                load=(
+                    training_load
+                    + race["load"]
+                ),
+                point_type="Race peak",
+                label=race["title"],
+                priority=3,
+            )
+
+            following_week_start = (
+                day_after
+                - timedelta(
+                    days=day_after.weekday()
+                )
+            )
+
+            if following_week_start == week_start:
+
+                following_load = (
+                    training_load
+                )
+
+            else:
+
+                following_load = (
+                    weekly_training_loads.get(
+                        following_week_start,
+                        0.0,
+                    )
+                )
+
+            add_row(
+                day=day_after,
+                load=following_load,
+                point_type="Post-race anchor",
+                label="Following weekly training load",
+                priority=2,
+            )
 
     return [
         {
-            "Date": week_start.isoformat(),
-            "Weekly average load": (
-                sum(loads)
-                / len(loads)
-            ),
-            "Session count": len(
-                loads
-            ),
+            key: value
+            for key, value in row.items()
+            if key != "_priority"
         }
-        for week_start, loads
-        in sorted(
-            weekly_loads.items()
+        for _, row in sorted(
+            rows_by_date.items()
         )
     ]
 
@@ -330,11 +473,11 @@ def _planned_load_chart(
     plan,
 ):
     """
-    Builds planned training load with separate race markers.
+    Builds session load and weekly total load using
+    independent vertical scales.
 
-    Training sessions form the load curve. Races remain
-    visible on their exact dates without determining the
-    vertical scale of the training progression.
+    Session load uses the left axis. Weekly total load
+    uses the right axis and includes isolated race peaks.
     """
 
     (
@@ -344,8 +487,8 @@ def _planned_load_chart(
         plan.chart_points
     )
 
-    weekly_average_data = (
-        _weekly_planned_load_average_data(
+    weekly_load_data = (
+        _weekly_planned_load_curve_data(
             plan.chart_points
         )
     )
@@ -380,7 +523,7 @@ def _planned_load_chart(
                 ),
                 alt.Tooltip(
                     "Planned load:Q",
-                    title="Planned load",
+                    title="Session load",
                     format=".0f",
                 ),
             ],
@@ -396,7 +539,10 @@ def _planned_load_chart(
         .encode(
             y=alt.Y(
                 "Planned load:Q",
-                title="Planned load (AU)",
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
                 scale=alt.Scale(
                     zero=True
                 ),
@@ -414,7 +560,7 @@ def _planned_load_chart(
         .encode(
             y=alt.Y(
                 "Planned load:Q",
-                title="Planned load (AU)",
+                axis=None,
                 scale=alt.Scale(
                     zero=True
                 ),
@@ -483,21 +629,22 @@ def _planned_load_chart(
         .encode(
             y=alt.Y(
                 "Marker load:Q",
-                title="Planned load (AU)",
+                axis=None,
                 scale=alt.Scale(
                     zero=True
                 ),
             ),
         )
     )
-    weekly_average_line = (
+
+    weekly_load_line = (
         alt.Chart(
             alt.Data(
-                values=weekly_average_data
+                values=weekly_load_data
             )
         )
         .mark_line(
-            interpolate="monotone",
+            interpolate="linear",
             strokeDash=[
                 5,
                 4,
@@ -514,8 +661,11 @@ def _planned_load_chart(
                 ),
             ),
             y=alt.Y(
-                "Weekly average load:Q",
-                title="Planned load (AU)",
+                "Weekly load:Q",
+                title="Weekly total load (AU)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
                 scale=alt.Scale(
                     zero=True
                 ),
@@ -523,30 +673,42 @@ def _planned_load_chart(
             tooltip=[
                 alt.Tooltip(
                     "Date:T",
-                    title="Week starting",
+                    title="Date",
                     format="%d %b %Y",
                 ),
                 alt.Tooltip(
-                    "Weekly average load:Q",
-                    title="Weekly average",
+                    "Weekly load:Q",
+                    title="Weekly total",
                     format=".0f",
                 ),
                 alt.Tooltip(
-                    "Session count:Q",
-                    title="Sessions",
-                    format=".0f",
+                    "Point type:N",
+                    title="Point",
+                ),
+                alt.Tooltip(
+                    "Label:N",
+                    title="Description",
                 ),
             ],
         )
     )
 
-    return (
+    session_load_chart = (
         alt.layer(
-            weekly_average_line,
             training_line,
             training_points,
             race_rules,
             race_points,
+        )
+    )
+
+    return (
+        alt.layer(
+            session_load_chart,
+            weekly_load_line,
+        )
+        .resolve_scale(
+            y="independent"
         )
         .properties(
             height=115,
@@ -563,8 +725,6 @@ def _planned_load_chart(
             titlePadding=6,
         )
     )
-
-
 
 def _distance_elevation_chart(
     plan,
@@ -1906,7 +2066,7 @@ def show_plan_page(
                 "Planned load"
                 "</div>"
                 '<div class="plan-chart-caption">'
-                "Session load · dashed curve shows weekly average."
+                "Session load · dashed line shows weekly total."
                 "</div>"
                 "</div>"
             ),
