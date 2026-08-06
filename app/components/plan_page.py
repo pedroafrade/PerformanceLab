@@ -2034,7 +2034,12 @@ def _compact_plan_layout_styles() -> None:
 
         button[kind="primary"] {
             min-height: 2.45rem;
+            margin-top: 0;
             white-space: nowrap;
+        }
+
+        .plan-generate-button-spacer {
+            height: 1.55rem;
         }
 
         .plan-progression-heading {
@@ -2114,6 +2119,7 @@ def _compact_plan_layout_styles() -> None:
         div[data-testid="stExpander"] summary p:first-letter {
             color: #ff4b4b;
         }
+
         </style>
         """,
         unsafe_allow_html=True,
@@ -2151,6 +2157,11 @@ def show_plan_page(
         )
 
     with action_column:
+
+        st.markdown(
+            '<div class="plan-generate-button-spacer"></div>',
+            unsafe_allow_html=True,
+        )
 
         st.button(
             "Generate plan",
