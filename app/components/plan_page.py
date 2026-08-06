@@ -1331,7 +1331,11 @@ def _week_html(
         )
 
     parts.append(
-        "</div>"
+        (
+            '<div class="complete-plan-week-spacer" '
+            'aria-hidden="true"></div>'
+            "</div>"
+        )
     )
 
     return "".join(
@@ -1977,9 +1981,20 @@ def _plan_styles() -> None:
         .complete-plan-week {
             display: flex;
             flex-direction: column;
-            gap: 0.32rem;
-            padding-top: 0.12rem;
+            width: 100%;
+            gap: 0.38rem;
+            padding: 0.55rem 0.65rem 0;
+            box-sizing: border-box;
         }
+
+        .complete-plan-week-spacer {
+            display: block;
+            width: 100%;
+            height: 0.38rem;
+            min-height: 0.38rem;
+            flex: 0 0 0.38rem;
+        }
+
 
         .complete-plan-session {
             position: relative;
@@ -2293,23 +2308,23 @@ def _compact_plan_layout_styles() -> None:
         }
 
         div[data-testid="stExpander"] {
-            margin-bottom: 0.15rem;
+            margin-bottom: 0.45rem;
             border-radius: 0.55rem;
         }
 
         div[data-testid="stExpander"] details {
+            overflow: hidden;
             border: 1px solid rgba(128, 128, 128, 0.24);
             border-radius: 0.55rem;
-            overflow: hidden;
             background: rgba(128, 128, 128, 0.015);
         }
 
         div[data-testid="stExpander"] details summary {
             min-height: 2.15rem;
-            padding-top: 0.35rem;
-            padding-bottom: 0.35rem;
+            padding: 0.35rem 0.65rem;
             font-size: 0.72rem;
             font-weight: 650;
+            box-sizing: border-box;
         }
 
         div[data-testid="stExpander"] details summary:hover {
@@ -2317,15 +2332,23 @@ def _compact_plan_layout_styles() -> None:
         }
 
         div[data-testid="stExpander"] details[open] summary {
-            border-bottom:
-                1px solid rgba(128, 128, 128, 0.16);
+            border-bottom: 1px solid rgba(128, 128, 128, 0.16);
             background: rgba(128, 128, 128, 0.035);
         }
 
-        div[data-testid="stExpander"] details > div {
-            padding-top: 0.2rem;
-            padding-bottom: 0.25rem;
+        div[data-testid="stExpander"] details summary:focus,
+        div[data-testid="stExpander"] details summary:focus-visible {
+            outline: none;
+            box-shadow: none;
         }
+
+        div[data-testid="stExpanderDetails"] {
+            display: block;
+            overflow: hidden;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         div[data-testid="stExpander"] summary p {
             margin: 0;
             font-size: 0.72rem;

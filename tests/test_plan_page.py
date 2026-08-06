@@ -432,6 +432,10 @@ def test_week_html_contains_workout():
         "status-modified"
         in html
     )
+    assert (
+        "complete-plan-week-spacer"
+        in html
+    )
 
 
 def test_week_html_escapes_workout_title():
