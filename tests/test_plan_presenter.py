@@ -1182,3 +1182,162 @@ def test_current_phase_metrics_only_include_remaining_sessions():
             expected_remaining_load
         )
     )
+def test_exposes_final_race_as_target_event():
+
+    first_race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+            8,
+            0,
+        ),
+        sport="Road Running",
+        title="Sealand",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        phase="Race",
+    )
+
+    final_race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="III Trail Pé Firme",
+        duration=timedelta(
+            minutes=201,
+        ),
+        intensity="Race effort",
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                first_race,
+                final_race,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.target_event_title
+        == "III Trail Pé Firme"
+    )
+
+    assert (
+        result.target_event_date
+        == date(
+            2026,
+            9,
+            27,
+        )
+    )
+
+
+def test_exposes_single_race_as_target_event():
+
+    race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            13,
+            8,
+            0,
+        ),
+        sport="Road Running",
+        title="Sealand",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Race effort",
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                race,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.target_event_title
+        == "Sealand"
+    )
+
+    assert (
+        result.target_event_date
+        == date(
+            2026,
+            9,
+            13,
+        )
+    )
+
+
+def test_has_no_target_event_without_races():
+
+    training = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        phase="Peak",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                training,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            5,
+        )
+    )
+
+    assert (
+        result.target_event_title
+        is None
+    )
+
+    assert (
+        result.target_event_date
+        is None
+    )

@@ -437,7 +437,45 @@ class PlanPresenter:
         return self._adaptation_data(
             latest
         )
+    @staticmethod
+    def _target_event_data(
+        weeks,
+    ) -> tuple[
+        str | None,
+        date | None,
+    ]:
+        """
+        Returns the final race in the presented plan.
 
+        The latest race is treated as the principal target
+        event when a plan contains more than one race.
+        """
+
+        races = tuple(
+            workout
+            for week in weeks
+            for workout in week.workouts
+            if workout.is_race
+        )
+
+        if not races:
+            return (
+                None,
+                None,
+            )
+
+        target_event = max(
+            races,
+            key=lambda workout: (
+                workout.scheduled_at
+            ),
+        )
+
+        return (
+            target_event.title,
+            target_event.scheduled_at.date(),
+        )
+    
     def build(
         self,
         *,
@@ -672,7 +710,12 @@ class PlanPresenter:
             for week in weeks_data
             for workout in week.workouts
         )
-
+        (
+            target_event_title,
+            target_event_date,
+        ) = self._target_event_data(
+            weeks_data
+        )
         return CompletePlanData(
             plan_id=self.plan.plan_id,
             start_date=self.plan.start_date,
@@ -698,6 +741,12 @@ class PlanPresenter:
                         reference_day
                     ),
                 )
+            ),
+            target_event_title=(
+                target_event_title
+            ),
+            target_event_date=(
+                target_event_date
             ),
             latest_adaptation=(
                 self._latest_adaptation_data()

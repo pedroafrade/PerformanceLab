@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from app.components.plan_page import (
     _current_plan_week,
     _plan_chart_data,
+    _plan_header_caption,
     _plan_volume_chart_data,
     _plan_summary_metrics,
     _weekly_planned_load_curve_data,
@@ -1472,3 +1473,69 @@ def test_builds_race_marker_in_plan_week_row():
     assert "III Trail Pé Firme" in result
     assert "2200 AU" in result
     assert "Race effort" in result
+
+def test_builds_target_event_header_caption():
+
+    plan = SimpleNamespace(
+        target_event_title=(
+            "III Trail Pé Firme"
+        ),
+        target_event_date=date(
+            2026,
+            9,
+            27,
+        ),
+    )
+
+    result = (
+        _plan_header_caption(
+            plan
+        )
+    )
+
+    assert result == (
+        "Strategy through III Trail Pé Firme"
+        " · "
+        "27 Sep 2026"
+    )
+
+
+def test_builds_generic_plan_header_caption():
+
+    plan = SimpleNamespace(
+        target_event_title=None,
+        target_event_date=None,
+    )
+
+    result = (
+        _plan_header_caption(
+            plan
+        )
+    )
+
+    assert result == (
+        "Review the complete persistent plan "
+        "through the target event and recovery."
+    )
+
+
+def test_uses_generic_caption_without_event_date():
+
+    plan = SimpleNamespace(
+        target_event_title="Target Race",
+        target_event_date=None,
+    )
+
+    result = (
+        _plan_header_caption(
+            plan
+        )
+    )
+
+    assert (
+        result
+        == (
+            "Review the complete persistent plan "
+            "through the target event and recovery."
+        )
+    )

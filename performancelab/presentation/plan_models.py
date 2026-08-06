@@ -145,6 +145,9 @@ class CompletePlanData:
         | None
     )
 
+    target_event_title: str | None = None
+    target_event_date: date | None = None
+
     latest_adaptation: (
         PlanAdaptationData
         | None

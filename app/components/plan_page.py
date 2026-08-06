@@ -2363,6 +2363,37 @@ def _compact_plan_layout_styles() -> None:
         """,
         unsafe_allow_html=True,
     )
+def _plan_header_caption(
+    plan,
+) -> str:
+    """
+    Builds the contextual plan-page subtitle.
+    """
+
+    target_title = (
+        str(
+            plan.target_event_title
+            or ""
+        )
+        .strip()
+    )
+
+    target_date = (
+        plan.target_event_date
+    )
+
+    if target_title and target_date:
+
+        return (
+            f"Strategy through {target_title}"
+            " · "
+            f"{target_date.strftime('%d %b %Y')}"
+        )
+
+    return (
+        "Review the complete persistent plan "
+        "through the target event and recovery."
+    )
 
 def show_plan_page(
     athlete,
@@ -2374,6 +2405,13 @@ def show_plan_page(
     """
 
     today = date.today()
+
+    plan = PlanPresenter(
+        plan=athlete.training_plan,
+        history=athlete.history,
+    ).build(
+        reference_day=today
+    )
 
     _compact_plan_layout_styles()
 
@@ -2391,8 +2429,9 @@ def show_plan_page(
         )
 
         st.caption(
-            "Review the complete persistent plan "
-            "through the target event and recovery."
+            _plan_header_caption(
+                plan
+            )
         )
 
     with action_column:
@@ -2413,13 +2452,6 @@ def show_plan_page(
                 on_generate_plan is None
             ),
         )
-
-    plan = PlanPresenter(
-        plan=athlete.training_plan,
-        history=athlete.history,
-    ).build(
-        reference_day=today
-    )
 
     if not plan.weeks:
 
