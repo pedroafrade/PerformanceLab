@@ -256,6 +256,48 @@ class PlanPresenter:
         ):
             phase_end_index += 1
 
+        remaining_phase_weeks = (
+            weeks[
+                current_index:
+                phase_end_index + 1
+            ]
+        )
+
+        remaining_workouts = tuple(
+            workout
+            for week in remaining_phase_weeks
+            for workout in week.workouts
+            if (
+                workout.scheduled_at.date()
+                >= reference_day
+            )
+        )
+
+        sessions_remaining = len(
+            remaining_workouts
+        )
+
+        planned_load_remaining = sum(
+            float(
+                workout.planned_load
+                or 0.0
+            )
+            for workout in remaining_workouts
+        )
+
+        longest_session_minutes = max(
+            (
+                round(
+                    workout.duration
+                    .total_seconds()
+                    / 60
+                )
+                for workout in remaining_workouts
+                if workout.duration is not None
+            ),
+            default=0,
+        )
+
         return PlanCurrentPhaseData(
             name=phase_name,
             objective=(
@@ -278,6 +320,15 @@ class PlanPresenter:
                 phase_end_index
                 - current_index
                 + 1
+            ),
+            sessions_remaining=(
+                sessions_remaining
+            ),
+            planned_load_remaining=(
+                planned_load_remaining
+            ),
+            longest_session_minutes=(
+                longest_session_minutes
             ),
         )
 

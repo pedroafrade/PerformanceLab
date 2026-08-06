@@ -1309,10 +1309,39 @@ def _sidebar_phase_html(
         ),
     )
 
+    sessions_remaining = max(
+        0,
+        int(
+            current_phase.sessions_remaining
+        ),
+    )
+
+    planned_load_remaining = max(
+        0.0,
+        float(
+            current_phase
+            .planned_load_remaining
+        ),
+    )
+
+    longest_session_minutes = max(
+        0,
+        int(
+            current_phase
+            .longest_session_minutes
+        ),
+    )
+
     weeks_label = (
-        "week remaining"
+        "week"
         if weeks_remaining == 1
-        else "weeks remaining"
+        else "weeks"
+    )
+
+    sessions_label = (
+        "session"
+        if sessions_remaining == 1
+        else "sessions"
     )
 
     return (
@@ -1332,13 +1361,39 @@ def _sidebar_phase_html(
         f"{objective}"
         "</p>"
         '<div class="plan-sidebar-divider"></div>'
-        '<div class="plan-sidebar-remaining">'
-        '<span class="plan-sidebar-remaining-value">'
+        '<div class="plan-sidebar-phase-metrics">'
+        '<div class="plan-sidebar-phase-metric">'
+        '<span class="plan-sidebar-phase-metric-value">'
         f"{weeks_remaining}"
         "</span>"
-        '<span class="plan-sidebar-remaining-label">'
-        f"{weeks_label}"
+        '<span class="plan-sidebar-phase-metric-label">'
+        f"{weeks_label} left"
         "</span>"
+        "</div>"
+        '<div class="plan-sidebar-phase-metric">'
+        '<span class="plan-sidebar-phase-metric-value">'
+        f"{sessions_remaining}"
+        "</span>"
+        '<span class="plan-sidebar-phase-metric-label">'
+        f"{sessions_label} left"
+        "</span>"
+        "</div>"
+        '<div class="plan-sidebar-phase-metric">'
+        '<span class="plan-sidebar-phase-metric-value">'
+        f"{planned_load_remaining:.0f}"
+        "</span>"
+        '<span class="plan-sidebar-phase-metric-label">'
+        "AU remaining"
+        "</span>"
+        "</div>"
+        '<div class="plan-sidebar-phase-metric">'
+        '<span class="plan-sidebar-phase-metric-value">'
+        f"{longest_session_minutes}"
+        "</span>"
+        '<span class="plan-sidebar-phase-metric-label">'
+        "max minutes"
+        "</span>"
+        "</div>"
         "</div>"
         "</section>"
     )
@@ -1667,21 +1722,40 @@ def _sidebar_styles() -> str:
     background: rgba(128, 128, 128, 0.17);
 }
 
-.plan-sidebar-remaining {
-    display: flex;
-    align-items: baseline;
+.plan-sidebar-phase-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.45rem;
 }
 
-.plan-sidebar-remaining-value {
-    font-size: 1.65rem;
-    font-weight: 700;
-    line-height: 1;
+.plan-sidebar-phase-metric {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.12rem;
+    padding: 0.45rem 0.5rem;
+    border: 1px solid rgba(128, 128, 128, 0.16);
+    border-radius: 0.5rem;
+    background: rgba(128, 128, 128, 0.025);
+    box-sizing: border-box;
 }
 
-.plan-sidebar-remaining-label {
-    font-size: 0.7rem;
-    opacity: 0.62;
+.plan-sidebar-phase-metric-value {
+    overflow: hidden;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plan-sidebar-phase-metric-label {
+    overflow: hidden;
+    font-size: 0.61rem;
+    line-height: 1.15;
+    opacity: 0.6;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .plan-sidebar-week-range {

@@ -96,6 +96,9 @@ class PlanCurrentPhaseData:
     start_date: date
     end_date: date
     weeks_remaining: int
+    sessions_remaining: int
+    planned_load_remaining: float
+    longest_session_minutes: int
 
 @dataclass(frozen=True)
 class PlanAdaptationData:

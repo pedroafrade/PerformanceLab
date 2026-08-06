@@ -532,7 +532,22 @@ def test_exposes_current_plan_phase():
         result.current_phase.weeks_remaining
         == 2
     )
+    assert (
+        result.current_phase.sessions_remaining
+        == 1
+    )
 
+    assert (
+        result.current_phase
+        .planned_load_remaining
+        > 0
+    )
+
+    assert (
+        result.current_phase
+        .longest_session_minutes
+        == 90
+    )
 
 def test_has_no_current_phase_outside_plan():
 
@@ -1067,3 +1082,103 @@ def test_has_no_latest_adaptation():
     )
 
     assert result.latest_adaptation is None
+
+def test_current_phase_metrics_only_include_remaining_sessions():
+
+    completed_phase_session = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        phase="Peak",
+    )
+
+    today_session = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            12,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Easy",
+        phase="Peak",
+    )
+
+    future_session = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            18,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90,
+        ),
+        intensity="Easy to moderate",
+        phase="Peak",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                completed_phase_session,
+                today_session,
+                future_session,
+            ],
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            12,
+        )
+    )
+
+    phase = result.current_phase
+
+    assert phase is not None
+
+    assert (
+        phase.sessions_remaining
+        == 2
+    )
+
+    assert (
+        phase.longest_session_minutes
+        == 90
+    )
+
+    expected_remaining_load = sum(
+        workout.planned_load
+        for workout in (
+            result.weeks[0].workouts[1],
+            result.weeks[1].workouts[0],
+        )
+        if workout.planned_load is not None
+    )
+
+    assert (
+        phase.planned_load_remaining
+        == pytest.approx(
+            expected_remaining_load
+        )
+    )

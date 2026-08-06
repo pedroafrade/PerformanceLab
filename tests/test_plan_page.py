@@ -611,6 +611,9 @@ def test_builds_current_phase_sidebar_card():
             6,
         ),
         weeks_remaining=2,
+        sessions_remaining=6,
+        planned_load_remaining=1450.0,
+        longest_session_minutes=120,
     )
 
     result = (
@@ -629,8 +632,13 @@ def test_builds_current_phase_sidebar_card():
 
     assert "17 Aug – 06 Sep" in result
     assert "2" in result
-    assert "weeks remaining" in result
-
+    assert "weeks left" in result
+    assert "6" in result
+    assert "sessions left" in result
+    assert "1450" in result
+    assert "AU remaining" in result
+    assert "120" in result
+    assert "max minutes" in result
 
 def test_builds_empty_phase_sidebar_card():
 
