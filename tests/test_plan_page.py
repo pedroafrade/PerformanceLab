@@ -10,6 +10,7 @@ from app.components.plan_page import (
     _plan_chart_data,
     _plan_volume_chart_data,
     _plan_summary_metrics,
+    _planned_load_chart_series,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
     _sidebar_week_html,
@@ -721,4 +722,107 @@ def test_marks_easy_session_as_aerobic():
             workout
         )
         == "aerobic"
+    )
+
+def test_separates_training_load_from_race_markers():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                4,
+            ),
+            title="Easy Run",
+            phase="Build",
+            planned_load=180.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                11,
+            ),
+            title="LT2 Run",
+            phase="Peak",
+            planned_load=400.0,
+            is_race=False,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                27,
+            ),
+            title="Trail Race",
+            phase="Race",
+            planned_load=2200.0,
+            is_race=True,
+        ),
+    )
+
+    (
+        training_rows,
+        race_rows,
+    ) = _planned_load_chart_series(
+        chart_points
+    )
+
+    assert [
+        row["Session"]
+        for row in training_rows
+    ] == [
+        "Easy Run",
+        "LT2 Run",
+    ]
+
+    assert len(
+        race_rows
+    ) == 1
+
+    assert (
+        race_rows[0]["Session"]
+        == "Trail Race"
+    )
+
+    assert (
+        race_rows[0]["Planned load"]
+        == 2200.0
+    )
+
+    assert (
+        race_rows[0]["Marker load"]
+        == 432.0
+    )
+
+
+def test_positions_race_marker_without_training_sessions():
+
+    chart_points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                9,
+                27,
+            ),
+            title="Trail Race",
+            phase="Race",
+            planned_load=2200.0,
+            is_race=True,
+        ),
+    )
+
+    (
+        training_rows,
+        race_rows,
+    ) = _planned_load_chart_series(
+        chart_points
+    )
+
+    assert training_rows == []
+
+    assert (
+        race_rows[0]["Marker load"]
+        == 2200.0
     )

@@ -194,23 +194,112 @@ def _plan_chart_date_scale(
         ]
     )
 
-def _planned_load_chart(
-    plan,
-):
+def _planned_load_chart_series(
+    chart_points,
+) -> tuple[
+    list[dict],
+    list[dict],
+]:
     """
-    Builds the session-level planned-load chart.
+    Separates training load from race markers.
+
+    Race load remains available in the tooltip, but its
+    marker is positioned just above the highest training
+    load so that a large race value does not flatten the
+    training progression.
     """
 
     chart_data = (
         _plan_chart_data(
-            plan.chart_points
+            chart_points
         )
     )
 
-    base = (
+    training_rows = [
+        row
+        for row in chart_data
+        if (
+            row["Session type"]
+            == "Training"
+        )
+    ]
+
+    race_rows = [
+        row
+        for row in chart_data
+        if (
+            row["Session type"]
+            == "Race"
+        )
+    ]
+
+    training_loads = [
+        float(
+            row["Planned load"]
+        )
+        for row in training_rows
+    ]
+
+    if training_loads:
+
+        race_marker_load = (
+            max(training_loads)
+            * 1.08
+        )
+
+    else:
+
+        available_loads = [
+            float(
+                row["Planned load"]
+            )
+            for row in chart_data
+        ]
+
+        race_marker_load = max(
+            available_loads,
+            default=1.0,
+        )
+
+    positioned_races = [
+        {
+            **row,
+            "Marker load": (
+                race_marker_load
+            ),
+        }
+        for row in race_rows
+    ]
+
+    return (
+        training_rows,
+        positioned_races,
+    )
+
+
+
+def _planned_load_chart(
+    plan,
+):
+    """
+    Builds planned training load with separate race markers.
+
+    Training sessions form the load curve. Races remain
+    visible on their exact dates without determining the
+    vertical scale of the training progression.
+    """
+
+    (
+        training_data,
+        race_data,
+    ) = _planned_load_chart_series(
+        plan.chart_points
+    )
+
+    training_base = (
         alt.Chart(
             alt.Data(
-                values=chart_data
+                values=training_data
             )
         )
         .encode(
@@ -236,10 +325,6 @@ def _planned_load_chart(
                     title="Phase",
                 ),
                 alt.Tooltip(
-                    "Session type:N",
-                    title="Type",
-                ),
-                alt.Tooltip(
                     "Planned load:Q",
                     title="Planned load",
                     format=".0f",
@@ -248,9 +333,11 @@ def _planned_load_chart(
         )
     )
 
-    line = (
-        base
-        .mark_line()
+    training_line = (
+        training_base
+        .mark_line(
+            strokeWidth=2,
+        )
         .encode(
             y=alt.Y(
                 "Planned load:Q",
@@ -262,11 +349,11 @@ def _planned_load_chart(
         )
     )
 
-    points = (
-        base
+    training_points = (
+        training_base
         .mark_point(
             filled=True,
-            size=65,
+            size=55,
         )
         .encode(
             y=alt.Y(
@@ -276,28 +363,73 @@ def _planned_load_chart(
                     zero=True
                 ),
             ),
-            shape=alt.Shape(
-                "Session type:N",
+        )
+    )
+
+    race_base = (
+        alt.Chart(
+            alt.Data(
+                values=race_data
+            )
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
                 title=None,
-                scale=alt.Scale(
-                    domain=[
-                        "Training",
-                        "Race",
-                    ],
-                    range=[
-                        "circle",
-                        "diamond",
-                    ],
+                scale=_plan_chart_date_scale(
+                    plan
                 ),
-                legend=alt.Legend(
-                    orient="top",
-                    direction="horizontal",
-                    columns=2,
-                    title=None,
-                    labelFontSize=9,
-                    symbolSize=55,
-                    offset=2,
-                    padding=0,
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Race date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Session:N",
+                    title="Race",
+                ),
+                alt.Tooltip(
+                    "Phase:N",
+                    title="Phase",
+                ),
+                alt.Tooltip(
+                    "Planned load:Q",
+                    title="Race load",
+                    format=".0f",
+                ),
+            ],
+        )
+    )
+
+    race_rules = (
+        race_base
+        .mark_rule(
+            strokeDash=[
+                4,
+                4,
+            ],
+            strokeWidth=1,
+            opacity=0.35,
+            color="#ff4b4b",
+        )
+    )
+
+    race_points = (
+        race_base
+        .mark_point(
+            filled=True,
+            shape="diamond",
+            size=110,
+            color="#ff4b4b",
+        )
+        .encode(
+            y=alt.Y(
+                "Marker load:Q",
+                title="Planned load (AU)",
+                scale=alt.Scale(
+                    zero=True
                 ),
             ),
         )
@@ -305,19 +437,27 @@ def _planned_load_chart(
 
     return (
         alt.layer(
-            line,
-            points,
+            training_line,
+            training_points,
+            race_rules,
+            race_points,
         )
         .properties(
             height=115,
         )
         .configure_axis(
+            grid=True,
+            gridOpacity=0.1,
+            gridWidth=0.6,
+            domainOpacity=0.35,
+            tickOpacity=0.35,
             labelFontSize=9,
             titleFontSize=10,
             labelPadding=3,
             titlePadding=6,
         )
     )
+
 
 
 def _distance_elevation_chart(
@@ -1663,7 +1803,7 @@ def show_plan_page(
                 "Planned load"
                 "</div>"
                 '<div class="plan-chart-caption">'
-                "Load for each session on its exact date."
+                "Training load curve · diamonds mark races."
                 "</div>"
                 "</div>"
             ),
