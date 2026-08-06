@@ -10,6 +10,7 @@ from app.components.plan_page import (
     _plan_chart_data,
     _plan_volume_chart_data,
     _plan_summary_metrics,
+    _planned_load_average,
     _planned_load_chart_series,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -927,3 +928,65 @@ def test_builds_plural_week_summary():
         "  ·  2h"
         "  ·  720 AU"
     )
+
+def test_calculates_planned_load_average_including_races():
+
+    chart_points = (
+        SimpleNamespace(
+            planned_load=100.0,
+        ),
+        SimpleNamespace(
+            planned_load=200.0,
+        ),
+        SimpleNamespace(
+            planned_load=900.0,
+        ),
+    )
+
+    result = (
+        _planned_load_average(
+            chart_points
+        )
+    )
+
+    assert result == 400.0
+
+
+def test_ignores_missing_load_when_calculating_average():
+
+    chart_points = (
+        SimpleNamespace(
+            planned_load=100.0,
+        ),
+        SimpleNamespace(
+            planned_load=None,
+        ),
+        SimpleNamespace(
+            planned_load=300.0,
+        ),
+    )
+
+    result = (
+        _planned_load_average(
+            chart_points
+        )
+    )
+
+    assert result == 200.0
+
+
+def test_returns_no_average_without_load_values():
+
+    chart_points = (
+        SimpleNamespace(
+            planned_load=None,
+        ),
+    )
+
+    result = (
+        _planned_load_average(
+            chart_points
+        )
+    )
+
+    assert result is None

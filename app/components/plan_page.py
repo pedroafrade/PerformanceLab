@@ -276,7 +276,31 @@ def _planned_load_chart_series(
         positioned_races,
     )
 
+def _planned_load_average(
+    chart_points,
+) -> float | None:
+    """
+    Returns mean planned load across all sessions.
 
+    The calculation includes both training sessions
+    and races, using their real planned-load values.
+    """
+
+    planned_loads = [
+        float(
+            point.planned_load
+        )
+        for point in chart_points
+        if point.planned_load is not None
+    ]
+
+    if not planned_loads:
+        return None
+
+    return (
+        sum(planned_loads)
+        / len(planned_loads)
+    )
 
 def _planned_load_chart(
     plan,
@@ -294,6 +318,12 @@ def _planned_load_chart(
         race_data,
     ) = _planned_load_chart_series(
         plan.chart_points
+    )
+
+    average_load = (
+        _planned_load_average(
+            plan.chart_points
+        )
     )
 
     training_base = (
@@ -436,6 +466,51 @@ def _planned_load_chart(
             ),
         )
     )
+    average_layers = []
+
+    if average_load is not None:
+
+        average_rule = (
+            alt.Chart(
+                alt.Data(
+                    values=[
+                        {
+                            "Average load": (
+                                average_load
+                            ),
+                        },
+                    ]
+                )
+            )
+            .mark_rule(
+                strokeDash=[
+                    5,
+                    4,
+                ],
+                strokeWidth=1,
+                opacity=0.3,
+            )
+            .encode(
+                y=alt.Y(
+                    "Average load:Q",
+                    title="Planned load (AU)",
+                    scale=alt.Scale(
+                        zero=True
+                    ),
+                ),
+                tooltip=[
+                    alt.Tooltip(
+                        "Average load:Q",
+                        title="Average load",
+                        format=".0f",
+                    ),
+                ],
+            )
+        )
+
+        average_layers.append(
+            average_rule
+        )
 
     return (
         alt.layer(
@@ -443,6 +518,7 @@ def _planned_load_chart(
             training_points,
             race_rules,
             race_points,
+            *average_layers,
         )
         .properties(
             height=115,
@@ -575,7 +651,7 @@ def _distance_elevation_chart(
         .encode(
             y=alt.Y(
                 "Distance:Q",
-                title="Distance (km)",
+                axis=None,
                 scale=alt.Scale(
                     zero=True
                 ),
@@ -614,7 +690,7 @@ def _distance_elevation_chart(
         .encode(
             y=alt.Y(
                 "Distance:Q",
-                title="Distance (km)",
+                axis=None,
                 scale=alt.Scale(
                     zero=True
                 ),
