@@ -91,7 +91,56 @@ def _deserialize_duration(value):
         return None
 
     return timedelta(seconds=value)
+# ======================================================
+# Text encoding repair
+# ======================================================
 
+def _repair_text_encoding(
+    value,
+):
+    """
+    Repairs text where UTF-8 was incorrectly interpreted
+    as Latin-1, for example PÃ© instead of Pé.
+    """
+
+    if value is None:
+
+        return None
+
+    text = str(
+        value
+    )
+
+    mojibake_markers = (
+        "Ã",
+        "Â",
+        "â€",
+        "â€“",
+        "â€”",
+    )
+
+    if not any(
+        marker in text
+        for marker in mojibake_markers
+    ):
+
+        return text
+
+    try:
+
+        return (
+            text
+            .encode("latin-1")
+            .decode("utf-8")
+        )
+
+    except (
+        UnicodeEncodeError,
+        UnicodeDecodeError,
+    ):
+
+        return text
+    
 # ======================================================
 # Heart-rate zones
 # ======================================================
@@ -477,7 +526,6 @@ def _planned_workout_to_dict(workout):
 
 
 # ======================================================
-
 def _planned_workout_from_dict(data):
 
     return PlannedWorkout(
@@ -486,9 +534,13 @@ def _planned_workout_from_dict(data):
             data.get("scheduled_at")
         ),
 
-        sport=data.get("sport"),
+        sport=_repair_text_encoding(
+            data.get("sport")
+        ),
 
-        title=data.get("title"),
+        title=_repair_text_encoding(
+            data.get("title")
+        ),
 
         duration=_deserialize_duration(
             data.get("duration")
@@ -500,32 +552,48 @@ def _planned_workout_from_dict(data):
             "elevation_gain"
         ),
 
-        description=data.get("description"),
-
-        prescription_summary=data.get(
-            "prescription_summary"
+        description=_repair_text_encoding(
+            data.get("description")
         ),
 
-        intensity=data.get("intensity"),
+        prescription_summary=(
+            _repair_text_encoding(
+                data.get(
+                    "prescription_summary"
+                )
+            )
+        ),
 
-        objective=data.get("objective"),
+        intensity=_repair_text_encoding(
+            data.get("intensity")
+        ),
+
+        objective=_repair_text_encoding(
+            data.get("objective")
+        ),
 
         structure=tuple(
-            data.get(
+            _repair_text_encoding(
+                item
+            )
+            for item in data.get(
                 "structure",
                 [],
             )
         ),
 
         equipment=tuple(
-            data.get(
+            _repair_text_encoding(
+                item
+            )
+            for item in data.get(
                 "equipment",
                 [],
             )
         ),
-        
-        phase=data.get(
-            "phase"
+
+        phase=_repair_text_encoding(
+            data.get("phase")
         ),
 
     )
@@ -712,23 +780,37 @@ def _event_from_dict(data):
             str(uuid4()),
         ),
 
-        name=data.get("name", ""),
-
-        location=data.get(
-            "location",
-            "",
+        name=_repair_text_encoding(
+            data.get(
+                "name",
+                "",
+            )
         ),
 
-        country=data.get(
-            "country",
-            "",
+        location=_repair_text_encoding(
+            data.get(
+                "location",
+                "",
+            )
+        ),
+
+        country=_repair_text_encoding(
+            data.get(
+                "country",
+                "",
+            )
         ),
 
         date=_deserialize_date(
             data.get("date")
         ),
 
-        sport=data.get("sport", ""),
+        sport=_repair_text_encoding(
+            data.get(
+                "sport",
+                "",
+            )
+        ),
 
         distance=data.get("distance"),
 
@@ -736,19 +818,25 @@ def _event_from_dict(data):
             "elevation_gain"
         ),
 
-        terrain=data.get(
-            "terrain",
-            "",
+        terrain=_repair_text_encoding(
+            data.get(
+                "terrain",
+                "",
+            )
         ),
 
-        surface=data.get(
-            "surface",
-            "",
+        surface=_repair_text_encoding(
+            data.get(
+                "surface",
+                "",
+            )
         ),
 
-        organizer=data.get(
-            "organizer",
-            "",
+        organizer=_repair_text_encoding(
+            data.get(
+                "organizer",
+                "",
+            )
         ),
 
         website=data.get(
@@ -761,9 +849,11 @@ def _event_from_dict(data):
             "",
         ),
 
-        description=data.get(
-            "description",
-            "",
+        description=_repair_text_encoding(
+            data.get(
+                "description",
+                "",
+            )
         ),
 
     )
