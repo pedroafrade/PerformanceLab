@@ -336,7 +336,8 @@ def _planned_load_chart(
     training_line = (
         training_base
         .mark_line(
-            strokeWidth=2,
+            interpolate="monotone",
+            strokeWidth=1.8,
         )
         .encode(
             y=alt.Y(
@@ -353,7 +354,8 @@ def _planned_load_chart(
         training_base
         .mark_point(
             filled=True,
-            size=55,
+            size=42,
+            opacity=0.85,
         )
         .encode(
             y=alt.Y(
@@ -407,11 +409,11 @@ def _planned_load_chart(
         race_base
         .mark_rule(
             strokeDash=[
-                4,
+                3,
                 4,
             ],
-            strokeWidth=1,
-            opacity=0.35,
+            strokeWidth=0.8,
+            opacity=0.22,
             color="#ff4b4b",
         )
     )
@@ -421,7 +423,7 @@ def _planned_load_chart(
         .mark_point(
             filled=True,
             shape="diamond",
-            size=110,
+            size=90,
             color="#ff4b4b",
         )
         .encode(
@@ -447,10 +449,10 @@ def _planned_load_chart(
         )
         .configure_axis(
             grid=True,
-            gridOpacity=0.1,
-            gridWidth=0.6,
-            domainOpacity=0.35,
-            tickOpacity=0.35,
+            gridOpacity=0.08,
+            gridWidth=0.5,
+            domainOpacity=0.28,
+            tickOpacity=0.28,
             labelFontSize=9,
             titleFontSize=10,
             labelPadding=3,
@@ -466,8 +468,9 @@ def _distance_elevation_chart(
     """
     Builds the weekly distance and elevation chart.
 
-    Weekly training points and race points belong to
-    the same chronological curves.
+    Distance uses a continuous line with weekly training
+    circles and race diamonds. Elevation uses only a
+    dashed line to reduce visual noise.
     """
 
     chart_data = (
@@ -493,10 +496,33 @@ def _distance_elevation_chart(
         )
     )
 
+    shared_tooltip = [
+        alt.Tooltip(
+            "Date:T",
+            title="Date",
+            format="%d %b %Y",
+        ),
+        alt.Tooltip(
+            "Distance:Q",
+            title="Distance",
+            format=".1f",
+        ),
+        alt.Tooltip(
+            "Elevation:Q",
+            title="Elevation",
+            format=".0f",
+        ),
+        alt.Tooltip(
+            "Point type:N",
+            title="Point",
+        ),
+    ]
+
     distance_line = (
         base
         .mark_line(
             interpolate="monotone",
+            strokeWidth=1.8,
         )
         .encode(
             y=alt.Y(
@@ -521,43 +547,30 @@ def _distance_elevation_chart(
                     columns=2,
                     title=None,
                     labelFontSize=9,
-                    symbolSize=55,
+                    symbolSize=45,
                     offset=2,
                     padding=0,
                 ),
             ),
-            tooltip=[
-                alt.Tooltip(
-                    "Date:T",
-                    title="Date",
-                    format="%d %b %Y",
-                ),
-                alt.Tooltip(
-                    "Distance:Q",
-                    title="Distance",
-                    format=".1f",
-                ),
-                alt.Tooltip(
-                    "Elevation:Q",
-                    title="Elevation",
-                    format=".0f",
-                ),
-                alt.Tooltip(
-                    "Point type:N",
-                    title="Point",
-                ),
-            ],
+            tooltip=shared_tooltip,
         )
         .transform_calculate(
             Metric="'Distance'"
         )
     )
 
-    distance_points = (
+    weekly_distance_points = (
         base
+        .transform_filter(
+            (
+                "datum['Point type'] "
+                "=== 'Weekly training'"
+            )
+        )
         .mark_point(
-            filled=False,
-            size=65,
+            filled=True,
+            size=36,
+            opacity=0.78,
         )
         .encode(
             y=alt.Y(
@@ -578,51 +591,46 @@ def _distance_elevation_chart(
                 ),
                 legend=None,
             ),
-            shape=alt.Shape(
-                "Point type:N",
+            tooltip=shared_tooltip,
+        )
+        .transform_calculate(
+            Metric="'Distance'"
+        )
+    )
+
+    race_distance_points = (
+        base
+        .transform_filter(
+            (
+                "datum['Point type'] "
+                "=== 'Race'"
+            )
+        )
+        .mark_point(
+            filled=True,
+            shape="diamond",
+            size=88,
+        )
+        .encode(
+            y=alt.Y(
+                "Distance:Q",
+                title="Distance (km)",
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+            color=alt.Color(
+                "Metric:N",
                 title=None,
                 scale=alt.Scale(
                     domain=[
-                        "Weekly training",
-                        "Race",
-                    ],
-                    range=[
-                        "circle",
-                        "diamond",
+                        "Distance",
+                        "Elevation",
                     ],
                 ),
-                legend=alt.Legend(
-                    orient="top",
-                    direction="horizontal",
-                    columns=2,
-                    title=None,
-                    labelFontSize=9,
-                    symbolSize=55,
-                    offset=2,
-                    padding=0,
-                ),
+                legend=None,
             ),
-            tooltip=[
-                alt.Tooltip(
-                    "Date:T",
-                    title="Date",
-                    format="%d %b %Y",
-                ),
-                alt.Tooltip(
-                    "Distance:Q",
-                    title="Distance",
-                    format=".1f",
-                ),
-                alt.Tooltip(
-                    "Elevation:Q",
-                    title="Elevation",
-                    format=".0f",
-                ),
-                alt.Tooltip(
-                    "Point type:N",
-                    title="Point",
-                ),
-            ],
+            tooltip=shared_tooltip,
         )
         .transform_calculate(
             Metric="'Distance'"
@@ -634,73 +642,11 @@ def _distance_elevation_chart(
         .mark_line(
             interpolate="monotone",
             strokeDash=[
-                6,
+                5,
                 4,
             ],
-        )
-        .encode(
-            y=alt.Y(
-                "Elevation:Q",
-                title="Elevation (m D+)",
-                axis=alt.Axis(
-                    orient="right",
-                ),
-                scale=alt.Scale(
-                    zero=True
-                ),
-            ),
-            color=alt.Color(
-                "Metric:N",
-                title=None,
-                scale=alt.Scale(
-                    domain=[
-                        "Distance",
-                        "Elevation",
-                    ],
-                ),
-                legend=alt.Legend(
-                    orient="top",
-                    direction="horizontal",
-                    columns=2,
-                    title=None,
-                    labelFontSize=9,
-                    symbolSize=55,
-                    offset=2,
-                    padding=0,
-                ),
-            ),
-            tooltip=[
-                alt.Tooltip(
-                    "Date:T",
-                    title="Date",
-                    format="%d %b %Y",
-                ),
-                alt.Tooltip(
-                    "Distance:Q",
-                    title="Distance",
-                    format=".1f",
-                ),
-                alt.Tooltip(
-                    "Elevation:Q",
-                    title="Elevation",
-                    format=".0f",
-                ),
-                alt.Tooltip(
-                    "Point type:N",
-                    title="Point",
-                ),
-            ],
-        )
-        .transform_calculate(
-            Metric="'Elevation'"
-        )
-    )
-
-    elevation_points = (
-        base
-        .mark_point(
-            filled=False,
-            size=65,
+            strokeWidth=1.5,
+            opacity=0.82,
         )
         .encode(
             y=alt.Y(
@@ -724,51 +670,7 @@ def _distance_elevation_chart(
                 ),
                 legend=None,
             ),
-            shape=alt.Shape(
-                "Point type:N",
-                title=None,
-                scale=alt.Scale(
-                    domain=[
-                        "Weekly training",
-                        "Race",
-                    ],
-                    range=[
-                        "circle",
-                        "diamond",
-                    ],
-                ),
-                legend=alt.Legend(
-                    orient="top",
-                    direction="horizontal",
-                    columns=2,
-                    title=None,
-                    labelFontSize=9,
-                    symbolSize=55,
-                    offset=2,
-                    padding=0,
-                ),
-            ),
-            tooltip=[
-                alt.Tooltip(
-                    "Date:T",
-                    title="Date",
-                    format="%d %b %Y",
-                ),
-                alt.Tooltip(
-                    "Distance:Q",
-                    title="Distance",
-                    format=".1f",
-                ),
-                alt.Tooltip(
-                    "Elevation:Q",
-                    title="Elevation",
-                    format=".0f",
-                ),
-                alt.Tooltip(
-                    "Point type:N",
-                    title="Point",
-                ),
-            ],
+            tooltip=shared_tooltip,
         )
         .transform_calculate(
             Metric="'Elevation'"
@@ -778,9 +680,9 @@ def _distance_elevation_chart(
     return (
         alt.layer(
             distance_line,
-            distance_points,
+            weekly_distance_points,
+            race_distance_points,
             elevation_line,
-            elevation_points,
         )
         .resolve_scale(
             y="independent"
@@ -789,6 +691,11 @@ def _distance_elevation_chart(
             height=125,
         )
         .configure_axis(
+            grid=True,
+            gridOpacity=0.08,
+            gridWidth=0.5,
+            domainOpacity=0.28,
+            tickOpacity=0.28,
             labelFontSize=9,
             titleFontSize=10,
             labelPadding=3,
