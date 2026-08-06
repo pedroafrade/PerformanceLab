@@ -18,6 +18,7 @@ from app.components.plan_page import (
     _status_label,
     _week_html,
     _week_is_current,
+    _week_summary_label,
      show_plan_page,
 )
 from performancelab.presentation import (
@@ -825,4 +826,104 @@ def test_positions_race_marker_without_training_sessions():
     assert (
         race_rows[0]["Marker load"]
         == 2200.0
+    )
+
+def test_builds_current_week_summary_label():
+
+    week = create_week()
+
+    result = (
+        _week_summary_label(
+            week,
+            reference_day=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+    )
+
+    assert result == (
+        "● 03 Aug – 09 Aug"
+        "  ·  Build"
+        "  ·  1 session"
+        "  ·  1h"
+        "  ·  180 AU"
+    )
+
+
+def test_builds_future_week_summary_without_marker():
+
+    week = create_week()
+
+    result = (
+        _week_summary_label(
+            week,
+            reference_day=date(
+                2026,
+                7,
+                20,
+            ),
+        )
+    )
+
+    assert result == (
+        "03 Aug – 09 Aug"
+        "  ·  Build"
+        "  ·  1 session"
+        "  ·  1h"
+        "  ·  180 AU"
+    )
+
+
+def test_builds_plural_week_summary():
+
+    first = SimpleNamespace(
+        duration=timedelta(
+            minutes=45,
+        ),
+    )
+
+    second = SimpleNamespace(
+        duration=timedelta(
+            minutes=75,
+        ),
+    )
+
+    week = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            10,
+        ),
+        end_date=date(
+            2026,
+            8,
+            16,
+        ),
+        phase="Peak",
+        planned_load=720.0,
+        workouts=(
+            first,
+            second,
+        ),
+    )
+
+    result = (
+        _week_summary_label(
+            week,
+            reference_day=date(
+                2026,
+                8,
+                5,
+            ),
+        )
+    )
+
+    assert result == (
+        "10 Aug – 16 Aug"
+        "  ·  Peak"
+        "  ·  2 sessions"
+        "  ·  2h"
+        "  ·  720 AU"
     )

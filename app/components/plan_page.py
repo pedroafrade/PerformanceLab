@@ -911,6 +911,62 @@ def _week_is_current(
         <= week.end_date
     )
 
+def _week_summary_label(
+    week,
+    *,
+    reference_day: date,
+) -> str:
+    """
+    Builds the compact summary shown in the week list.
+    """
+
+    phase = (
+        str(
+            week.phase
+            or "Unassigned"
+        )
+        .strip()
+    )
+
+    session_count = len(
+        week.workouts
+    )
+
+    session_label = (
+        "session"
+        if session_count == 1
+        else "sessions"
+    )
+
+    duration = (
+        _week_duration_label(
+            week
+        )
+    )
+
+    current_marker = (
+        "● "
+        if _week_is_current(
+            week,
+            reference_day=reference_day,
+        )
+        else ""
+    )
+
+    return (
+        f"{current_marker}"
+        f"{week.start_date.strftime('%d %b')}"
+        " – "
+        f"{week.end_date.strftime('%d %b')}"
+        "  ·  "
+        f"{phase}"
+        "  ·  "
+        f"{session_count} {session_label}"
+        "  ·  "
+        f"{duration}"
+        "  ·  "
+        f"{week.planned_load:.0f} AU"
+    )
 
 def _week_html(
     week,
@@ -1448,21 +1504,21 @@ def _plan_styles() -> None:
         .complete-plan-week {
             display: flex;
             flex-direction: column;
-            gap: 0.45rem;
-            padding-top: 0.35rem;
+            gap: 0.3rem;
+            padding-top: 0.15rem;
         }
 
         .complete-plan-session {
             display: grid;
             grid-template-columns:
-                minmax(70px, 0.7fr)
-                minmax(220px, 3fr)
-                minmax(80px, 0.8fr)
-                minmax(100px, 1fr)
-                minmax(90px, 0.9fr);
-            gap: 0.75rem;
+                minmax(64px, 0.65fr)
+                minmax(220px, 3.2fr)
+                minmax(72px, 0.7fr)
+                minmax(95px, 0.9fr)
+                minmax(78px, 0.75fr);
+            gap: 0.55rem;
             align-items: center;
-            padding: 0.7rem 0.8rem;
+            padding: 0.5rem 0.65rem;
             border: 1px solid rgba(128, 128, 128, 0.22);
             border-left: 4px solid #4f86f7;
             border-radius: 0.5rem;
@@ -1619,11 +1675,47 @@ def _compact_plan_layout_styles() -> None:
         }
 
         div[data-testid="stExpander"] {
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.15rem;
+            border-radius: 0.55rem;
+        }
+
+        div[data-testid="stExpander"] details {
+            border: 1px solid rgba(128, 128, 128, 0.24);
+            border-radius: 0.55rem;
+            overflow: hidden;
+            background: rgba(128, 128, 128, 0.015);
         }
 
         div[data-testid="stExpander"] details summary {
-            min-height: 2.25rem;
+            min-height: 2.15rem;
+            padding-top: 0.35rem;
+            padding-bottom: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 650;
+        }
+
+        div[data-testid="stExpander"] details summary:hover {
+            background: rgba(128, 128, 128, 0.045);
+        }
+
+        div[data-testid="stExpander"] details[open] summary {
+            border-bottom:
+                1px solid rgba(128, 128, 128, 0.16);
+            background: rgba(128, 128, 128, 0.035);
+        }
+
+        div[data-testid="stExpander"] details > div {
+            padding-top: 0.2rem;
+            padding-bottom: 0.25rem;
+        }
+        div[data-testid="stExpander"] summary p {
+            margin: 0;
+            font-size: 0.72rem;
+            line-height: 1.2;
+        }
+
+        div[data-testid="stExpander"] summary p:first-letter {
+            color: #ff4b4b;
         }
         </style>
         """,
@@ -1851,16 +1943,11 @@ def show_plan_page(
 
         for week in plan.weeks:
 
-            phase = (
-                week.phase
-                or "Unassigned"
-            )
-
             label = (
-                f"{week.start_date.strftime('%d %b')} – "
-                f"{week.end_date.strftime('%d %b')} · "
-                f"{phase} · "
-                f"{week.planned_load:.0f} AU"
+                _week_summary_label(
+                    week,
+                    reference_day=today,
+                )
             )
 
             with st.expander(
