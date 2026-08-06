@@ -29,7 +29,7 @@ def test_builds_summary_metric_cards():
 
     assert (
         result.count(
-            'class="summary-metric-card"'
+            'class="summary-metric-card '
         )
         == 2
     )
@@ -118,5 +118,102 @@ def test_exposes_summary_card_styles():
 
     assert (
         ".summary-metric-value"
+        in styles
+    )
+
+def test_adds_metric_specific_card_classes():
+
+    result = summary_cards_html(
+        (
+            (
+                "calendar_month",
+                "Horizon",
+                "9 weeks",
+            ),
+            (
+                "monitoring",
+                "Planned load",
+                "8435 AU",
+            ),
+            (
+                "route",
+                "Max distance",
+                "38 km/week",
+            ),
+            (
+                "terrain",
+                "Max elevation",
+                "950 m/week",
+            ),
+        )
+    )
+
+    assert (
+        "summary-metric-card-calendar-month"
+        in result
+    )
+
+    assert (
+        "summary-metric-card-monitoring"
+        in result
+    )
+
+    assert (
+        "summary-metric-card-route"
+        in result
+    )
+
+    assert (
+        "summary-metric-card-terrain"
+        in result
+    )
+
+
+def test_normalizes_summary_card_icon_class():
+
+    result = summary_cards_html(
+        (
+            (
+                "Example_ICON",
+                "Example",
+                "123",
+            ),
+        )
+    )
+
+    assert (
+        "summary-metric-card-example-icon"
+        in result
+    )
+
+
+def test_summary_styles_define_metric_accents():
+
+    styles = (
+        summary_cards_styles()
+    )
+
+    assert (
+        ".summary-metric-card::before"
+        in styles
+    )
+
+    assert (
+        ".summary-metric-card-calendar-month"
+        in styles
+    )
+
+    assert (
+        ".summary-metric-card-monitoring"
+        in styles
+    )
+
+    assert (
+        ".summary-metric-card-route"
+        in styles
+    )
+
+    assert (
+        ".summary-metric-card-terrain"
         in styles
     )
