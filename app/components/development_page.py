@@ -60,6 +60,252 @@ def _daily_load_chart_rows(
         )
     ]
 
+def _form_status(
+    value: float,
+) -> str:
+    """
+    Returns a concise current-form interpretation.
+    """
+
+    if value >= 5:
+        return "Fresh"
+
+    if value >= -5:
+        return "Balanced"
+
+    if value >= -15:
+        return "Loaded"
+
+    return "Fatigued"
+
+
+def _recovery_status(
+    score: float,
+) -> str:
+    """
+    Returns a concise recovery interpretation.
+    """
+
+    if score >= 70:
+        return "Good"
+
+    if score >= 50:
+        return "Moderate"
+
+    return "Low"
+
+
+def _load_status(
+    acute_load: float,
+    chronic_load: float,
+) -> str:
+    """
+    Describes recent load relative to chronic load.
+    """
+
+    if chronic_load <= 0:
+
+        return "No baseline"
+
+    ratio = (
+        acute_load
+        / chronic_load
+    )
+
+    if ratio > 1.2:
+        return "Elevated"
+
+    if ratio < 0.8:
+        return "Reduced"
+
+    return "Stable"
+
+
+def _development_summary_cards_html(
+    development,
+) -> str:
+    """
+    Builds the four development summary cards.
+    """
+
+    cards = (
+        (
+            "favorite",
+            "Recovery",
+            f"{development.recovery_score:.0f}",
+            _recovery_status(
+                development.recovery_score
+            ),
+            "Current",
+        ),
+        (
+            "monitoring",
+            "Chronic load",
+            f"{development.chronic_load:.0f}",
+            _load_status(
+                development.acute_load,
+                development.chronic_load,
+            ),
+            "Current training state",
+        ),
+        (
+            "balance",
+            "Form",
+            f"{development.current_form:+.1f}",
+            _form_status(
+                development.current_form
+            ),
+            "Today",
+        ),
+        (
+            "show_chart",
+            "Acute load",
+            f"{development.acute_load:.0f}",
+            development.load_status,
+            "Recent training load",
+        ),
+    )
+
+    cards_html = []
+
+    for (
+        icon,
+        label,
+        value,
+        status,
+        context,
+    ) in cards:
+
+        cards_html.append(
+            (
+                '<section class="development-kpi-card">'
+                '<div class="development-kpi-icon">'
+                '<span class="material-symbols-rounded">'
+                f"{icon}"
+                "</span>"
+                "</div>"
+                '<div class="development-kpi-content">'
+                '<div class="development-kpi-label">'
+                f"{label}"
+                "</div>"
+                '<div class="development-kpi-value">'
+                f"{value}"
+                "</div>"
+                '<div class="development-kpi-status">'
+                f"{status}"
+                "</div>"
+                '<div class="development-kpi-context">'
+                f"{context}"
+                "</div>"
+                "</div>"
+                "</section>"
+            )
+        )
+
+    return (
+        '<div class="development-kpi-grid">'
+        + "".join(
+            cards_html
+        )
+        + "</div>"
+    )
+
+
+def _development_summary_styles() -> str:
+    """
+    Returns styles for the development summary cards.
+    """
+
+    return """
+    .development-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+        margin: 0.8rem 0 1rem 0;
+    }
+
+    .development-kpi-card {
+        display: grid;
+        grid-template-columns: 3.2rem minmax(0, 1fr);
+        gap: 0.7rem;
+        align-items: center;
+        min-height: 7.1rem;
+        padding: 0.85rem 0.9rem;
+        border: 1px solid rgba(128, 128, 128, 0.22);
+        border-radius: 0.65rem;
+        background: rgba(128, 128, 128, 0.015);
+        box-sizing: border-box;
+    }
+
+    .development-kpi-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        border: 1px solid rgba(128, 128, 128, 0.22);
+        border-radius: 50%;
+        background: rgba(128, 128, 128, 0.025);
+    }
+
+    .development-kpi-icon
+    .material-symbols-rounded {
+        font-size: 1.45rem;
+        font-variation-settings:
+            "FILL" 0,
+            "wght" 350,
+            "GRAD" 0,
+            "opsz" 24;
+    }
+
+    .development-kpi-content {
+        min-width: 0;
+    }
+
+    .development-kpi-label {
+        margin-bottom: 0.18rem;
+        font-size: 0.72rem;
+        opacity: 0.65;
+    }
+
+    .development-kpi-value {
+        margin-bottom: 0.08rem;
+        font-size: 1.45rem;
+        font-weight: 750;
+        line-height: 1.05;
+    }
+
+    .development-kpi-status {
+        overflow: hidden;
+        font-size: 0.76rem;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .development-kpi-context {
+        margin-top: 0.45rem;
+        overflow: hidden;
+        font-size: 0.61rem;
+        opacity: 0.48;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 1050px) {
+        .development-kpi-grid {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .development-kpi-grid {
+            grid-template-columns:
+                minmax(0, 1fr);
+        }
+    }
+    """
 
 def show_development_page(
     athlete,
@@ -74,8 +320,7 @@ def show_development_page(
     )
 
     st.caption(
-        "Understand how training load is influencing "
-        "fitness, fatigue, form and recovery."
+        "Training trends, load and performance."
     )
 
     development = (
@@ -84,66 +329,17 @@ def show_development_page(
         ).build()
     )
 
-    (
-        fitness_column,
-        fatigue_column,
-        form_column,
-        recovery_column,
-    ) = st.columns(4)
-
-    with fitness_column:
-
-        st.metric(
-            "Fitness",
-            (
-                f"{development.current_fitness:.1f}"
-            ),
-            help=(
-                "Chronic training load. Represents "
-                "longer-term training fitness."
-            ),
-        )
-
-    with fatigue_column:
-
-        st.metric(
-            "Fatigue",
-            (
-                f"{development.current_fatigue:.1f}"
-            ),
-            help=(
-                "Acute training load. Represents "
-                "recent accumulated fatigue."
-            ),
-        )
-
-    with form_column:
-
-        st.metric(
-            "Form",
-            (
-                f"{development.current_form:+.1f}"
-            ),
-            help=(
-                "Training stress balance. Positive "
-                "values generally indicate freshness."
-            ),
-        )
-
-    with recovery_column:
-
-        st.metric(
-            "Recovery",
-            (
-                f"{development.recovery_score:.0f}"
-            ),
-            help=(
-                "Current recovery score calculated "
-                "from the athlete's training state."
-            ),
-        )
-
-    st.divider()
+    st.markdown(
+        (
+            "<style>"
+            + _development_summary_styles()
+            + "</style>"
+            + _development_summary_cards_html(
+                development
+            )
+        ),
+        unsafe_allow_html=True,
+    )
 
     st.subheader(
         "Performance development"
