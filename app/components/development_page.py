@@ -130,7 +130,7 @@ def _development_summary_cards_html(
 
     cards = (
         (
-            "favorite",
+            "♡",
             "Recovery",
             f"{development.recovery_score:.0f}",
             _recovery_status(
@@ -139,7 +139,7 @@ def _development_summary_cards_html(
             "Current",
         ),
         (
-            "monitoring",
+            "↗",
             "Chronic load",
             f"{development.chronic_load:.0f}",
             _load_status(
@@ -149,7 +149,7 @@ def _development_summary_cards_html(
             "Current training state",
         ),
         (
-            "balance",
+            "⚖",
             "Form",
             f"{development.current_form:+.1f}",
             _form_status(
@@ -158,7 +158,7 @@ def _development_summary_cards_html(
             "Today",
         ),
         (
-            "show_chart",
+            "▥",
             "Acute load",
             f"{development.acute_load:.0f}",
             development.load_status,
@@ -180,9 +180,7 @@ def _development_summary_cards_html(
             (
                 '<section class="development-kpi-card">'
                 '<div class="development-kpi-icon">'
-                '<span class="material-symbols-rounded">'
                 f"{icon}"
-                "</span>"
                 "</div>"
                 '<div class="development-kpi-content">'
                 '<div class="development-kpi-label">'
@@ -246,16 +244,8 @@ def _development_summary_styles() -> str:
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 50%;
         background: rgba(128, 128, 128, 0.025);
-    }
-
-    .development-kpi-icon
-    .material-symbols-rounded {
-        font-size: 1.45rem;
-        font-variation-settings:
-            "FILL" 0,
-            "wght" 350,
-            "GRAD" 0,
-            "opsz" 24;
+        font-size: 1.35rem;
+        font-weight: 500;
     }
 
     .development-kpi-content {
