@@ -244,7 +244,6 @@ def test_builds_plan_summary_metrics():
     }
 
 
-
 def test_builds_planned_session_chart_data():
 
     chart_points = (
@@ -254,10 +253,16 @@ def test_builds_planned_session_chart_data():
                 8,
                 4,
             ),
-            title="Easy Run",
-            phase="Build",
             planned_load=180.0,
             distance=10.0,
+            elevation_gain=None,
+            duration=timedelta(
+                minutes=60,
+            ),
+            title="Easy Run",
+            intensity="Easy",
+            phase="Build",
+            status="pending",
             is_race=False,
         ),
         SimpleNamespace(
@@ -266,10 +271,16 @@ def test_builds_planned_session_chart_data():
                 8,
                 11,
             ),
-            title="LT2 Run",
-            phase="Peak",
             planned_load=315.0,
             distance=8.0,
+            elevation_gain=None,
+            duration=timedelta(
+                minutes=45,
+            ),
+            title="LT2 Run",
+            intensity="Hard",
+            phase="Peak",
+            status="pending",
             is_race=False,
         ),
         SimpleNamespace(
@@ -278,42 +289,64 @@ def test_builds_planned_session_chart_data():
                 9,
                 13,
             ),
-            title="Race",
-            phase="Race",
             planned_load=900.0,
             distance=25.0,
+            elevation_gain=None,
+            duration=timedelta(
+                minutes=201,
+            ),
+            title="Race",
+            intensity="Race effort",
+            phase="Race",
+            status="pending",
             is_race=True,
         ),
     )
 
-    result = _plan_chart_data(
-        chart_points
+    result = (
+        _plan_chart_data(
+            chart_points
+        )
     )
 
     assert result == [
         {
             "Date": "2026-08-04",
             "Planned load": 180.0,
+            "Distance": 10.0,
+            "Elevation": None,
+            "Duration": 60,
             "Session": "Easy Run",
+            "Intensity": "Easy",
             "Phase": "Build",
+            "Status": "Pending",
             "Session type": "Training",
         },
         {
             "Date": "2026-08-11",
             "Planned load": 315.0,
+            "Distance": 8.0,
+            "Elevation": None,
+            "Duration": 45,
             "Session": "LT2 Run",
+            "Intensity": "Hard",
             "Phase": "Peak",
+            "Status": "Pending",
             "Session type": "Training",
         },
         {
             "Date": "2026-09-13",
             "Planned load": 900.0,
+            "Distance": 25.0,
+            "Elevation": None,
+            "Duration": 201,
             "Session": "Race",
+            "Intensity": "Race effort",
             "Phase": "Race",
+            "Status": "Pending",
             "Session type": "Race",
         },
     ]
-
 
 def test_omits_chart_points_without_planned_load():
 
@@ -589,12 +622,14 @@ def test_aggregates_weekly_training_volume_and_races():
             "Distance": 18.0,
             "Elevation": 500.0,
             "Point type": "Weekly training",
+            "Label": "07 Sep – 13 Sep",
         },
         {
             "Date": "2026-09-13",
             "Distance": 42.0,
             "Elevation": 1800.0,
             "Point type": "Race",
+            "Label": "Race",
         },
         {
             "Date": "2026-09-20",

@@ -784,6 +784,8 @@ class PlanPresenter:
                 elevation_gain=(
                     workout.elevation_gain
                 ),
+                duration=workout.duration,
+                intensity=workout.intensity,
                 is_race=workout.is_race,
                 status=workout.status,
             )

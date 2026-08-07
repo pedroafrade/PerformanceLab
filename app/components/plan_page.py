@@ -46,26 +46,58 @@ def _plan_chart_data(
     Converts session-level planned load into chart rows.
     """
 
-    return [
-        {
-            "Date": point.day.isoformat(),
-            "Planned load": (
-                point.planned_load
-            ),
-            "Session": point.title,
-            "Phase": (
-                point.phase
-                or "Unassigned"
-            ),
-            "Session type": (
-                "Race"
-                if point.is_race
-                else "Training"
-            ),
-        }
-        for point in chart_points
-        if point.planned_load is not None
-    ]
+    rows = []
+
+    for point in chart_points:
+
+        if point.planned_load is None:
+            continue
+
+        duration_minutes = None
+
+        if point.duration is not None:
+
+            duration_minutes = round(
+                point.duration.total_seconds()
+                / 60
+            )
+
+        rows.append(
+            {
+                "Date": point.day.isoformat(),
+                "Planned load": (
+                    point.planned_load
+                ),
+                "Distance": point.distance,
+                "Elevation": (
+                    point.elevation_gain
+                ),
+                "Duration": (
+                    duration_minutes
+                ),
+                "Session": point.title,
+                "Intensity": (
+                    point.intensity
+                    or "—"
+                ),
+                "Phase": (
+                    point.phase
+                    or "Unassigned"
+                ),
+                "Status": (
+                    _status_label(
+                        point.status
+                    )
+                ),
+                "Session type": (
+                    "Race"
+                    if point.is_race
+                    else "Training"
+                ),
+            }
+        )
+
+    return rows
 
 
 def _plan_volume_chart_data(
@@ -134,6 +166,11 @@ def _plan_volume_chart_data(
                 "Point type": (
                     "Weekly training"
                 ),
+                "Label": (
+                    f"{week.start_date.strftime('%d %b')}"
+                    " – "
+                    f"{week.end_date.strftime('%d %b')}"
+                ),
             }
         )
 
@@ -158,6 +195,10 @@ def _plan_volume_chart_data(
                         or 0.0
                     ),
                     "Point type": "Race",
+                    "Label": (
+                        workout.title
+                        or "Race"
+                    ),
                 }
             )
 
@@ -537,13 +578,36 @@ def _planned_load_chart(
                     title="Session",
                 ),
                 alt.Tooltip(
+                    "Duration:Q",
+                    title="Duration (min)",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Intensity:N",
+                    title="Intensity",
+                ),
+                alt.Tooltip(
+                    "Planned load:Q",
+                    title="Load (AU)",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance (km)",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Elevation:Q",
+                    title="Elevation (m+)",
+                    format=".0f",
+                ),
+                alt.Tooltip(
                     "Phase:N",
                     title="Phase",
                 ),
                 alt.Tooltip(
-                    "Planned load:Q",
-                    title="Session load",
-                    format=".0f",
+                    "Status:N",
+                    title="Status",
                 ),
             ],
         )
@@ -615,13 +679,28 @@ def _planned_load_chart(
                     title="Race",
                 ),
                 alt.Tooltip(
-                    "Phase:N",
-                    title="Phase",
+                    "Duration:Q",
+                    title="Duration (min)",
+                    format=".0f",
                 ),
                 alt.Tooltip(
                     "Planned load:Q",
-                    title="Race load",
+                    title="Race load (AU)",
                     format=".0f",
+                ),
+                alt.Tooltip(
+                    "Distance:Q",
+                    title="Distance (km)",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Elevation:Q",
+                    title="Elevation (m+)",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Phase:N",
+                    title="Phase",
                 ),
             ],
         )
@@ -792,18 +871,22 @@ def _distance_elevation_chart(
             format="%d %b %Y",
         ),
         alt.Tooltip(
+            "Point type:N",
+            title="Type",
+        ),
+        alt.Tooltip(
+            "Label:N",
+            title="Session / week",
+        ),
+        alt.Tooltip(
             "Distance:Q",
-            title="Distance",
+            title="Distance (km)",
             format=".1f",
         ),
         alt.Tooltip(
             "Elevation:Q",
-            title="Elevation",
+            title="Elevation (m+)",
             format=".0f",
-        ),
-        alt.Tooltip(
-            "Point type:N",
-            title="Point",
         ),
     ]
 
