@@ -172,3 +172,108 @@ def test_exposes_recovery_and_load_guidance():
         result.ramp_rate,
         float,
     )
+
+def test_aggregates_completed_volume_by_sport():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    today = date.today()
+
+    athlete.history.add(
+        create_workout(
+            sport="Trail Running",
+            workout_date=today,
+            distance=12.0,
+            elevation_gain=400.0,
+            duration=timedelta(
+                minutes=90,
+            ),
+            rpe=5,
+            title="Trail Run",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Trail Running",
+            workout_date=(
+                today
+                - timedelta(days=1)
+            ),
+            distance=8.0,
+            elevation_gain=200.0,
+            duration=timedelta(
+                minutes=60,
+            ),
+            rpe=4,
+            title="Easy Trail",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Cycling",
+            workout_date=(
+                today
+                - timedelta(days=2)
+            ),
+            distance=40.0,
+            elevation_gain=300.0,
+            duration=timedelta(
+                minutes=120,
+            ),
+            rpe=5,
+            title="Bike",
+        )
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build()
+    )
+
+    assert (
+        len(
+            result.sport_volume
+        )
+        == 2
+    )
+
+    assert (
+        result.sport_volume[0]
+        .sport
+        == "Trail Running"
+    )
+
+    assert (
+        result.sport_volume[0]
+        .duration_seconds
+        == 9000.0
+    )
+
+    assert (
+        result.sport_volume[0]
+        .distance
+        == 20.0
+    )
+
+    assert (
+        result.sport_volume[0]
+        .sessions
+        == 2
+    )
+
+    assert (
+        result.sport_volume[1]
+        .sport
+        == "Cycling"
+    )
+
+    assert (
+        result.sport_volume[1]
+        .duration_seconds
+        == 7200.0
+    )

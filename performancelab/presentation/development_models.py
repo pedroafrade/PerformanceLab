@@ -7,6 +7,16 @@ Development presentation models.
 from dataclasses import dataclass
 from datetime import date, datetime
 
+@dataclass(frozen=True)
+class DevelopmentSportVolumeData:
+    """
+    Aggregated completed training volume for one sport.
+    """
+
+    sport: str
+    duration_seconds: float
+    distance: float
+    sessions: int
 
 @dataclass(frozen=True)
 class DevelopmentData:
@@ -39,3 +49,8 @@ class DevelopmentData:
 
     load_status: str
     load_recommendation: str
+
+    sport_volume: tuple[
+        DevelopmentSportVolumeData,
+        ...,
+    ] = ()

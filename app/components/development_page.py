@@ -189,7 +189,7 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=125,
+            height=105,
         )
         .configure_view(
             strokeWidth=0,
@@ -647,6 +647,165 @@ def _development_summary_styles() -> str:
     }
     """
 
+def _sport_volume_duration_label(
+    duration_seconds: float,
+) -> str:
+    """
+    Formats aggregated sport duration.
+    """
+
+    total_minutes = round(
+        duration_seconds
+        / 60
+    )
+
+    hours, minutes = divmod(
+        total_minutes,
+        60,
+    )
+
+    if hours and minutes:
+
+        return (
+            f"{hours}h {minutes:02d}m"
+        )
+
+    if hours:
+
+        return f"{hours}h"
+
+    return f"{minutes}m"
+
+
+def _development_sport_volume_html(
+    development,
+) -> str:
+    """
+    Builds the compact volume-by-sport card.
+    """
+
+    rows = tuple(
+        development.sport_volume
+    )
+
+    if not rows:
+
+        return (
+            '<section class="development-volume-card">'
+            '<div class="development-volume-heading">'
+            "Volume by sport"
+            "</div>"
+            '<div class="development-volume-empty">'
+            "No completed activity volume."
+            "</div>"
+            "</section>"
+        )
+
+    maximum_duration = max(
+        (
+            row.duration_seconds
+            for row in rows
+        ),
+        default=0.0,
+    )
+
+    row_html = []
+
+    for row in rows[:3]:
+
+        if maximum_duration > 0:
+
+            percentage = (
+                row.duration_seconds
+                / maximum_duration
+                * 100
+            )
+
+        else:
+
+            percentage = 0.0
+
+        duration_label = (
+            _sport_volume_duration_label(
+                row.duration_seconds
+            )
+        )
+
+        distance_label = (
+            f"{row.distance:.0f} km"
+            if row.distance > 0
+            else "—"
+        )
+
+        row_html.append(
+            (
+                '<div class="development-volume-row">'
+                '<div class="development-volume-row-top">'
+                '<span class="development-volume-sport">'
+                f"{escape(row.sport)}"
+                "</span>"
+                '<span class="development-volume-value">'
+                f"{escape(duration_label)}"
+                " · "
+                f"{escape(distance_label)}"
+                "</span>"
+                "</div>"
+                '<div class="development-volume-track">'
+                '<div class="development-volume-fill" '
+                f'style="width:{percentage:.1f}%">'
+                "</div>"
+                "</div>"
+                "</div>"
+            )
+        )
+
+    total_seconds = sum(
+        row.duration_seconds
+        for row in rows
+    )
+
+    total_distance = sum(
+        row.distance
+        for row in rows
+    )
+
+    total_sessions = sum(
+        row.sessions
+        for row in rows
+    )
+
+    total_duration = (
+        _sport_volume_duration_label(
+            total_seconds
+        )
+    )
+
+    return (
+        '<section class="development-volume-card">'
+        '<div class="development-volume-heading">'
+        "Volume by sport"
+        "</div>"
+        '<div class="development-volume-subtitle">'
+        "Completed activity history"
+        "</div>"
+        '<div class="development-volume-rows">'
+        + "".join(
+            row_html
+        )
+        + "</div>"
+        '<div class="development-volume-total">'
+        '<span>Total</span>'
+        "<span>"
+        f"{escape(total_duration)}"
+        " · "
+        f"{total_distance:.0f} km"
+        " · "
+        f"{total_sessions} sessions"
+        "</span>"
+        "</div>"
+        "</section>"
+    )
+
 def _development_overall_status(
     development,
 ) -> tuple[str, str]:
@@ -966,6 +1125,94 @@ def _development_interpretation_styles() -> str:
         line-height: 1.35;
     }
     """
+def _development_lower_styles() -> str:
+    """
+    Returns styles for compact lower development cards.
+    """
+
+    return """
+    .development-volume-card {
+        height: 11rem;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid rgba(128, 128, 128, 0.22);
+        border-radius: 0.65rem;
+        background: rgba(128, 128, 128, 0.012);
+        box-sizing: border-box;
+    }
+
+    .development-volume-heading {
+        font-size: 0.9rem;
+        font-weight: 750;
+    }
+
+    .development-volume-subtitle {
+        margin-top: 0.1rem;
+        margin-bottom: 0.55rem;
+        font-size: 0.61rem;
+        opacity: 0.52;
+    }
+
+    .development-volume-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.48rem;
+    }
+
+    .development-volume-row-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.15rem;
+    }
+
+    .development-volume-sport {
+        overflow: hidden;
+        font-size: 0.68rem;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .development-volume-value {
+        flex: 0 0 auto;
+        font-size: 0.61rem;
+        opacity: 0.6;
+        white-space: nowrap;
+    }
+
+    .development-volume-track {
+        width: 100%;
+        height: 0.3rem;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(128, 128, 128, 0.14);
+    }
+
+    .development-volume-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: currentColor;
+        opacity: 0.52;
+    }
+
+    .development-volume-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.62rem;
+        padding-top: 0.45rem;
+        border-top: 1px solid rgba(128, 128, 128, 0.14);
+        font-size: 0.62rem;
+        font-weight: 650;
+    }
+
+    .development-volume-empty {
+        padding-top: 2.4rem;
+        font-size: 0.68rem;
+        opacity: 0.55;
+        text-align: center;
+    }
+    """
 
 def show_development_page(
     athlete,
@@ -1080,32 +1327,56 @@ def show_development_page(
         unsafe_allow_html=True,
     )
 
-    st.subheader(
-        "Daily training load"
+    (
+        daily_load_column,
+        volume_column,
+    ) = st.columns(
+        [1.7, 1],
+        gap="medium",
     )
 
-    st.caption(
-        "Session-RPE load by day with a "
-        "7-day rolling average."
-    )
+    with daily_load_column:
 
-    load_rows = (
-        _daily_load_chart_rows(
-            development
+        st.subheader(
+            "Daily training load"
         )
-    )
 
-    if load_rows:
+        st.caption(
+            "Session-RPE load by day with a "
+            "7-day rolling average."
+        )
 
-        st.altair_chart(
-            _daily_training_load_chart(
+        load_rows = (
+            _daily_load_chart_rows(
                 development
-            ),
-            use_container_width=True,
+            )
         )
 
-    else:
+        if load_rows:
 
-        st.info(
-            "No daily training load is available."
+            st.altair_chart(
+                _daily_training_load_chart(
+                    development
+                ),
+                use_container_width=True,
+            )
+
+        else:
+
+            st.info(
+                "No daily training load is available."
+            )
+
+    with volume_column:
+
+        st.markdown(
+            (
+                "<style>"
+                + _development_lower_styles()
+                + "</style>"
+                + _development_sport_volume_html(
+                    development
+                )
+            ),
+            unsafe_allow_html=True,
         )

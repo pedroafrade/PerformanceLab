@@ -11,6 +11,8 @@ from app.components.development_page import (
     _development_interpretation_html,
     _development_load_form_chart,
     _development_overall_status,
+    _development_sport_volume_html,
+    _sport_volume_duration_label,
     _development_summary_cards_html,
     _form_status,
     _load_status,
@@ -386,7 +388,7 @@ def test_builds_daily_training_load_chart():
 
     assert (
         specification["height"]
-        == 125
+        == 105
     )
 
     assert (
@@ -399,4 +401,99 @@ def test_builds_daily_training_load_chart():
         specification["layer"][1]
         ["mark"]["type"]
         == "line"
+    )
+
+def test_formats_sport_volume_duration():
+
+    assert (
+        _sport_volume_duration_label(
+            5400.0
+        )
+        == "1h 30m"
+    )
+
+    assert (
+        _sport_volume_duration_label(
+            7200.0
+        )
+        == "2h"
+    )
+
+
+def test_builds_sport_volume_card():
+
+    development = (
+        create_development_data()
+    )
+
+    development = type(
+        "DevelopmentWithVolume",
+        (),
+        {
+            **development.__dict__,
+            "sport_volume": (
+                type(
+                    "SportVolume",
+                    (),
+                    {
+                        "sport": (
+                            "Trail Running"
+                        ),
+                        "duration_seconds": (
+                            9000.0
+                        ),
+                        "distance": 20.0,
+                        "sessions": 2,
+                    },
+                )(),
+                type(
+                    "SportVolume",
+                    (),
+                    {
+                        "sport": "Cycling",
+                        "duration_seconds": (
+                            7200.0
+                        ),
+                        "distance": 40.0,
+                        "sessions": 1,
+                    },
+                )(),
+            ),
+        },
+    )()
+
+    result = (
+        _development_sport_volume_html(
+            development
+        )
+    )
+
+    assert (
+        "Volume by sport"
+        in result
+    )
+
+    assert (
+        "Trail Running"
+        in result
+    )
+
+    assert (
+        "Cycling"
+        in result
+    )
+
+    assert (
+        "2h 30m"
+        in result
+    )
+
+    assert (
+        "60 km"
+        in result
+    )
+
+    assert (
+        "3 sessions"
+        in result
     )
