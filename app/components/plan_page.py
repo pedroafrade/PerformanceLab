@@ -53,12 +53,18 @@ def _plan_chart_data(
         if point.planned_load is None:
             continue
 
+        duration = getattr(
+            point,
+            "duration",
+            None,
+        )
+
         duration_minutes = None
 
-        if point.duration is not None:
+        if duration is not None:
 
             duration_minutes = round(
-                point.duration.total_seconds()
+                duration.total_seconds()
                 / 60
             )
 
@@ -68,16 +74,26 @@ def _plan_chart_data(
                 "Planned load": (
                     point.planned_load
                 ),
-                "Distance": point.distance,
-                "Elevation": (
-                    point.elevation_gain
+                "Distance": getattr(
+                    point,
+                    "distance",
+                    None,
+                ),
+                "Elevation": getattr(
+                    point,
+                    "elevation_gain",
+                    None,
                 ),
                 "Duration": (
                     duration_minutes
                 ),
                 "Session": point.title,
                 "Intensity": (
-                    point.intensity
+                    getattr(
+                        point,
+                        "intensity",
+                        None,
+                    )
                     or "—"
                 ),
                 "Phase": (
@@ -86,7 +102,11 @@ def _plan_chart_data(
                 ),
                 "Status": (
                     _status_label(
-                        point.status
+                        getattr(
+                            point,
+                            "status",
+                            "pending",
+                        )
                     )
                 ),
                 "Session type": (
@@ -196,7 +216,11 @@ def _plan_volume_chart_data(
                     ),
                     "Point type": "Race",
                     "Label": (
-                        workout.title
+                        getattr(
+                            workout,
+                            "title",
+                            None,
+                        )
                         or "Race"
                     ),
                 }
@@ -2855,6 +2879,186 @@ def _plan_header_caption(
         "through the target event and recovery."
     )
 
+def _ics_escape(
+    value,
+) -> str:
+    """
+    Escapes text for an iCalendar field.
+    """
+
+    return (
+        str(
+            value
+            or ""
+        )
+        .replace(
+            "\\",
+            "\\\\",
+        )
+        .replace(
+            ";",
+            "\\;",
+        )
+        .replace(
+            ",",
+            "\\,",
+        )
+        .replace(
+            "\r\n",
+            "\\n",
+        )
+        .replace(
+            "\n",
+            "\\n",
+        )
+    )
+
+
+def _plan_calendar_ics(
+    plan,
+) -> str:
+    """
+    Exports every planned workout as an iCalendar event.
+    """
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//PerformanceLab//Training Plan//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:PerformanceLab Training Plan",
+    ]
+
+    event_index = 0
+
+    for week in plan.weeks:
+
+        for workout in week.workouts:
+
+            event_index += 1
+
+            start = (
+                workout.scheduled_at
+            )
+
+            duration = (
+                workout.duration
+                or timedelta(
+                    hours=1
+                )
+            )
+
+            end = (
+                start
+                + duration
+            )
+
+            title = (
+                workout.title
+                or "Planned workout"
+            )
+
+            description_parts = []
+
+            if workout.sport:
+
+                description_parts.append(
+                    str(
+                        workout.sport
+                    )
+                )
+
+            if workout.intensity:
+
+                description_parts.append(
+                    (
+                        "Intensity: "
+                        f"{workout.intensity}"
+                    )
+                )
+
+            if workout.phase:
+
+                description_parts.append(
+                    (
+                        "Phase: "
+                        f"{workout.phase}"
+                    )
+                )
+
+            if (
+                workout.prescription_summary
+            ):
+
+                description_parts.append(
+                    str(
+                        workout
+                        .prescription_summary
+                    )
+                )
+
+            description = "\\n".join(
+                _ics_escape(
+                    part
+                )
+                for part
+                in description_parts
+            )
+
+            uid = (
+                f"{plan.plan_id}-"
+                f"{start.strftime('%Y%m%d%H%M%S')}-"
+                f"{event_index}"
+                "@performancelab"
+            )
+
+            lines.extend(
+                [
+                    "BEGIN:VEVENT",
+                    (
+                        "UID:"
+                        + uid
+                    ),
+                    (
+                        "DTSTART:"
+                        + start.strftime(
+                            "%Y%m%dT%H%M%S"
+                        )
+                    ),
+                    (
+                        "DTEND:"
+                        + end.strftime(
+                            "%Y%m%dT%H%M%S"
+                        )
+                    ),
+                    (
+                        "SUMMARY:"
+                        + _ics_escape(
+                            title
+                        )
+                    ),
+                    (
+                        "DESCRIPTION:"
+                        + description
+                    ),
+                    "STATUS:CONFIRMED",
+                    "TRANSP:TRANSPARENT",
+                    "END:VEVENT",
+                ]
+            )
+
+    lines.append(
+        "END:VCALENDAR"
+    )
+
+    return (
+        "\r\n".join(
+            lines
+        )
+        + "\r\n"
+    )
+
 def show_plan_page(
     athlete,
     *,
@@ -2910,6 +3114,32 @@ def show_plan_page(
             on_click=on_generate_plan,
             disabled=(
                 on_generate_plan is None
+            ),
+        )
+
+        calendar_data = (
+            _plan_calendar_ics(
+                plan
+            )
+            if plan.weeks
+            else ""
+        )
+
+        st.download_button(
+            "Export calendar",
+            data=calendar_data,
+            file_name=(
+                "performancelab-plan.ics"
+            ),
+            mime=(
+                "text/calendar; "
+                "charset=utf-8"
+            ),
+            use_container_width=True,
+            disabled=(
+                not bool(
+                    plan.weeks
+                )
             ),
         )
 

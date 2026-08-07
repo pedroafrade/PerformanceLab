@@ -7,6 +7,8 @@ from types import SimpleNamespace
 
 from app.components.plan_page import (
     _current_plan_week,
+    _ics_escape,
+    _plan_calendar_ics,
     _plan_chart_data,
     _plan_header_caption,
     _plan_volume_chart_data,
@@ -1747,4 +1749,159 @@ def test_week_focus_uses_phase_when_no_key_session():
 
     assert result == (
         "Reduce fatigue and preserve readiness",
+    )
+
+def test_escapes_icalendar_text():
+
+    result = _ics_escape(
+        "LT2 Run, hard; 3×8\nTrail"
+    )
+
+    assert result == (
+        "LT2 Run\\, hard\\; 3×8"
+        "\\nTrail"
+    )
+
+def test_exports_plan_as_icalendar():
+
+    workout = SimpleNamespace(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        title="LT2 Run",
+        sport="Trail Running",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        phase="Peak",
+        prescription_summary=(
+            "3×8 min at LT2"
+        ),
+    )
+
+    week = SimpleNamespace(
+        workouts=(
+            workout,
+        ),
+    )
+
+    plan = SimpleNamespace(
+        plan_id="plan-123",
+        weeks=(
+            week,
+        ),
+    )
+
+    result = (
+        _plan_calendar_ics(
+            plan
+        )
+    )
+
+    assert (
+        result.startswith(
+            "BEGIN:VCALENDAR\r\n"
+        )
+    )
+
+    assert (
+        result.endswith(
+            "END:VCALENDAR\r\n"
+        )
+    )
+
+    assert (
+        "BEGIN:VEVENT"
+        in result
+    )
+
+    assert (
+        "UID:plan-123-20260811080000-1"
+        "@performancelab"
+        in result
+    )
+
+    assert (
+        "DTSTART:20260811T080000"
+        in result
+    )
+
+    assert (
+        "DTEND:20260811T084500"
+        in result
+    )
+
+    assert (
+        "SUMMARY:LT2 Run"
+        in result
+    )
+
+    assert (
+        "Trail Running"
+        in result
+    )
+
+    assert (
+        "Intensity: Hard"
+        in result
+    )
+
+    assert (
+        "Phase: Peak"
+        in result
+    )
+
+    assert (
+        "3×8 min at LT2"
+        in result
+    )
+
+def test_calendar_export_defaults_missing_duration():
+
+    workout = SimpleNamespace(
+        scheduled_at=datetime(
+            2026,
+            8,
+            13,
+            9,
+            0,
+        ),
+        title="Easy Run",
+        sport="Running",
+        duration=None,
+        intensity="Easy",
+        phase="Build",
+        prescription_summary=None,
+    )
+
+    plan = SimpleNamespace(
+        plan_id="plan-456",
+        weeks=(
+            SimpleNamespace(
+                workouts=(
+                    workout,
+                ),
+            ),
+        ),
+    )
+
+    result = (
+        _plan_calendar_ics(
+            plan
+        )
+    )
+
+    assert (
+        "DTSTART:20260813T090000"
+        in result
+    )
+
+    assert (
+        "DTEND:20260813T100000"
+        in result
     )
