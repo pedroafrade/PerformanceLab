@@ -636,6 +636,7 @@ def test_aggregates_weekly_training_volume_and_races():
             "Distance": 0.0,
             "Elevation": 0.0,
             "Point type": "Weekly training",
+            "Label": "14 Sep – 20 Sep",
         },
     ]
     
@@ -679,6 +680,7 @@ def test_keeps_recovery_until_exact_plan_end():
                 "Distance": 0.0,
                 "Elevation": 0.0,
                 "Point type": "Weekly training",
+                "Label": "28 Sep – 04 Oct",
             },
         ]
     )
