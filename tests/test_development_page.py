@@ -7,6 +7,7 @@ from datetime import date
 from app.components.development_page import (
     _daily_load_chart_rows,
     _development_chart_rows,
+    _development_load_form_chart,
     _development_summary_cards_html,
     _form_status,
     _load_status,
@@ -253,4 +254,35 @@ def test_builds_development_summary_cards():
     assert (
         "150"
         in result
+    )
+
+def test_builds_development_load_form_chart():
+
+    chart = (
+        _development_load_form_chart(
+            create_development_data()
+        )
+    )
+
+    specification = (
+        chart.to_dict()
+    )
+
+    assert (
+        len(
+            specification["layer"]
+        )
+        == 3
+    )
+
+    assert (
+        specification["resolve"]
+        ["scale"]
+        ["y"]
+        == "independent"
+    )
+
+    assert (
+        specification["height"]
+        == 290
     )

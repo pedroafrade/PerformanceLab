@@ -4,6 +4,7 @@ PerformanceLab
 Athlete development page.
 """
 
+import altair as alt
 import streamlit as st
 
 from performancelab.presentation import (
@@ -59,6 +60,197 @@ def _daily_load_chart_rows(
             strict=True,
         )
     ]
+def _development_load_form_chart(
+    development,
+):
+    """
+    Builds the main ATL, CTL and TSB development chart.
+    """
+
+    rows = (
+        _development_chart_rows(
+            development
+        )
+    )
+
+    base = (
+        alt.Chart(
+            alt.Data(
+                values=rows
+            )
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title=None,
+                axis=alt.Axis(
+                    format="%d %b",
+                    labelAngle=0,
+                    grid=False,
+                    tickCount=10,
+                ),
+            )
+        )
+    )
+
+    load_lines = (
+        base
+        .transform_fold(
+            [
+                "Fatigue",
+                "Fitness",
+            ],
+            as_=[
+                "Metric",
+                "Value",
+            ],
+        )
+        .mark_line(
+            strokeWidth=2,
+        )
+        .encode(
+            y=alt.Y(
+                "Value:Q",
+                title="Load (ATL / CTL)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+                scale=alt.Scale(
+                    zero=False,
+                ),
+            ),
+            color=alt.Color(
+                "Metric:N",
+                title=None,
+                scale=alt.Scale(
+                    domain=[
+                        "Fatigue",
+                        "Fitness",
+                    ],
+                    range=[
+                        "#ff4b4b",
+                        "#4f86f7",
+                    ],
+                ),
+                legend=alt.Legend(
+                    orient="top",
+                    direction="horizontal",
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Metric:N",
+                    title="Metric",
+                ),
+                alt.Tooltip(
+                    "Value:Q",
+                    title="Load",
+                    format=".1f",
+                ),
+            ],
+        )
+    )
+
+    form_line = (
+        base
+        .mark_line(
+            strokeWidth=2,
+            color="#7c3aed",
+        )
+        .encode(
+            y=alt.Y(
+                "Form:Q",
+                title="Form (TSB)",
+                axis=alt.Axis(
+                    orient="right",
+                ),
+                scale=alt.Scale(
+                    zero=False,
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Form:Q",
+                    title="Form (TSB)",
+                    format="+.1f",
+                ),
+                alt.Tooltip(
+                    "Fatigue:Q",
+                    title="Fatigue (ATL)",
+                    format=".1f",
+                ),
+                alt.Tooltip(
+                    "Fitness:Q",
+                    title="Fitness (CTL)",
+                    format=".1f",
+                ),
+            ],
+        )
+    )
+
+    zero_line = (
+        alt.Chart(
+            alt.Data(
+                values=[
+                    {
+                        "y": 0,
+                    }
+                ]
+            )
+        )
+        .mark_rule(
+            strokeDash=[
+                4,
+                4,
+            ],
+            opacity=0.28,
+        )
+        .encode(
+            y="y:Q",
+        )
+    )
+
+    return (
+        alt.layer(
+            load_lines,
+            form_line,
+            zero_line,
+        )
+        .resolve_scale(
+            y="independent"
+        )
+        .properties(
+            height=290,
+        )
+        .configure_view(
+            strokeWidth=0,
+        )
+        .configure_axis(
+            labelFontSize=10,
+            titleFontSize=11,
+            gridColor=(
+                "rgba(128,128,128,0.14)"
+            ),
+            domain=False,
+            tickColor=(
+                "rgba(128,128,128,0.22)"
+            ),
+        )
+        .configure_legend(
+            labelFontSize=10,
+            symbolStrokeWidth=3,
+        )
+    )
 
 def _form_status(
     value: float,
@@ -332,12 +524,12 @@ def show_development_page(
     )
 
     st.subheader(
-        "Performance development"
+        "Load and form"
     )
 
     st.caption(
-        "Fitness, fatigue and form across the available "
-        "training history."
+        "Acute load (ATL), chronic load (CTL) "
+        "and training stress balance (TSB)."
     )
 
     performance_rows = (
@@ -348,14 +540,10 @@ def show_development_page(
 
     if performance_rows:
 
-        st.line_chart(
-            performance_rows,
-            x="Date",
-            y=[
-                "Fitness",
-                "Fatigue",
-                "Form",
-            ],
+        st.altair_chart(
+            _development_load_form_chart(
+                development
+            ),
             use_container_width=True,
         )
 
