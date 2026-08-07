@@ -6,6 +6,7 @@ from datetime import date
 
 from app.components.development_page import (
     _daily_load_chart_rows,
+    _daily_training_load_chart,
     _development_chart_rows,
     _development_interpretation_html,
     _development_load_form_chart,
@@ -362,4 +363,40 @@ def test_prioritises_low_recovery_in_overall_status():
             "The current state suggests that "
             "recovery should take priority."
         ),
+    )
+
+def test_builds_daily_training_load_chart():
+
+    chart = (
+        _daily_training_load_chart(
+            create_development_data()
+        )
+    )
+
+    specification = (
+        chart.to_dict()
+    )
+
+    assert (
+        len(
+            specification["layer"]
+        )
+        == 2
+    )
+
+    assert (
+        specification["height"]
+        == 190
+    )
+
+    assert (
+        specification["layer"][0]
+        ["mark"]["type"]
+        == "bar"
+    )
+
+    assert (
+        specification["layer"][1]
+        ["mark"]["type"]
+        == "line"
     )

@@ -62,6 +62,151 @@ def _daily_load_chart_rows(
             strict=True,
         )
     ]
+
+def _daily_training_load_chart(
+    development,
+):
+    """
+    Builds daily training load with a rolling
+    seven-day average.
+    """
+
+    rows = (
+        _daily_load_chart_rows(
+            development
+        )
+    )
+
+    chart_rows = [
+        {
+            **row,
+            "Date": (
+                row["Date"]
+                .isoformat()
+            ),
+        }
+        for row in rows
+    ]
+
+    base = (
+        alt.Chart(
+            alt.Data(
+                values=chart_rows
+            )
+        )
+        .transform_window(
+            rolling_load=(
+                "mean(Training load)"
+            ),
+            frame=[
+                -6,
+                0,
+            ],
+            sort=[
+                {
+                    "field": "Date",
+                    "order": "ascending",
+                }
+            ],
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title=None,
+                axis=alt.Axis(
+                    format="%d %b",
+                    labelAngle=0,
+                    grid=False,
+                    tickCount=10,
+                ),
+            )
+        )
+    )
+
+    bars = (
+        base
+        .mark_bar(
+            opacity=0.42,
+            size=4,
+        )
+        .encode(
+            y=alt.Y(
+                "Training load:Q",
+                title="Daily load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Training load:Q",
+                    title="Daily load",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "rolling_load:Q",
+                    title="7-day average",
+                    format=".0f",
+                ),
+            ],
+        )
+    )
+
+    rolling_line = (
+        base
+        .mark_line(
+            strokeWidth=2,
+            opacity=0.72,
+        )
+        .encode(
+            y=alt.Y(
+                "rolling_load:Q",
+                title="Daily load (AU)",
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "rolling_load:Q",
+                    title="7-day average",
+                    format=".0f",
+                ),
+            ],
+        )
+    )
+
+    return (
+        alt.layer(
+            bars,
+            rolling_line,
+        )
+        .properties(
+            height=190,
+        )
+        .configure_view(
+            strokeWidth=0,
+        )
+        .configure_axis(
+            labelFontSize=10,
+            titleFontSize=11,
+            gridColor=(
+                "rgba(128,128,128,0.14)"
+            ),
+            domain=False,
+            tickColor=(
+                "rgba(128,128,128,0.22)"
+            ),
+        )
+    )
+
 def _development_load_form_chart(
     development,
 ):
@@ -917,7 +1062,8 @@ def show_development_page(
     )
 
     st.caption(
-        "Session-RPE load accumulated each day."
+        "Session-RPE load by day with a "
+        "7-day rolling average."
     )
 
     load_rows = (
@@ -928,10 +1074,10 @@ def show_development_page(
 
     if load_rows:
 
-        st.bar_chart(
-            load_rows,
-            x="Date",
-            y="Training load",
+        st.altair_chart(
+            _daily_training_load_chart(
+                development
+            ),
             use_container_width=True,
         )
 
