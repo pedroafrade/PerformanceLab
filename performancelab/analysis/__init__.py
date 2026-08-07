@@ -8,6 +8,7 @@ from .heart_rate_profile import (
     HeartRateProfile,
     HeartRateZone,
     build_heart_rate_profile,
+    heart_rate_zone_durations,
 )
 from .nutrition_profile import (
     NutritionProfile,
@@ -21,4 +22,5 @@ __all__ = [
     "HeartRateZone",
     "NutritionProfile",
     "build_heart_rate_profile",
+    "heart_rate_zone_durations",
 ]

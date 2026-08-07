@@ -8,6 +8,7 @@ from app.components.development_page import (
     _daily_load_chart_rows,
     _daily_training_load_chart,
     _development_chart_rows,
+    _development_intensity_html,
     _development_interpretation_html,
     _development_load_form_chart,
     _development_overall_status,
@@ -22,6 +23,8 @@ from app.components.development_page import (
 
 from performancelab.presentation import (
     DevelopmentData,
+    DevelopmentHeartRateZoneData,
+    DevelopmentIntensityData,
 )
 
 
@@ -388,7 +391,7 @@ def test_builds_daily_training_load_chart():
 
     assert (
         specification["height"]
-        == 105
+        == 88
     )
 
     assert (
@@ -497,3 +500,58 @@ def test_builds_sport_volume_card():
         "3 sessions"
         in result
     )
+
+def test_builds_development_intensity_card():
+
+    development = (
+        create_development_data()
+    )
+
+    development = type(
+        "DevelopmentWithIntensity",
+        (),
+        {
+            **development.__dict__,
+            "intensity": (
+                DevelopmentIntensityData(
+                    zones=(
+                        DevelopmentHeartRateZoneData(
+                            name="Z1",
+                            lower_bpm=120,
+                            upper_bpm=135,
+                            duration_seconds=1200.0,
+                            percentage=20.0,
+                        ),
+                        DevelopmentHeartRateZoneData(
+                            name="Z2",
+                            lower_bpm=136,
+                            upper_bpm=150,
+                            duration_seconds=2400.0,
+                            percentage=40.0,
+                        ),
+                    ),
+                    zone_source="manual",
+                    heart_rate_seconds=3600.0,
+                    average_rpe=6.2,
+                    sessions_with_rpe=10,
+                    high_rpe_sessions=2,
+                )
+            ),
+        },
+    )()
+
+    result = (
+        _development_intensity_html(
+            development
+        )
+    )
+
+    assert "Intensity & RPE" in result
+    assert "Manual HR zones" in result
+    assert "Z1" in result
+    assert "Z2" in result
+    assert "20%" in result
+    assert "40%" in result
+    assert "Average RPE" in result
+    assert "6.2" in result
+    assert "RPE &gt; 8" in result

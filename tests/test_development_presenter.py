@@ -277,3 +277,83 @@ def test_aggregates_completed_volume_by_sport():
         .duration_seconds
         == 7200.0
     )
+
+def test_builds_heart_rate_zone_distribution():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=190,
+        resting_hr=50,
+    )
+
+    today = date.today()
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=today,
+        distance=5.0,
+        elevation_gain=0.0,
+        duration=timedelta(
+            minutes=30,
+        ),
+        rpe=6,
+        title="Run",
+    )
+
+    workout.sensors.add(
+        "heart_rate",
+        [
+            {
+                "time": (
+                    "2026-08-07T08:00:00"
+                ),
+                "value": 130,
+            },
+            {
+                "time": (
+                    "2026-08-07T08:00:10"
+                ),
+                "value": 145,
+            },
+            {
+                "time": (
+                    "2026-08-07T08:00:20"
+                ),
+                "value": 160,
+            },
+        ],
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build()
+    )
+
+    assert (
+        result.intensity
+        is not None
+    )
+
+    assert (
+        len(
+            result.intensity.zones
+        )
+        == 5
+    )
+
+    assert (
+        result.intensity
+        .heart_rate_seconds
+        > 0
+    )
+
+    assert (
+        result.intensity
+        .average_rpe
+        == 6.0
+    )

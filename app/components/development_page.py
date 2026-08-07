@@ -189,7 +189,7 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=105,
+            height=88,
         )
         .configure_view(
             strokeWidth=0,
@@ -806,6 +806,108 @@ def _development_sport_volume_html(
         "</section>"
     )
 
+def _development_intensity_html(
+    development,
+) -> str:
+    """
+    Builds heart-rate zone distribution and RPE summary.
+    """
+
+    intensity = (
+        development.intensity
+    )
+
+    if intensity is None:
+
+        return (
+            '<section class="development-intensity-card">'
+            '<div class="development-intensity-heading">'
+            "Intensity & RPE"
+            "</div>"
+            '<div class="development-intensity-empty">'
+            "No intensity data available."
+            "</div>"
+            "</section>"
+        )
+
+    zone_rows = []
+
+    for zone in intensity.zones:
+
+        duration = (
+            _sport_volume_duration_label(
+                zone.duration_seconds
+            )
+        )
+
+        zone_rows.append(
+            (
+                '<div class="development-zone-row">'
+                '<span class="development-zone-name">'
+                f"{escape(zone.name)}"
+                "</span>"
+                '<div class="development-zone-track">'
+                '<div class="development-zone-fill" '
+                f'style="width:{zone.percentage:.1f}%">'
+                "</div>"
+                "</div>"
+                '<span class="development-zone-percent">'
+                f"{zone.percentage:.0f}%"
+                "</span>"
+                '<span class="development-zone-time">'
+                f"{escape(duration)}"
+                "</span>"
+                "</div>"
+            )
+        )
+
+    average_rpe = (
+        (
+            f"{intensity.average_rpe:.1f}"
+        )
+        if intensity.average_rpe
+        is not None
+        else "—"
+    )
+
+    source_label = {
+        "manual": "Manual HR zones",
+        "karvonen": "Karvonen HR zones",
+    }.get(
+        intensity.zone_source,
+        "Heart-rate zones",
+    )
+
+    return (
+        '<section class="development-intensity-card">'
+        '<div class="development-intensity-heading">'
+        "Intensity & RPE"
+        "</div>"
+        '<div class="development-intensity-subtitle">'
+        f"{escape(source_label)}"
+        "</div>"
+        '<div class="development-zone-rows">'
+        + "".join(
+            zone_rows
+        )
+        + "</div>"
+        '<div class="development-intensity-metrics">'
+        '<div>'
+        '<span>Average RPE</span>'
+        '<strong>'
+        f"{average_rpe}"
+        "</strong>"
+        "</div>"
+        '<div>'
+        '<span>RPE &gt; 8</span>'
+        '<strong>'
+        f"{intensity.high_rpe_sessions}"
+        "</strong>"
+        "</div>"
+        "</div>"
+        "</section>"
+    )
+
 def _development_overall_status(
     development,
 ) -> tuple[str, str]:
@@ -1131,43 +1233,46 @@ def _development_lower_styles() -> str:
     """
 
     return """
-    .development-volume-card {
-        height: 11rem;
-        padding: 0.65rem 0.75rem;
+    .development-volume-card,
+    .development-intensity-card {
+        height: 9.35rem;
+        padding: 0.5rem 0.6rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.012);
         box-sizing: border-box;
     }
 
-    .development-volume-heading {
-        font-size: 0.9rem;
+    .development-volume-heading,
+    .development-intensity-heading {
+        font-size: 0.8rem;
         font-weight: 750;
     }
 
-    .development-volume-subtitle {
-        margin-top: 0.1rem;
-        margin-bottom: 0.55rem;
-        font-size: 0.61rem;
+    .development-volume-subtitle,
+    .development-intensity-subtitle {
+        margin-top: 0.04rem;
+        margin-bottom: 0.34rem;
+        font-size: 0.53rem;
         opacity: 0.52;
     }
 
     .development-volume-rows {
         display: flex;
         flex-direction: column;
-        gap: 0.48rem;
+        gap: 0.3rem;
     }
 
     .development-volume-row-top {
         display: flex;
         justify-content: space-between;
-        gap: 0.5rem;
-        margin-bottom: 0.15rem;
+        gap: 0.4rem;
+        margin-bottom: 0.08rem;
     }
 
     .development-volume-sport {
         overflow: hidden;
-        font-size: 0.68rem;
+        font-size: 0.58rem;
         font-weight: 650;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1175,20 +1280,25 @@ def _development_lower_styles() -> str:
 
     .development-volume-value {
         flex: 0 0 auto;
-        font-size: 0.61rem;
+        font-size: 0.51rem;
         opacity: 0.6;
         white-space: nowrap;
     }
 
-    .development-volume-track {
+    .development-volume-track,
+    .development-zone-track {
         width: 100%;
-        height: 0.3rem;
         overflow: hidden;
         border-radius: 999px;
         background: rgba(128, 128, 128, 0.14);
     }
 
-    .development-volume-fill {
+    .development-volume-track {
+        height: 0.22rem;
+    }
+
+    .development-volume-fill,
+    .development-zone-fill {
         height: 100%;
         border-radius: inherit;
         background: currentColor;
@@ -1198,19 +1308,76 @@ def _development_lower_styles() -> str:
     .development-volume-total {
         display: flex;
         justify-content: space-between;
-        gap: 0.5rem;
-        margin-top: 0.62rem;
-        padding-top: 0.45rem;
+        gap: 0.35rem;
+        margin-top: 0.34rem;
+        padding-top: 0.26rem;
         border-top: 1px solid rgba(128, 128, 128, 0.14);
-        font-size: 0.62rem;
+        font-size: 0.5rem;
         font-weight: 650;
     }
 
-    .development-volume-empty {
-        padding-top: 2.4rem;
-        font-size: 0.68rem;
+    .development-volume-empty,
+    .development-intensity-empty {
+        padding-top: 2rem;
+        font-size: 0.6rem;
         opacity: 0.55;
         text-align: center;
+    }
+
+    .development-zone-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+    }
+
+    .development-zone-row {
+        display: grid;
+        grid-template-columns:
+            1.25rem minmax(0, 1fr) 1.7rem 2.2rem;
+        gap: 0.22rem;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .development-zone-name {
+        font-size: 0.56rem;
+        font-weight: 700;
+    }
+
+    .development-zone-track {
+        height: 0.3rem;
+    }
+
+    .development-zone-percent,
+    .development-zone-time {
+        font-size: 0.5rem;
+        opacity: 0.62;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .development-intensity-metrics {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 0.4rem;
+        margin-top: 0.32rem;
+        padding-top: 0.26rem;
+        border-top: 1px solid rgba(128, 128, 128, 0.14);
+    }
+
+    .development-intensity-metrics div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .development-intensity-metrics span {
+        font-size: 0.48rem;
+        opacity: 0.55;
+    }
+
+    .development-intensity-metrics strong {
+        font-size: 0.72rem;
     }
     """
 
@@ -1240,8 +1407,8 @@ def show_development_page(
         """
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 2.1rem;
-            padding-bottom: 0.5rem;
+            padding-top: 1.9rem;
+            padding-bottom: 0;
         }
 
         div[data-testid="stHeadingWithActionElements"] {
@@ -1330,8 +1497,9 @@ def show_development_page(
     (
         daily_load_column,
         volume_column,
+        intensity_column,
     ) = st.columns(
-        [1.7, 1],
+        [1.45, 0.85, 0.9],
         gap="medium",
     )
 
@@ -1375,6 +1543,20 @@ def show_development_page(
                 + _development_lower_styles()
                 + "</style>"
                 + _development_sport_volume_html(
+                    development
+                )
+            ),
+            unsafe_allow_html=True,
+        )
+
+    with intensity_column:
+
+        st.markdown(
+            (
+                "<style>"
+                + _development_lower_styles()
+                + "</style>"
+                + _development_intensity_html(
                     development
                 )
             ),

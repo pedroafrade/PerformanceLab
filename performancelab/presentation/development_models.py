@@ -19,6 +19,37 @@ class DevelopmentSportVolumeData:
     sessions: int
 
 @dataclass(frozen=True)
+class DevelopmentHeartRateZoneData:
+    """
+    Aggregated time in one heart-rate zone.
+    """
+
+    name: str
+    lower_bpm: int
+    upper_bpm: int
+    duration_seconds: float
+    percentage: float
+
+
+@dataclass(frozen=True)
+class DevelopmentIntensityData:
+    """
+    Objective heart-rate intensity and subjective RPE.
+    """
+
+    zones: tuple[
+        DevelopmentHeartRateZoneData,
+        ...,
+    ]
+
+    zone_source: str | None
+    heart_rate_seconds: float
+
+    average_rpe: float | None
+    sessions_with_rpe: int
+    high_rpe_sessions: int
+
+@dataclass(frozen=True)
 class DevelopmentData:
     """
     Presentation-ready view of the athlete's
@@ -54,3 +85,8 @@ class DevelopmentData:
         DevelopmentSportVolumeData,
         ...,
     ] = ()
+
+    intensity: (
+        DevelopmentIntensityData
+        | None
+    ) = None

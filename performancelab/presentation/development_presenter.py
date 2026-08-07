@@ -6,9 +6,16 @@ Development presenter.
 
 from performancelab.athlete import Athlete
 
+from performancelab.analysis import (
+    heart_rate_zone_durations,
+)
+
 from .dashboard import DashboardData
+
 from .development_models import (
     DevelopmentData,
+    DevelopmentHeartRateZoneData,
+    DevelopmentIntensityData,
     DevelopmentSportVolumeData,
 )
 
@@ -112,6 +119,152 @@ class DevelopmentPresenter:
             rows
         )
 
+    def _intensity_summary(
+        self,
+    ) -> DevelopmentIntensityData:
+        """
+        Aggregates heart-rate zone time and RPE
+        across completed activity history.
+        """
+
+        profile = (
+            self.athlete
+            .analytics
+            .heart_rate_profile
+        )
+
+        rpe_values = [
+            float(
+                workout.feedback
+                .effective_rpe
+            )
+            for workout in self.athlete.history
+            if (
+                workout.feedback
+                .effective_rpe
+                is not None
+            )
+        ]
+
+        if profile is None:
+
+            return (
+                DevelopmentIntensityData(
+                    zones=(),
+                    zone_source=None,
+                    heart_rate_seconds=0.0,
+                    average_rpe=(
+                        (
+                            sum(rpe_values)
+                            / len(rpe_values)
+                        )
+                        if rpe_values
+                        else None
+                    ),
+                    sessions_with_rpe=(
+                        len(rpe_values)
+                    ),
+                    high_rpe_sessions=sum(
+                        1
+                        for value
+                        in rpe_values
+                        if value > 8
+                    ),
+                )
+            )
+
+        totals = {
+            zone.name: 0.0
+            for zone in profile.zones
+        }
+
+        for workout in self.athlete.history:
+
+            workout_totals = (
+                heart_rate_zone_durations(
+                    workout,
+                    profile,
+                )
+            )
+
+            for (
+                zone_name,
+                seconds,
+            ) in workout_totals.items():
+
+                totals[
+                    zone_name
+                ] = (
+                    totals.get(
+                        zone_name,
+                        0.0,
+                    )
+                    + seconds
+                )
+
+        total_seconds = sum(
+            totals.values()
+        )
+
+        zones = tuple(
+            DevelopmentHeartRateZoneData(
+                name=zone.name,
+                lower_bpm=(
+                    zone.lower_bpm
+                ),
+                upper_bpm=(
+                    zone.upper_bpm
+                ),
+                duration_seconds=(
+                    totals.get(
+                        zone.name,
+                        0.0,
+                    )
+                ),
+                percentage=(
+                    (
+                        totals.get(
+                            zone.name,
+                            0.0,
+                        )
+                        / total_seconds
+                        * 100
+                    )
+                    if total_seconds > 0
+                    else 0.0
+                ),
+            )
+            for zone in profile.zones
+        )
+
+        return (
+            DevelopmentIntensityData(
+                zones=zones,
+                zone_source=(
+                    profile.source
+                ),
+                heart_rate_seconds=(
+                    total_seconds
+                ),
+                average_rpe=(
+                    (
+                        sum(rpe_values)
+                        / len(rpe_values)
+                    )
+                    if rpe_values
+                    else None
+                ),
+                sessions_with_rpe=(
+                    len(rpe_values)
+                ),
+                high_rpe_sessions=sum(
+                    1
+                    for value in rpe_values
+                    if value > 8
+                ),
+            )
+        )
+
     def build(self) -> DevelopmentData:
 
         dashboard = DashboardData(
@@ -178,5 +331,8 @@ class DevelopmentPresenter:
             ),
             sport_volume=(
                 self._sport_volume()
+            ),
+            intensity=(
+                self._intensity_summary()
             ),
         )

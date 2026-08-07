@@ -12,6 +12,8 @@ from .activities_presenter import (
 )
 from .development_models import (
     DevelopmentData,
+    DevelopmentHeartRateZoneData,
+    DevelopmentIntensityData,
     DevelopmentSportVolumeData,
 )
 from .development_presenter import (
@@ -125,6 +127,8 @@ __all__ = [
 
     # Development
     "DevelopmentData",
+    "DevelopmentHeartRateZoneData",
+    "DevelopmentIntensityData",
     "DevelopmentPresenter",
     "DevelopmentSportVolumeData",
 

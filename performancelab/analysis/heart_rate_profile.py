@@ -10,6 +10,8 @@ training zones.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
+from statistics import median
 
 from performancelab.physiology import (
     heart_rate_zones,
@@ -248,3 +250,240 @@ def build_heart_rate_profile(
         zones=zones,
         source="karvonen",
     )
+
+def _heart_rate_sample_timestamp(
+    value,
+) -> datetime | None:
+    """
+    Normalizes a sensor timestamp.
+    """
+
+    if isinstance(
+        value,
+        datetime,
+    ):
+        return value
+
+    if isinstance(
+        value,
+        str,
+    ):
+
+        try:
+
+            return datetime.fromisoformat(
+                value.replace(
+                    "Z",
+                    "+00:00",
+                )
+            )
+
+        except ValueError:
+
+            return None
+
+    return None
+
+
+def heart_rate_zone_durations(
+    workout,
+    profile: HeartRateProfile | None,
+) -> dict[str, float]:
+    """
+    Returns recorded seconds spent in each
+    heart-rate zone.
+
+    Timestamped samples use the interval until the
+    next sample. Large recording gaps are replaced by
+    the normal sampling interval so pauses do not
+    artificially inflate time in zone.
+    """
+
+    if (
+        profile is None
+        or not profile.has_zones
+    ):
+
+        return {}
+
+    totals = {
+        zone.name: 0.0
+        for zone in profile.zones
+    }
+
+    sensor = workout.sensors.get(
+        "heart_rate"
+    )
+
+    if not isinstance(
+        sensor,
+        (list, tuple),
+    ):
+
+        return totals
+
+    samples = []
+
+    for item in sensor:
+
+        if isinstance(
+            item,
+            dict,
+        ):
+
+            value = item.get(
+                "value"
+            )
+
+            timestamp = (
+                _heart_rate_sample_timestamp(
+                    item.get(
+                        "time"
+                    )
+                )
+            )
+
+        else:
+
+            value = item
+            timestamp = None
+
+        if (
+            not isinstance(
+                value,
+                (int, float),
+            )
+            or isinstance(
+                value,
+                bool,
+            )
+            or value <= 0
+        ):
+
+            continue
+
+        samples.append(
+            {
+                "time": timestamp,
+                "value": float(
+                    value
+                ),
+            }
+        )
+
+    if not samples:
+
+        return totals
+
+    timestamped = [
+        sample
+        for sample in samples
+        if sample["time"] is not None
+    ]
+
+    if len(timestamped) >= 2:
+
+        timestamped.sort(
+            key=lambda sample: (
+                sample["time"]
+            )
+        )
+
+        positive_intervals = []
+
+        for current, following in zip(
+            timestamped,
+            timestamped[1:],
+            strict=False,
+        ):
+
+            interval = (
+                following["time"]
+                - current["time"]
+            ).total_seconds()
+
+            if (
+                interval > 0
+                and interval <= 60
+            ):
+
+                positive_intervals.append(
+                    interval
+                )
+
+        nominal_interval = (
+            median(
+                positive_intervals
+            )
+            if positive_intervals
+            else 1.0
+        )
+
+        maximum_interval = max(
+            30.0,
+            nominal_interval * 5,
+        )
+
+        for index, sample in enumerate(
+            timestamped
+        ):
+
+            if (
+                index
+                < len(timestamped) - 1
+            ):
+
+                following = (
+                    timestamped[
+                        index + 1
+                    ]
+                )
+
+                interval = (
+                    following["time"]
+                    - sample["time"]
+                ).total_seconds()
+
+                if (
+                    interval <= 0
+                    or interval
+                    > maximum_interval
+                ):
+
+                    interval = (
+                        nominal_interval
+                    )
+
+            else:
+
+                interval = (
+                    nominal_interval
+                )
+
+            zone = profile.zone_for(
+                sample["value"]
+            )
+
+            if zone is not None:
+
+                totals[
+                    zone.name
+                ] += interval
+
+        return totals
+
+    # Fallback for sensor streams without timestamps.
+    # Each sample receives equal weight.
+    for sample in samples:
+
+        zone = profile.zone_for(
+            sample["value"]
+        )
+
+        if zone is not None:
+
+            totals[
+                zone.name
+            ] += 1.0
+
+    return totals
