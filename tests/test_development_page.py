@@ -293,7 +293,7 @@ def test_builds_development_load_form_chart():
 
     assert (
         specification["height"]
-        == 215
+        == 195
     )
 
 def test_builds_development_interpretation():

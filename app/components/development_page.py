@@ -388,7 +388,7 @@ def _development_load_form_chart(
             y="independent"
         )
         .properties(
-            height=215,
+            height=195,
         )
         .configure_view(
             strokeWidth=0,
@@ -569,7 +569,7 @@ def _development_summary_styles() -> str:
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.65rem;
-        margin: 0.45rem 0 0.65rem 0;
+        margin: 0.3rem 0 0.45rem 0;
     }
 
     .development-kpi-card {
@@ -577,8 +577,8 @@ def _development_summary_styles() -> str:
         grid-template-columns: 2.65rem minmax(0, 1fr);
         gap: 0.6rem;
         align-items: center;
-        min-height: 5.35rem;
-        padding: 0.55rem 0.7rem;
+        min-height: 4.9rem;
+        padding: 0.42rem 0.7rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.015);
@@ -1128,8 +1128,8 @@ def _development_interpretation_styles() -> str:
     return """
     .development-interpretation-card {
         height: 100%;
-        min-height: 17rem;
-        padding: 0.65rem 0.8rem;
+        min-height: 15.8rem;
+        padding: 0.55rem 0.7rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.012);
@@ -1407,16 +1407,16 @@ def show_development_page(
         """
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 1.9rem;
+            padding-top: 1.65rem;
             padding-bottom: 0;
         }
 
         div[data-testid="stHeadingWithActionElements"] {
-            margin-bottom: -0.15rem;
+            margin-bottom: -0.3rem;
         }
 
         div[data-testid="stCaptionContainer"] {
-            margin-bottom: 0.1rem;
+            margin-bottom: 0;
         }
         </style>
         """,
@@ -1488,11 +1488,6 @@ def show_development_page(
             ),
             unsafe_allow_html=True,
         )
-
-    st.markdown(
-        "<div style='height:0.2rem'></div>",
-        unsafe_allow_html=True,
-    )
 
     (
         daily_load_column,
