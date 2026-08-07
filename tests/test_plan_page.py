@@ -19,6 +19,7 @@ from app.components.plan_page import (
     _sidebar_week_html,
     _week_duration_label,
     _status_label,
+    _week_focus_items,
     _week_html,
     _week_is_current,
     _week_summary_label,
@@ -435,6 +436,15 @@ def test_week_html_contains_workout():
     )
     assert (
         "complete-plan-week-spacer"
+        in html
+    )
+    assert (
+        "complete-plan-focus"
+        in html
+    )
+
+    assert (
+        "Week focus"
         in html
     )
 
@@ -1615,4 +1625,89 @@ def test_does_not_build_event_information_without_race():
     assert (
         "Target event"
         not in result
+    )
+
+def test_builds_week_focus_from_key_sessions():
+
+    week = SimpleNamespace(
+        phase="Peak",
+        workouts=(
+            SimpleNamespace(
+                title="LT2 Run",
+                intensity="Hard",
+                is_race=False,
+            ),
+            SimpleNamespace(
+                title="Long Run",
+                intensity="Easy",
+                is_race=False,
+            ),
+        ),
+    )
+
+    result = (
+        _week_focus_items(
+            week
+        )
+    )
+
+    assert result == (
+        "Develop LT2 durability",
+        "Build aerobic durability",
+        "Prioritise race-specific quality",
+    )
+
+
+def test_builds_race_week_focus():
+
+    week = SimpleNamespace(
+        phase="Race",
+        workouts=(
+            SimpleNamespace(
+                title="Pre-race Run",
+                intensity="Easy",
+                is_race=False,
+            ),
+            SimpleNamespace(
+                title="III Trail Pé Firme",
+                intensity="Race effort",
+                is_race=True,
+            ),
+        ),
+    )
+
+    result = (
+        _week_focus_items(
+            week
+        )
+    )
+
+    assert result == (
+        "Preserve race readiness",
+        "Execute the target event",
+        "Preserve freshness for competition",
+    )
+
+
+def test_week_focus_uses_phase_when_no_key_session():
+
+    week = SimpleNamespace(
+        phase="Taper",
+        workouts=(
+            SimpleNamespace(
+                title="Easy Run",
+                intensity="Easy",
+                is_race=False,
+            ),
+        ),
+    )
+
+    result = (
+        _week_focus_items(
+            week
+        )
+    )
+
+    assert result == (
+        "Reduce fatigue and preserve readiness",
     )

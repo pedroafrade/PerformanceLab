@@ -1164,6 +1164,159 @@ def _week_summary_label(
         f"{week.planned_load:.0f} AU"
     )
 
+def _week_focus_items(
+    week,
+) -> tuple[str, ...]:
+    """
+    Builds a concise training focus from the sessions
+    already present in one plan week.
+    """
+
+    focus_items = []
+
+    def add_focus(
+        label: str,
+    ) -> None:
+
+        if (
+            label not in focus_items
+            and len(focus_items) < 3
+        ):
+            focus_items.append(
+                label
+            )
+
+    for workout in week.workouts:
+
+        title = (
+            str(
+                workout.title
+                or ""
+            )
+            .strip()
+            .lower()
+        )
+
+        intensity = (
+            str(
+                workout.intensity
+                or ""
+            )
+            .strip()
+            .lower()
+        )
+
+        if workout.is_race:
+
+            add_focus(
+                "Execute the target event"
+            )
+
+            continue
+
+        if (
+            "lt2" in title
+            or "threshold" in title
+        ):
+
+            add_focus(
+                "Develop LT2 durability"
+            )
+
+        elif (
+            "vo2" in title
+            or "vo₂" in title
+        ):
+
+            add_focus(
+                "Maintain VO₂max stimulus"
+            )
+
+        elif (
+            "long run" in title
+            or "long trail" in title
+        ):
+
+            add_focus(
+                "Build aerobic durability"
+            )
+
+        elif (
+            "hill" in title
+            or "climb" in title
+        ):
+
+            add_focus(
+                "Develop climbing strength"
+            )
+
+        elif (
+            "shakeout" in title
+            or "pre-race" in title
+            or "pre race" in title
+        ):
+
+            add_focus(
+                "Preserve race readiness"
+            )
+
+        elif (
+            "recovery" in title
+            or intensity == "recovery"
+        ):
+
+            add_focus(
+                "Promote recovery"
+            )
+
+    phase = (
+        str(
+            getattr(
+                week,
+                "phase",
+                "",
+            )
+            or ""
+        )
+        .strip()
+        .lower()
+    )
+
+    phase_focus = {
+        "build": (
+            "Build sustainable aerobic capacity"
+        ),
+        "peak": (
+            "Prioritise race-specific quality"
+        ),
+        "taper": (
+            "Reduce fatigue and preserve readiness"
+        ),
+        "race": (
+            "Preserve freshness for competition"
+        ),
+        "transition": (
+            "Restore freshness"
+        ),
+        "regeneration": (
+            "Restore freshness"
+        ),
+    }
+
+    fallback = phase_focus.get(
+        phase
+    )
+
+    if fallback is not None:
+
+        add_focus(
+            fallback
+        )
+
+    return tuple(
+        focus_items
+    )
+
 def _week_html(
     week,
 ) -> str:
@@ -1174,6 +1327,36 @@ def _week_html(
     parts = [
         '<div class="complete-plan-week">'
     ]
+
+    focus_items = (
+        _week_focus_items(
+            week
+        )
+    )
+
+    if focus_items:
+
+        focus_html = "".join(
+            (
+                '<span class="complete-plan-focus-item">'
+                f"{escape(item)}"
+                "</span>"
+            )
+            for item in focus_items
+        )
+
+        parts.append(
+            (
+                '<section class="complete-plan-focus">'
+                '<div class="complete-plan-focus-label">'
+                "Week focus"
+                "</div>"
+                '<div class="complete-plan-focus-items">'
+                f"{focus_html}"
+                "</div>"
+                "</section>"
+            )
+        )
 
     race_workouts = tuple(
         workout
@@ -2060,6 +2243,61 @@ def _plan_styles() -> None:
             height: 0.38rem;
             min-height: 0.38rem;
             flex: 0 0 0.38rem;
+        }
+        .complete-plan-focus {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            min-height: 2.15rem;
+            padding: 0.35rem 0.55rem;
+            border: 1px solid rgba(128, 128, 128, 0.17);
+            border-radius: 0.5rem;
+            background: rgba(128, 128, 128, 0.02);
+            box-sizing: border-box;
+        }
+
+        .complete-plan-focus-label {
+            flex: 0 0 auto;
+            font-size: 0.64rem;
+            font-weight: 750;
+            text-transform: uppercase;
+            opacity: 0.58;
+            white-space: nowrap;
+        }
+
+        .complete-plan-focus-items {
+            display: flex;
+            min-width: 0;
+            flex-wrap: wrap;
+            gap: 0.28rem 0.7rem;
+            align-items: center;
+        }
+
+        .complete-plan-focus-item {
+            position: relative;
+            font-size: 0.69rem;
+            font-weight: 600;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        .complete-plan-focus-item + .complete-plan-focus-item::before {
+            content: "·";
+            position: absolute;
+            left: -0.45rem;
+            opacity: 0.42;
+        }
+
+        @media (max-width: 820px) {
+            .complete-plan-focus {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .complete-plan-focus-item {
+                white-space: normal;
+            }
         }
         .complete-plan-event {
             display: grid;
