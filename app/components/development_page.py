@@ -1128,7 +1128,7 @@ def _development_interpretation_styles() -> str:
     return """
     .development-interpretation-card {
         height: 100%;
-        min-height: 15.8rem;
+        min-height: 15.5rem;
         padding: 0.55rem 0.7rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
@@ -1405,6 +1405,7 @@ def show_development_page(
 
     st.markdown(
         """
+        
         <style>
         div[data-testid="stMainBlockContainer"] {
             padding-top: 1.65rem;
@@ -1417,6 +1418,9 @@ def show_development_page(
 
         div[data-testid="stCaptionContainer"] {
             margin-bottom: 0;
+        }
+        .development-row-gap {
+            height: 0.25rem;
         }
         </style>
         """,
@@ -1488,6 +1492,13 @@ def show_development_page(
             ),
             unsafe_allow_html=True,
         )
+    st.markdown(
+        (
+            '<div class="development-row-gap">'
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
 
     (
         daily_load_column,
