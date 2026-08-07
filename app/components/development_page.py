@@ -189,7 +189,7 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=190,
+            height=125,
         )
         .configure_view(
             strokeWidth=0,
@@ -388,7 +388,7 @@ def _development_load_form_chart(
             y="independent"
         )
         .properties(
-            height=290,
+            height=215,
         )
         .configure_view(
             strokeWidth=0,
@@ -568,17 +568,17 @@ def _development_summary_styles() -> str:
     .development-kpi-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin: 0.8rem 0 1rem 0;
+        gap: 0.65rem;
+        margin: 0.45rem 0 0.65rem 0;
     }
 
     .development-kpi-card {
         display: grid;
-        grid-template-columns: 3.2rem minmax(0, 1fr);
-        gap: 0.7rem;
+        grid-template-columns: 2.65rem minmax(0, 1fr);
+        gap: 0.6rem;
         align-items: center;
-        min-height: 7.1rem;
-        padding: 0.85rem 0.9rem;
+        min-height: 5.35rem;
+        padding: 0.55rem 0.7rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.015);
@@ -589,12 +589,12 @@ def _development_summary_styles() -> str:
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 3rem;
-        height: 3rem;
+        width: 2.45rem;
+        height: 2.45rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 50%;
         background: rgba(128, 128, 128, 0.025);
-        font-size: 1.35rem;
+        font-size: 1.05rem;
         font-weight: 500;
     }
 
@@ -609,10 +609,10 @@ def _development_summary_styles() -> str:
     }
 
     .development-kpi-value {
-        margin-bottom: 0.08rem;
-        font-size: 1.45rem;
+        margin-bottom: 0.04rem;
+        font-size: 1.22rem;
         font-weight: 750;
-        line-height: 1.05;
+        line-height: 1;
     }
 
     .development-kpi-status {
@@ -624,7 +624,7 @@ def _development_summary_styles() -> str:
     }
 
     .development-kpi-context {
-        margin-top: 0.45rem;
+        margin-top: 0.22rem;
         overflow: hidden;
         font-size: 0.61rem;
         opacity: 0.48;
@@ -867,8 +867,8 @@ def _development_interpretation_styles() -> str:
     return """
     .development-interpretation-card {
         height: 100%;
-        min-height: 21rem;
-        padding: 0.9rem 1rem;
+        min-height: 17rem;
+        padding: 0.65rem 0.8rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.012);
@@ -876,14 +876,14 @@ def _development_interpretation_styles() -> str:
     }
 
     .development-interpretation-heading {
-        margin-bottom: 0.7rem;
+        margin-bottom: 0.45rem;
         font-size: 0.92rem;
         font-weight: 750;
     }
 
     .development-interpretation-summary {
-        margin-bottom: 0.75rem;
-        padding: 0.62rem 0.7rem;
+        margin-bottom: 0.4rem;
+        padding: 0.45rem 0.55rem;
         border: 1px solid rgba(128, 128, 128, 0.20);
         border-radius: 0.5rem;
         background: rgba(128, 128, 128, 0.025);
@@ -909,10 +909,10 @@ def _development_interpretation_styles() -> str:
 
     .development-interpretation-item {
         display: grid;
-        grid-template-columns: 1.6rem minmax(0, 1fr);
-        gap: 0.55rem;
+        grid-template-columns: 1.35rem minmax(0, 1fr);
+        gap: 0.42rem;
         align-items: start;
-        padding: 0.48rem 0;
+        padding: 0.31rem 0;
         border-bottom: 1px solid rgba(128, 128, 128, 0.14);
     }
 
@@ -947,8 +947,8 @@ def _development_interpretation_styles() -> str:
     }
 
     .development-interpretation-recommendation {
-        margin-top: 0.72rem;
-        padding: 0.55rem 0.65rem;
+        margin-top: 0.4rem;
+        padding: 0.4rem 0.5rem;
         border: 1px solid rgba(128, 128, 128, 0.20);
         border-radius: 0.45rem;
     }
@@ -989,6 +989,26 @@ def show_development_page(
         ).build()
     )
 
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 2.1rem;
+            padding-bottom: 0.5rem;
+        }
+
+        div[data-testid="stHeadingWithActionElements"] {
+            margin-bottom: -0.15rem;
+        }
+
+        div[data-testid="stCaptionContainer"] {
+            margin-bottom: 0.1rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    
     st.markdown(
         (
             "<style>"
@@ -1055,7 +1075,10 @@ def show_development_page(
             unsafe_allow_html=True,
         )
 
-    st.divider()
+    st.markdown(
+        "<div style='height:0.2rem'></div>",
+        unsafe_allow_html=True,
+    )
 
     st.subheader(
         "Daily training load"

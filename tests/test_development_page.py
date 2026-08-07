@@ -288,7 +288,7 @@ def test_builds_development_load_form_chart():
 
     assert (
         specification["height"]
-        == 290
+        == 215
     )
 
 def test_builds_development_interpretation():
@@ -386,7 +386,7 @@ def test_builds_daily_training_load_chart():
 
     assert (
         specification["height"]
-        == 190
+        == 125
     )
 
     assert (
