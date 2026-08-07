@@ -7,13 +7,16 @@ from datetime import date
 from app.components.development_page import (
     _daily_load_chart_rows,
     _development_chart_rows,
+    _development_interpretation_html,
     _development_load_form_chart,
+    _development_overall_status,
     _development_summary_cards_html,
     _form_status,
     _load_status,
     _recovery_status,
     show_development_page,
 )
+
 from performancelab.presentation import (
     DevelopmentData,
 )
@@ -285,4 +288,78 @@ def test_builds_development_load_form_chart():
     assert (
         specification["height"]
         == 290
+    )
+
+def test_builds_development_interpretation():
+
+    result = (
+        _development_interpretation_html(
+            create_development_data()
+        )
+    )
+
+    assert (
+        "development-interpretation-card"
+        in result
+    )
+
+    assert (
+        "Interpretation"
+        in result
+    )
+
+    assert (
+        "Training load"
+        in result
+    )
+
+    assert (
+        "Recovery"
+        in result
+    )
+
+    assert (
+        "Form"
+        in result
+    )
+
+    assert (
+        "Recommendation"
+        in result
+    )
+
+    assert (
+        "150 AU"
+        in result
+    )
+
+    assert (
+        "120 AU"
+        in result
+    )
+
+    assert (
+        "-7.2 TSB"
+        in result
+    )
+
+
+def test_prioritises_low_recovery_in_overall_status():
+
+    development = (
+        create_development_data()
+    )
+
+    result = (
+        _development_overall_status(
+            development
+        )
+    )
+
+    assert result == (
+        "Recovery deserves attention",
+        (
+            "The current state suggests that "
+            "recovery should take priority."
+        ),
     )
