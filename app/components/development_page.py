@@ -73,10 +73,21 @@ def _development_load_form_chart(
         )
     )
 
+    chart_rows = [
+        {
+            **row,
+            "Date": (
+                row["Date"]
+                .isoformat()
+            ),
+        }
+        for row in rows
+    ]
+
     base = (
         alt.Chart(
             alt.Data(
-                values=rows
+                values=chart_rows
             )
         )
         .encode(
