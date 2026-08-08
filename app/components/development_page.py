@@ -1389,102 +1389,182 @@ def _development_lower_styles() -> str:
     """
 
     return """
-    .development-volume-card,
-
-.development-intensity-card {
+.development-volume-card,
+.development-intensity-card,
+.development-reference-card {
     height: 9.1rem;
     padding: 0.48rem 0.6rem 0.42rem;
     border: 1px solid rgba(128, 128, 128, 0.22);
     border-radius: 0.65rem;
     background: rgba(128, 128, 128, 0.012);
     box-sizing: border-box;
-
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
 }
 
-.development-intensity-heading {
-    font-size: 0.88rem;
-    line-height: 1.05;
-    font-weight: 750;
+/* Pace & thresholds needs slightly more vertical room */
+.development-reference-card {
+    height: 9.35rem;
 }
 
-.development-intensity-subtitle {
-    margin-top: 0.02rem;
-    margin-bottom: 0.22rem;
-    font-size: 0.61rem;
-    line-height: 1.1;
-    opacity: 0.52;
-}
+    .development-volume-card,
+    .development-intensity-card {
+        display: flex;
+        flex-direction: column;
+    }
 
-.development-zone-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 0.13rem;
-}
+    .development-volume-heading,
+    .development-intensity-heading,
+    .development-reference-heading {
+        font-size: 0.88rem;
+        line-height: 1.05;
+        font-weight: 750;
+    }
 
-.development-zone-row {
-    display: grid;
-    grid-template-columns:
-        1.25rem minmax(0, 1fr) 1.7rem 2.2rem;
-    gap: 0.22rem;
-    align-items: center;
-    min-width: 0;
-}
+    .development-volume-subtitle,
+    .development-intensity-subtitle,
+    .development-reference-subtitle {
+        margin-top: 0.02rem;
+        margin-bottom: 0.22rem;
+        font-size: 0.61rem;
+        line-height: 1.1;
+        opacity: 0.52;
+    }
 
-.development-zone-name {
-    font-size: 0.64rem;
-    line-height: 1.05;
-    font-weight: 700;
-}
+    /* Volume by sport */
 
-.development-zone-track {
-    height: 0.28rem;
-}
+    .development-volume-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.24rem;
+    }
 
-.development-zone-percent,
-.development-zone-time {
-    font-size: 0.58rem;
-    line-height: 1.05;
-    opacity: 0.62;
-    text-align: right;
-    white-space: nowrap;
-}
+    .development-volume-row-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.4rem;
+        margin-bottom: 0.06rem;
+        align-items: center;
+    }
 
-.development-intensity-metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.4rem;
+    .development-volume-sport {
+        overflow: hidden;
+        font-size: 0.68rem;
+        line-height: 1.05;
+        font-weight: 650;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-    margin-top: auto;
-    padding-top: 0.22rem;
+    .development-volume-value {
+        flex: 0 0 auto;
+        font-size: 0.62rem;
+        line-height: 1.05;
+        opacity: 0.6;
+        white-space: nowrap;
+    }
 
-    border-top: 1px solid rgba(128, 128, 128, 0.14);
-}
+    .development-volume-track,
+    .development-zone-track {
+        width: 100%;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(128, 128, 128, 0.14);
+    }
 
-.development-intensity-metrics div {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
+    .development-volume-track {
+        height: 0.24rem;
+    }
 
-.development-intensity-metrics span {
-    font-size: 0.57rem;
-    line-height: 1.05;
-    opacity: 0.55;
-}
+    .development-volume-fill,
+    .development-zone-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: currentColor;
+        opacity: 0.52;
+    }
 
-.development-intensity-metrics strong {
-    margin-top: 0.05rem;
-    font-size: 0.8rem;
-    line-height: 1;
-}
+    .development-volume-total {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.35rem;
+        margin-top: auto;
+        padding-top: 0.24rem;
+        border-top: 1px solid rgba(128, 128, 128, 0.14);
+        font-size: 0.61rem;
+        line-height: 1.05;
+        font-weight: 650;
+    }
+
+    /* Intensity & RPE */
+
+    .development-zone-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 0.13rem;
+    }
+
+    .development-zone-row {
+        display: grid;
+        grid-template-columns:
+            1.25rem minmax(0, 1fr) 1.7rem 2.2rem;
+        gap: 0.22rem;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .development-zone-name {
+        font-size: 0.64rem;
+        line-height: 1.05;
+        font-weight: 700;
+    }
+
+    .development-zone-track {
+        height: 0.28rem;
+    }
+
+    .development-zone-percent,
+    .development-zone-time {
+        font-size: 0.58rem;
+        line-height: 1.05;
+        opacity: 0.62;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .development-intensity-metrics {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 0.4rem;
+        margin-top: auto;
+        padding-top: 0.2rem;
+        border-top: 1px solid rgba(128, 128, 128, 0.14);
+    }
+
+    .development-intensity-metrics div {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .development-intensity-metrics span {
+        font-size: 0.57rem;
+        line-height: 1.05;
+        opacity: 0.55;
+    }
+
+    .development-intensity-metrics strong {
+        margin-top: 0.04rem;
+        font-size: 0.78rem;
+        line-height: 1;
+    }
+
+    /* Pace & thresholds */
 
     .development-reference-zones {
         display: flex;
         flex-direction: column;
-        gap: 0.19rem;
+        gap: 0.15rem;
     }
 
     .development-reference-row,
@@ -1496,8 +1576,8 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-row {
-        font-size: 0.73rem;
-        line-height: 1.1;
+        font-size: 0.67rem;
+        line-height: 1.05;
     }
 
     .development-reference-label {
@@ -1505,7 +1585,8 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-value {
-        font-size: 0.69rem;
+        font-size: 0.64rem;
+        line-height: 1.05;
         font-weight: 600;
         white-space: nowrap;
     }
@@ -1514,16 +1595,16 @@ def _development_lower_styles() -> str:
         display: grid;
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
-        gap: 0.18rem 0.55rem;
-        margin-top: 0.5rem;
-        padding-top: 0.4rem;
+        gap: 0.12rem 0.5rem;
+        margin-top: 0.28rem;
+        padding-top: 0.24rem;
         border-top: 1px solid rgba(128, 128, 128, 0.14);
     }
 
     .development-reference-summary-row {
         min-width: 0;
-        font-size: 0.67rem;
-        line-height: 1.1;
+        font-size: 0.61rem;
+        line-height: 1.05;
     }
 
     .development-reference-summary-row span {
@@ -1531,8 +1612,17 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-summary-row strong {
-        font-size: 0.7rem;
+        font-size: 0.64rem;
         white-space: nowrap;
+    }
+
+    .development-volume-empty,
+    .development-intensity-empty,
+    .development-reference-empty {
+        padding-top: 2rem;
+        font-size: 0.62rem;
+        opacity: 0.55;
+        text-align: center;
     }
     """
 
@@ -1576,7 +1666,7 @@ def show_development_page(
             padding-top: 3.65rem;
             padding-bottom: 0;
         }
-        
+
         section[data-testid="stMain"] > div {
             padding-bottom: 0 !important;
         }
@@ -1654,8 +1744,8 @@ def show_development_page(
         ) {
             height: 0;
             min-height: 0;
-            margin-top: -0.55rem;
-            margin-bottom: -1.45rem;
+            margin-top: -0.65rem;
+            margin-bottom: -1.55rem;
         }
         </style>
 
