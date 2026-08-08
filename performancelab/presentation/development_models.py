@@ -50,6 +50,35 @@ class DevelopmentIntensityData:
     high_rpe_sessions: int
 
 @dataclass(frozen=True)
+class DevelopmentPaceZoneData:
+    """
+    One running pace training zone.
+    """
+
+    name: str
+    faster_pace: float
+    slower_pace: float
+
+
+@dataclass(frozen=True)
+class DevelopmentPerformanceReferencesData:
+    """
+    Stable physiological performance references.
+    """
+
+    pace_zones: tuple[
+        DevelopmentPaceZoneData,
+        ...,
+    ]
+
+    easy_pace: float | None
+    tempo_pace: float | None
+    lt2_pace: float | None
+
+    threshold_hr: int | None
+    ftp: float | None
+
+@dataclass(frozen=True)
 class DevelopmentData:
     """
     Presentation-ready view of the athlete's
@@ -88,5 +117,10 @@ class DevelopmentData:
 
     intensity: (
         DevelopmentIntensityData
+        | None
+    ) = None
+
+    performance_references: (
+        DevelopmentPerformanceReferencesData
         | None
     ) = None

@@ -676,6 +676,32 @@ def _sport_volume_duration_label(
 
     return f"{minutes}m"
 
+def _pace_label(
+    pace: float | None,
+) -> str:
+    """
+    Formats minutes per kilometre as mm:ss /km.
+    """
+
+    if (
+        pace is None
+        or pace <= 0
+    ):
+
+        return "—"
+
+    total_seconds = round(
+        pace * 60
+    )
+
+    minutes, seconds = divmod(
+        total_seconds,
+        60,
+    )
+
+    return (
+        f"{minutes}:{seconds:02d} /km"
+    )
 
 def _development_sport_volume_html(
     development,
@@ -905,6 +931,135 @@ def _development_intensity_html(
         "</strong>"
         "</div>"
         "</div>"
+        "</section>"
+    )
+
+def _development_performance_references_html(
+    development,
+) -> str:
+    """
+    Builds running pace and threshold references.
+    """
+
+    references = (
+        development
+        .performance_references
+    )
+
+    if references is None:
+
+        return (
+            '<section class="development-reference-card">'
+            '<div class="development-reference-heading">'
+            "Performance references"
+            "</div>"
+            '<div class="development-reference-empty">'
+            "No performance references available."
+            "</div>"
+            "</section>"
+        )
+
+    zone_rows = []
+
+    for zone in references.pace_zones:
+
+        pace_range = (
+            f"{_pace_label(zone.faster_pace)}"
+            " – "
+            f"{_pace_label(zone.slower_pace)}"
+        )
+
+        zone_rows.append(
+            (
+                '<div class="development-reference-row">'
+                '<span class="development-reference-label">'
+                f"{escape(zone.name)}"
+                "</span>"
+                '<strong class="development-reference-value">'
+                f"{escape(pace_range)}"
+                "</strong>"
+                "</div>"
+            )
+        )
+
+    threshold_rows = (
+        (
+            "Easy pace",
+            _pace_label(
+                references.easy_pace
+            ),
+        ),
+        (
+            "Tempo",
+            _pace_label(
+                references.tempo_pace
+            ),
+        ),
+        (
+            "LT2 pace",
+            _pace_label(
+                references.lt2_pace
+            ),
+        ),
+        (
+            "Threshold HR",
+            (
+                f"{references.threshold_hr} bpm"
+                if references.threshold_hr
+                is not None
+                else "—"
+            ),
+        ),
+    )
+
+    if references.ftp is not None:
+
+        threshold_rows = (
+            *threshold_rows,
+            (
+                "FTP",
+                f"{references.ftp:.0f} W",
+            ),
+        )
+
+    summary_html = []
+
+    for (
+        label,
+        value,
+    ) in threshold_rows:
+
+        summary_html.append(
+            (
+                '<div class="development-reference-summary-row">'
+                '<span>'
+                f"{escape(label)}"
+                "</span>"
+                "<strong>"
+                f"{escape(value)}"
+                "</strong>"
+                "</div>"
+            )
+        )
+
+    return (
+        '<section class="development-reference-card">'
+        '<div class="development-reference-heading">'
+        "Performance references"
+        "</div>"
+        '<div class="development-reference-subtitle">'
+        "Running pace zones and thresholds"
+        "</div>"
+        '<div class="development-reference-zones">'
+        + "".join(
+            zone_rows
+        )
+        + "</div>"
+        '<div class="development-reference-summary">'
+        + "".join(
+            summary_html
+        )
+        + "</div>"
         "</section>"
     )
 
@@ -1379,6 +1534,84 @@ def _development_lower_styles() -> str:
     .development-intensity-metrics strong {
         font-size: 0.72rem;
     }
+
+    .development-reference-card {
+        height: 9.35rem;
+        padding: 0.5rem 0.6rem;
+        border: 1px solid rgba(128, 128, 128, 0.22);
+        border-radius: 0.65rem;
+        background: rgba(128, 128, 128, 0.012);
+        box-sizing: border-box;
+    }
+
+    .development-reference-heading {
+        font-size: 0.8rem;
+        font-weight: 750;
+    }
+
+    .development-reference-subtitle {
+        margin-top: 0.04rem;
+        margin-bottom: 0.28rem;
+        font-size: 0.53rem;
+        opacity: 0.52;
+    }
+
+    .development-reference-zones {
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+    }
+
+    .development-reference-row,
+    .development-reference-summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.35rem;
+        align-items: center;
+    }
+
+    .development-reference-row {
+        font-size: 0.51rem;
+    }
+
+    .development-reference-label {
+        font-weight: 700;
+    }
+
+    .development-reference-value {
+        font-size: 0.49rem;
+        white-space: nowrap;
+    }
+
+    .development-reference-summary {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: 0.14rem 0.45rem;
+        margin-top: 0.3rem;
+        padding-top: 0.24rem;
+        border-top: 1px solid rgba(128, 128, 128, 0.14);
+    }
+
+    .development-reference-summary-row {
+        min-width: 0;
+        font-size: 0.48rem;
+    }
+
+    .development-reference-summary-row span {
+        opacity: 0.56;
+    }
+
+    .development-reference-summary-row strong {
+        white-space: nowrap;
+    }
+
+    .development-reference-empty {
+        padding-top: 2rem;
+        font-size: 0.6rem;
+        opacity: 0.55;
+        text-align: center;
+    }
     """
 
 def show_development_page(
@@ -1504,9 +1737,10 @@ def show_development_page(
         daily_load_column,
         volume_column,
         intensity_column,
+        references_column,
     ) = st.columns(
-        [1.45, 0.85, 0.9],
-        gap="medium",
+        [1.35, 0.72, 0.78, 0.85],
+        gap="small",
     )
 
     with daily_load_column:
@@ -1563,6 +1797,20 @@ def show_development_page(
                 + _development_lower_styles()
                 + "</style>"
                 + _development_intensity_html(
+                    development
+                )
+            ),
+            unsafe_allow_html=True,
+        )
+
+    with references_column:
+
+        st.markdown(
+            (
+                "<style>"
+                + _development_lower_styles()
+                + "</style>"
+                + _development_performance_references_html(
                     development
                 )
             ),

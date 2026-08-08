@@ -357,3 +357,36 @@ def test_builds_heart_rate_zone_distribution():
         .average_rpe
         == 6.0
     )
+
+def test_builds_performance_references():
+
+    athlete = Athlete(
+        name="Pedro",
+        max_hr=190,
+        resting_hr=50,
+        threshold_hr=177,
+        ftp=220,
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build()
+    )
+
+    references = (
+        result
+        .performance_references
+    )
+
+    assert references is not None
+
+    assert (
+        references.threshold_hr
+        == 177
+    )
+
+    assert (
+        references.ftp
+        == 220
+    )

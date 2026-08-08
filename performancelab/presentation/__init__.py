@@ -14,6 +14,8 @@ from .development_models import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
     DevelopmentIntensityData,
+    DevelopmentPaceZoneData,
+    DevelopmentPerformanceReferencesData,
     DevelopmentSportVolumeData,
 )
 from .development_presenter import (
@@ -129,6 +131,8 @@ __all__ = [
     "DevelopmentData",
     "DevelopmentHeartRateZoneData",
     "DevelopmentIntensityData",
+    "DevelopmentPaceZoneData",
+    "DevelopmentPerformanceReferencesData",
     "DevelopmentPresenter",
     "DevelopmentSportVolumeData",
 

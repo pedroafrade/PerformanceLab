@@ -11,6 +11,8 @@ from app.components.development_page import (
     _development_intensity_html,
     _development_interpretation_html,
     _development_load_form_chart,
+    _development_performance_references_html,
+    _pace_label,
     _development_overall_status,
     _development_sport_volume_html,
     _sport_volume_duration_label,
@@ -25,6 +27,8 @@ from performancelab.presentation import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
     DevelopmentIntensityData,
+    DevelopmentPaceZoneData,
+    DevelopmentPerformanceReferencesData,
 )
 
 
@@ -555,3 +559,76 @@ def test_builds_development_intensity_card():
     assert "Average RPE" in result
     assert "6.2" in result
     assert "RPE &gt; 8" in result
+
+def test_formats_pace_label():
+
+    assert (
+        _pace_label(
+            5.2
+        )
+        == "5:12 /km"
+    )
+
+    assert (
+        _pace_label(
+            None
+        )
+        == "—"
+    )
+
+
+def test_builds_performance_references_card():
+
+    development = (
+        create_development_data()
+    )
+
+    development = type(
+        "DevelopmentWithReferences",
+        (),
+        {
+            **development.__dict__,
+            "performance_references": (
+                DevelopmentPerformanceReferencesData(
+                    pace_zones=(
+                        DevelopmentPaceZoneData(
+                            name="Z1",
+                            faster_pace=6.0,
+                            slower_pace=6.5,
+                        ),
+                        DevelopmentPaceZoneData(
+                            name="Z2",
+                            faster_pace=5.5,
+                            slower_pace=6.0,
+                        ),
+                    ),
+                    easy_pace=6.1,
+                    tempo_pace=5.1,
+                    lt2_pace=4.95,
+                    threshold_hr=177,
+                    ftp=220,
+                )
+            ),
+        },
+    )()
+
+    result = (
+        _development_performance_references_html(
+            development
+        )
+    )
+
+    assert (
+        "Performance references"
+        in result
+    )
+
+    assert "Z1" in result
+    assert "Z2" in result
+    assert "6:00 /km" in result
+    assert "6:30 /km" in result
+    assert "Easy pace" in result
+    assert "Tempo" in result
+    assert "LT2 pace" in result
+    assert "177 bpm" in result
+    assert "220 W" in result

@@ -16,7 +16,13 @@ from .development_models import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
     DevelopmentIntensityData,
+    DevelopmentPaceZoneData,
+    DevelopmentPerformanceReferencesData,
     DevelopmentSportVolumeData,
+)
+
+from performancelab.physiology import (
+    pace_zones,
 )
 
 
@@ -265,6 +271,87 @@ class DevelopmentPresenter:
             )
         )
 
+    def _performance_references(
+        self,
+    ) -> DevelopmentPerformanceReferencesData:
+        """
+        Builds pace zones and physiological
+        performance references.
+        """
+
+        analytics = (
+            self.athlete.analytics
+        )
+
+        profile = (
+            analytics.performance_profile
+        )
+
+        threshold_pace = (
+            profile.threshold_pace
+        )
+
+        zone_map = (
+            pace_zones(
+                threshold_pace
+            )
+            if threshold_pace is not None
+            else None
+        )
+
+        pace_zone_rows = []
+
+        if zone_map is not None:
+
+            for (
+                zone_name,
+                limits,
+            ) in zone_map.items():
+
+                faster_pace = min(
+                    limits
+                )
+
+                slower_pace = max(
+                    limits
+                )
+
+                pace_zone_rows.append(
+                    DevelopmentPaceZoneData(
+                        name=zone_name,
+                        faster_pace=(
+                            faster_pace
+                        ),
+                        slower_pace=(
+                            slower_pace
+                        ),
+                    )
+                )
+
+        return (
+            DevelopmentPerformanceReferencesData(
+                pace_zones=tuple(
+                    pace_zone_rows
+                ),
+                easy_pace=(
+                    analytics
+                    .typical_easy_running_pace
+                ),
+                tempo_pace=(
+                    profile.tempo_pace
+                ),
+                lt2_pace=(
+                    profile.threshold_pace
+                ),
+                threshold_hr=(
+                    profile.threshold_hr
+                ),
+                ftp=(
+                    profile.ftp
+                ),
+            )
+        )
+
     def build(self) -> DevelopmentData:
 
         dashboard = DashboardData(
@@ -334,5 +421,8 @@ class DevelopmentPresenter:
             ),
             intensity=(
                 self._intensity_summary()
+            ),
+            performance_references=(
+                self._performance_references()
             ),
         )
