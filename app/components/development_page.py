@@ -189,7 +189,7 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=130,
+            height=175,
         )
         .configure_view(
             strokeWidth=0,
@@ -388,7 +388,7 @@ def _development_load_form_chart(
             y="independent"
         )
         .properties(
-            height=180,
+            height=225,
         )
         .configure_view(
             strokeWidth=0,
@@ -569,7 +569,7 @@ def _development_summary_styles() -> str:
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.65rem;
-        margin: 0.3rem 0 0.25rem 0;
+        margin: 0 0 0.15rem 0;
     }
 
     .development-kpi-card {
@@ -577,8 +577,8 @@ def _development_summary_styles() -> str:
         grid-template-columns: 2.65rem minmax(0, 1fr);
         gap: 0.6rem;
         align-items: center;
-        min-height: 4.9rem;
-        padding: 0.42rem 0.7rem;
+        min-height: 4.65rem;
+        padding: 0.34rem 0.7rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
         background: rgba(128, 128, 128, 0.015);
@@ -589,12 +589,12 @@ def _development_summary_styles() -> str:
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2.45rem;
-        height: 2.45rem;
+        width: 2.4rem;
+        height: 2.4rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 50%;
         background: rgba(128, 128, 128, 0.025);
-        font-size: 1.05rem;
+        font-size: 1.02rem;
         font-weight: 500;
     }
 
@@ -603,30 +603,30 @@ def _development_summary_styles() -> str:
     }
 
     .development-kpi-label {
-        margin-bottom: 0.18rem;
-        font-size: 0.72rem;
+        margin-bottom: 0.1rem;
+        font-size: 0.7rem;
         opacity: 0.65;
     }
 
     .development-kpi-value {
-        margin-bottom: 0.04rem;
-        font-size: 1.22rem;
+        margin-bottom: 0.03rem;
+        font-size: 1.2rem;
         font-weight: 750;
         line-height: 1;
     }
 
     .development-kpi-status {
         overflow: hidden;
-        font-size: 0.76rem;
+        font-size: 0.74rem;
         font-weight: 650;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     .development-kpi-context {
-        margin-top: 0.22rem;
+        margin-top: 0.14rem;
         overflow: hidden;
-        font-size: 0.61rem;
+        font-size: 0.59rem;
         opacity: 0.48;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1382,196 +1382,122 @@ def _development_interpretation_styles() -> str:
         line-height: 1.35;
     }
     """
+
 def _development_lower_styles() -> str:
     """
-    Returns styles for compact lower development cards.
+    Returns styles for lower development cards.
     """
 
     return """
     .development-volume-card,
-    .development-intensity-card {
-        height: 9.1rem;
-        padding: 0.5rem 0.6rem;
-        border: 1px solid rgba(128, 128, 128, 0.22);
-        border-radius: 0.65rem;
-        background: rgba(128, 128, 128, 0.012);
-        box-sizing: border-box;
-    }
 
-    .development-volume-heading,
-    .development-intensity-heading {
-        font-size: 0.88rem;
-        font-weight: 750;
-    }
+.development-intensity-card {
+    height: 9.1rem;
+    padding: 0.48rem 0.6rem 0.42rem;
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 0.65rem;
+    background: rgba(128, 128, 128, 0.012);
+    box-sizing: border-box;
 
-    .development-volume-subtitle,
-    .development-intensity-subtitle {
-        margin-top: 0.04rem;
-        margin-bottom: 0.34rem;
-        font-size: 0.61rem;
-        opacity: 0.52;
-    }
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
 
-    .development-volume-rows {
-        display: flex;
-        flex-direction: column;
-        gap: 0.3rem;
-    }
+.development-intensity-heading {
+    font-size: 0.88rem;
+    line-height: 1.05;
+    font-weight: 750;
+}
 
-    .development-volume-row-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.4rem;
-        margin-bottom: 0.08rem;
-    }
+.development-intensity-subtitle {
+    margin-top: 0.02rem;
+    margin-bottom: 0.22rem;
+    font-size: 0.61rem;
+    line-height: 1.1;
+    opacity: 0.52;
+}
 
-    .development-volume-sport {
-        overflow: hidden;
-        font-size: 0.66rem;
-        font-weight: 650;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+.development-zone-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.13rem;
+}
 
-    .development-volume-value {
-        flex: 0 0 auto;
-        font-size: 0.59rem;
-        opacity: 0.6;
-        white-space: nowrap;
-    }
+.development-zone-row {
+    display: grid;
+    grid-template-columns:
+        1.25rem minmax(0, 1fr) 1.7rem 2.2rem;
+    gap: 0.22rem;
+    align-items: center;
+    min-width: 0;
+}
 
-    .development-volume-track,
-    .development-zone-track {
-        width: 100%;
-        overflow: hidden;
-        border-radius: 999px;
-        background: rgba(128, 128, 128, 0.14);
-    }
+.development-zone-name {
+    font-size: 0.64rem;
+    line-height: 1.05;
+    font-weight: 700;
+}
 
-    .development-volume-track {
-        height: 0.22rem;
-    }
+.development-zone-track {
+    height: 0.28rem;
+}
 
-    .development-volume-fill,
-    .development-zone-fill {
-        height: 100%;
-        border-radius: inherit;
-        background: currentColor;
-        opacity: 0.52;
-    }
+.development-zone-percent,
+.development-zone-time {
+    font-size: 0.58rem;
+    line-height: 1.05;
+    opacity: 0.62;
+    text-align: right;
+    white-space: nowrap;
+}
 
-    .development-volume-total {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.35rem;
-        margin-top: 0.34rem;
-        padding-top: 0.26rem;
-        border-top: 1px solid rgba(128, 128, 128, 0.14);
-        font-size: 0.59rem;
-        font-weight: 650;
-    }
+.development-intensity-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
 
-    .development-volume-empty,
-    .development-intensity-empty {
-        padding-top: 2rem;
-        font-size: 0.6rem;
-        opacity: 0.55;
-        text-align: center;
-    }
+    margin-top: auto;
+    padding-top: 0.22rem;
 
-    .development-zone-rows {
-        display: flex;
-        flex-direction: column;
-        gap: 0.18rem;
-    }
+    border-top: 1px solid rgba(128, 128, 128, 0.14);
+}
 
-    .development-zone-row {
-        display: grid;
-        grid-template-columns:
-            1.25rem minmax(0, 1fr) 1.7rem 2.2rem;
-        gap: 0.22rem;
-        align-items: center;
-        min-width: 0;
-    }
+.development-intensity-metrics div {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
 
-    .development-zone-name {
-        font-size: 0.64rem;
-        font-weight: 700;
-    }
+.development-intensity-metrics span {
+    font-size: 0.57rem;
+    line-height: 1.05;
+    opacity: 0.55;
+}
 
-    .development-zone-track {
-        height: 0.3rem;
-    }
-
-    .development-zone-percent,
-    .development-zone-time {
-        font-size: 0.58rem;
-        opacity: 0.62;
-        text-align: right;
-        white-space: nowrap;
-    }
-
-    .development-intensity-metrics {
-        display: grid;
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-        gap: 0.4rem;
-        margin-top: 0.32rem;
-        padding-top: 0.26rem;
-        border-top: 1px solid rgba(128, 128, 128, 0.14);
-    }
-
-    .development-intensity-metrics div {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .development-intensity-metrics span {
-        font-size: 0.57rem;
-        opacity: 0.55;
-    }
-
-    .development-intensity-metrics strong {
-        font-size: 0.8rem;
-    }
-
-    .development-reference-card {
-        height: 9.1rem;
-        padding: 0.5rem 0.6rem;
-        border: 1px solid rgba(128, 128, 128, 0.22);
-        border-radius: 0.65rem;
-        background: rgba(128, 128, 128, 0.012);
-        box-sizing: border-box;
-    }
-
-    .development-reference-heading {
-        font-size: 0.88rem;
-        font-weight: 750;
-    }
-
-    .development-reference-subtitle {
-        margin-top: 0.04rem;
-        margin-bottom: 0.28rem;
-        font-size: 0.61rem;
-        opacity: 0.52;
-    }
+.development-intensity-metrics strong {
+    margin-top: 0.05rem;
+    font-size: 0.8rem;
+    line-height: 1;
+}
 
     .development-reference-zones {
         display: flex;
         flex-direction: column;
-        gap: 0.12rem;
+        gap: 0.19rem;
     }
 
     .development-reference-row,
     .development-reference-summary-row {
         display: flex;
         justify-content: space-between;
-        gap: 0.35rem;
+        gap: 0.4rem;
         align-items: center;
     }
 
     .development-reference-row {
-        font-size: 0.61rem;
+        font-size: 0.73rem;
+        line-height: 1.1;
     }
 
     .development-reference-label {
@@ -1579,7 +1505,8 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-value {
-        font-size: 0.57rem;
+        font-size: 0.69rem;
+        font-weight: 600;
         white-space: nowrap;
     }
 
@@ -1587,32 +1514,46 @@ def _development_lower_styles() -> str:
         display: grid;
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
-        gap: 0.14rem 0.45rem;
-        margin-top: 0.3rem;
-        padding-top: 0.24rem;
+        gap: 0.18rem 0.55rem;
+        margin-top: 0.5rem;
+        padding-top: 0.4rem;
         border-top: 1px solid rgba(128, 128, 128, 0.14);
     }
 
     .development-reference-summary-row {
         min-width: 0;
-        font-size: 0.57rem;
+        font-size: 0.67rem;
+        line-height: 1.1;
     }
 
     .development-reference-summary-row span {
-        opacity: 0.56;
+        opacity: 0.58;
     }
 
     .development-reference-summary-row strong {
+        font-size: 0.7rem;
         white-space: nowrap;
     }
-
-    .development-reference-empty {
-        padding-top: 2rem;
-        font-size: 0.6rem;
-        opacity: 0.55;
-        text-align: center;
-    }
     """
+
+def _development_chart_heading_html(
+    title: str,
+    subtitle: str,
+) -> str:
+    """
+    Builds a compact heading for development charts.
+    """
+
+    return (
+        '<div class="development-chart-heading">'
+        '<div class="development-chart-title">'
+        f"{escape(title)}"
+        "</div>"
+        '<div class="development-chart-subtitle">'
+        f"{escape(subtitle)}"
+        "</div>"
+        "</div>"
+    )
 
 def show_development_page(
     athlete,
@@ -1622,14 +1563,6 @@ def show_development_page(
     training-load development.
     """
 
-    st.title(
-        "Development"
-    )
-
-    st.caption(
-        "Training trends, load and performance."
-    )
-
     development = (
         DevelopmentPresenter(
             athlete
@@ -1638,32 +1571,106 @@ def show_development_page(
 
     st.markdown(
         """
-        
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 1.65rem;
+            padding-top: 3.65rem;
             padding-bottom: 0;
         }
-
-        div[data-testid="stHeadingWithActionElements"] {
-            margin-bottom: -0.3rem;
+        
+        section[data-testid="stMain"] > div {
+            padding-bottom: 0 !important;
         }
 
-        div[data-testid="stCaptionContainer"] {
-            margin-bottom: 0;
-        }
-        .development-chart-gap {
-            height: 0.05rem;
+        div[data-testid="stMainBlockContainer"] > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
         }
 
-        .development-row-gap {
-            height: 0.12rem;
+        .development-page-header {
+            margin: 0 0 0.45rem 0;
+            padding: 0;
+        }
+
+        .development-page-title {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 750;
+            line-height: 1.05;
+        }
+
+        .development-page-subtitle {
+            margin-top: 0.32rem;
+            font-size: 0.76rem;
+            line-height: 1.15;
+            opacity: 0.58;
+        }
+
+        .development-chart-heading {
+            margin: 0;
+            padding: 0;
+        }
+
+        .development-chart-title {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.05;
+        }
+
+        .development-chart-subtitle {
+            margin: 0.14rem 0 0 0;
+            font-size: 0.69rem;
+            line-height: 1.15;
+            opacity: 0.58;
+        }
+
+        .development-section-gap {
+            height: 0.55rem;
+        }
+
+        /* Marker between the two charts. */
+        .development-between-charts {
+            height: 0;
+        }
+
+        /* Collapse the Streamlit element that contains the marker. */
+        div[data-testid="stElementContainer"]:has(
+            .development-between-charts
+        ) {
+            height: 0;
+            min-height: 0;
+            margin-top: -0.65rem;
+            margin-bottom: -1.35rem;
+        }
+
+        /* Marker immediately before the three lower cards. */
+        .development-lower-row {
+            height: 0;
+        }
+
+        /* Pull the complete lower row upwards. */
+        div[data-testid="stElementContainer"]:has(
+            .development-lower-row
+        ) {
+            height: 0;
+            min-height: 0;
+            margin-top: -0.55rem;
+            margin-bottom: -1.45rem;
         }
         </style>
+
+        <div class="development-page-header">
+            <div class="development-page-title">
+                Development
+            </div>
+            <div class="development-page-subtitle">
+                Training trends, load and performance.
+            </div>
+        </div>
         """,
         unsafe_allow_html=True,
     )
-    
+
     st.markdown(
         (
             "<style>"
@@ -1675,7 +1682,10 @@ def show_development_page(
         ),
         unsafe_allow_html=True,
     )
-
+    st.markdown(
+        '<div class="development-section-gap"></div>',
+        unsafe_allow_html=True,
+    )
     (
         chart_column,
         interpretation_column,
@@ -1686,13 +1696,15 @@ def show_development_page(
 
     with chart_column:
 
-        st.subheader(
-            "Load and form"
-        )
-
-        st.caption(
-            "Acute load (ATL), chronic load (CTL) "
-            "and training stress balance (TSB)."
+        st.markdown(
+            _development_chart_heading_html(
+                "Load and form",
+                (
+                    "Acute load (ATL), chronic load (CTL) "
+                    "and training stress balance (TSB)."
+                ),
+            ),
+            unsafe_allow_html=True,
         )
 
         performance_rows = (
@@ -1718,20 +1730,19 @@ def show_development_page(
             )
 
         st.markdown(
-            (
-                '<div class="development-chart-gap">'
-                "</div>"
-            ),
+            '<div class="development-between-charts"></div>',
             unsafe_allow_html=True,
         )
 
-        st.subheader(
-            "Daily training load"
-        )
-
-        st.caption(
-            "Session-RPE load by day with a "
-            "7-day rolling average."
+        st.markdown(
+            _development_chart_heading_html(
+                "Daily training load",
+                (
+                    "Session-RPE load by day with a "
+                    "7-day rolling average."
+                ),
+            ),
+            unsafe_allow_html=True,
         )
 
         load_rows = (
@@ -1768,12 +1779,8 @@ def show_development_page(
             ),
             unsafe_allow_html=True,
         )
-
     st.markdown(
-        (
-            '<div class="development-row-gap">'
-            "</div>"
-        ),
+        '<div class="development-lower-row"></div>',
         unsafe_allow_html=True,
     )
     (
