@@ -951,7 +951,7 @@ def _development_performance_references_html(
         return (
             '<section class="development-reference-card">'
             '<div class="development-reference-heading">'
-            "Performance references"
+            "Pace & thresholds"
             "</div>"
             '<div class="development-reference-empty">'
             "No performance references available."
@@ -1045,7 +1045,7 @@ def _development_performance_references_html(
     return (
         '<section class="development-reference-card">'
         '<div class="development-reference-heading">'
-        "Performance references"
+        "Pace & thresholds"
         "</div>"
         '<div class="development-reference-subtitle">'
         "Running pace zones and thresholds"
@@ -1400,7 +1400,7 @@ def _development_lower_styles() -> str:
 
     .development-volume-heading,
     .development-intensity-heading {
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         font-weight: 750;
     }
 
@@ -1408,7 +1408,7 @@ def _development_lower_styles() -> str:
     .development-intensity-subtitle {
         margin-top: 0.04rem;
         margin-bottom: 0.34rem;
-        font-size: 0.53rem;
+        font-size: 0.61rem;
         opacity: 0.52;
     }
 
@@ -1427,7 +1427,7 @@ def _development_lower_styles() -> str:
 
     .development-volume-sport {
         overflow: hidden;
-        font-size: 0.58rem;
+        font-size: 0.66rem;
         font-weight: 650;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -1435,7 +1435,7 @@ def _development_lower_styles() -> str:
 
     .development-volume-value {
         flex: 0 0 auto;
-        font-size: 0.51rem;
+        font-size: 0.59rem;
         opacity: 0.6;
         white-space: nowrap;
     }
@@ -1467,7 +1467,7 @@ def _development_lower_styles() -> str:
         margin-top: 0.34rem;
         padding-top: 0.26rem;
         border-top: 1px solid rgba(128, 128, 128, 0.14);
-        font-size: 0.5rem;
+        font-size: 0.59rem;
         font-weight: 650;
     }
 
@@ -1495,7 +1495,7 @@ def _development_lower_styles() -> str:
     }
 
     .development-zone-name {
-        font-size: 0.56rem;
+        font-size: 0.64rem;
         font-weight: 700;
     }
 
@@ -1505,7 +1505,7 @@ def _development_lower_styles() -> str:
 
     .development-zone-percent,
     .development-zone-time {
-        font-size: 0.5rem;
+        font-size: 0.58rem;
         opacity: 0.62;
         text-align: right;
         white-space: nowrap;
@@ -1527,12 +1527,12 @@ def _development_lower_styles() -> str:
     }
 
     .development-intensity-metrics span {
-        font-size: 0.48rem;
+        font-size: 0.57rem;
         opacity: 0.55;
     }
 
     .development-intensity-metrics strong {
-        font-size: 0.72rem;
+        font-size: 0.8rem;
     }
 
     .development-reference-card {
@@ -1545,14 +1545,14 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-heading {
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         font-weight: 750;
     }
 
     .development-reference-subtitle {
         margin-top: 0.04rem;
         margin-bottom: 0.28rem;
-        font-size: 0.53rem;
+        font-size: 0.61rem;
         opacity: 0.52;
     }
 
@@ -1571,7 +1571,7 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-row {
-        font-size: 0.51rem;
+        font-size: 0.61rem;
     }
 
     .development-reference-label {
@@ -1579,7 +1579,7 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-value {
-        font-size: 0.49rem;
+        font-size: 0.57rem;
         white-space: nowrap;
     }
 
@@ -1595,7 +1595,7 @@ def _development_lower_styles() -> str:
 
     .development-reference-summary-row {
         min-width: 0;
-        font-size: 0.48rem;
+        font-size: 0.57rem;
     }
 
     .development-reference-summary-row span {
@@ -1652,12 +1652,12 @@ def show_development_page(
         div[data-testid="stCaptionContainer"] {
             margin-bottom: 0;
         }
-        .development-row-gap {
-            height: 0.15rem;
+        .development-chart-gap {
+            height: 0.05rem;
         }
 
-        .development-analysis-gap {
-            height: 0.05rem;
+        .development-row-gap {
+            height: 0.12rem;
         }
         </style>
         """,
@@ -1717,37 +1717,13 @@ def show_development_page(
                 "performance development."
             )
 
-    with interpretation_column:
-
         st.markdown(
             (
-                "<style>"
-                + _development_interpretation_styles()
-                + "</style>"
-                + _development_interpretation_html(
-                    development
-                )
+                '<div class="development-chart-gap">'
+                "</div>"
             ),
             unsafe_allow_html=True,
         )
-
-    st.markdown(
-        (
-            '<div class="development-analysis-gap">'
-            "</div>"
-        ),
-        unsafe_allow_html=True,
-    )
-
-    (
-        daily_load_column,
-        daily_load_spacer,
-    ) = st.columns(
-        [2.15, 1],
-        gap="medium",
-    )
-
-    with daily_load_column:
 
         st.subheader(
             "Daily training load"
@@ -1779,6 +1755,20 @@ def show_development_page(
                 "No daily training load is available."
             )
 
+    with interpretation_column:
+
+        st.markdown(
+            (
+                "<style>"
+                + _development_interpretation_styles()
+                + "</style>"
+                + _development_interpretation_html(
+                    development
+                )
+            ),
+            unsafe_allow_html=True,
+        )
+
     st.markdown(
         (
             '<div class="development-row-gap">'
@@ -1786,7 +1776,6 @@ def show_development_page(
         ),
         unsafe_allow_html=True,
     )
-
     (
         volume_column,
         intensity_column,

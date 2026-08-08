@@ -619,7 +619,7 @@ def test_builds_performance_references_card():
     )
 
     assert (
-        "Performance references"
+        "Pace & thresholds"
         in result
     )
 
