@@ -189,7 +189,7 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=88,
+            height=130,
         )
         .configure_view(
             strokeWidth=0,
@@ -388,7 +388,7 @@ def _development_load_form_chart(
             y="independent"
         )
         .properties(
-            height=195,
+            height=180,
         )
         .configure_view(
             strokeWidth=0,
@@ -569,7 +569,7 @@ def _development_summary_styles() -> str:
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.65rem;
-        margin: 0.3rem 0 0.45rem 0;
+        margin: 0.3rem 0 0.25rem 0;
     }
 
     .development-kpi-card {
@@ -1390,7 +1390,7 @@ def _development_lower_styles() -> str:
     return """
     .development-volume-card,
     .development-intensity-card {
-        height: 9.35rem;
+        height: 9.1rem;
         padding: 0.5rem 0.6rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
@@ -1536,7 +1536,7 @@ def _development_lower_styles() -> str:
     }
 
     .development-reference-card {
-        height: 9.35rem;
+        height: 9.1rem;
         padding: 0.5rem 0.6rem;
         border: 1px solid rgba(128, 128, 128, 0.22);
         border-radius: 0.65rem;
@@ -1653,7 +1653,11 @@ def show_development_page(
             margin-bottom: 0;
         }
         .development-row-gap {
-            height: 0.25rem;
+            height: 0.15rem;
+        }
+
+        .development-analysis-gap {
+            height: 0.05rem;
         }
         </style>
         """,
@@ -1672,11 +1676,12 @@ def show_development_page(
         unsafe_allow_html=True,
     )
 
-    chart_column, interpretation_column = (
-        st.columns(
-            [2.15, 1],
-            gap="medium",
-        )
+    (
+        chart_column,
+        interpretation_column,
+    ) = st.columns(
+        [2.15, 1],
+        gap="medium",
     )
 
     with chart_column:
@@ -1725,9 +1730,10 @@ def show_development_page(
             ),
             unsafe_allow_html=True,
         )
+
     st.markdown(
         (
-            '<div class="development-row-gap">'
+            '<div class="development-analysis-gap">'
             "</div>"
         ),
         unsafe_allow_html=True,
@@ -1735,12 +1741,10 @@ def show_development_page(
 
     (
         daily_load_column,
-        volume_column,
-        intensity_column,
-        references_column,
+        daily_load_spacer,
     ) = st.columns(
-        [1.35, 0.72, 0.78, 0.85],
-        gap="small",
+        [2.15, 1],
+        gap="medium",
     )
 
     with daily_load_column:
@@ -1774,6 +1778,23 @@ def show_development_page(
             st.info(
                 "No daily training load is available."
             )
+
+    st.markdown(
+        (
+            '<div class="development-row-gap">'
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    (
+        volume_column,
+        intensity_column,
+        references_column,
+    ) = st.columns(
+        [1, 1, 1],
+        gap="medium",
+    )
 
     with volume_column:
 
