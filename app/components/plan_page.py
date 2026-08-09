@@ -259,6 +259,75 @@ def _plan_chart_date_scale(
         ]
     )
 
+def _plan_today_marker_data(
+    plan,
+    *,
+    reference_day: date,
+) -> list[dict]:
+    """
+    Builds the current-day marker when the reference
+    day falls inside the plan horizon.
+    """
+
+    if (
+        plan.start_date is None
+        or plan.end_date is None
+        or reference_day < plan.start_date
+        or reference_day > plan.end_date
+    ):
+        return []
+
+    return [
+        {
+            "Date": reference_day.isoformat(),
+            "Label": "Today",
+        }
+    ]
+
+
+def _plan_today_marker(
+    plan,
+):
+    """
+    Builds the vertical current-day chart marker.
+    """
+
+    marker_data = (
+        _plan_today_marker_data(
+            plan,
+            reference_day=date.today(),
+        )
+    )
+
+    return (
+        alt.Chart(
+            alt.Data(
+                values=marker_data
+            )
+        )
+        .mark_rule(
+            strokeDash=[4, 4],
+            strokeWidth=1.2,
+            opacity=0.65,
+            color="#6b7280",
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                scale=_plan_chart_date_scale(
+                    plan
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Today",
+                    format="%d %b %Y",
+                ),
+            ],
+        )
+    )
+
 def _planned_load_chart_series(
     chart_points,
 ) -> tuple[
@@ -830,10 +899,17 @@ def _planned_load_chart(
         )
     )
 
+    today_marker = (
+        _plan_today_marker(
+            plan
+        )
+    )
+
     return (
         alt.layer(
             session_load_chart,
             weekly_load_line,
+            today_marker,
         )
         .resolve_scale(
             y="independent"
@@ -1073,12 +1149,19 @@ def _distance_elevation_chart(
         )
     )
 
+    today_marker = (
+        _plan_today_marker(
+            plan
+        )
+    )
+
     return (
         alt.layer(
             distance_line,
             weekly_distance_points,
             race_distance_points,
             elevation_line,
+            today_marker,
         )
         .resolve_scale(
             y="independent"
@@ -2010,6 +2093,116 @@ def _sidebar_week_html(
         "</section>"
     )
 
+def _adaptation_metric_rows(
+    adaptation,
+    *,
+    adjusted: bool,
+) -> tuple[str, ...]:
+    """
+    Builds visible before/after metrics for the plan
+    adaptation card.
+    """
+
+    prefix = (
+        "revised"
+        if adjusted
+        else "previous"
+    )
+
+    rows = []
+
+    minutes = getattr(
+        adaptation,
+        f"{prefix}_minutes",
+        None,
+    )
+
+    if minutes is not None:
+        rows.append(
+            f"{minutes} min"
+        )
+
+    distance = getattr(
+        adaptation,
+        f"{prefix}_distance",
+        None,
+    )
+
+    if distance is not None:
+        rows.append(
+            f"{distance:g} km"
+        )
+
+    elevation = getattr(
+        adaptation,
+        f"{prefix}_elevation_gain",
+        None,
+    )
+
+    if elevation is not None:
+        rows.append(
+            f"+{elevation:g} m D+"
+        )
+
+    prescription = getattr(
+        adaptation,
+        f"{prefix}_prescription",
+        None,
+    )
+
+    if prescription:
+        rows.append(
+            str(
+                prescription
+            )
+        )
+
+    return tuple(
+        rows
+    )
+
+
+def _sidebar_adaptation_column_html(
+    *,
+    label: str,
+    title: str,
+    rows: tuple[str, ...],
+    adjusted: bool,
+) -> str:
+    """
+    Builds one before/after adaptation column.
+    """
+
+    modifier = (
+        " adjusted"
+        if adjusted
+        else ""
+    )
+
+    metrics = "".join(
+        (
+            '<div class="plan-sidebar-adaptation-metric">'
+            f"{escape(row)}"
+            "</div>"
+        )
+        for row in rows
+    )
+
+    return (
+        '<div class="plan-sidebar-adaptation-column'
+        f'{modifier}">'
+        '<div class="plan-sidebar-adaptation-column-label">'
+        f"{escape(label)}"
+        "</div>"
+        '<div class="plan-sidebar-adaptation-column-title">'
+        f"{escape(title)}"
+        "</div>"
+        '<div class="plan-sidebar-adaptation-metrics">'
+        f"{metrics}"
+        "</div>"
+        "</div>"
+    )
+
 def _sidebar_adaptation_html(
     adaptation,
     *,
@@ -2047,13 +2240,6 @@ def _sidebar_adaptation_html(
     else:
         date_label = f"{days_ago} days ago"
 
-    workout_title = escape(
-        str(
-            adaptation.workout_title
-            or "Planned workout"
-        )
-    )
-
     reason = escape(
         str(
             adaptation.reason
@@ -2061,10 +2247,42 @@ def _sidebar_adaptation_html(
         )
     )
 
-    change_label = (
-        f"{adaptation.previous_minutes}"
-        " → "
-        f"{adaptation.revised_minutes} min"
+    planned_rows = (
+        _adaptation_metric_rows(
+            adaptation,
+            adjusted=False,
+        )
+    )
+
+    adjusted_rows = (
+        _adaptation_metric_rows(
+            adaptation,
+            adjusted=True,
+        )
+    )
+
+    planned_html = (
+        _sidebar_adaptation_column_html(
+            label="Planned session",
+            title=(
+                adaptation.workout_title
+                or "Planned workout"
+            ),
+            rows=planned_rows,
+            adjusted=False,
+        )
+    )
+
+    adjusted_html = (
+        _sidebar_adaptation_column_html(
+            label="Adjusted session",
+            title=(
+                adaptation.workout_title
+                or "Planned workout"
+            ),
+            rows=adjusted_rows,
+            adjusted=True,
+        )
     )
 
     return (
@@ -2079,13 +2297,14 @@ def _sidebar_adaptation_html(
         "<span>·</span>"
         f"<span>{reason}</span>"
         "</div>"
-        '<div class="plan-sidebar-adaptation-change">'
-        '<span class="plan-sidebar-adaptation-title">'
-        f"{workout_title}"
-        "</span>"
-        '<span class="plan-sidebar-adaptation-duration">'
-        f"{escape(change_label)}"
-        "</span>"
+        '<div class="plan-sidebar-adaptation-comparison">'
+        f"{planned_html}"
+        '<div class="plan-sidebar-adaptation-arrow">'
+        "→"
+        "</div>"
+        f"{adjusted_html}"
+        "</div>"
+        '<div class="plan-sidebar-adaptation-status-row">'
         '<span class="plan-sidebar-adaptation-status">'
         "Applied"
         "</span>"
@@ -2286,29 +2505,71 @@ def _sidebar_styles() -> str:
     opacity: 0.62;
 }
 
-.plan-sidebar-adaptation-change {
+.plan-sidebar-adaptation-comparison {
     display: grid;
     grid-template-columns:
         minmax(0, 1fr)
-        auto
-        auto;
-    gap: 0.5rem;
-    align-items: center;
+        1.65rem
+        minmax(0, 1fr);
+    gap: 0.35rem;
+    align-items: stretch;
 }
 
-.plan-sidebar-adaptation-title {
+.plan-sidebar-adaptation-column {
     min-width: 0;
+    padding: 0.45rem 0.48rem;
+    border: 1px solid rgba(128, 128, 128, 0.16);
+    border-radius: 0.45rem;
+    background: rgba(128, 128, 128, 0.018);
+    box-sizing: border-box;
+}
+
+.plan-sidebar-adaptation-column.adjusted {
+    background: rgba(57, 169, 107, 0.045);
+}
+
+.plan-sidebar-adaptation-column-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.52rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    opacity: 0.52;
+}
+
+.plan-sidebar-adaptation-column-title {
     overflow: hidden;
-    font-size: 0.76rem;
-    font-weight: 650;
+    margin-bottom: 0.28rem;
+    font-size: 0.69rem;
+    font-weight: 700;
+    line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.plan-sidebar-adaptation-duration {
-    font-size: 0.72rem;
-    white-space: nowrap;
-    opacity: 0.78;
+.plan-sidebar-adaptation-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.plan-sidebar-adaptation-metric {
+    font-size: 0.61rem;
+    line-height: 1.2;
+}
+
+.plan-sidebar-adaptation-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    opacity: 0.52;
+}
+
+.plan-sidebar-adaptation-status-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.45rem;
 }
 
 .plan-sidebar-adaptation-status {
@@ -2319,7 +2580,6 @@ def _sidebar_styles() -> str:
     font-weight: 700;
     white-space: nowrap;
 }
-
 .plan-sidebar-empty {
     margin: 0;
     font-size: 0.78rem;

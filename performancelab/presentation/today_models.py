@@ -47,13 +47,24 @@ class TodayGuidanceData:
 @dataclass(frozen=True)
 class TodayAdaptationData:
     """
-    Presentation-ready summary of the latest plan change.
+    Presentation-ready before/after plan adaptation.
     """
 
     workout_title: str
+
     previous_minutes: int
     revised_minutes: int
+
     reason: str
+
+    previous_distance: float | None = None
+    revised_distance: float | None = None
+
+    previous_elevation_gain: float | None = None
+    revised_elevation_gain: float | None = None
+
+    previous_prescription: str | None = None
+    revised_prescription: str | None = None
 
 
 @dataclass(frozen=True)

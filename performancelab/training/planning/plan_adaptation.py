@@ -22,10 +22,21 @@ class TrainingPlanAdaptation:
     reconciled_on: date
     workout_day: date
     workout_title: str
+
     previous_duration: timedelta
     revised_duration: timedelta
+
     trigger_status: WorkoutOutcomeStatus
     load_difference: float | None = None
+
+    previous_distance: float | None = None
+    revised_distance: float | None = None
+
+    previous_elevation_gain: float | None = None
+    revised_elevation_gain: float | None = None
+
+    previous_prescription: str | None = None
+    revised_prescription: str | None = None
 
     def __post_init__(self) -> None:
 
@@ -33,6 +44,7 @@ class TrainingPlanAdaptation:
             self.reconciled_on,
             field_name="reconciled_on",
         )
+
         self._validate_date(
             self.workout_day,
             field_name="workout_day",
@@ -53,6 +65,7 @@ class TrainingPlanAdaptation:
             self.previous_duration,
             field_name="previous_duration",
         )
+
         self._validate_duration(
             self.revised_duration,
             field_name="revised_duration",

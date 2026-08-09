@@ -14,6 +14,7 @@ from app.components.plan_page import (
     _plan_volume_chart_data,
     _plan_summary_metrics,
     _weekly_planned_load_curve_data,
+    _plan_today_marker_data,
     _planned_load_chart_series,
     _sidebar_adaptation_html,
     _sidebar_phase_html,
@@ -1379,8 +1380,12 @@ def test_builds_latest_adaptation_sidebar_card():
     assert "Latest adaptation" in result
     assert "2 days ago" in result
     assert "LT2 Run" in result
-    assert "50 → 38 min" in result
+    assert "Planned session" in result
+    assert "Adjusted session" in result
+    assert "50 min" in result
+    assert "38 min" in result
     assert "Applied" in result
+    assert "plan-sidebar-adaptation-arrow" in result
 
     assert (
         "Completed load was higher than planned."
@@ -1905,3 +1910,65 @@ def test_calendar_export_defaults_missing_duration():
         "DTEND:20260813T100000"
         in result
     )
+
+def test_builds_today_marker_inside_plan():
+
+    plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            9,
+            30,
+        ),
+    )
+
+    result = (
+        _plan_today_marker_data(
+            plan,
+            reference_day=date(
+                2026,
+                8,
+                9,
+            ),
+        )
+    )
+
+    assert result == [
+        {
+            "Date": "2026-08-09",
+            "Label": "Today",
+        }
+    ]
+
+
+def test_omits_today_marker_outside_plan():
+
+    plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            1,
+        ),
+        end_date=date(
+            2026,
+            9,
+            30,
+        ),
+    )
+
+    result = (
+        _plan_today_marker_data(
+            plan,
+            reference_day=date(
+                2026,
+                10,
+                1,
+            ),
+        )
+    )
+
+    assert result == []

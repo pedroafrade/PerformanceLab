@@ -105,16 +105,28 @@ class PlanCurrentPhaseData:
 @dataclass(frozen=True)
 class PlanAdaptationData:
     """
-    Presentation-ready summary of one plan adaptation.
+    Presentation-ready before/after plan adaptation.
     """
 
     reconciled_on: date
     workout_day: date
     workout_title: str
+
     previous_minutes: int
     revised_minutes: int
+
     reason: str
 
+    previous_distance: float | None = None
+    revised_distance: float | None = None
+
+    previous_elevation_gain: float | None = None
+    revised_elevation_gain: float | None = None
+
+    previous_prescription: str | None = None
+    revised_prescription: str | None = None
+
+    
 @dataclass(frozen=True)
 class CompletePlanData:
     """

@@ -224,6 +224,24 @@ class TodayPresenter:
                     adaptation
                 )
             ),
+            previous_distance=(
+                adaptation.previous_distance
+            ),
+            revised_distance=(
+                adaptation.revised_distance
+            ),
+            previous_elevation_gain=(
+                adaptation.previous_elevation_gain
+            ),
+            revised_elevation_gain=(
+                adaptation.revised_elevation_gain
+            ),
+            previous_prescription=(
+                adaptation.previous_prescription
+            ),
+            revised_prescription=(
+                adaptation.revised_prescription
+            ),
         )
 
     @staticmethod

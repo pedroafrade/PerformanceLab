@@ -381,7 +381,110 @@ class PlanPresenter:
 
 
     @staticmethod
+    def _adaptation_prescription(
+        workout,
+    ) -> str | None:
+        """
+        Returns the most useful execution dose for an
+        adapted workout.
+        """
+
+        if workout is None:
+            return None
+
+        prescription_summary = str(
+            getattr(
+                workout,
+                "prescription_summary",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            prescription_summary
+            and "×" in prescription_summary
+        ):
+            return prescription_summary
+
+        interval_step = next(
+            (
+                str(step).strip()
+                for step in getattr(
+                    workout,
+                    "structure",
+                    (),
+                )
+                if (
+                    str(step).strip()
+                    and "×" in str(step)
+                )
+            ),
+            None,
+        )
+
+        if interval_step:
+            return interval_step
+
+        return (
+            prescription_summary
+            or None
+        )
+
+
+    @staticmethod
+    def _adaptation_prescription(
+        workout,
+    ) -> str | None:
+        """
+        Returns the execution dose of the adapted workout.
+        """
+
+        if workout is None:
+            return None
+
+        prescription_summary = str(
+            getattr(
+                workout,
+                "prescription_summary",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            prescription_summary
+            and "×" in prescription_summary
+        ):
+            return prescription_summary
+
+        interval_step = next(
+            (
+                str(step).strip()
+                for step in getattr(
+                    workout,
+                    "structure",
+                    (),
+                )
+                if (
+                    str(step).strip()
+                    and "×" in str(step)
+                )
+            ),
+            None,
+        )
+
+        if interval_step:
+            return interval_step
+
+        return (
+            prescription_summary
+            or None
+        )
+
+
     def _adaptation_data(
+        self,
         adaptation: TrainingPlanAdaptation,
     ) -> PlanAdaptationData:
         """
@@ -413,6 +516,24 @@ class PlanPresenter:
                 ._adaptation_reason(
                     adaptation
                 )
+            ),
+            previous_distance=(
+                adaptation.previous_distance
+            ),
+            revised_distance=(
+                adaptation.revised_distance
+            ),
+            previous_elevation_gain=(
+                adaptation.previous_elevation_gain
+            ),
+            revised_elevation_gain=(
+                adaptation.revised_elevation_gain
+            ),
+            previous_prescription=(
+                adaptation.previous_prescription
+            ),
+            revised_prescription=(
+                adaptation.revised_prescription
             ),
         )
 

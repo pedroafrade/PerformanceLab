@@ -202,7 +202,64 @@ class TrainingPlanAdapter:
         )
 
     # ======================================================
+    @staticmethod
+    def _scaled_metric(
+        value: float | None,
+        *,
+        factor: float,
+    ) -> float | None:
+        """
+        Scales a planned distance or elevation value while
+        preserving missing metrics.
+        """
 
+        if value is None:
+            return None
+
+        return round(
+            float(value)
+            * factor,
+            1,
+        )
+
+
+    @staticmethod
+    def _workout_dose(
+        workout: PlannedWorkout,
+    ) -> str | None:
+        """
+        Returns the most useful concise workout dose.
+
+        Interval prescriptions take priority over generic
+        summary text.
+        """
+
+        interval_step = next(
+            (
+                str(step).strip()
+                for step in workout.structure
+                if (
+                    str(step).strip()
+                    and "×" in str(step)
+                )
+            ),
+            None,
+        )
+
+        if interval_step:
+            return interval_step
+
+        summary = str(
+            workout.prescription_summary
+            or ""
+        ).strip()
+
+        return (
+            summary
+            or None
+        )
+
+    
     @staticmethod
     def _adaptation_records(
         *,
@@ -228,7 +285,8 @@ class TrainingPlanAdapter:
         ...,
     ]:
         """
-        Records duration changes made to future sessions.
+        Records the before/after prescription of every
+        adapted future session.
         """
 
         records = []
@@ -237,6 +295,7 @@ class TrainingPlanAdapter:
             original_workouts,
             revised_workouts,
         ):
+
             if (
                 original.duration is None
                 or revised.duration is None
@@ -294,13 +353,37 @@ class TrainingPlanAdapter:
                     load_difference=(
                         trigger.load_difference
                     ),
+                    previous_distance=(
+                        original.distance
+                    ),
+                    revised_distance=(
+                        revised.distance
+                    ),
+                    previous_elevation_gain=(
+                        original.elevation_gain
+                    ),
+                    revised_elevation_gain=(
+                        revised.elevation_gain
+                    ),
+                    previous_prescription=(
+                        TrainingPlanAdapter
+                        ._workout_dose(
+                            original
+                        )
+                    ),
+                    revised_prescription=(
+                        TrainingPlanAdapter
+                        ._workout_dose(
+                            revised
+                        )
+                    ),
                 )
             )
 
         return tuple(
             records
         )
-
+    
     @staticmethod
     def _outcome_priority(
         outcome: WorkoutOutcome,
@@ -431,7 +514,26 @@ class TrainingPlanAdapter:
                 - reduction_fraction
             )
         )
+        duration_factor = (
+            adjusted_duration.total_seconds()
+            / candidate.duration.total_seconds()
+        )
 
+        adjusted_distance = (
+            TrainingPlanAdapter
+            ._scaled_metric(
+                candidate.distance,
+                factor=duration_factor,
+            )
+        )
+
+        adjusted_elevation_gain = (
+            TrainingPlanAdapter
+            ._scaled_metric(
+                candidate.elevation_gain,
+                factor=duration_factor,
+            )
+        )
         adjusted_minutes = max(
             1,
             round(
@@ -475,6 +577,10 @@ class TrainingPlanAdapter:
         updated[candidate_index] = replace(
             candidate,
             duration=adjusted_duration,
+            distance=adjusted_distance,
+            elevation_gain=(
+                adjusted_elevation_gain
+            ),
             prescription_summary=(
                 prescription_summary
             ),
@@ -636,7 +742,26 @@ class TrainingPlanAdapter:
                 + increase_fraction
             )
         )
+        duration_factor = (
+            adjusted_duration.total_seconds()
+            / candidate.duration.total_seconds()
+        )
 
+        adjusted_distance = (
+            TrainingPlanAdapter
+            ._scaled_metric(
+                candidate.distance,
+                factor=duration_factor,
+            )
+        )
+
+        adjusted_elevation_gain = (
+            TrainingPlanAdapter
+            ._scaled_metric(
+                candidate.elevation_gain,
+                factor=duration_factor,
+            )
+        )
         adjusted_minutes = max(
             1,
             round(
@@ -648,6 +773,10 @@ class TrainingPlanAdapter:
         updated[candidate_index] = replace(
             candidate,
             duration=adjusted_duration,
+            distance=adjusted_distance,
+            elevation_gain=(
+                adjusted_elevation_gain
+            ),
             prescription_summary=(
                 "Adjusted easy session · "
                 f"{adjusted_minutes} min total"

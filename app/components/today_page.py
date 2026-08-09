@@ -347,6 +347,115 @@ def _adaptation_change_label(
         f"{adaptation.revised_minutes} min"
     )
 
+def _adaptation_metric_rows(
+    adaptation,
+    *,
+    adjusted: bool,
+) -> tuple[str, ...]:
+    """
+    Builds the visible before/after metrics for one
+    adaptation column.
+    """
+
+    prefix = (
+        "revised"
+        if adjusted
+        else "previous"
+    )
+
+    rows = []
+
+    minutes = getattr(
+        adaptation,
+        f"{prefix}_minutes",
+        None,
+    )
+
+    if minutes is not None:
+        rows.append(
+            f"{minutes} min"
+        )
+
+    distance = getattr(
+        adaptation,
+        f"{prefix}_distance",
+        None,
+    )
+
+    if distance is not None:
+        rows.append(
+            f"{distance:g} km"
+        )
+
+    elevation = getattr(
+        adaptation,
+        f"{prefix}_elevation_gain",
+        None,
+    )
+
+    if elevation is not None:
+        rows.append(
+            f"+{elevation:g} m D+"
+        )
+
+    prescription = getattr(
+        adaptation,
+        f"{prefix}_prescription",
+        None,
+    )
+
+    if prescription:
+        rows.append(
+            str(
+                prescription
+            )
+        )
+
+    return tuple(
+        rows
+    )
+
+
+def _adaptation_column_html(
+    *,
+    label: str,
+    title: str,
+    rows: tuple[str, ...],
+    adjusted: bool,
+) -> str:
+    """
+    Builds one side of the adaptation comparison card.
+    """
+
+    modifier = (
+        " adjusted"
+        if adjusted
+        else ""
+    )
+
+    metrics = "".join(
+        (
+            '<div class="today-adaptation-metric">'
+            f"{escape(row)}"
+            "</div>"
+        )
+        for row in rows
+    )
+
+    return (
+        '<div class="today-adaptation-column'
+        f'{modifier}">'
+        '<div class="today-adaptation-column-label">'
+        f"{escape(label)}"
+        "</div>"
+        '<div class="today-adaptation-column-title">'
+        f"{escape(title)}"
+        "</div>"
+        '<div class="today-adaptation-metrics">'
+        f"{metrics}"
+        "</div>"
+        "</div>"
+    )
 
 def _show_latest_adaptation(
     adaptation,
@@ -358,22 +467,68 @@ def _show_latest_adaptation(
     if adaptation is None:
         return
 
+    planned_rows = (
+        _adaptation_metric_rows(
+            adaptation,
+            adjusted=False,
+        )
+    )
+
+    adjusted_rows = (
+        _adaptation_metric_rows(
+            adaptation,
+            adjusted=True,
+        )
+    )
+
+    planned_html = (
+        _adaptation_column_html(
+            label="Planned session",
+            title=(
+                adaptation.workout_title
+                or "Planned workout"
+            ),
+            rows=planned_rows,
+            adjusted=False,
+        )
+    )
+
+    adjusted_html = (
+        _adaptation_column_html(
+            label="Adjusted session",
+            title=(
+                adaptation.workout_title
+                or "Adjusted workout"
+            ),
+            rows=adjusted_rows,
+            adjusted=True,
+        )
+    )
+
+    comparison_html = (
+        '<div class="today-adaptation-comparison">'
+        f"{planned_html}"
+        '<div class="today-adaptation-arrow">'
+        "&rarr;"
+        "</div>"
+        f"{adjusted_html}"
+        "</div>"
+    )
+
     with st.container(
         border=True
     ):
         st.markdown(
             "**Latest plan adaptation**"
         )
+
         st.caption(
             adaptation.reason
         )
-        st.markdown(
-            (
-                f"**{adaptation.workout_title}** · "
-                f"{_adaptation_change_label(adaptation)}"
-            )
-        )
 
+        st.html(
+            comparison_html
+        )
 
 def _show_guidance_card(
     *,
@@ -423,6 +578,74 @@ def _apply_today_page_styles() -> None:
 
         div[data-testid="stMainBlockContainer"] h1 {
             margin-bottom: 0;
+        }
+        .today-adaptation-comparison {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1fr)
+                2rem
+                minmax(0, 1fr);
+            gap: 0.45rem;
+            align-items: stretch;
+            margin-top: 0.55rem;
+        }
+
+        .today-adaptation-column {
+            min-width: 0;
+            padding: 0.55rem 0.6rem;
+            border: 1px solid rgba(128, 128, 128, 0.18);
+            border-radius: 0.55rem;
+            background: rgba(128, 128, 128, 0.018);
+            box-sizing: border-box;
+        }
+
+        .today-adaptation-column.adjusted {
+            background: rgba(57, 169, 107, 0.045);
+        }
+
+        .today-adaptation-column-label {
+            margin-bottom: 0.3rem;
+            font-size: 0.6rem;
+            font-weight: 750;
+            text-transform: uppercase;
+            opacity: 0.55;
+        }
+
+        .today-adaptation-column-title {
+            margin-bottom: 0.32rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        .today-adaptation-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 0.16rem;
+        }
+
+        .today-adaptation-metric {
+            font-size: 0.72rem;
+            line-height: 1.25;
+        }
+
+        .today-adaptation-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            font-weight: 700;
+            opacity: 0.55;
+        }
+
+        @media (max-width: 760px) {
+            .today-adaptation-comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .today-adaptation-arrow {
+                transform: rotate(90deg);
+            }
         }
         </style>
         """,
