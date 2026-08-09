@@ -6,6 +6,8 @@ from datetime import date, timedelta
 
 from app.components.activities_page import (
     _activity_rows,
+    _activity_page_slice,
+    _activity_row_label,
     _analysis_available,
     _format_load,
     _outcome_filter_value,
@@ -14,6 +16,7 @@ from app.components.activities_page import (
     _total_duration,
     _workout_for_activity,
     show_activities_page,
+
 )
 from performancelab.presentation import (
     ActivityListItemData,
@@ -523,3 +526,81 @@ def test_marks_basic_activity_without_sensor_data():
     )
 
     assert result == "Basic"
+
+def test_activity_browser_page_slice():
+
+    activities = tuple(
+        create_activity(
+            workout_id=f"activity-{index}",
+            workout_date=date(
+                2026,
+                8,
+                1,
+            ),
+            title=f"Run {index}",
+            sport="Running",
+            distance=10,
+            duration=timedelta(
+                hours=1,
+            ),
+            elevation_gain=100,
+            rpe=5,
+        )
+        for index in range(12)
+    )
+
+    first_page = (
+        _activity_page_slice(
+            activities,
+            page=0,
+        )
+    )
+
+    second_page = (
+        _activity_page_slice(
+            activities,
+            page=1,
+        )
+    )
+
+    assert len(
+        first_page
+    ) == 8
+
+    assert len(
+        second_page
+    ) == 4
+
+
+def test_builds_compact_activity_row_label():
+
+    activity = create_activity(
+        workout_id="activity-1",
+        workout_date=date(
+            2026,
+            8,
+            9,
+        ),
+        title="Hill Run",
+        sport="Running",
+        distance=11.58,
+        duration=timedelta(
+            hours=1,
+            minutes=42,
+        ),
+        elevation_gain=630,
+        rpe=7.7,
+    )
+
+    label = (
+        _activity_row_label(
+            activity
+        )
+    )
+
+    assert "Hill Run" in label
+    assert "Running" in label
+    assert "11.58 km" in label
+    assert "1h 42m" in label
+    assert "630 m" in label
+    assert "RPE 7.7" in label
