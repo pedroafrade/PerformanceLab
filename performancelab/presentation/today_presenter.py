@@ -197,12 +197,102 @@ class TodayPresenter:
         )
 
     @staticmethod
+    def _adaptation_prescription(
+        workout,
+    ) -> str | None:
+        """
+        Returns the most useful concise execution dose
+        available for one planned workout.
+        """
+
+        if workout is None:
+            return None
+
+        interval_step = next(
+            (
+                str(step).strip()
+                for step in getattr(
+                    workout,
+                    "structure",
+                    (),
+                )
+                if (
+                    str(step).strip()
+                    and "×" in str(step)
+                )
+            ),
+            None,
+        )
+
+        if interval_step:
+            return interval_step
+
+        prescription_summary = str(
+            getattr(
+                workout,
+                "prescription_summary",
+                "",
+            )
+            or ""
+        ).strip()
+
+        return (
+            prescription_summary
+            or None
+        )
+
+
+    def _adapted_workout(
+        self,
+        adaptation: TrainingPlanAdaptation,
+    ):
+        """
+        Finds the current planned workout represented by
+        an adaptation.
+        """
+
+        return next(
+            (
+                workout
+                for workout
+                in self.athlete.training_plan
+                if (
+                    workout.day
+                    == adaptation.workout_day
+                    and (
+                        workout.title
+                        or ""
+                    )
+                    == adaptation.workout_title
+                )
+            ),
+            None,
+        )
+
+
     def _adaptation_data(
+        self,
         adaptation: TrainingPlanAdaptation,
     ) -> TodayAdaptationData:
         """
         Converts a domain adaptation into concise UI data.
+
+        Older adaptations recover their revised execution
+        dose from the current planned workout.
         """
+
+        adapted_workout = (
+            self._adapted_workout(
+                adaptation
+            )
+        )
+
+        revised_prescription = (
+            adaptation.revised_prescription
+            or self._adaptation_prescription(
+                adapted_workout
+            )
+        )
 
         return TodayAdaptationData(
             workout_title=(
@@ -240,7 +330,7 @@ class TodayPresenter:
                 adaptation.previous_prescription
             ),
             revised_prescription=(
-                adaptation.revised_prescription
+                revised_prescription
             ),
         )
 

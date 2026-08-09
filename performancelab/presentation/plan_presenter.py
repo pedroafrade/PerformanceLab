@@ -419,27 +419,12 @@ class PlanPresenter:
         workout,
     ) -> str | None:
         """
-        Returns the most useful execution dose for an
-        adapted workout.
+        Returns the most useful concise execution dose
+        available for one planned workout.
         """
 
         if workout is None:
             return None
-
-        prescription_summary = str(
-            getattr(
-                workout,
-                "prescription_summary",
-                "",
-            )
-            or ""
-        ).strip()
-
-        if (
-            prescription_summary
-            and "×" in prescription_summary
-        ):
-            return prescription_summary
 
         interval_step = next(
             (
@@ -460,23 +445,6 @@ class PlanPresenter:
         if interval_step:
             return interval_step
 
-        return (
-            prescription_summary
-            or None
-        )
-
-
-    @staticmethod
-    def _adaptation_prescription(
-        workout,
-    ) -> str | None:
-        """
-        Returns the execution dose of the adapted workout.
-        """
-
-        if workout is None:
-            return None
-
         prescription_summary = str(
             getattr(
                 workout,
@@ -486,36 +454,37 @@ class PlanPresenter:
             or ""
         ).strip()
 
-        if (
-            prescription_summary
-            and "×" in prescription_summary
-        ):
-            return prescription_summary
-
-        interval_step = next(
-            (
-                str(step).strip()
-                for step in getattr(
-                    workout,
-                    "structure",
-                    (),
-                )
-                if (
-                    str(step).strip()
-                    and "×" in str(step)
-                )
-            ),
-            None,
-        )
-
-        if interval_step:
-            return interval_step
-
         return (
             prescription_summary
             or None
         )
 
+
+    def _adapted_workout(
+        self,
+        adaptation: TrainingPlanAdaptation,
+    ):
+        """
+        Finds the current planned workout represented by
+        an adaptation record.
+        """
+
+        return next(
+            (
+                workout
+                for workout in self.plan
+                if (
+                    workout.day
+                    == adaptation.workout_day
+                    and (
+                        workout.title
+                        or ""
+                    )
+                    == adaptation.workout_title
+                )
+            ),
+            None,
+        )
 
     def _adaptation_data(
         self,
@@ -523,7 +492,24 @@ class PlanPresenter:
     ) -> PlanAdaptationData:
         """
         Converts one domain adaptation into UI data.
+
+        Older persisted adaptations may not contain the
+        revised prescription. In that case the current
+        adapted workout provides a safe fallback.
         """
+
+        adapted_workout = (
+            self._adapted_workout(
+                adaptation
+            )
+        )
+
+        revised_prescription = (
+            adaptation.revised_prescription
+            or self._adaptation_prescription(
+                adapted_workout
+            )
+        )
 
         return PlanAdaptationData(
             reconciled_on=(
@@ -567,7 +553,7 @@ class PlanPresenter:
                 adaptation.previous_prescription
             ),
             revised_prescription=(
-                adaptation.revised_prescription
+                revised_prescription
             ),
         )
 
