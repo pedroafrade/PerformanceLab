@@ -67,17 +67,29 @@ def _plan_chart_data(
                 duration.total_seconds()
                 / 60
             )
+        completed_load = getattr(
+            point,
+            "completed_load",
+            None,
+        )
 
+        load_difference = (
+            completed_load
+            - point.planned_load
+            if completed_load is not None
+            else None
+        )
         rows.append(
             {
                 "Date": point.day.isoformat(),
                 "Planned load": (
                     point.planned_load
                 ),
-                "Completed load": getattr(
-                    point,
-                    "completed_load",
-                    None,
+                "Completed load": (
+                    completed_load
+                ),
+                "Load difference": (
+                    load_difference
                 ),
                 "Distance": getattr(
                     point,
@@ -715,7 +727,8 @@ def _planned_load_chart(
         training_base
         .mark_line(
             interpolate="monotone",
-            strokeWidth=1.8,
+            strokeWidth=1.6,
+            opacity=0.72,
         )
         .encode(
             y=alt.Y(
@@ -788,13 +801,18 @@ def _planned_load_chart(
                 ),
                 alt.Tooltip(
                     "Planned load:Q",
-                    title="Planned load",
+                    title="Planned",
                     format=".0f",
                 ),
                 alt.Tooltip(
                     "Completed load:Q",
-                    title="Completed load",
+                    title="Completed",
                     format=".0f",
+                ),
+                alt.Tooltip(
+                    "Load difference:Q",
+                    title="Δ load",
+                    format="+.0f",
                 ),
                 alt.Tooltip(
                     "Status:N",
@@ -808,7 +826,7 @@ def _planned_load_chart(
         completed_base
         .mark_line(
             interpolate="linear",
-            strokeWidth=2.2,
+            strokeWidth=2.4,
             color="#16a34a",
         )
         .encode(
@@ -829,8 +847,10 @@ def _planned_load_chart(
         completed_base
         .mark_point(
             filled=True,
-            size=55,
+            size=64,
             color="#16a34a",
+            stroke="white",
+            strokeWidth=0.6,
         )
         .encode(
             y=alt.Y(
@@ -1030,6 +1050,31 @@ def _planned_load_chart(
             titlePadding=6,
         )
     )
+def _plan_load_legend_html() -> str:
+    """
+    Builds a compact legend for the plan load chart.
+    """
+
+    return """
+    <div class="plan-load-legend">
+        <span class="plan-load-legend-item">
+            <span class="plan-load-line planned"></span>
+            Planned
+        </span>
+        <span class="plan-load-legend-item">
+            <span class="plan-load-line completed"></span>
+            Completed
+        </span>
+        <span class="plan-load-legend-item">
+            <span class="plan-load-line weekly"></span>
+            Weekly total
+        </span>
+        <span class="plan-load-legend-item">
+            <span class="plan-load-race"></span>
+            Race
+        </span>
+    </div>
+    """
 
 def _distance_elevation_chart(
     plan,
@@ -2686,6 +2731,53 @@ def _sidebar_styles() -> str:
     font-size: 0.78rem;
     opacity: 0.6;
 }
+.plan-load-legend {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: -0.2rem;
+    margin-bottom: 0.2rem;
+    font-size: 0.65rem;
+    opacity: 0.72;
+}
+
+.plan-load-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+}
+
+.plan-load-line {
+    display: inline-block;
+    width: 1.25rem;
+    height: 2px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.plan-load-line.planned {
+    opacity: 0.65;
+}
+
+.plan-load-line.completed {
+    height: 3px;
+    background: #16a34a;
+}
+
+.plan-load-line.weekly {
+    height: 0;
+    border-top: 1px dashed currentColor;
+    background: transparent;
+    opacity: 0.55;
+}
+
+.plan-load-race {
+    width: 0.45rem;
+    height: 0.45rem;
+    background: #ff4b4b;
+    transform: rotate(45deg);
+}
 """
 
 def _plan_styles() -> None:
@@ -3638,7 +3730,9 @@ def show_plan_page(
             ),
             use_container_width=True,
         )
-
+        st.html(
+            _plan_load_legend_html()
+        )
         st.markdown(
             (
                 '<div class="plan-chart-block">'

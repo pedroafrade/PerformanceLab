@@ -317,6 +317,7 @@ def test_builds_planned_session_chart_data():
             "Date": "2026-08-04",
             "Planned load": 180.0,
             "Completed load": None,
+            "Load difference": None,
             "Distance": 10.0,
             "Elevation": None,
             "Duration": 60,
@@ -330,6 +331,7 @@ def test_builds_planned_session_chart_data():
             "Date": "2026-08-11",
             "Planned load": 315.0,
             "Completed load": None,
+            "Load difference": None,
             "Distance": 8.0,
             "Elevation": None,
             "Duration": 45,
@@ -343,6 +345,7 @@ def test_builds_planned_session_chart_data():
             "Date": "2026-09-13",
             "Planned load": 900.0,
             "Completed load": None,
+            "Load difference": None,
             "Distance": 25.0,
             "Elevation": None,
             "Duration": 201,
@@ -1975,3 +1978,37 @@ def test_omits_today_marker_outside_plan():
     )
 
     assert result == []
+
+def test_builds_completed_load_difference():
+
+    point = SimpleNamespace(
+        day=date(
+            2026,
+            8,
+            9,
+        ),
+        planned_load=320.0,
+        completed_load=419.0,
+        distance=12.0,
+        elevation_gain=450.0,
+        duration=timedelta(
+            minutes=75,
+        ),
+        title="Hill Run",
+        intensity="Hard",
+        phase="Build",
+        status="modified",
+        is_race=False,
+    )
+
+    result = _plan_chart_data(
+        (point,)
+    )
+
+    assert result[0][
+        "Completed load"
+    ] == 419.0
+
+    assert result[0][
+        "Load difference"
+    ] == 99.0
