@@ -810,7 +810,9 @@ def _comparison_chart(
         {
             **row,
             "Activity": (
-                "Current"
+                _workout_label(
+                    workout
+                )
             ),
         }
         for row in (
@@ -1021,7 +1023,15 @@ def show_activity_analysis(
     workout,
     *,
     history=None,
+    key_prefix: str = "activity_analysis",
+    show_heading: bool = True,
 ) -> None:
+    """
+    Shows route, environment and historical performance
+    analysis for one completed workout.
+
+    The same component is reused by Today and Activities.
+    """
 
     if workout is None:
         return
@@ -1030,9 +1040,10 @@ def show_activity_analysis(
         border=True
     ):
 
-        st.markdown(
-            "**Activity analysis**"
-        )
+        if show_heading:
+            st.markdown(
+                "**Activity analysis**"
+            )
 
         (
             temperature_column,
@@ -1109,12 +1120,31 @@ def show_activity_analysis(
         )
 
         st.markdown(
-            "**Performance profile**"
+            "**Performance comparison**"
         )
+
+        if similar:
+            st.caption(
+                (
+                    f"{len(similar)} similar historical "
+                    "route"
+                    + (
+                        "s"
+                        if len(similar) != 1
+                        else ""
+                    )
+                    + " found."
+                )
+            )
+        else:
+            st.caption(
+                "No sufficiently similar historical "
+                "route was found."
+            )
 
         metric_column, compare_column = (
             st.columns(
-                2,
+                [1, 1.35],
                 gap="small",
             )
         )
@@ -1125,8 +1155,7 @@ def show_activity_analysis(
                 "Metric",
                 options=metrics,
                 key=(
-                    "today_activity_"
-                    "analysis_metric"
+                    f"{key_prefix}_metric"
                 ),
             )
 
@@ -1160,8 +1189,7 @@ def show_activity_analysis(
                         comparison_options
                     ),
                     key=(
-                        "today_activity_"
-                        "comparison"
+                        f"{key_prefix}_comparison"
                     ),
                 )
             )
@@ -1191,15 +1219,9 @@ def show_activity_analysis(
 
             if similar:
                 st.caption(
-                    f"{len(similar)} similar "
-                    "historical route(s) available. "
-                    "Select one above to compare."
-                )
-
-            else:
-                st.caption(
-                    "No sufficiently similar previous "
-                    "route was found in the history."
+                    "Select a matching historical "
+                    "activity above to overlay its "
+                    "performance profile."
                 )
 
         else:

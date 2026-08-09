@@ -6,6 +6,7 @@ from datetime import date, timedelta
 
 from app.components.activities_page import (
     _activity_rows,
+    _analysis_available,
     _format_load,
     _outcome_filter_value,
     _outcome_label,
@@ -83,6 +84,7 @@ def test_builds_activity_table_rows():
                 "Volta da Ericeira"
             ),
             "Sport": "Cycling",
+            "Analysis": "—",
             "Distance": "50.30 km",
             "Duration": "2h 32m",
             "Elevation": "980 m",
@@ -413,3 +415,111 @@ def test_converts_outside_plan_filter():
     assert _outcome_filter_value(
         "Outside plan"
     ) == "outside_plan"
+
+def test_marks_activity_with_route_and_sensors():
+
+    from performancelab.history import (
+        History,
+    )
+    from performancelab.workout import (
+        Workout,
+    )
+
+    workout = Workout()
+
+    workout.sensors.add(
+        "gps",
+        [
+            {
+                "latitude": 38.7,
+                "longitude": -9.4,
+            },
+            {
+                "latitude": 38.71,
+                "longitude": -9.39,
+            },
+        ],
+    )
+
+    workout.sensors.add(
+        "heart_rate",
+        [
+            {
+                "value": 150,
+            },
+        ],
+    )
+
+    activity = create_activity(
+        workout_id=workout.workout_id,
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Trail Run",
+        sport="Trail Running",
+        distance=10,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=500,
+        rpe=6,
+    )
+
+    result = (
+        _analysis_available(
+            History(
+                workouts=[
+                    workout
+                ]
+            ),
+            activity,
+        )
+    )
+
+    assert result == (
+        "Route + sensors"
+    )
+
+
+def test_marks_basic_activity_without_sensor_data():
+
+    from performancelab.history import (
+        History,
+    )
+    from performancelab.workout import (
+        Workout,
+    )
+
+    workout = Workout()
+
+    activity = create_activity(
+        workout_id=workout.workout_id,
+        workout_date=date(
+            2026,
+            8,
+            2,
+        ),
+        title="Manual Run",
+        sport="Running",
+        distance=5,
+        duration=timedelta(
+            minutes=30,
+        ),
+        elevation_gain=None,
+        rpe=5,
+    )
+
+    result = (
+        _analysis_available(
+            History(
+                workouts=[
+                    workout
+                ]
+            ),
+            activity,
+        )
+    )
+
+    assert result == "Basic"

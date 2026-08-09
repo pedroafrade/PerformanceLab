@@ -1054,7 +1054,9 @@ def show_today_page(
 
         if today_workout is not None:
             show_activity_analysis(
-                today_workout
+                today_workout,
+                history=athlete.history,
+                key_prefix="today_activity_analysis",
             )
 
     with guidance_column:

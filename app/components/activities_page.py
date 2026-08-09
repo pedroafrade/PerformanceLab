@@ -12,11 +12,11 @@ from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
 )
+from .activity_analysis import (
+    show_activity_analysis,
+)
 from .activity_input import (
     show_activity_input,
-)
-from .route_map import (
-    show_route_map,
 )
 from .workout_details import (
     show_workout_details,
@@ -64,6 +64,8 @@ def _outcome_label(
 
 def _activity_rows(
     activities,
+    *,
+    history=None,
 ) -> list[dict]:
     """
     Converts activity presentation data into table rows.
@@ -76,6 +78,14 @@ def _activity_rows(
             ),
             "Activity": activity.title,
             "Sport": activity.sport,
+            "Analysis": (
+                _analysis_available(
+                    history,
+                    activity,
+                )
+                if history is not None
+                else "—"
+            ),
             "Distance": format_distance(
                 activity.distance
             ),
@@ -205,6 +215,57 @@ def _workout_for_activity(
 
     return None
 
+def _analysis_available(
+    history,
+    activity,
+) -> str:
+    """
+    Indicates whether the complete workout contains
+    GPS and detailed sensor streams.
+    """
+
+    workout = (
+        _workout_for_activity(
+            history,
+            activity,
+        )
+    )
+
+    if workout is None:
+        return "—"
+
+    has_gps = bool(
+        workout.sensors.get(
+            "gps"
+        )
+    )
+
+    has_performance = any(
+        bool(
+            workout.sensors.get(
+                sensor
+            )
+        )
+        for sensor in (
+            "heart_rate",
+            "power",
+            "cadence",
+        )
+    )
+
+    if (
+        has_gps
+        and has_performance
+    ):
+        return "Route + sensors"
+
+    if has_gps:
+        return "Route"
+
+    if has_performance:
+        return "Sensors"
+
+    return "Basic"
 
 def show_activities_page(
     athlete,
@@ -370,6 +431,11 @@ def show_activities_page(
     st.subheader(
         "Activity history"
     )
+    st.caption(
+        "Select an activity to analyse its route, "
+        "performance profile and comparable historical "
+        "efforts."
+    )
 
     if not activities:
 
@@ -381,7 +447,8 @@ def show_activities_page(
 
     selection_event = st.dataframe(
         _activity_rows(
-            activities
+            activities,
+            history=athlete.history,
         ),
         width="stretch",
         hide_index=True,
@@ -501,10 +568,29 @@ def show_activities_page(
             "with a planned workout."
         )
 
-    show_workout_details(
-        selected_workout
+    (
+        analysis_tab,
+        details_tab,
+    ) = st.tabs(
+        [
+            "Performance analysis",
+            "Activity details",
+        ]
     )
 
-    show_route_map(
-        selected_workout
-    )
+    with analysis_tab:
+
+        show_activity_analysis(
+            selected_workout,
+            history=athlete.history,
+            key_prefix=(
+                "activities_selected_analysis"
+            ),
+            show_heading=False,
+        )
+
+    with details_tab:
+
+        show_workout_details(
+            selected_workout
+        )
