@@ -211,66 +211,258 @@ def _session_step_html(
         "</div>"
     )
 
+def _activity_distance_label(
+    value: float | None,
+) -> str:
+    if value is None:
+        return "—"
+
+    return f"{value:.1f} km"
+
+
+def _activity_elevation_label(
+    value: float | None,
+) -> str:
+    if value is None:
+        return "—"
+
+    return f"+{value:.0f} m"
+
+
+def _activity_load_label(
+    value: float | None,
+) -> str:
+    if value is None:
+        return "—"
+
+    return f"{value:.0f} AU"
+
+
+def _activity_rpe_label(
+    value: float | None,
+) -> str:
+    if value is None:
+        return "—"
+
+    return f"{value:.1f}"
+
+
+def _activity_metric_html(
+    *,
+    label: str,
+    value: str,
+) -> str:
+    return (
+        '<div class="today-activity-metric">'
+        '<div class="today-activity-metric-label">'
+        f"{escape(label)}"
+        "</div>"
+        '<div class="today-activity-metric-value">'
+        f"{escape(value)}"
+        "</div>"
+        "</div>"
+    )
+
+
+def _activity_summary_html(
+    activity,
+) -> str:
+    metrics = (
+        _activity_metric_html(
+            label="Distance",
+            value=_activity_distance_label(
+                activity.distance
+            ),
+        )
+        + _activity_metric_html(
+            label="Duration",
+            value=(
+                _duration_label(
+                    activity.duration
+                )
+                or "—"
+            ),
+        )
+        + _activity_metric_html(
+            label="Elevation",
+            value=_activity_elevation_label(
+                activity.elevation_gain
+            ),
+        )
+        + _activity_metric_html(
+            label="RPE",
+            value=_activity_rpe_label(
+                activity.rpe
+            ),
+        )
+        + _activity_metric_html(
+            label="Completed load",
+            value=_activity_load_label(
+                activity.completed_load
+            ),
+        )
+    )
+
+    return (
+        '<div class="today-activity-summary">'
+        f"{metrics}"
+        "</div>"
+    )
 
 def _show_today_session(
     session,
+    today_activity,
 ) -> None:
     """
-    Displays today's session as the dominant action.
+    Displays either today's prescription or the
+    completed activity summary.
+
+    Once today's activity has been completed, the
+    completed session remains the main daily context
+    until the calendar day changes.
     """
+
+    completed_today = (
+        today_activity is not None
+    )
 
     with st.container(
         border=True
     ):
         st.markdown(
-            "**Today's session**"
-        )
-
-        st.subheader(
-            _today_session_title(
-                session
+            (
+                "**Today's activity**"
+                if completed_today
+                else "**Today's session**"
             )
         )
 
-        st.caption(
-            _today_session_metadata(
-                session
+        if completed_today:
+            st.subheader(
+                today_activity.title
+                or "Completed activity"
             )
-        )
 
-        if (
-            session is not None
-            and session.structure
-        ):
-            steps = "".join(
-                _session_step_html(
-                    index=index,
-                    step=step,
+            metadata = [
+                value
+                for value in (
+                    today_activity.sport,
+                    "Completed",
                 )
-                for index, step in enumerate(
-                    session.structure,
-                    start=1,
-                )
+                if value
+            ]
+
+            st.caption(
+                " · ".join(metadata)
             )
 
             st.html(
-                (
-                    "<div style='"
-                    "margin-top:0.55rem;"
-                    "border-top:1px solid "
-                    "rgba(128,128,128,0.22);"
-                    "'>"
-                    f"{steps}"
-                    "</div>"
+                _activity_summary_html(
+                    today_activity
                 )
             )
 
-        st.caption(
-            (
-                "Status · "
-                f"{_today_session_status(session)}"
+            if (
+                today_activity.outcome_status
+                is not None
+            ):
+                st.markdown(
+                    "**Result vs plan**"
+                )
+
+                comparison = []
+
+                if today_activity.planned_title:
+                    comparison.append(
+                        (
+                            "Planned",
+                            today_activity.planned_title,
+                        )
+                    )
+
+                comparison.append(
+                    (
+                        "Completed",
+                        today_activity.title,
+                    )
+                )
+
+                comparison_html = "".join(
+                    (
+                        '<div class="today-result-row">'
+                        '<span class="today-result-label">'
+                        f"{escape(label)}"
+                        "</span>"
+                        '<span class="today-result-value">'
+                        f"{escape(value)}"
+                        "</span>"
+                        "</div>"
+                    )
+                    for label, value
+                    in comparison
+                )
+
+                st.html(
+                    (
+                        '<div class="today-result-comparison">'
+                        f"{comparison_html}"
+                        "</div>"
+                    )
+                )
+
+                st.caption(
+                    (
+                        "Outcome · "
+                        f"{today_activity.outcome_status}"
+                    )
+                )
+
+        else:
+            st.subheader(
+                _today_session_title(
+                    session
+                )
             )
-        )
+
+            st.caption(
+                _today_session_metadata(
+                    session
+                )
+            )
+
+            if (
+                session is not None
+                and session.structure
+            ):
+                steps = "".join(
+                    _session_step_html(
+                        index=index,
+                        step=step,
+                    )
+                    for index, step in enumerate(
+                        session.structure,
+                        start=1,
+                    )
+                )
+
+                st.html(
+                    (
+                        "<div style='"
+                        "margin-top:0.55rem;"
+                        "border-top:1px solid "
+                        "rgba(128,128,128,0.22);"
+                        "'>"
+                        f"{steps}"
+                        "</div>"
+                    )
+                )
+
+            st.caption(
+                (
+                    "Status · "
+                    f"{_today_session_status(session)}"
+                )
+            )
 
         activity_column, calendar_column = (
             st.columns(
@@ -281,8 +473,16 @@ def _show_today_session(
 
         with activity_column:
             st.button(
-                "Add activity",
-                icon=":material/add:",
+                (
+                    "View activity"
+                    if completed_today
+                    else "Add activity"
+                ),
+                icon=(
+                    ":material/directions_run:"
+                    if completed_today
+                    else ":material/add:"
+                ),
                 use_container_width=True,
                 key="today_add_activity",
                 on_click=_navigate_to,
@@ -579,6 +779,60 @@ def _apply_today_page_styles() -> None:
         div[data-testid="stMainBlockContainer"] h1 {
             margin-bottom: 0;
         }
+        .today-activity-summary {
+            display: grid;
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+            gap: 0.7rem;
+            margin-top: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .today-activity-metric {
+            min-width: 0;
+            padding: 0.7rem 0.75rem;
+            border: 1px solid rgba(128, 128, 128, 0.18);
+            border-radius: 0.55rem;
+            background: rgba(128, 128, 128, 0.025);
+        }
+
+        .today-activity-metric-label {
+            margin-bottom: 0.2rem;
+            font-size: 0.68rem;
+            opacity: 0.58;
+        }
+
+        .today-activity-metric-value {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .today-result-comparison {
+            margin-top: 0.45rem;
+            margin-bottom: 0.35rem;
+            border-top: 1px solid rgba(128, 128, 128, 0.18);
+        }
+
+        .today-result-row {
+            display: grid;
+            grid-template-columns: 6rem minmax(0, 1fr);
+            gap: 0.75rem;
+            padding: 0.42rem 0;
+            border-bottom:
+                1px solid rgba(128, 128, 128, 0.14);
+        }
+
+        .today-result-label {
+            font-size: 0.72rem;
+            opacity: 0.58;
+        }
+
+        .today-result-value {
+            font-size: 0.82rem;
+            font-weight: 650;
+        }
+
         .today-adaptation-comparison {
             display: grid;
             grid-template-columns:
@@ -645,6 +899,10 @@ def _apply_today_page_styles() -> None:
 
             .today-adaptation-arrow {
                 transform: rotate(90deg);
+            }
+            .today-activity-summary {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
         }
         </style>
@@ -752,7 +1010,8 @@ def show_today_page(
 
     with session_column:
         _show_today_session(
-            today.today_session
+            today.today_session,
+            today.today_activity_summary,
         )
 
     with guidance_column:

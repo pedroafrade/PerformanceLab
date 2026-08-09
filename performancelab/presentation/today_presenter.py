@@ -125,6 +125,25 @@ class TodayPresenter:
             else None
         )
 
+        today_activity_summary = next(
+            (
+                activity
+                for activity in activities
+                if (
+                    (
+                        activity.workout_date.date()
+                        if isinstance(
+                            activity.workout_date,
+                            datetime,
+                        )
+                        else activity.workout_date
+                    )
+                    == reference_day
+                )
+            ),
+            None,
+        )
+
         recovery = dashboard.recovery
         training_load = (
             dashboard.training_load
@@ -188,6 +207,9 @@ class TodayPresenter:
             ),
             latest_activity_summary=(
                 latest_activity_summary
+            ),
+            today_activity_summary=(
+                today_activity_summary
             ),
             recovery=recovery,
             training_load=training_load,

@@ -100,6 +100,10 @@ class TodayData:
         ActivityListItemData
         | None
     )
+    today_activity_summary: (
+        ActivityListItemData
+        | None
+    )
     recovery: RecoveryCardData
 
     training_load: (
