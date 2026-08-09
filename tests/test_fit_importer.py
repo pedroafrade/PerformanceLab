@@ -38,6 +38,8 @@ def sample_messages():
                 "heart_rate": 140,
                 "cadence": 82,
                 "power": 210,
+                "temperature": 18.0,
+                "humidity": 62.0,
             },
             {
                 "timestamp": datetime(
@@ -55,6 +57,8 @@ def sample_messages():
                 "heart_rate": 155,
                 "cadence": 86,
                 "power": 240,
+                "temperature": 20.0,
+                "humidity": 58.0,
             },
         ],
         "sessions": [
@@ -193,7 +197,79 @@ def test_fit_sensor_series(monkeypatch):
             "value": 420.0,
         },
     ]
+def test_fit_imports_environment(
+    monkeypatch,
+):
 
+    importer = FITImporter()
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: sample_messages(),
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert (
+        workout.environment.temperature
+        == 19.0
+    )
+
+    assert (
+        workout.environment.humidity
+        == 60.0
+    )
+
+def test_fit_prefers_session_environment(
+    monkeypatch,
+):
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    messages["sessions"][0][
+        "avg_temperature"
+    ] = 21.0
+
+    messages["sessions"][0][
+        "avg_humidity"
+    ] = 55.0
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: messages,
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert (
+        workout.environment.temperature
+        == 21.0
+    )
+
+    assert (
+        workout.environment.humidity
+        == 55.0
+    )
 # ======================================================
 
 def test_fit_without_activity(monkeypatch):

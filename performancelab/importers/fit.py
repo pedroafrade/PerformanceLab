@@ -153,8 +153,190 @@ class FITImporter(WorkoutImporter):
                     },
                 ],
             )
-        return workout
 
+        temperature = (
+            self._temperature(
+                records,
+                session,
+            )
+        )
+
+        if temperature is not None:
+            workout.environment.temperature = (
+                temperature
+            )
+
+        humidity = (
+            self._humidity(
+                records,
+                session,
+            )
+        )
+
+        if humidity is not None:
+            workout.environment.humidity = (
+                humidity
+            )
+
+        return workout
+    
+    # ======================================================
+    # Environment
+    # ======================================================
+
+    @staticmethod
+    def _average_numeric_values(
+        values,
+    ) -> float | None:
+        """
+        Returns the mean of valid numeric values.
+        """
+
+        numeric_values = []
+
+        for value in values:
+
+            if value is None:
+                continue
+
+            try:
+                numeric = float(
+                    value
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ):
+                continue
+
+            numeric_values.append(
+                numeric
+            )
+
+        if not numeric_values:
+            return None
+
+        return (
+            sum(numeric_values)
+            / len(numeric_values)
+        )
+
+
+    @classmethod
+    def _temperature(
+        cls,
+        records: list[dict],
+        session: dict,
+    ) -> float | None:
+        """
+        Returns the best available activity temperature.
+
+        Session average temperature is preferred.
+        Otherwise the value is averaged from record
+        samples when available.
+        """
+
+        for key in (
+            "avg_temperature",
+            "average_temperature",
+        ):
+
+            value = session.get(
+                key
+            )
+
+            if value is None:
+                continue
+
+            try:
+                return float(
+                    value
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ):
+                pass
+
+        result = (
+            cls._average_numeric_values(
+                record.get(
+                    "temperature"
+                )
+                for record in records
+            )
+        )
+
+        return result
+
+
+    @classmethod
+    def _humidity(
+        cls,
+        records: list[dict],
+        session: dict,
+    ) -> float | None:
+        """
+        Returns the best available relative humidity.
+
+        Humidity is not present in every FIT activity,
+        so missing data remains None.
+        """
+
+        for key in (
+            "avg_humidity",
+            "average_humidity",
+            "humidity",
+        ):
+
+            value = session.get(
+                key
+            )
+
+            if value is None:
+                continue
+
+            try:
+                humidity = float(
+                    value
+                )
+
+            except (
+                TypeError,
+                ValueError,
+            ):
+                continue
+
+            if (
+                0.0
+                <= humidity
+                <= 100.0
+            ):
+                return humidity
+
+        result = (
+            cls._average_numeric_values(
+                record.get(
+                    "humidity"
+                )
+                for record in records
+            )
+        )
+
+        if result is None:
+            return None
+
+        if not (
+            0.0
+            <= result
+            <= 100.0
+        ):
+            return None
+
+        return result
+    
     # ======================================================
     # Active calories
     # ======================================================
