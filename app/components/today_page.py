@@ -13,6 +13,10 @@ from performancelab.presentation import (
     TodayPresenter,
 )
 
+from .activity_analysis import (
+    show_activity_analysis,
+)
+
 
 def _navigate_to(
     page: str,
@@ -972,6 +976,34 @@ def _show_daily_decision(
                 ),
             )
 
+def _today_completed_workout(
+    athlete,
+    activity_summary,
+):
+    """
+    Resolves today's presentation summary back to the
+    domain Workout so route and sensor data are available.
+    """
+
+    if activity_summary is None:
+        return None
+
+    workout_id = str(
+        activity_summary.workout_id
+    )
+
+    return next(
+        (
+            workout
+            for workout
+            in athlete.history.workouts
+            if str(
+                workout.workout_id
+            )
+            == workout_id
+        ),
+        None,
+    )
 
 def show_today_page(
     athlete,
@@ -986,6 +1018,12 @@ def show_today_page(
         athlete
     ).build()
 
+    today_workout = (
+        _today_completed_workout(
+            athlete,
+            today.today_activity_summary,
+        )
+    )
     st.title(
         "Today"
     )
@@ -1013,6 +1051,11 @@ def show_today_page(
             today.today_session,
             today.today_activity_summary,
         )
+
+        if today_workout is not None:
+            show_activity_analysis(
+                today_workout
+            )
 
     with guidance_column:
         _show_guidance_card(

@@ -4,6 +4,7 @@ PerformanceLab
 Reusable completed-activity analysis.
 """
 
+from bisect import bisect_left
 from datetime import datetime
 from math import (
     asin,
@@ -47,14 +48,29 @@ def _parse_time(
         return None
 
 
-def _elapsed_minutes(
-    timestamp: datetime,
-    start: datetime,
-) -> float:
+def _workout_datetime(
+    workout,
+) -> datetime | None:
 
-    return (
-        timestamp - start
-    ).total_seconds() / 60
+    value = getattr(
+        workout,
+        "date",
+        None,
+    )
+
+    if isinstance(
+        value,
+        datetime,
+    ):
+        return value
+
+    if value is None:
+        return None
+
+    return datetime.combine(
+        value,
+        datetime.min.time(),
+    )
 
 
 def _haversine_km(
@@ -63,9 +79,6 @@ def _haversine_km(
     latitude_2: float,
     longitude_2: float,
 ) -> float:
-    """
-    Distance between two GPS points in kilometres.
-    """
 
     radius_km = 6371.0088
 
@@ -79,7 +92,6 @@ def _haversine_km(
     delta_lat = radians(
         latitude_2 - latitude_1
     )
-
     delta_lon = radians(
         longitude_2 - longitude_1
     )
@@ -108,8 +120,8 @@ def _route_profile_rows(
     workout,
 ) -> list[dict]:
     """
-    Builds elapsed-time elevation and pace samples
-    from the GPS track.
+    Builds cumulative route distance, progress,
+    elevation and instantaneous pace.
     """
 
     points = route_points(
@@ -129,65 +141,12 @@ def _route_profile_rows(
 
         parsed.append(
             {
-                **point,
-                "timestamp": timestamp,
-            }
-        )
-
-    if len(parsed) < 2:
-        return []
-
-    start = parsed[0][
-        "timestamp"
-    ]
-
-    rows = []
-
-    previous = None
-
-    for point in parsed:
-
-        pace = None
-
-        if previous is not None:
-
-            seconds = (
-                point["timestamp"]
-                - previous["timestamp"]
-            ).total_seconds()
-
-            distance = _haversine_km(
-                previous["latitude"],
-                previous["longitude"],
-                point["latitude"],
-                point["longitude"],
-            )
-
-            if (
-                seconds > 0
-                and distance > 0.002
-            ):
-                candidate = (
-                    seconds
-                    / 60
-                    / distance
-                )
-
-                # Remove GPS spikes and stops.
-                if (
-                    1.5
-                    <= candidate
-                    <= 30
-                ):
-                    pace = candidate
-
-        rows.append(
-            {
-                "Elapsed": (
-                    _elapsed_minutes(
-                        point["timestamp"],
-                        start,
-                    )
+                "Timestamp": timestamp,
+                "Latitude": float(
+                    point["latitude"]
+                ),
+                "Longitude": float(
+                    point["longitude"]
                 ),
                 "Elevation": (
                     float(
@@ -199,22 +158,440 @@ def _route_profile_rows(
                     is not None
                     else None
                 ),
+            }
+        )
+
+    if len(parsed) < 2:
+        return []
+
+    cumulative_distance = 0.0
+    rows = []
+
+    previous = None
+
+    for point in parsed:
+
+        pace = None
+
+        if previous is not None:
+
+            segment_distance = (
+                _haversine_km(
+                    previous["Latitude"],
+                    previous["Longitude"],
+                    point["Latitude"],
+                    point["Longitude"],
+                )
+            )
+
+            seconds = (
+                point["Timestamp"]
+                - previous["Timestamp"]
+            ).total_seconds()
+
+            cumulative_distance += (
+                segment_distance
+            )
+
+            if (
+                seconds > 0
+                and segment_distance
+                > 0.002
+            ):
+                candidate = (
+                    seconds
+                    / 60
+                    / segment_distance
+                )
+
+                if (
+                    1.5
+                    <= candidate
+                    <= 30
+                ):
+                    pace = candidate
+
+        rows.append(
+            {
+                **point,
+                "Distance": (
+                    cumulative_distance
+                ),
                 "Pace": pace,
             }
         )
 
         previous = point
 
-    return rows
+    total_distance = (
+        rows[-1]["Distance"]
+    )
+
+    if total_distance <= 0:
+        return []
+
+    return [
+        {
+            **row,
+            "Progress": (
+                row["Distance"]
+                / total_distance
+                * 100
+            ),
+        }
+        for row in rows
+    ]
 
 
-def _sensor_rows(
+def _resample_route(
+    workout,
+    *,
+    points: int = 50,
+) -> list[dict]:
+    """
+    Normalises a route to a fixed number of positions.
+    """
+
+    route = (
+        _route_profile_rows(
+            workout
+        )
+    )
+
+    if len(route) < 2:
+        return []
+
+    result = []
+    index = 0
+
+    for target_index in range(
+        points
+    ):
+
+        target = (
+            target_index
+            / (points - 1)
+            * 100
+        )
+
+        while (
+            index < len(route) - 1
+            and abs(
+                route[index + 1][
+                    "Progress"
+                ]
+                - target
+            )
+            < abs(
+                route[index][
+                    "Progress"
+                ]
+                - target
+            )
+        ):
+            index += 1
+
+        result.append(
+            route[index]
+        )
+
+    return result
+
+
+def _route_similarity_score(
+    workout,
+    candidate,
+) -> float:
+    """
+    Returns a 0–100 geographical route similarity.
+
+    Geometry has more weight than total distance and
+    reverse-direction traversals are supported.
+    """
+
+    current = _resample_route(
+        workout
+    )
+    previous = _resample_route(
+        candidate
+    )
+
+    if (
+        not current
+        or not previous
+    ):
+        return 0.0
+
+    current_length = (
+        current[-1]["Distance"]
+    )
+    previous_length = (
+        previous[-1]["Distance"]
+    )
+
+    largest = max(
+        current_length,
+        previous_length,
+    )
+
+    if largest <= 0:
+        return 0.0
+
+    length_similarity = max(
+        0.0,
+        1.0
+        - (
+            abs(
+                current_length
+                - previous_length
+            )
+            / largest
+        ),
+    )
+
+    if length_similarity < 0.72:
+        return 0.0
+
+    def mean_geometry_distance(
+        second_route,
+    ) -> float:
+
+        distances = [
+            _haversine_km(
+                first["Latitude"],
+                first["Longitude"],
+                second["Latitude"],
+                second["Longitude"],
+            )
+            for first, second
+            in zip(
+                current,
+                second_route,
+            )
+        ]
+
+        return (
+            sum(distances)
+            / len(distances)
+        )
+
+    forward_distance = (
+        mean_geometry_distance(
+            previous
+        )
+    )
+
+    reverse_distance = (
+        mean_geometry_distance(
+            list(
+                reversed(
+                    previous
+                )
+            )
+        )
+    )
+
+    geometry_distance = min(
+        forward_distance,
+        reverse_distance,
+    )
+
+    # Routes that are geographically too far apart
+    # cannot be considered the same route, even when
+    # their total distance is very similar.
+    if geometry_distance >= 0.60:
+        return 0.0
+
+    geometry_similarity = max(
+        0.0,
+        1.0
+        - geometry_distance / 0.60,
+    )
+
+    score = (
+        0.78
+        * geometry_similarity
+        + 0.22
+        * length_similarity
+    )
+
+    return round(
+        score * 100,
+        1,
+    )
+
+
+def _similar_workouts(
+    workout,
+    history,
+    *,
+    minimum_score: float = 70.0,
+    limit: int = 5,
+) -> list[tuple[float, object]]:
+    """
+    Finds earlier activities with sufficiently similar
+    GPS geometry.
+    """
+
+    if history is None:
+        return []
+
+    current_date = (
+        _workout_datetime(
+            workout
+        )
+    )
+
+    current_sport = str(
+        workout.sport
+        or ""
+    ).strip().casefold()
+
+    matches = []
+
+    for candidate in (
+        history.workouts
+    ):
+
+        if (
+            str(
+                candidate.workout_id
+            )
+            == str(
+                workout.workout_id
+            )
+        ):
+            continue
+
+        candidate_date = (
+            _workout_datetime(
+                candidate
+            )
+        )
+
+        if (
+            current_date is not None
+            and candidate_date
+            is not None
+            and candidate_date
+            >= current_date
+        ):
+            continue
+
+        candidate_sport = str(
+            candidate.sport
+            or ""
+        ).strip().casefold()
+
+        if (
+            candidate_sport
+            != current_sport
+        ):
+            continue
+
+        if not candidate.sensors.get(
+            "gps"
+        ):
+            continue
+
+        score = (
+            _route_similarity_score(
+                workout,
+                candidate,
+            )
+        )
+
+        if score < minimum_score:
+            continue
+
+        matches.append(
+            (
+                score,
+                candidate,
+            )
+        )
+
+    matches.sort(
+        key=lambda item: (
+            item[0],
+            (
+                _workout_datetime(
+                    item[1]
+                )
+                or datetime.min
+            ),
+        ),
+        reverse=True,
+    )
+
+    return matches[
+        :limit
+    ]
+
+
+def _route_progress_for_time(
+    route,
+    timestamp: datetime,
+) -> float | None:
+
+    if not route:
+        return None
+
+    timestamps = [
+        row["Timestamp"]
+        for row in route
+    ]
+
+    index = bisect_left(
+        timestamps,
+        timestamp,
+    )
+
+    if index <= 0:
+        return route[0][
+            "Progress"
+        ]
+
+    if index >= len(route):
+        return route[-1][
+            "Progress"
+        ]
+
+    before = route[
+        index - 1
+    ]
+    after = route[
+        index
+    ]
+
+    if (
+        timestamp
+        - before["Timestamp"]
+        <= after["Timestamp"]
+        - timestamp
+    ):
+        return before[
+            "Progress"
+        ]
+
+    return after[
+        "Progress"
+    ]
+
+
+def _sensor_progress_rows(
     workout,
     sensor_name: str,
 ) -> list[dict]:
-    """
-    Converts one sensor stream into elapsed-time rows.
-    """
+
+    route = (
+        _route_profile_rows(
+            workout
+        )
+    )
+
+    if not route:
+        return []
 
     samples = (
         workout.sensors.get(
@@ -223,7 +600,7 @@ def _sensor_rows(
         or []
     )
 
-    parsed = []
+    rows = []
 
     for sample in samples:
 
@@ -252,59 +629,45 @@ def _sensor_rows(
         ):
             continue
 
-        parsed.append(
-            (
+        progress = (
+            _route_progress_for_time(
+                route,
                 timestamp,
-                numeric_value,
             )
         )
 
-    if not parsed:
-        return []
+        if progress is None:
+            continue
 
-    start = parsed[0][0]
+        rows.append(
+            {
+                "Progress": progress,
+                "Value": numeric_value,
+            }
+        )
 
-    return [
-        {
-            "Elapsed": (
-                _elapsed_minutes(
-                    timestamp,
-                    start,
-                )
-            ),
-            "Value": value,
-        }
-        for timestamp, value
-        in parsed
-    ]
+    return rows
 
 
 def _available_metrics(
     workout,
-) -> dict[str, str]:
+) -> tuple[str, ...]:
 
-    metrics = {}
+    values = []
 
     if workout.sensors.get(
         "heart_rate"
     ):
-        metrics[
+        values.append(
             "Heart rate"
-        ] = "heart_rate"
+        )
 
     if workout.sensors.get(
         "power"
     ):
-        metrics[
+        values.append(
             "Power"
-        ] = "power"
-
-    if workout.sensors.get(
-        "cadence"
-    ):
-        metrics[
-            "Cadence"
-        ] = "cadence"
+        )
 
     profile = (
         _route_profile_rows(
@@ -316,11 +679,59 @@ def _available_metrics(
         row["Pace"] is not None
         for row in profile
     ):
-        metrics[
+        values.append(
             "Pace"
-        ] = "pace"
+        )
 
-    return metrics
+    if workout.sensors.get(
+        "cadence"
+    ):
+        values.append(
+            "Cadence"
+        )
+
+    return tuple(
+        values
+    )
+
+
+def _metric_rows(
+    workout,
+    metric: str,
+) -> list[dict]:
+
+    if metric == "Pace":
+
+        return [
+            {
+                "Progress": (
+                    row["Progress"]
+                ),
+                "Value": (
+                    row["Pace"]
+                ),
+            }
+            for row in (
+                _route_profile_rows(
+                    workout
+                )
+            )
+            if row["Pace"]
+            is not None
+        ]
+
+    sensor_name = {
+        "Heart rate": "heart_rate",
+        "Power": "power",
+        "Cadence": "cadence",
+    }[metric]
+
+    return (
+        _sensor_progress_rows(
+            workout,
+            sensor_name,
+        )
+    )
 
 
 def _metric_axis(
@@ -336,79 +747,119 @@ def _metric_axis(
             "Power",
             "W",
         ),
-        "Cadence": (
-            "Cadence",
-            "spm",
-        ),
         "Pace": (
             "Pace",
             "min/km",
         ),
+        "Cadence": (
+            "Cadence",
+            "spm",
+        ),
     }[metric]
 
 
-def _metric_rows(
+def _workout_label(
     workout,
-    metric: str,
-) -> list[dict]:
+) -> str:
 
-    if metric == "Pace":
-
-        return [
-            {
-                "Elapsed": (
-                    row["Elapsed"]
-                ),
-                "Value": (
-                    row["Pace"]
-                ),
-            }
-            for row in (
-                _route_profile_rows(
-                    workout
-                )
-            )
-            if row["Pace"]
-            is not None
-        ]
-
-    sensor_name = (
-        _available_metrics(
-            workout
-        )[metric]
+    title = (
+        workout.info.title
+        or workout.sport
+        or "Activity"
     )
 
-    return _sensor_rows(
+    value = getattr(
         workout,
-        sensor_name,
+        "date",
+        None,
+    )
+
+    if isinstance(
+        value,
+        datetime,
+    ):
+        day = value.date()
+
+    else:
+        day = value
+
+    if day is None:
+        return str(title)
+
+    return (
+        f"{title} · "
+        f"{day.strftime('%d %b %Y')}"
     )
 
 
-def _activity_profile_chart(
+def _comparison_chart(
     workout,
     *,
     metric: str,
+    comparison=None,
 ):
     """
-    One selected physiological/performance metric
-    over an elevation backdrop.
+    Overlays one metric from the current activity and,
+    optionally, a previous matching route.
+
+    Elevation from the current activity remains a
+    low-opacity background.
     """
 
-    profile_rows = (
-        _route_profile_rows(
-            workout
+    current_rows = [
+        {
+            **row,
+            "Activity": (
+                "Current"
+            ),
+        }
+        for row in (
+            _metric_rows(
+                workout,
+                metric,
+            )
         )
-    )
+    ]
+
+    if not current_rows:
+        return None
+
+    comparison_rows = []
+
+    if comparison is not None:
+
+        comparison_rows = [
+            {
+                **row,
+                "Activity": (
+                    _workout_label(
+                        comparison
+                    )
+                ),
+            }
+            for row in (
+                _metric_rows(
+                    comparison,
+                    metric,
+                )
+            )
+        ]
 
     metric_rows = (
-        _metric_rows(
-            workout,
-            metric,
-        )
+        current_rows
+        + comparison_rows
     )
 
-    if not metric_rows:
-        return None
+    elevation_rows = [
+        row
+        for row in (
+            _route_profile_rows(
+                workout
+            )
+        )
+        if row["Elevation"]
+        is not None
+    ]
 
     title, unit = (
         _metric_axis(
@@ -418,16 +869,9 @@ def _activity_profile_chart(
 
     layers = []
 
-    elevation_rows = [
-        row
-        for row in profile_rows
-        if row["Elevation"]
-        is not None
-    ]
-
     if elevation_rows:
 
-        elevation = (
+        elevation_chart = (
             alt.Chart(
                 alt.Data(
                     values=elevation_rows
@@ -438,8 +882,14 @@ def _activity_profile_chart(
             )
             .encode(
                 x=alt.X(
-                    "Elapsed:Q",
-                    title="Elapsed time (min)",
+                    "Progress:Q",
+                    title="Route progress (%)",
+                    scale=alt.Scale(
+                        domain=[
+                            0,
+                            100,
+                        ]
+                    ),
                 ),
                 y=alt.Y(
                     "Elevation:Q",
@@ -451,9 +901,9 @@ def _activity_profile_chart(
                 ),
                 tooltip=[
                     alt.Tooltip(
-                        "Elapsed:Q",
-                        title="Elapsed",
-                        format=".1f",
+                        "Progress:Q",
+                        title="Route progress",
+                        format=".0f",
                     ),
                     alt.Tooltip(
                         "Elevation:Q",
@@ -465,37 +915,56 @@ def _activity_profile_chart(
         )
 
         layers.append(
-            elevation
+            elevation_chart
         )
 
-    metric_line = (
+    metric_scale = alt.Scale(
+        zero=False,
+        reverse=(
+            metric == "Pace"
+        ),
+    )
+
+    metric_chart = (
         alt.Chart(
             alt.Data(
                 values=metric_rows
             )
         )
         .mark_line(
-            strokeWidth=1.8,
+            strokeWidth=1.9,
         )
         .encode(
             x=alt.X(
-                "Elapsed:Q",
-                title="Elapsed time (min)",
+                "Progress:Q",
+                title="Route progress (%)",
+                scale=alt.Scale(
+                    domain=[
+                        0,
+                        100,
+                    ]
+                ),
             ),
             y=alt.Y(
                 "Value:Q",
                 title=(
                     f"{title} ({unit})"
                 ),
-                scale=alt.Scale(
-                    zero=False
-                ),
+                scale=metric_scale,
+            ),
+            color=alt.Color(
+                "Activity:N",
+                title=None,
             ),
             tooltip=[
                 alt.Tooltip(
-                    "Elapsed:Q",
-                    title="Elapsed",
-                    format=".1f",
+                    "Activity:N",
+                    title="Activity",
+                ),
+                alt.Tooltip(
+                    "Progress:Q",
+                    title="Route progress",
+                    format=".0f",
                 ),
                 alt.Tooltip(
                     "Value:Q",
@@ -507,7 +976,7 @@ def _activity_profile_chart(
     )
 
     layers.append(
-        metric_line
+        metric_chart
     )
 
     return (
@@ -518,7 +987,7 @@ def _activity_profile_chart(
             y="independent"
         )
         .properties(
-            height=235
+            height=250
         )
     )
 
@@ -550,11 +1019,9 @@ def _environment_label(
 
 def show_activity_analysis(
     workout,
+    *,
+    history=None,
 ) -> None:
-    """
-    Shows route, environment and sensor analysis
-    for one completed workout.
-    """
 
     if workout is None:
         return
@@ -562,6 +1029,7 @@ def show_activity_analysis(
     with st.container(
         border=True
     ):
+
         st.markdown(
             "**Activity analysis**"
         )
@@ -611,6 +1079,7 @@ def show_activity_analysis(
         if workout.sensors.get(
             "gps"
         ):
+
             st.markdown(
                 "**Route**"
             )
@@ -626,27 +1095,88 @@ def show_activity_analysis(
         )
 
         if not metrics:
+            st.caption(
+                "No detailed sensor streams "
+                "are available for this activity."
+            )
             return
+
+        similar = (
+            _similar_workouts(
+                workout,
+                history,
+            )
+        )
 
         st.markdown(
             "**Performance profile**"
         )
 
-        metric = st.selectbox(
-            "Metric",
-            options=tuple(
-                metrics.keys()
-            ),
-            key=(
-                "today_activity_"
-                "analysis_metric"
-            ),
+        metric_column, compare_column = (
+            st.columns(
+                2,
+                gap="small",
+            )
+        )
+
+        with metric_column:
+
+            metric = st.selectbox(
+                "Metric",
+                options=metrics,
+                key=(
+                    "today_activity_"
+                    "analysis_metric"
+                ),
+            )
+
+        comparison_options = [
+            "This activity only"
+        ]
+
+        comparison_lookup = {}
+
+        for score, candidate in similar:
+
+            label = (
+                f"{_workout_label(candidate)}"
+                f" · {score:.0f}% route match"
+            )
+
+            comparison_options.append(
+                label
+            )
+
+            comparison_lookup[
+                label
+            ] = candidate
+
+        with compare_column:
+
+            comparison_label = (
+                st.selectbox(
+                    "Compare with",
+                    options=(
+                        comparison_options
+                    ),
+                    key=(
+                        "today_activity_"
+                        "comparison"
+                    ),
+                )
+            )
+
+        comparison = (
+            comparison_lookup.get(
+                comparison_label
+            )
         )
 
         chart = (
-            _activity_profile_chart(
+            _comparison_chart(
                 workout,
                 metric=metric,
+                comparison=comparison,
             )
         )
 
@@ -657,7 +1187,37 @@ def show_activity_analysis(
                 use_container_width=True,
             )
 
-        st.caption(
-            "Elevation is shown as the "
-            "background profile."
-        )
+        if comparison is None:
+
+            if similar:
+                st.caption(
+                    f"{len(similar)} similar "
+                    "historical route(s) available. "
+                    "Select one above to compare."
+                )
+
+            else:
+                st.caption(
+                    "No sufficiently similar previous "
+                    "route was found in the history."
+                )
+
+        else:
+
+            selected_score = next(
+                (
+                    score
+                    for score, candidate
+                    in similar
+                    if candidate
+                    is comparison
+                ),
+                None,
+            )
+
+            if selected_score is not None:
+
+                st.caption(
+                    "Route similarity · "
+                    f"{selected_score:.0f}%"
+                )
