@@ -632,8 +632,25 @@ def _training_plan_adaptation_to_dict(
         "load_difference": (
             adaptation.load_difference
         ),
+        "previous_distance": (
+            adaptation.previous_distance
+        ),
+        "revised_distance": (
+            adaptation.revised_distance
+        ),
+        "previous_elevation_gain": (
+            adaptation.previous_elevation_gain
+        ),
+        "revised_elevation_gain": (
+            adaptation.revised_elevation_gain
+        ),
+        "previous_prescription": (
+            adaptation.previous_prescription
+        ),
+        "revised_prescription": (
+            adaptation.revised_prescription
+        ),
     }
-
 
 # ======================================================
 
@@ -674,6 +691,32 @@ def _training_plan_adaptation_from_dict(
         ),
         load_difference=data.get(
             "load_difference"
+        ),
+        previous_distance=data.get(
+            "previous_distance"
+        ),
+        revised_distance=data.get(
+            "revised_distance"
+        ),
+        previous_elevation_gain=data.get(
+            "previous_elevation_gain"
+        ),
+        revised_elevation_gain=data.get(
+            "revised_elevation_gain"
+        ),
+        previous_prescription=(
+            _repair_text_encoding(
+                data.get(
+                    "previous_prescription"
+                )
+            )
+        ),
+        revised_prescription=(
+            _repair_text_encoding(
+                data.get(
+                    "revised_prescription"
+                )
+            )
         ),
     )
 
