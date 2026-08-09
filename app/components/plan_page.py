@@ -74,6 +74,11 @@ def _plan_chart_data(
                 "Planned load": (
                     point.planned_load
                 ),
+                "Completed load": getattr(
+                    point,
+                    "completed_load",
+                    None,
+                ),
                 "Distance": getattr(
                     point,
                     "distance",
@@ -746,6 +751,100 @@ def _planned_load_chart(
             ),
         )
     )
+    completed_rows = [
+        row
+        for row in training_data
+        if (
+            row.get(
+                "Completed load"
+            )
+            is not None
+        )
+    ]
+
+    completed_base = (
+        alt.Chart(
+            alt.Data(
+                values=completed_rows
+            )
+        )
+        .encode(
+            x=alt.X(
+                "Date:T",
+                title=None,
+                scale=_plan_chart_date_scale(
+                    plan
+                ),
+            ),
+            tooltip=[
+                alt.Tooltip(
+                    "Date:T",
+                    title="Date",
+                    format="%d %b %Y",
+                ),
+                alt.Tooltip(
+                    "Session:N",
+                    title="Session",
+                ),
+                alt.Tooltip(
+                    "Planned load:Q",
+                    title="Planned load",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Completed load:Q",
+                    title="Completed load",
+                    format=".0f",
+                ),
+                alt.Tooltip(
+                    "Status:N",
+                    title="Status",
+                ),
+            ],
+        )
+    )
+
+    completed_line = (
+        completed_base
+        .mark_line(
+            interpolate="linear",
+            strokeWidth=2.2,
+            color="#16a34a",
+        )
+        .encode(
+            y=alt.Y(
+                "Completed load:Q",
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    completed_points = (
+        completed_base
+        .mark_point(
+            filled=True,
+            size=55,
+            color="#16a34a",
+        )
+        .encode(
+            y=alt.Y(
+                "Completed load:Q",
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
 
     race_base = (
         alt.Chart(
@@ -894,6 +993,8 @@ def _planned_load_chart(
         alt.layer(
             training_line,
             training_points,
+            completed_line,
+            completed_points,
             race_rules,
             race_points,
         )

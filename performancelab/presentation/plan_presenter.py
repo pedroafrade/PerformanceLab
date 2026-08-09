@@ -47,15 +47,13 @@ class PlanPresenter:
         self,
         *,
         reference_day: date,
-    ) -> dict[object, str]:
+    ) -> dict[object, object]:
         """
-        Indexes outcome status by planned workout.
+        Indexes complete workout outcomes by planned workout.
         """
 
         return {
-            outcome.planned_workout: (
-                outcome.status.value
-            )
+            outcome.planned_workout: outcome
             for outcome in (
                 self.plan.assess_outcomes(
                     history=self.history,
@@ -63,6 +61,42 @@ class PlanPresenter:
                 )
             )
         }
+    def _outcome_for_presented_workout(
+        self,
+        workout,
+        outcomes,
+    ):
+        """
+        Finds the domain outcome corresponding to one
+        presentation workout.
+        """
+
+        domain_workout = next(
+            (
+                planned
+                for planned in self.plan
+                if (
+                    planned.scheduled_at
+                    == workout.scheduled_at
+                    and (
+                        planned.title
+                        or ""
+                    )
+                    == (
+                        workout.title
+                        or ""
+                    )
+                )
+            ),
+            None,
+        )
+
+        if domain_workout is None:
+            return None
+
+        return outcomes.get(
+            domain_workout
+        )
     
     @staticmethod
     def _phase_objective(
@@ -758,9 +792,10 @@ class PlanPresenter:
                         ).strip().lower()
                         == "race effort"
                     ),
-                    status=outcomes.get(
-                        workout,
-                        "pending",
+                    status=(
+                        outcomes[workout].status.value
+                        if workout in outcomes
+                        else "pending"
                     ),
                     prescription_summary=(
                         workout
@@ -900,6 +935,19 @@ class PlanPresenter:
                 phase=workout.phase,
                 planned_load=(
                     workout.planned_load
+                ),
+                completed_load=(
+                    outcome.completed_load
+                    if (
+                        outcome := (
+                            self
+                            ._outcome_for_presented_workout(
+                                workout,
+                                outcomes,
+                            )
+                        )
+                    )
+                    else None
                 ),
                 distance=workout.distance,
                 elevation_gain=(

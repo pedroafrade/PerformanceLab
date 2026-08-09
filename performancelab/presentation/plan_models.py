@@ -37,11 +37,15 @@ class PlanChartPointData:
     day: date
     title: str
     phase: str | None
+
     planned_load: float | None
+    completed_load: float | None
+
     distance: float | None
     elevation_gain: float | None
     duration: timedelta | None
     intensity: str | None
+
     is_race: bool
     status: str
 

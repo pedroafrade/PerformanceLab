@@ -316,6 +316,7 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-08-04",
             "Planned load": 180.0,
+            "Completed load": None,
             "Distance": 10.0,
             "Elevation": None,
             "Duration": 60,
@@ -328,6 +329,7 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-08-11",
             "Planned load": 315.0,
+            "Completed load": None,
             "Distance": 8.0,
             "Elevation": None,
             "Duration": 45,
@@ -340,6 +342,7 @@ def test_builds_planned_session_chart_data():
         {
             "Date": "2026-09-13",
             "Planned load": 900.0,
+            "Completed load": None,
             "Distance": 25.0,
             "Elevation": None,
             "Duration": 201,
