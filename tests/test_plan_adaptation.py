@@ -12,6 +12,13 @@ from performancelab.training.planning import (
     WorkoutOutcomeStatus,
 )
 
+from performancelab.training.planning.planned_workout import (
+    PlannedWorkout,
+)
+from performancelab.training.planning.training_plan_adapter import (
+    TrainingPlanAdapter,
+)
+
 
 def create_adaptation() -> TrainingPlanAdaptation:
 
@@ -148,3 +155,75 @@ def test_rejects_datetime_as_domain_date():
                 WorkoutOutcomeStatus.SUBSTITUTE
             ),
         )
+def test_adapted_hill_session_preserves_repetitions():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            11,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Hill Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Hard",
+        objective=(
+            "Develop strength and power on climbs."
+        ),
+        structure=(
+            "Warm up 10 min",
+            "5×3 min uphill",
+            (
+                "Recover 2 min easy downhill "
+                "between repetitions"
+            ),
+            "Cool down 5 min",
+            (
+                "Heart rate target: "
+                "Z4 · 177–186 bpm"
+            ),
+        ),
+    )
+
+    result = (
+        TrainingPlanAdapter
+        ._adapted_structure(
+            workout=workout,
+            duration=timedelta(
+                minutes=36,
+            ),
+            main_label=(
+                "Controlled quality work"
+            ),
+        )
+    )
+
+    assert any(
+        (
+            "×3 min uphill"
+            in step
+        )
+        for step in result
+    )
+
+    assert any(
+        (
+            "Recover 2 min easy downhill"
+            in step
+        )
+        for step in result
+    )
+
+    assert (
+        "Controlled quality work 22 min"
+        not in result
+    )
+
+    assert (
+        "Heart rate target: Z4 · 177–186 bpm"
+        in result
+    )

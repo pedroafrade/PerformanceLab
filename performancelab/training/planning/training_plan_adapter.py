@@ -668,6 +668,368 @@ class TrainingPlanAdapter:
 
     # ======================================================
     @staticmethod
+    def _adapted_threshold_structure(
+        total_minutes: int,
+    ) -> tuple[str, ...]:
+        """
+        Builds a conservative threshold prescription while
+        preserving the existing LT2 adaptation behaviour.
+        """
+
+        repetitions = 3
+        recovery_minutes = 2
+
+        work_minutes = max(
+            4,
+            ceil(
+                total_minutes
+                / (
+                    repetitions
+                    * 2
+                )
+            ),
+        )
+
+        total_work_minutes = (
+            repetitions
+            * work_minutes
+        )
+
+        total_recovery_minutes = (
+            (
+                repetitions
+                - 1
+            )
+            * recovery_minutes
+        )
+
+        preparation_minutes = (
+            total_minutes
+            - total_work_minutes
+            - total_recovery_minutes
+        )
+
+        cool_down_minutes = max(
+            4,
+            round(
+                preparation_minutes
+                * 0.35
+            ),
+        )
+
+        warm_up_minutes = (
+            preparation_minutes
+            - cool_down_minutes
+        )
+
+        return (
+            (
+                "Warm up "
+                f"{warm_up_minutes} min"
+            ),
+            (
+                f"{repetitions}×"
+                f"{work_minutes} min "
+                "at LT2"
+            ),
+            (
+                "Recover "
+                f"{recovery_minutes} min "
+                "easy between repetitions"
+            ),
+            (
+                "Cool down "
+                f"{cool_down_minutes} min"
+            ),
+        )
+
+    @staticmethod
+    def _adapted_hill_structure(
+        *,
+        workout: PlannedWorkout,
+        total_minutes: int,
+    ) -> tuple[str, ...]:
+        """
+        Preserves an explicit hill-repetition prescription
+        when a hill session is shortened.
+        """
+
+        original_structure = tuple(
+            str(step).strip()
+            for step in workout.structure
+            if str(step).strip()
+        )
+
+        repetition_minutes = 3
+        recovery_minutes = 2
+
+        for step in original_structure:
+
+            normalized = step.lower()
+
+            if (
+                "×" in step
+                and "min uphill" in normalized
+            ):
+
+                try:
+                    interval_part = (
+                        normalized
+                        .split("×", 1)[1]
+                        .split("min uphill", 1)[0]
+                        .strip()
+                    )
+
+                    repetition_minutes = max(
+                        1,
+                        int(
+                            interval_part
+                            .split()[-1]
+                        ),
+                    )
+
+                except (
+                    ValueError,
+                    IndexError,
+                ):
+                    pass
+
+            if (
+                normalized.startswith(
+                    "recover "
+                )
+                and " min " in normalized
+            ):
+
+                try:
+                    recovery_minutes = max(
+                        1,
+                        int(
+                            normalized
+                            .split(
+                                "recover ",
+                                1,
+                            )[1]
+                            .split(
+                                " min",
+                                1,
+                            )[0]
+                        ),
+                    )
+
+                except (
+                    ValueError,
+                    IndexError,
+                ):
+                    pass
+
+        warm_up_minutes = min(
+            10,
+            max(
+                7,
+                total_minutes // 4,
+            ),
+        )
+
+        cool_down_minutes = min(
+            5,
+            max(
+                4,
+                total_minutes // 8,
+            ),
+        )
+
+        available_minutes = max(
+            1,
+            (
+                total_minutes
+                - warm_up_minutes
+                - cool_down_minutes
+            ),
+        )
+
+        repetition_block = (
+            repetition_minutes
+            + recovery_minutes
+        )
+
+        repetitions = max(
+            3,
+            (
+                available_minutes
+                + recovery_minutes
+            )
+            // repetition_block,
+        )
+
+        while (
+            repetitions > 3
+            and (
+                repetitions
+                * repetition_minutes
+                + (
+                    repetitions - 1
+                )
+                * recovery_minutes
+            )
+            > available_minutes
+        ):
+            repetitions -= 1
+
+        prescribed_main_minutes = (
+            repetitions
+            * repetition_minutes
+            + (
+                repetitions - 1
+            )
+            * recovery_minutes
+        )
+
+        remaining_minutes = max(
+            0,
+            (
+                total_minutes
+                - prescribed_main_minutes
+                - cool_down_minutes
+            ),
+        )
+
+        warm_up_minutes = max(
+            5,
+            remaining_minutes,
+        )
+
+        return (
+            f"Warm up {warm_up_minutes} min",
+            (
+                f"{repetitions}×"
+                f"{repetition_minutes} min uphill"
+            ),
+            (
+                f"Recover {recovery_minutes} min "
+                "easy downhill between repetitions"
+            ),
+            f"Cool down {cool_down_minutes} min",
+        )
+
+
+    @staticmethod
+    def _adapted_vo2_structure(
+        total_minutes: int,
+    ) -> tuple[str, ...]:
+        """
+        Builds an executable VO2max interval session.
+        """
+
+        repetition_minutes = 3
+        recovery_minutes = 2
+
+        warm_up_minutes = min(
+            12,
+            max(
+                8,
+                total_minutes // 4,
+            ),
+        )
+
+        cool_down_minutes = min(
+            8,
+            max(
+                5,
+                total_minutes // 7,
+            ),
+        )
+
+        available_minutes = max(
+            1,
+            (
+                total_minutes
+                - warm_up_minutes
+                - cool_down_minutes
+            ),
+        )
+
+        repetitions = max(
+            2,
+            (
+                available_minutes
+                + recovery_minutes
+            )
+            // (
+                repetition_minutes
+                + recovery_minutes
+            ),
+        )
+
+        return (
+            f"Warm up {warm_up_minutes} min",
+            (
+                f"{repetitions}×"
+                f"{repetition_minutes} min "
+                "at VO₂max effort"
+            ),
+            (
+                f"Recover {recovery_minutes} min "
+                "easy between repetitions"
+            ),
+            f"Cool down {cool_down_minutes} min",
+        )
+
+
+    @staticmethod
+    def _adapted_speed_structure(
+        total_minutes: int,
+    ) -> tuple[str, ...]:
+        """
+        Builds an executable short-speed prescription.
+        """
+
+        warm_up_minutes = min(
+            10,
+            max(
+                7,
+                total_minutes // 4,
+            ),
+        )
+
+        cool_down_minutes = min(
+            5,
+            max(
+                4,
+                total_minutes // 8,
+            ),
+        )
+
+        available_minutes = max(
+            2,
+            (
+                total_minutes
+                - warm_up_minutes
+                - cool_down_minutes
+            ),
+        )
+
+        repetitions = max(
+            4,
+            min(
+                10,
+                available_minutes // 2,
+            ),
+        )
+
+        return (
+            f"Warm up {warm_up_minutes} min",
+            (
+                f"{repetitions}×30 sec fast"
+            ),
+            (
+                "Recover 90 sec easy "
+                "after each repetition"
+            ),
+            f"Cool down {cool_down_minutes} min",
+        )
+    
+    @staticmethod
     def _adapted_structure(
         *,
         workout: PlannedWorkout,
@@ -675,11 +1037,12 @@ class TrainingPlanAdapter:
         main_label: str,
     ) -> tuple[str, ...]:
         """
-        Builds a conservative prescription whose timed
-        steps match the adapted total duration.
+        Builds an executable prescription for an adapted
+        workout while preserving the session's key stimulus.
 
-        Threshold sessions preserve an explicit interval
-        structure whenever the available duration allows it.
+        Interval sessions retain explicit repetitions and
+        recoveries instead of being reduced to one generic
+        main-work block.
         """
 
         total_minutes = max(
@@ -697,86 +1060,22 @@ class TrainingPlanAdapter:
             )
         )
 
-        is_threshold_session = any(
-            token in description
-            for token in (
-                "lt2",
-                "threshold",
+        target_guidance = tuple(
+            step
+            for step in workout.structure
+            if str(
+                step
+            ).strip().lower().startswith(
+                (
+                    "heart rate target:",
+                    "power target:",
+                    "pace target:",
+                )
             )
         )
 
-        if (
-            is_threshold_session
-            and total_minutes >= 30
-        ):
-            repetitions = 3
-            recovery_minutes = 2
+        if total_minutes <= 15:
 
-            work_minutes = max(
-                4,
-                ceil(
-                    total_minutes
-                    / (
-                        repetitions
-                        * 2
-                    )
-                ),
-            )
-
-            total_work_minutes = (
-                repetitions
-                * work_minutes
-            )
-
-            total_recovery_minutes = (
-                (
-                    repetitions
-                    - 1
-                )
-                * recovery_minutes
-            )
-
-            preparation_minutes = (
-                total_minutes
-                - total_work_minutes
-                - total_recovery_minutes
-            )
-
-            cool_down_minutes = max(
-                4,
-                round(
-                    preparation_minutes
-                    * 0.35
-                ),
-            )
-
-            warm_up_minutes = (
-                preparation_minutes
-                - cool_down_minutes
-            )
-
-            timed_steps = (
-                (
-                    "Warm up "
-                    f"{warm_up_minutes} min"
-                ),
-                (
-                    f"{repetitions}×"
-                    f"{work_minutes} min "
-                    "at LT2"
-                ),
-                (
-                    "Recover "
-                    f"{recovery_minutes} min "
-                    "easy between repetitions"
-                ),
-                (
-                    "Cool down "
-                    f"{cool_down_minutes} min"
-                ),
-            )
-
-        elif total_minutes <= 15:
             timed_steps = (
                 (
                     f"{main_label} "
@@ -784,7 +1083,60 @@ class TrainingPlanAdapter:
                 ),
             )
 
+            return (
+                *timed_steps,
+                *target_guidance,
+            )
+
+        if any(
+            token in description
+            for token in (
+                "lt2",
+                "threshold",
+            )
+        ):
+            timed_steps = (
+                TrainingPlanAdapter
+                ._adapted_threshold_structure(
+                    total_minutes
+                )
+            )
+
+        elif "hill" in description:
+
+            timed_steps = (
+                TrainingPlanAdapter
+                ._adapted_hill_structure(
+                    workout=workout,
+                    total_minutes=total_minutes,
+                )
+            )
+
+        elif any(
+            token in description
+            for token in (
+                "vo2",
+                "vo₂",
+            )
+        ):
+            timed_steps = (
+                TrainingPlanAdapter
+                ._adapted_vo2_structure(
+                    total_minutes
+                )
+            )
+
+        elif "speed" in description:
+
+            timed_steps = (
+                TrainingPlanAdapter
+                ._adapted_speed_structure(
+                    total_minutes
+                )
+            )
+
         else:
+
             warm_up_minutes = min(
                 10,
                 max(
@@ -824,20 +1176,6 @@ class TrainingPlanAdapter:
                     f"{cool_down_minutes} min"
                 ),
             )
-
-        target_guidance = tuple(
-            step
-            for step in workout.structure
-            if str(
-                step
-            ).strip().lower().startswith(
-                (
-                    "heart rate target:",
-                    "power target:",
-                    "pace target:",
-                )
-            )
-        )
 
         return (
             *timed_steps,
