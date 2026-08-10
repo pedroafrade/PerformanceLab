@@ -9,13 +9,9 @@ import pydeck as pdk
 import streamlit as st
 
 from performancelab.presentation import (
-
     has_route,
-
     route_center,
-
     route_coordinates,
-
 )
 
 
@@ -28,83 +24,74 @@ def show_route_map(
     *,
     height: int | None = None,
 ):
-
     """
-    Displays an interactive workout route.
+    Displays the workout route.
+
+    Panning remains available, while zooming is locked.
     """
 
     if not has_route(workout):
-
         return
 
     coordinates = route_coordinates(
-
         workout
-
     )
 
     center = route_center(
-
         workout
-
     )
 
     if center is None:
-
         return
 
     route = pd.DataFrame(
-
         {
-
             "path": [
-
                 coordinates
-
             ]
-
         }
-
     )
 
     layer = pdk.Layer(
-
         "PathLayer",
-
         data=route,
-
         get_path="path",
-
         get_width=5,
-
         pickable=False,
-
     )
 
-    view = pdk.ViewState(
+    fixed_zoom = 13
 
+    view_state = pdk.ViewState(
         latitude=center[0],
-
         longitude=center[1],
-
-        zoom=13,
-
+        zoom=fixed_zoom,
+        min_zoom=fixed_zoom,
+        max_zoom=fixed_zoom,
         pitch=0,
+    )
 
+    map_view = pdk.View(
+        type="MapView",
+        controller={
+            "dragPan": True,
+            "dragRotate": False,
+            "scrollZoom": False,
+            "doubleClickZoom": False,
+            "touchZoom": False,
+            "keyboard": False,
+        },
     )
 
     deck = pdk.Deck(
-
         layers=[
-
             layer
-
         ],
-
-        initial_view_state=view,
-
+        views=[
+            map_view
+        ],
+        initial_view_state=view_state,
         map_style="road",
-
     )
 
     st.pydeck_chart(

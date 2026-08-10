@@ -1027,25 +1027,21 @@ def show_activity_analysis(
     key_prefix: str = "activity_analysis",
     show_heading: bool = True,
     compact: bool = False,
+    environment_first: bool = True,
 ) -> None:
     """
     Shows route, environment and historical performance
     analysis for one completed workout.
 
-    The same component is reused by Today and Activities.
+    Today keeps environment near the top.
+    Activities can place it after the comparison controls
+    for a denser selected-session dashboard.
     """
 
     if workout is None:
         return
 
-    with st.container(
-        border=True
-    ):
-
-        if show_heading:
-            st.markdown(
-                "**Activity analysis**"
-            )
+    def show_environment() -> None:
 
         (
             temperature_column,
@@ -1089,6 +1085,103 @@ def show_activity_analysis(
                 ),
             )
 
+    with st.container(
+        border=True
+    ):
+
+        if show_heading:
+            st.markdown(
+                "**Activity analysis**"
+            )
+
+        if environment_first:
+            show_environment()
+
+        metrics = (
+            _available_metrics(
+                workout
+            )
+        )
+
+        similar = (
+            _similar_workouts(
+                workout,
+                history,
+            )
+        )
+
+        if metrics:
+
+            st.markdown(
+                "**Performance comparison**"
+            )
+
+            metric_column, compare_column = (
+                st.columns(
+                    [1, 1.35],
+                    gap="small",
+                )
+            )
+
+            with metric_column:
+
+                metric = st.selectbox(
+                    "Metric",
+                    options=metrics,
+                    key=(
+                        f"{key_prefix}_metric"
+                    ),
+                )
+
+            comparison_options = [
+                "This activity only"
+            ]
+
+            comparison_lookup = {}
+
+            for score, candidate in similar:
+
+                label = (
+                    f"{_workout_label(candidate)}"
+                    f" · {score:.0f}% route match"
+                )
+
+                comparison_options.append(
+                    label
+                )
+
+                comparison_lookup[
+                    label
+                ] = candidate
+
+            with compare_column:
+
+                comparison_label = (
+                    st.selectbox(
+                        "Compare with",
+                        options=(
+                            comparison_options
+                        ),
+                        key=(
+                            f"{key_prefix}_comparison"
+                        ),
+                    )
+                )
+
+            comparison = (
+                comparison_lookup.get(
+                    comparison_label
+                )
+            )
+
+        else:
+
+            metric = None
+            comparison = None
+
+        if not environment_first:
+            show_environment()
+
         if workout.sensors.get(
             "gps"
         ):
@@ -1100,112 +1193,19 @@ def show_activity_analysis(
             show_route_map(
                 workout,
                 height=(
-                    190
+                    155
                     if compact
                     else 420
                 ),
             )
 
-        metrics = (
-            _available_metrics(
-                workout
-            )
-        )
-
         if not metrics:
+
             st.caption(
                 "No detailed sensor streams "
                 "are available for this activity."
             )
             return
-
-        similar = (
-            _similar_workouts(
-                workout,
-                history,
-            )
-        )
-
-        st.markdown(
-            "**Performance comparison**"
-        )
-
-        if similar:
-            st.caption(
-                (
-                    f"{len(similar)} similar historical "
-                    "route"
-                    + (
-                        "s"
-                        if len(similar) != 1
-                        else ""
-                    )
-                    + " found."
-                )
-            )
-        else:
-            st.caption(
-                "No sufficiently similar historical "
-                "route was found."
-            )
-
-        metric_column, compare_column = (
-            st.columns(
-                [1, 1.35],
-                gap="small",
-            )
-        )
-
-        with metric_column:
-
-            metric = st.selectbox(
-                "Metric",
-                options=metrics,
-                key=(
-                    f"{key_prefix}_metric"
-                ),
-            )
-
-        comparison_options = [
-            "This activity only"
-        ]
-
-        comparison_lookup = {}
-
-        for score, candidate in similar:
-
-            label = (
-                f"{_workout_label(candidate)}"
-                f" · {score:.0f}% route match"
-            )
-
-            comparison_options.append(
-                label
-            )
-
-            comparison_lookup[
-                label
-            ] = candidate
-
-        with compare_column:
-
-            comparison_label = (
-                st.selectbox(
-                    "Compare with",
-                    options=(
-                        comparison_options
-                    ),
-                    key=(
-                        f"{key_prefix}_comparison"
-                    ),
-                )
-            )
-
-        comparison = (
-            comparison_lookup.get(
-                comparison_label
-            )
-        )
 
         chart = (
             _comparison_chart(
@@ -1213,7 +1213,7 @@ def show_activity_analysis(
                 metric=metric,
                 comparison=comparison,
                 height=(
-                    190
+                    175
                     if compact
                     else 250
                 ),
@@ -1231,9 +1231,22 @@ def show_activity_analysis(
 
             if similar:
                 st.caption(
-                    "Select a matching historical "
-                    "activity above to overlay its "
-                    "performance profile."
+                    (
+                        f"{len(similar)} similar historical "
+                        "route"
+                        + (
+                            "s"
+                            if len(similar) != 1
+                            else ""
+                        )
+                        + " available for comparison."
+                    )
+                )
+
+            else:
+                st.caption(
+                    "No sufficiently similar historical "
+                    "route was found."
                 )
 
         else:
