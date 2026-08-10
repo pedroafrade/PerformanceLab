@@ -5,21 +5,20 @@ Activities page.
 """
 
 from datetime import date, timedelta
+from html import escape
 
 import streamlit as st
 
 from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
+    sensor_summary,
 )
 from .activity_analysis import (
     show_activity_analysis,
 )
 from .activity_input import (
     show_activity_input,
-)
-from .workout_details import (
-    show_workout_details,
 )
 from .workout_table import (
     format_distance,
@@ -440,7 +439,62 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.15;
             opacity: 0.58;
         }
+        .activities-metrics-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(7, minmax(0, 1fr));
+            gap: 0;
+            margin: 0;
+            padding: 0.34rem 0.55rem;
+            border-bottom:
+                1px solid rgba(128, 128, 128, 0.16);
+        }
 
+        .activities-metric {
+            min-width: 0;
+            padding: 0.2rem 0.42rem;
+            border-right:
+                1px solid rgba(128, 128, 128, 0.13);
+        }
+
+        .activities-metric:nth-child(7n) {
+            border-right: 0;
+        }
+
+        .activities-metric-label {
+            overflow: hidden;
+            margin-bottom: 0.08rem;
+            font-size: 0.58rem;
+            line-height: 1.1;
+            opacity: 0.58;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .activities-metric-value {
+            overflow: hidden;
+            font-size: 0.76rem;
+            font-weight: 680;
+            line-height: 1.15;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1200px) {
+            .activities-metrics-grid {
+                grid-template-columns:
+                    repeat(4, minmax(0, 1fr));
+            }
+
+            .activities-metric:nth-child(7n) {
+                border-right:
+                    1px solid rgba(128, 128, 128, 0.13);
+            }
+
+            .activities-metric:nth-child(4n) {
+                border-right: 0;
+            }
+        }
         .st-key-activities_browser
         div[data-testid="stMetric"] {
             padding: 0.18rem 0 !important;
@@ -648,6 +702,228 @@ def _selected_activity_header_html(
         "</div>"
         "</div>"
     )
+def _sensor_summary_label(
+    workout,
+    sensor_name: str,
+    *,
+    suffix: str,
+) -> str:
+    """
+    Formats the average and maximum of one sensor.
+    """
+
+    summary = sensor_summary(
+        workout,
+        sensor_name,
+    )
+
+    average = summary["average"]
+    maximum = summary["maximum"]
+
+    if (
+        average is None
+        and maximum is None
+    ):
+        return "—"
+
+    if maximum is None:
+        return (
+            f"{average:.0f} {suffix}"
+        )
+
+    if average is None:
+        return (
+            f"— / {maximum:.0f} {suffix}"
+        )
+
+    return (
+        f"{average:.0f} / "
+        f"{maximum:.0f} {suffix}"
+    )
+
+
+def _environment_metric_label(
+    value,
+    *,
+    suffix: str = "",
+    decimals: int = 0,
+) -> str:
+    """
+    Formats one optional environment measurement.
+    """
+
+    if value is None:
+        return "—"
+
+    if isinstance(
+        value,
+        (int, float),
+    ) and not isinstance(
+        value,
+        bool,
+    ):
+        return (
+            f"{value:.{decimals}f}"
+            f"{suffix}"
+        )
+
+    return str(value)
+
+
+def _compact_activity_metrics_html(
+    *,
+    activity,
+    workout,
+) -> str:
+    """
+    Builds one uniform metrics grid above the route map.
+    """
+
+    normalized_sport = str(
+        activity.sport or ""
+    ).strip().casefold()
+
+    is_cycling = any(
+        token in normalized_sport
+        for token in (
+            "cycl",
+            "bike",
+            "bicycle",
+        )
+    )
+
+    cadence_unit = (
+        "rpm"
+        if is_cycling
+        else "spm"
+    )
+
+    effective_rpe = (
+        workout.feedback.effective_rpe
+    )
+
+    environment = workout.environment
+
+    metrics = (
+        (
+            "Distance",
+            format_distance(
+                activity.distance
+            ),
+        ),
+        (
+            "Duration",
+            format_duration(
+                activity.duration
+            ),
+        ),
+        (
+            "Elevation",
+            format_elevation(
+                activity.elevation_gain
+            ),
+        ),
+        (
+            "RPE",
+            (
+                f"{effective_rpe:.1f}"
+                if effective_rpe is not None
+                else "—"
+            ),
+        ),
+        (
+            "HR avg / max",
+            _sensor_summary_label(
+                workout,
+                "heart_rate",
+                suffix="bpm",
+            ),
+        ),
+        (
+            "Power avg / max",
+            _sensor_summary_label(
+                workout,
+                "power",
+                suffix="W",
+            ),
+        ),
+        (
+            "Cadence avg / max",
+            _sensor_summary_label(
+                workout,
+                "cadence",
+                suffix=cadence_unit,
+            ),
+        ),
+        (
+            "Planned load",
+            _format_load(
+                activity.planned_load
+            ),
+        ),
+        (
+            "Completed load",
+            _format_load(
+                activity.completed_load
+            ),
+        ),
+        (
+            "Δ load",
+            _format_load(
+                activity.load_difference,
+                signed=True,
+            ),
+        ),
+        (
+            "Air temperature",
+            _environment_metric_label(
+                environment.temperature,
+                suffix=" °C",
+                decimals=1,
+            ),
+        ),
+        (
+            "Humidity",
+            _environment_metric_label(
+                environment.humidity,
+                suffix="%",
+            ),
+        ),
+        (
+            "Terrain",
+            (
+                environment.terrain
+                or "—"
+            ),
+        ),
+        (
+            "Plan result",
+            _outcome_label(
+                activity.outcome_status
+            ),
+        ),
+    )
+
+    content = "".join(
+        (
+            '<div class="activities-metric">'
+            '<div class="activities-metric-label">'
+            f"{escape(str(label))}"
+            "</div>"
+            '<div class="activities-metric-value">'
+            f"{escape(str(value))}"
+            "</div>"
+            "</div>"
+        )
+        for label, value
+        in metrics
+    )
+
+    return (
+        '<div class="activities-metrics-grid">'
+        f"{content}"
+        "</div>"
+    )
 
 def _show_selected_activity_dashboard(
     *,
@@ -667,71 +943,24 @@ def _show_selected_activity_dashboard(
         unsafe_allow_html=True,
     )
 
-    if (
-        activity.outcome_status
-        is not None
-    ):
-        (
-            planned_column,
-            completed_column,
-            difference_column,
-        ) = st.columns(
-            3,
-            gap="small",
-        )
-
-        with planned_column:
-            st.metric(
-                "Planned",
-                _format_load(
-                    activity.planned_load
-                ),
-            )
-
-        with completed_column:
-            st.metric(
-                "Completed",
-                _format_load(
-                    activity.completed_load
-                ),
-            )
-
-        with difference_column:
-            st.metric(
-                "Δ load",
-                _format_load(
-                    activity.load_difference,
-                    signed=True,
-                ),
-            )
-
-    analysis_tab, details_tab = (
-        st.tabs(
-            [
-                "Performance",
-                "Details",
-            ]
+    st.html(
+        _compact_activity_metrics_html(
+            activity=activity,
+            workout=workout,
         )
     )
 
-    with analysis_tab:
-
-        show_activity_analysis(
-            workout,
-            history=athlete.history,
-            key_prefix=(
-                "activities_inline_"
-                f"{activity.workout_id}"
-            ),
-            show_heading=False,
-            compact=True,
-        )
-
-    with details_tab:
-
-        show_workout_details(
-            workout
-        )
+    show_activity_analysis(
+        workout,
+        history=athlete.history,
+        key_prefix=(
+            "activities_inline_"
+            f"{activity.workout_id}"
+        ),
+        show_heading=False,
+        compact=True,
+        environment_first=False,
+    )
 
 def show_activities_page(
     athlete,

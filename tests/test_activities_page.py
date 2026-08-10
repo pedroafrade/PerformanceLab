@@ -8,6 +8,7 @@ from app.components.activities_page import (
     _activity_rows,
     _activity_row_label,
     _analysis_available,
+    _compact_activity_metrics_html,
     _format_load,
     _outcome_filter_value,
     _outcome_label,
@@ -559,3 +560,66 @@ def test_builds_compact_activity_row_label():
     assert "1h 42m" in label
     assert "630 m" in label
     assert "RPE 7.7" in label
+
+def test_builds_unified_activity_metrics():
+
+    from performancelab.workout import (
+        Workout,
+    )
+
+    activity = ActivityListItemData(
+        workout_id="activity-metrics",
+        workout_date=date(
+            2026,
+            8,
+            7,
+        ),
+        sport="Cycling",
+        title="Cycling activity",
+        distance=50.3,
+        duration=timedelta(
+            hours=2,
+            minutes=32,
+        ),
+        elevation_gain=980,
+        rpe=7.5,
+        outcome_status=(
+            "outside_plan"
+        ),
+        planned_load=None,
+        completed_load=1140,
+        load_difference=None,
+    )
+
+    workout = Workout()
+    workout.info.sport = "Cycling"
+    workout.info.distance = 50.3
+    workout.info.duration = timedelta(
+        hours=2,
+        minutes=32,
+    )
+    workout.info.elevation_gain = 980
+    workout.feedback.rpe = 7.5
+
+    html = (
+        _compact_activity_metrics_html(
+            activity=activity,
+            workout=workout,
+        )
+    )
+
+    assert "Distance" in html
+    assert "Duration" in html
+    assert "Elevation" in html
+    assert "RPE" in html
+    assert "HR avg / max" in html
+    assert "Power avg / max" in html
+    assert "Cadence avg / max" in html
+    assert "Planned load" in html
+    assert "Completed load" in html
+    assert "1140 AU" in html
+    assert "Air temperature" in html
+    assert "Humidity" in html
+    assert "Terrain" in html
+    assert "Plan result" in html
+    assert "Outside Plan" in html
