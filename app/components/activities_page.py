@@ -359,10 +359,10 @@ def _apply_activities_page_styles() -> None:
         .st-key-activities_browser
         div[data-testid="stButton"] > button {
             width: 100%;
-            min-height: 2.15rem;
-            height: 2.15rem;
+            min-height: 1.72rem;
+            height: 1.72rem;
             margin: 0 !important;
-            padding: 0.22rem 0.55rem !important;
+            padding: 0.12rem 0.55rem !important;
 
             border: 0 !important;
             border-bottom:

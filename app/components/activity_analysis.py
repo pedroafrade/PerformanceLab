@@ -831,6 +831,47 @@ def _workout_label(
         f"{day.strftime('%d %b %Y')}"
     )
 
+def _distance_domain(
+    *row_groups,
+) -> tuple[
+    float,
+    float,
+] | None:
+    """
+    Returns an exact chart distance domain.
+
+    The final axis value corresponds to the final
+    recorded route or sensor distance.
+    """
+
+    distances = [
+        float(
+            row["Distance"]
+        )
+        for rows in row_groups
+        for row in rows
+        if (
+            isinstance(
+                row.get("Distance"),
+                (int, float),
+            )
+            and not isinstance(
+                row.get("Distance"),
+                bool,
+            )
+            and row["Distance"] >= 0
+        )
+    ]
+
+    if not distances:
+        return None
+
+    return (
+        0.0,
+        max(
+            distances
+        ),
+    )
 
 def _comparison_chart(
     workout,
@@ -904,6 +945,29 @@ def _comparison_chart(
         is not None
     ]
 
+    distance_domain = (
+        _distance_domain(
+            elevation_rows,
+            current_rows,
+        )
+    )
+
+    distance_scale = (
+        alt.Scale(
+            domain=list(
+                distance_domain
+            ),
+            nice=False,
+            zero=True,
+        )
+        if distance_domain
+        is not None
+        else alt.Scale(
+            nice=False,
+            zero=True,
+        )
+    )
+
     title, unit = (
         _metric_axis(
             metric
@@ -927,6 +991,7 @@ def _comparison_chart(
                 x=alt.X(
                     "Distance:Q",
                     title="Distance (km)",
+                    scale=distance_scale,
                 ),
                 y=alt.Y(
                     "Elevation:Q",
@@ -975,6 +1040,7 @@ def _comparison_chart(
             x=alt.X(
                 "Distance:Q",
                 title="Distance (km)",
+                scale=distance_scale,
             ),
             y=alt.Y(
                 "Value:Q",
@@ -1142,7 +1208,7 @@ def show_activity_analysis(
             show_route_map(
                 workout,
                 height=(
-                    205
+                    260
                     if compact
                     else 420
                 ),
@@ -1237,9 +1303,9 @@ def show_activity_analysis(
                 metric=metric,
                 comparison=comparison,
                 height=(
-                    205
+                    260
                     if compact
-                    else 250
+                    else 300
                 ),
             )
         )

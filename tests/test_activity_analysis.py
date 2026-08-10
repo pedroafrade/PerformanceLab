@@ -3,6 +3,7 @@ from datetime import datetime
 from performancelab import Workout
 
 from app.components.activity_analysis import (
+    _distance_domain,
     _route_similarity_score,
 )
 
@@ -143,4 +144,52 @@ def test_route_similarity_rejects_different_route():
             second,
         )
         < 20
+    )
+
+def test_distance_domain_ends_at_last_record():
+
+    result = _distance_domain(
+        [
+            {
+                "Distance": 0.0,
+            },
+            {
+                "Distance": 5.25,
+            },
+            {
+                "Distance": 10.40,
+            },
+        ]
+    )
+
+    assert result == (
+        0.0,
+        10.40,
+    )
+
+
+def test_distance_domain_uses_route_end():
+
+    result = _distance_domain(
+        [
+            {
+                "Distance": 0.0,
+            },
+            {
+                "Distance": 10.40,
+            },
+        ],
+        [
+            {
+                "Distance": 0.2,
+            },
+            {
+                "Distance": 10.1,
+            },
+        ],
+    )
+
+    assert result == (
+        0.0,
+        10.40,
     )

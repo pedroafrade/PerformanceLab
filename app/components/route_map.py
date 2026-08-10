@@ -4,13 +4,14 @@ PerformanceLab
 Route Map Component.
 """
 
+from math import log2
+
 import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
 from performancelab.presentation import (
     has_route,
-    route_center,
     route_coordinates,
 )
 
@@ -18,6 +19,108 @@ from performancelab.presentation import (
 # ======================================================
 # Route map
 # ======================================================
+def _route_view(
+    coordinates,
+) -> tuple[
+    float,
+    float,
+    float,
+]:
+    """
+    Returns a map centre and zoom that contain the
+    complete recorded route.
+    """
+
+    longitudes = [
+        coordinate[0]
+        for coordinate in coordinates
+    ]
+
+    latitudes = [
+        coordinate[1]
+        for coordinate in coordinates
+    ]
+
+    minimum_longitude = min(
+        longitudes
+    )
+    maximum_longitude = max(
+        longitudes
+    )
+    minimum_latitude = min(
+        latitudes
+    )
+    maximum_latitude = max(
+        latitudes
+    )
+
+    longitude = (
+        minimum_longitude
+        + maximum_longitude
+    ) / 2
+
+    latitude = (
+        minimum_latitude
+        + maximum_latitude
+    ) / 2
+
+    longitude_span = (
+        maximum_longitude
+        - minimum_longitude
+    )
+
+    latitude_span = (
+        maximum_latitude
+        - minimum_latitude
+    )
+
+    if (
+        longitude_span <= 0
+        and latitude_span <= 0
+    ):
+        return (
+            latitude,
+            longitude,
+            16.0,
+        )
+
+    longitude_zoom = log2(
+        360
+        / max(
+            longitude_span,
+            0.000001,
+        )
+    )
+
+    latitude_zoom = log2(
+        180
+        / max(
+            latitude_span,
+            0.000001,
+        )
+    )
+
+    zoom = (
+        min(
+            longitude_zoom,
+            latitude_zoom,
+        )
+        - 0.9
+    )
+
+    zoom = max(
+        1.0,
+        min(
+            zoom,
+            18.0,
+        ),
+    )
+
+    return (
+        latitude,
+        longitude,
+        zoom,
+    )
 
 def show_route_map(
     workout,
@@ -37,12 +140,13 @@ def show_route_map(
         workout
     )
 
-    center = route_center(
-        workout
+    (
+        latitude,
+        longitude,
+        route_zoom,
+    ) = _route_view(
+        coordinates
     )
-
-    if center is None:
-        return
 
     route = pd.DataFrame(
         {
@@ -60,14 +164,12 @@ def show_route_map(
         pickable=False,
     )
 
-    fixed_zoom = 13
-
     view_state = pdk.ViewState(
-        latitude=center[0],
-        longitude=center[1],
-        zoom=fixed_zoom,
-        min_zoom=fixed_zoom,
-        max_zoom=fixed_zoom,
+        latitude=latitude,
+        longitude=longitude,
+        zoom=route_zoom,
+        min_zoom=1,
+        max_zoom=20,
         pitch=0,
     )
 
@@ -76,9 +178,9 @@ def show_route_map(
         controller={
             "dragPan": True,
             "dragRotate": False,
-            "scrollZoom": False,
-            "doubleClickZoom": False,
-            "touchZoom": False,
+            "scrollZoom": True,
+            "doubleClickZoom": True,
+            "touchZoom": True,
             "keyboard": False,
         },
     )
