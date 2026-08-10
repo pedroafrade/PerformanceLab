@@ -985,7 +985,9 @@ def _comparison_chart(
                 )
             )
             .mark_area(
-                opacity=0.30,
+                color="#9CA3AF",
+                opacity=0.18,
+                interpolate="monotone",
             )
             .encode(
                 x=alt.X(
