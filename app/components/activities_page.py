@@ -11,13 +11,15 @@ import streamlit as st
 from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
-    sensor_summary,
 )
 from .activity_analysis import (
     show_activity_analysis,
 )
 from .activity_input import (
     show_activity_input,
+)
+from .workout_details import (
+    show_workout_details,
 )
 from .workout_table import (
     format_distance,
@@ -269,7 +271,8 @@ def _analysis_available(
 
 def _apply_activities_page_styles() -> None:
     """
-    Builds a compact viewport-based Activities workspace.
+    Keeps Activities within the viewport and turns the
+    history into one compact internally scrolling panel.
     """
 
     st.markdown(
@@ -291,7 +294,7 @@ def _apply_activities_page_styles() -> None:
         }
 
         .activities-page-header {
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.55rem 0;
             padding: 0;
         }
 
@@ -317,19 +320,17 @@ def _apply_activities_page_styles() -> None:
         }
 
         .activities-section-copy {
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.38rem;
             font-size: 0.68rem;
             line-height: 1.2;
             opacity: 0.58;
         }
 
-        /* =============================================
-           Activity browser
-           ============================================= */
+        /* =================================================
+           Scrollable activity browser
+           ================================================= */
 
         .st-key-activities_browser {
-            height: calc(100vh - 10.8rem) !important;
-            min-height: 35rem;
             border-color:
                 rgba(128, 128, 128, 0.22) !important;
             border-radius: 0.6rem !important;
@@ -346,31 +347,10 @@ def _apply_activities_page_styles() -> None:
             margin-bottom: 0 !important;
         }
 
-        /* Sticky search/filter strip. */
-
-        .st-key-activities_browser_filters {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-
-            padding: 0.34rem 0.42rem 0.28rem;
-            margin: 0 -0.42rem;
-
-            border-bottom:
-                1px solid rgba(128, 128, 128, 0.20);
-
-            background: var(--background-color);
-        }
-
-        .st-key-activities_browser_filters
-        div[data-testid="stTextInput"],
-        .st-key-activities_browser_filters
-        div[data-testid="stSelectbox"] {
-            margin: 0 !important;
-        }
-
-        /* Continuous activity rows. */
-
+        /*
+        Activity rows become table-like lines instead
+        of separate floating cards.
+        */
         .st-key-activities_browser
         div[data-testid="stButton"] {
             margin: 0 !important;
@@ -380,11 +360,10 @@ def _apply_activities_page_styles() -> None:
         .st-key-activities_browser
         div[data-testid="stButton"] > button {
             width: 100%;
-            min-height: 2.05rem;
-            height: 2.05rem;
-
+            min-height: 2.15rem;
+            height: 2.15rem;
             margin: 0 !important;
-            padding: 0.18rem 0.52rem !important;
+            padding: 0.22rem 0.55rem !important;
 
             border: 0 !important;
             border-bottom:
@@ -392,14 +371,17 @@ def _apply_activities_page_styles() -> None:
                 rgba(128, 128, 128, 0.15) !important;
 
             border-radius: 0 !important;
-            background: transparent !important;
+
+            background:
+                transparent !important;
+
             box-shadow: none !important;
 
             text-align: left !important;
 
-            font-size: 0.67rem !important;
+            font-size: 0.69rem !important;
             font-weight: 500 !important;
-            line-height: 1 !important;
+            line-height: 1.05 !important;
         }
 
         .st-key-activities_browser
@@ -410,107 +392,86 @@ def _apply_activities_page_styles() -> None:
                 !important;
         }
 
+        /*
+        Primary = currently expanded activity.
+        Keep it subtle instead of a full red row.
+        */
         .st-key-activities_browser
         div[data-testid="stButton"]
         > button[kind="primary"] {
-            border-left:
-                2px solid #ff4b4b !important;
-
             background:
                 rgba(255, 75, 75, 0.065)
+                !important;
+
+            border-left:
+                2px solid #ff4b4b
                 !important;
 
             color: inherit !important;
         }
 
-        /* =============================================
+        /* =================================================
            Expanded activity
-           ============================================= */
+           ================================================= */
 
         .activities-selected-header {
             margin: 0;
-            padding: 0.32rem 0.52rem;
+            padding: 0.48rem 0.6rem;
 
             border: 0;
             border-bottom:
-                1px solid rgba(128, 128, 128, 0.15);
+                1px solid rgba(128, 128, 128, 0.16);
 
             border-radius: 0;
+
             background:
                 rgba(128, 128, 128, 0.025);
         }
 
         .activities-selected-title {
-            font-size: 0.82rem;
+            font-size: 0.88rem;
             font-weight: 720;
-            line-height: 1.08;
+            line-height: 1.1;
         }
 
         .activities-selected-meta {
-            margin-top: 0.08rem;
-            font-size: 0.58rem;
-            line-height: 1.12;
+            margin-top: 0.1rem;
+            font-size: 0.62rem;
+            line-height: 1.15;
             opacity: 0.58;
-        }
-
-        .activities-detail-grid {
-            display: grid;
-            grid-template-columns:
-                repeat(4, minmax(0, 1fr));
-
-            gap: 0.3rem 0.45rem;
-
-            padding: 0.38rem 0.52rem;
-
-            border-bottom:
-                1px solid rgba(128, 128, 128, 0.14);
-        }
-
-        .activities-detail-item {
-            min-width: 0;
-        }
-
-        .activities-detail-label {
-            margin-bottom: 0.03rem;
-            font-size: 0.54rem;
-            opacity: 0.5;
-        }
-
-        .activities-detail-value {
-            overflow: hidden;
-            font-size: 0.68rem;
-            font-weight: 680;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .st-key-activities_browser
         div[data-testid="stMetric"] {
-            padding: 0.1rem 0 !important;
+            padding: 0.18rem 0 !important;
         }
 
         .st-key-activities_browser
         div[data-testid="stMetricLabel"] {
-            font-size: 0.58rem !important;
+            font-size: 0.62rem !important;
         }
 
         .st-key-activities_browser
         div[data-testid="stMetricValue"] {
-            font-size: 0.82rem !important;
+            font-size: 0.9rem !important;
         }
 
-        /*
-        Hide chart toolbar in the embedded analysis.
-        Tooltips still work.
-        */
         .st-key-activities_browser
-        div[data-testid="stElementToolbar"] {
-            display: none !important;
+        div[data-testid="stTabs"] {
+            margin-top: 0.1rem;
         }
 
-        /* =============================================
-           Right cards
-           ============================================= */
+        .st-key-activities_browser
+        button[data-baseweb="tab"] {
+            min-height: 1.8rem !important;
+            padding-top: 0.15rem !important;
+            padding-bottom: 0.15rem !important;
+            font-size: 0.7rem !important;
+        }
+
+        /* =================================================
+           Right utility cards
+           ================================================= */
 
         .activities-summary-grid {
             display: grid;
@@ -521,10 +482,8 @@ def _apply_activities_page_styles() -> None:
 
         .activities-summary-item {
             padding: 0.52rem 0.58rem;
-
             border:
                 1px solid rgba(128, 128, 128, 0.18);
-
             border-radius: 0.5rem;
             box-sizing: border-box;
         }
@@ -541,18 +500,9 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.05;
         }
 
-        .activities-coach-placeholder {
-            padding: 0.2rem 0;
-            font-size: 0.72rem;
-            line-height: 1.45;
-            opacity: 0.62;
-        }
-
         @media (max-width: 900px) {
-            .activities-summary-grid,
-            .activities-detail-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
+            .activities-summary-grid {
+                grid-template-columns: 1fr;
             }
         }
         </style>
@@ -699,138 +649,6 @@ def _selected_activity_header_html(
         "</div>"
     )
 
-def _compact_activity_details_html(
-    *,
-    activity,
-    workout,
-) -> str:
-    """
-    Builds the key completed-session values shown
-    immediately after opening an activity.
-    """
-
-    heart_rate = sensor_summary(
-        workout,
-        "heart_rate",
-    )
-
-    power = sensor_summary(
-        workout,
-        "power",
-    )
-
-    cadence = sensor_summary(
-        workout,
-        "cadence",
-    )
-
-    heart_rate_label = "—"
-
-    if (
-        heart_rate["average"]
-        is not None
-        and heart_rate["maximum"]
-        is not None
-    ):
-        heart_rate_label = (
-            f"{heart_rate['average']:.0f} / "
-            f"{heart_rate['maximum']:.0f} bpm"
-        )
-
-    power_label = "—"
-
-    if (
-        power["average"]
-        is not None
-        and power["maximum"]
-        is not None
-    ):
-        power_label = (
-            f"{power['average']:.0f} / "
-            f"{power['maximum']:.0f} W"
-        )
-
-    cadence_label = "—"
-
-    if (
-        cadence["average"]
-        is not None
-        and cadence["maximum"]
-        is not None
-    ):
-        cadence_label = (
-            f"{cadence['average']:.0f} / "
-            f"{cadence['maximum']:.0f}"
-        )
-
-    values = (
-        (
-            "Distance",
-            format_distance(
-                activity.distance
-            ),
-        ),
-        (
-            "Duration",
-            format_duration(
-                activity.duration
-            ),
-        ),
-        (
-            "Elevation",
-            format_elevation(
-                activity.elevation_gain
-            ),
-        ),
-        (
-            "RPE",
-            (
-                f"{activity.rpe:.1f}"
-                if activity.rpe is not None
-                else "—"
-            ),
-        ),
-        (
-            "HR avg / max",
-            heart_rate_label,
-        ),
-        (
-            "Power avg / max",
-            power_label,
-        ),
-        (
-            "Cadence avg / max",
-            cadence_label,
-        ),
-        (
-            "Plan result",
-            _outcome_label(
-                activity.outcome_status
-            ),
-        ),
-    )
-
-    content = "".join(
-        (
-            '<div class="activities-detail-item">'
-            '<div class="activities-detail-label">'
-            f"{label}"
-            "</div>"
-            '<div class="activities-detail-value">'
-            f"{value}"
-            "</div>"
-            "</div>"
-        )
-        for label, value
-        in values
-    )
-
-    return (
-        '<div class="activities-detail-grid">'
-        f"{content}"
-        "</div>"
-    )
-
 def _show_selected_activity_dashboard(
     *,
     activity,
@@ -838,8 +656,8 @@ def _show_selected_activity_dashboard(
     athlete,
 ) -> None:
     """
-    Shows an expanded activity directly inside the
-    scrolling history panel.
+    Compact dashboard rendered inside the scrolling
+    activity browser itself.
     """
 
     st.markdown(
@@ -847,13 +665,6 @@ def _show_selected_activity_dashboard(
             activity
         ),
         unsafe_allow_html=True,
-    )
-
-    st.html(
-        _compact_activity_details_html(
-            activity=activity,
-            workout=workout,
-        )
     )
 
     if (
@@ -894,17 +705,33 @@ def _show_selected_activity_dashboard(
                 ),
             )
 
-    show_activity_analysis(
-        workout,
-        history=athlete.history,
-        key_prefix=(
-            "activities_inline_"
-            f"{activity.workout_id}"
-        ),
-        show_heading=False,
-        compact=True,
-        environment_first=False,
+    analysis_tab, details_tab = (
+        st.tabs(
+            [
+                "Performance",
+                "Details",
+            ]
+        )
     )
+
+    with analysis_tab:
+
+        show_activity_analysis(
+            workout,
+            history=athlete.history,
+            key_prefix=(
+                "activities_inline_"
+                f"{activity.workout_id}"
+            ),
+            show_heading=False,
+            compact=True,
+        )
+
+    with details_tab:
+
+        show_workout_details(
+            workout
+        )
 
 def show_activities_page(
     athlete,
@@ -923,9 +750,7 @@ def show_activities_page(
         reference_day=date.today(),
     )
 
-    all_activities = (
-        presenter.build()
-    )
+    all_activities = presenter.build()
 
     if not all_activities:
 
@@ -945,7 +770,10 @@ def show_activities_page(
         key=str.casefold,
     )
 
-    # Values already stored by Streamlit widgets.
+    # ==================================================
+    # Current filter state
+    # ==================================================
+
     query = st.session_state.get(
         "activities_search",
         "",
@@ -1049,38 +877,23 @@ def show_activities_page(
     )
 
     # ==================================================
-    # LEFT — activity history
+    # LEFT — activity browser
     # ==================================================
 
     with activity_column:
 
-        st.markdown(
-            (
-                '<div class="activities-section-heading">'
-                "Activity history"
-                "</div>"
-                '<div class="activities-section-copy">'
-                "Select a session to open its training "
-                "analysis and historical comparison."
-                "</div>"
-            ),
-            unsafe_allow_html=True,
-        )
-
         with st.container(
-            height=625,
+            height=720,
             border=True,
             key="activities_browser",
         ):
 
-            # ------------------------------------------
-            # Fixed search/filter row
-            # ------------------------------------------
+            # ==========================================
+            # Sticky filters
+            # ==========================================
 
             with st.container(
-                key=(
-                    "activities_browser_filters"
-                )
+                key="activities_browser_filters"
             ):
 
                 (
@@ -1159,9 +972,9 @@ def show_activities_page(
                         ),
                     )
 
-            # ------------------------------------------
-            # Activities
-            # ------------------------------------------
+            # ==========================================
+            # Activity rows
+            # ==========================================
 
             if not activities:
 
@@ -1235,7 +1048,7 @@ def show_activities_page(
                 )
 
     # ==================================================
-    # RIGHT — coach / summary
+    # RIGHT — Training coach
     # ==================================================
 
     with utility_column:
@@ -1248,10 +1061,7 @@ def show_activities_page(
                 "**Training coach**"
             )
 
-            if (
-                selected_activity
-                is None
-            ):
+            if selected_activity is None:
 
                 st.html(
                     (
@@ -1274,13 +1084,16 @@ def show_activities_page(
                         '<div class="'
                         'activities-coach-placeholder">'
                         "Coach interpretation will appear "
-                        "here. The next commit will connect "
-                        "this card to the LLM using the "
-                        "selected activity, athlete context "
-                        "and recent training history."
+                        "here. The LLM will use this "
+                        "activity, athlete context and "
+                        "recent training history."
                         "</div>"
                     )
                 )
+
+        # ==============================================
+        # Activity summary
+        # ==============================================
 
         with st.container(
             border=True
@@ -1299,6 +1112,10 @@ def show_activities_page(
                     ),
                 )
             )
+
+        # ==============================================
+        # Add activity
+        # ==============================================
 
         with st.expander(
             "Add activity",

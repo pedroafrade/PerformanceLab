@@ -578,6 +578,46 @@ def _route_progress_for_time(
         "Progress"
     ]
 
+def _route_distance_for_time(
+    route,
+    timestamp: datetime,
+) -> float | None:
+    """
+    Returns cumulative route distance in kilometres
+    for the GPS point nearest to a timestamp.
+    """
+
+    if not route:
+        return None
+
+    timestamps = [
+        row["Timestamp"]
+        for row in route
+    ]
+
+    index = bisect_left(
+        timestamps,
+        timestamp,
+    )
+
+    if index <= 0:
+        return route[0]["Distance"]
+
+    if index >= len(route):
+        return route[-1]["Distance"]
+
+    before = route[index - 1]
+    after = route[index]
+
+    if (
+        timestamp
+        - before["Timestamp"]
+        <= after["Timestamp"]
+        - timestamp
+    ):
+        return before["Distance"]
+
+    return after["Distance"]
 
 def _sensor_progress_rows(
     workout,
@@ -629,19 +669,19 @@ def _sensor_progress_rows(
         ):
             continue
 
-        progress = (
-            _route_progress_for_time(
+        distance = (
+            _route_distance_for_time(
                 route,
                 timestamp,
             )
         )
 
-        if progress is None:
+        if distance is None:
             continue
 
         rows.append(
             {
-                "Progress": progress,
+                "Distance": distance,
                 "Value": numeric_value,
             }
         )
@@ -704,8 +744,8 @@ def _metric_rows(
 
         return [
             {
-                "Progress": (
-                    row["Progress"]
+                "Distance": (
+                    row["Distance"]
                 ),
                 "Value": (
                     row["Pace"]
@@ -885,14 +925,8 @@ def _comparison_chart(
             )
             .encode(
                 x=alt.X(
-                    "Progress:Q",
-                    title="Route progress (%)",
-                    scale=alt.Scale(
-                        domain=[
-                            0,
-                            100,
-                        ]
-                    ),
+                    "Distance:Q",
+                    title="Distance (km)",
                 ),
                 y=alt.Y(
                     "Elevation:Q",
@@ -904,9 +938,9 @@ def _comparison_chart(
                 ),
                 tooltip=[
                     alt.Tooltip(
-                        "Progress:Q",
-                        title="Route progress",
-                        format=".0f",
+                        "Distance:Q",
+                        title="Distance (km)",
+                        format=".2f",
                     ),
                     alt.Tooltip(
                         "Elevation:Q",
@@ -939,14 +973,8 @@ def _comparison_chart(
         )
         .encode(
             x=alt.X(
-                "Progress:Q",
-                title="Route progress (%)",
-                scale=alt.Scale(
-                    domain=[
-                        0,
-                        100,
-                    ]
-                ),
+                "Distance:Q",
+                title="Distance (km)",
             ),
             y=alt.Y(
                 "Value:Q",
@@ -965,9 +993,9 @@ def _comparison_chart(
                     title="Activity",
                 ),
                 alt.Tooltip(
-                    "Progress:Q",
-                    title="Route progress",
-                    format=".0f",
+                    "Distance:Q",
+                    title="Distance (km)",
+                    format=".2f",
                 ),
                 alt.Tooltip(
                     "Value:Q",
@@ -1030,60 +1058,12 @@ def show_activity_analysis(
     environment_first: bool = True,
 ) -> None:
     """
-    Shows route, environment and historical performance
-    analysis for one completed workout.
-
-    Today keeps environment near the top.
-    Activities can place it after the comparison controls
-    for a denser selected-session dashboard.
+    Shows route, performance profile and historical
+    comparison for one completed workout.
     """
 
     if workout is None:
         return
-
-    def show_environment() -> None:
-
-        (
-            temperature_column,
-            humidity_column,
-            terrain_column,
-        ) = st.columns(
-            3,
-            gap="small",
-        )
-
-        with temperature_column:
-            st.metric(
-                "Air temperature",
-                _environment_label(
-                    workout
-                    .environment
-                    .temperature,
-                    suffix=" °C",
-                ),
-            )
-
-        with humidity_column:
-            st.metric(
-                "Humidity",
-                _environment_label(
-                    workout
-                    .environment
-                    .humidity,
-                    suffix="%",
-                ),
-            )
-
-        with terrain_column:
-            st.metric(
-                "Terrain",
-                (
-                    workout
-                    .environment
-                    .terrain
-                    or "—"
-                ),
-            )
 
     with st.container(
         border=True
@@ -1095,7 +1075,35 @@ def show_activity_analysis(
             )
 
         if environment_first:
-            show_environment()
+            (
+                temperature_column,
+                humidity_column,
+                terrain_column,
+            ) = st.columns(3, gap="small")
+
+            with temperature_column:
+                st.metric(
+                    "Air temperature",
+                    _environment_label(
+                        workout.environment.temperature,
+                        suffix=" °C",
+                    ),
+                )
+
+            with humidity_column:
+                st.metric(
+                    "Humidity",
+                    _environment_label(
+                        workout.environment.humidity,
+                        suffix="%",
+                    ),
+                )
+
+            with terrain_column:
+                st.metric(
+                    "Terrain",
+                    workout.environment.terrain or "—",
+                )
 
         metrics = (
             _available_metrics(
@@ -1110,77 +1118,18 @@ def show_activity_analysis(
             )
         )
 
-        if metrics:
+        # Default chart metric.
+        metric = (
+            metrics[0]
+            if metrics
+            else None
+        )
 
-            st.markdown(
-                "**Performance comparison**"
-            )
+        comparison = None
 
-            metric_column, compare_column = (
-                st.columns(
-                    [1, 1.35],
-                    gap="small",
-                )
-            )
-
-            with metric_column:
-
-                metric = st.selectbox(
-                    "Metric",
-                    options=metrics,
-                    key=(
-                        f"{key_prefix}_metric"
-                    ),
-                )
-
-            comparison_options = [
-                "This activity only"
-            ]
-
-            comparison_lookup = {}
-
-            for score, candidate in similar:
-
-                label = (
-                    f"{_workout_label(candidate)}"
-                    f" · {score:.0f}% route match"
-                )
-
-                comparison_options.append(
-                    label
-                )
-
-                comparison_lookup[
-                    label
-                ] = candidate
-
-            with compare_column:
-
-                comparison_label = (
-                    st.selectbox(
-                        "Compare with",
-                        options=(
-                            comparison_options
-                        ),
-                        key=(
-                            f"{key_prefix}_comparison"
-                        ),
-                    )
-                )
-
-            comparison = (
-                comparison_lookup.get(
-                    comparison_label
-                )
-            )
-
-        else:
-
-            metric = None
-            comparison = None
-
-        if not environment_first:
-            show_environment()
+        # ------------------------------------------
+        # Route
+        # ------------------------------------------
 
         if workout.sensors.get(
             "gps"
@@ -1193,11 +1142,15 @@ def show_activity_analysis(
             show_route_map(
                 workout,
                 height=(
-                    155
+                    205
                     if compact
                     else 420
                 ),
             )
+
+        # ------------------------------------------
+        # Performance graph
+        # ------------------------------------------
 
         if not metrics:
 
@@ -1207,13 +1160,84 @@ def show_activity_analysis(
             )
             return
 
+        chart_placeholder = (
+            st.empty()
+        )
+
+        # ------------------------------------------
+        # Comparison controls AFTER graph
+        # ------------------------------------------
+
+        st.markdown(
+            "**Performance comparison**"
+        )
+
+        (
+            metric_column,
+            compare_column,
+        ) = st.columns(
+            [1, 1.35],
+            gap="small",
+        )
+
+        with metric_column:
+
+            metric = st.selectbox(
+                "Metric",
+                options=metrics,
+                key=(
+                    f"{key_prefix}_metric"
+                ),
+            )
+
+        comparison_options = [
+            "This activity only"
+        ]
+
+        comparison_lookup = {}
+
+        for score, candidate in similar:
+
+            label = (
+                f"{_workout_label(candidate)}"
+                f" · {score:.0f}% route match"
+            )
+
+            comparison_options.append(
+                label
+            )
+
+            comparison_lookup[
+                label
+            ] = candidate
+
+        with compare_column:
+
+            comparison_label = (
+                st.selectbox(
+                    "Compare with",
+                    options=(
+                        comparison_options
+                    ),
+                    key=(
+                        f"{key_prefix}_comparison"
+                    ),
+                )
+            )
+
+        comparison = (
+            comparison_lookup.get(
+                comparison_label
+            )
+        )
+
         chart = (
             _comparison_chart(
                 workout,
                 metric=metric,
                 comparison=comparison,
                 height=(
-                    175
+                    205
                     if compact
                     else 250
                 ),
@@ -1222,7 +1246,7 @@ def show_activity_analysis(
 
         if chart is not None:
 
-            st.altair_chart(
+            chart_placeholder.altair_chart(
                 chart,
                 use_container_width=True,
             )
@@ -1230,6 +1254,7 @@ def show_activity_analysis(
         if comparison is None:
 
             if similar:
+
                 st.caption(
                     (
                         f"{len(similar)} similar historical "
@@ -1244,6 +1269,7 @@ def show_activity_analysis(
                 )
 
             else:
+
                 st.caption(
                     "No sufficiently similar historical "
                     "route was found."
