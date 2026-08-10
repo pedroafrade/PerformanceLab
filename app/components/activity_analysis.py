@@ -1027,6 +1027,16 @@ def _comparison_chart(
         ),
     )
 
+    activity_legend = (
+        alt.Legend(
+            orient="top",
+            direction="horizontal",
+            title=None,
+        )
+        if comparison is not None
+        else None
+    )
+
     metric_chart = (
         alt.Chart(
             alt.Data(
@@ -1052,6 +1062,7 @@ def _comparison_chart(
             color=alt.Color(
                 "Activity:N",
                 title=None,
+                legend=activity_legend,
             ),
             tooltip=[
                 alt.Tooltip(
