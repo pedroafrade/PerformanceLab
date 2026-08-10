@@ -64,6 +64,7 @@ def sample_messages():
         "sessions": [
             {
                 "sport": "running",
+                "sub_sport": "trail",
                 "start_time": datetime(
                     2026,
                     7,
@@ -227,6 +228,10 @@ def test_fit_imports_environment(
     assert (
         workout.environment.humidity
         == 60.0
+    )
+    assert (
+        workout.environment.terrain
+        == "Trail"
     )
 
 def test_fit_prefers_session_environment(

@@ -178,6 +178,15 @@ class FITImporter(WorkoutImporter):
                 humidity
             )
 
+        terrain = self._terrain(
+            session
+        )
+
+        if terrain:
+            workout.environment.terrain = (
+                terrain
+            )
+
         return workout
     
     # ======================================================
@@ -336,6 +345,50 @@ class FITImporter(WorkoutImporter):
             return None
 
         return result
+
+    @staticmethod
+    def _terrain(
+        session: dict,
+    ) -> str:
+        """
+        Returns the terrain represented by FIT sub_sport.
+
+        Missing terrain remains empty rather than being
+        inferred from the workout title.
+        """
+
+        value = session.get(
+            "sub_sport"
+        )
+
+        if value is None:
+            return ""
+
+        normalized = str(
+            value
+        ).strip().lower()
+
+        if not normalized:
+            return ""
+
+        aliases = {
+            "trail": "Trail",
+            "road": "Road",
+            "gravel_cycling": "Gravel",
+            "mountain_biking": "Off-road",
+            "track_running": "Track",
+            "indoor_running": "Indoor",
+            "indoor_cycling": "Indoor",
+            "treadmill": "Indoor",
+        }
+
+        return aliases.get(
+            normalized,
+            normalized.replace(
+                "_",
+                " ",
+            ).title(),
+        )
     
     # ======================================================
     # Active calories
