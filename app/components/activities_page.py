@@ -266,13 +266,13 @@ def _analysis_available(
         return "Sensors"
 
     return "Basic"
-_ACTIVITIES_PAGE_SIZE = 8
+
 
 
 def _apply_activities_page_styles() -> None:
     """
-    Aligns Activities with the Development page and
-    keeps the activity browser compact.
+    Keeps Activities within the viewport and turns the
+    history into one compact internally scrolling panel.
     """
 
     st.markdown(
@@ -280,15 +280,21 @@ def _apply_activities_page_styles() -> None:
         <style>
         div[data-testid="stMainBlockContainer"] {
             padding-top: 3.65rem;
-            padding-bottom: 0.6rem;
+            padding-bottom: 0 !important;
         }
 
         section[data-testid="stMain"] > div {
             padding-bottom: 0 !important;
         }
 
+        div[data-testid="stMainBlockContainer"]
+        > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
         .activities-page-header {
-            margin: 0 0 0.65rem 0;
+            margin: 0 0 0.55rem 0;
             padding: 0;
         }
 
@@ -307,67 +313,191 @@ def _apply_activities_page_styles() -> None:
         }
 
         .activities-section-heading {
-            margin: 0 0 0.15rem 0;
+            margin: 0 0 0.08rem 0;
             font-size: 1.25rem;
             font-weight: 700;
             line-height: 1.1;
         }
 
         .activities-section-copy {
-            margin-bottom: 0.55rem;
-            font-size: 0.7rem;
+            margin-bottom: 0.38rem;
+            font-size: 0.68rem;
+            line-height: 1.2;
             opacity: 0.58;
         }
+
+        /* =================================================
+           Scrollable activity browser
+           ================================================= */
+
+        .st-key-activities_browser {
+            border-color:
+                rgba(128, 128, 128, 0.22) !important;
+            border-radius: 0.6rem !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stVerticalBlock"] {
+            gap: 0 !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stElementContainer"] {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /*
+        Activity rows become table-like lines instead
+        of separate floating cards.
+        */
+        .st-key-activities_browser
+        div[data-testid="stButton"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stButton"] > button {
+            width: 100%;
+            min-height: 2.15rem;
+            height: 2.15rem;
+            margin: 0 !important;
+            padding: 0.22rem 0.55rem !important;
+
+            border: 0 !important;
+            border-bottom:
+                1px solid
+                rgba(128, 128, 128, 0.15) !important;
+
+            border-radius: 0 !important;
+
+            background:
+                transparent !important;
+
+            box-shadow: none !important;
+
+            text-align: left !important;
+
+            font-size: 0.69rem !important;
+            font-weight: 500 !important;
+            line-height: 1.05 !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stButton"]
+        > button:hover {
+            background:
+                rgba(128, 128, 128, 0.055)
+                !important;
+        }
+
+        /*
+        Primary = currently expanded activity.
+        Keep it subtle instead of a full red row.
+        */
+        .st-key-activities_browser
+        div[data-testid="stButton"]
+        > button[kind="primary"] {
+            background:
+                rgba(255, 75, 75, 0.065)
+                !important;
+
+            border-left:
+                2px solid #ff4b4b
+                !important;
+
+            color: inherit !important;
+        }
+
+        /* =================================================
+           Expanded activity
+           ================================================= */
+
+        .activities-selected-header {
+            margin: 0;
+            padding: 0.48rem 0.6rem;
+
+            border: 0;
+            border-bottom:
+                1px solid rgba(128, 128, 128, 0.16);
+
+            border-radius: 0;
+
+            background:
+                rgba(128, 128, 128, 0.025);
+        }
+
+        .activities-selected-title {
+            font-size: 0.88rem;
+            font-weight: 720;
+            line-height: 1.1;
+        }
+
+        .activities-selected-meta {
+            margin-top: 0.1rem;
+            font-size: 0.62rem;
+            line-height: 1.15;
+            opacity: 0.58;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stMetric"] {
+            padding: 0.18rem 0 !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stMetricLabel"] {
+            font-size: 0.62rem !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stMetricValue"] {
+            font-size: 0.9rem !important;
+        }
+
+        .st-key-activities_browser
+        div[data-testid="stTabs"] {
+            margin-top: 0.1rem;
+        }
+
+        .st-key-activities_browser
+        button[data-baseweb="tab"] {
+            min-height: 1.8rem !important;
+            padding-top: 0.15rem !important;
+            padding-bottom: 0.15rem !important;
+            font-size: 0.7rem !important;
+        }
+
+        /* =================================================
+           Right utility cards
+           ================================================= */
 
         .activities-summary-grid {
             display: grid;
             grid-template-columns:
                 repeat(2, minmax(0, 1fr));
-            gap: 0.5rem;
+            gap: 0.42rem;
         }
 
         .activities-summary-item {
-            padding: 0.65rem 0.7rem;
-            border: 1px solid rgba(128, 128, 128, 0.18);
-            border-radius: 0.55rem;
+            padding: 0.52rem 0.58rem;
+            border:
+                1px solid rgba(128, 128, 128, 0.18);
+            border-radius: 0.5rem;
             box-sizing: border-box;
         }
 
         .activities-summary-label {
-            margin-bottom: 0.12rem;
-            font-size: 0.64rem;
+            margin-bottom: 0.08rem;
+            font-size: 0.6rem;
             opacity: 0.55;
         }
 
         .activities-summary-value {
-            font-size: 1.05rem;
+            font-size: 0.92rem;
             font-weight: 720;
-            line-height: 1.1;
-        }
-
-        .activities-selected-header {
-            margin: 0.4rem 0 0.55rem;
-            padding: 0.6rem 0.7rem;
-            border: 1px solid rgba(128, 128, 128, 0.20);
-            border-radius: 0.6rem;
-            background: rgba(128, 128, 128, 0.025);
-        }
-
-        .activities-selected-title {
-            font-size: 1rem;
-            font-weight: 720;
-        }
-
-        .activities-selected-meta {
-            margin-top: 0.12rem;
-            font-size: 0.68rem;
-            opacity: 0.58;
-        }
-
-        div[data-testid="stButton"] > button[
-            kind="secondary"
-        ] {
-            text-align: left;
+            line-height: 1.05;
         }
 
         @media (max-width: 900px) {
@@ -395,14 +525,16 @@ def _activity_row_label(
     activity,
 ) -> str:
     """
-    Compact single-line activity browser label.
+    Builds one dense activity-history row.
     """
 
-    values = [
-        format_workout_date(
-            activity.workout_date
-        ),
-        activity.title or "Activity",
+    primary = (
+        f"{format_workout_date(activity.workout_date)}"
+        " · "
+        f"{activity.title or 'Activity'}"
+    )
+
+    metadata = [
         activity.sport or "—",
         format_distance(
             activity.distance
@@ -413,30 +545,33 @@ def _activity_row_label(
     ]
 
     if activity.elevation_gain is not None:
-        values.append(
+        metadata.append(
             format_elevation(
                 activity.elevation_gain
             )
         )
 
     if activity.rpe is not None:
-        values.append(
+        metadata.append(
             f"RPE {activity.rpe:g}"
         )
 
     if activity.outcome_status:
-        values.append(
+        metadata.append(
             _outcome_label(
                 activity.outcome_status
             )
         )
 
-    return "  ·  ".join(
-        str(value)
-        for value in values
-        if value
+    return (
+        primary
+        + "  ·  "
+        + " · ".join(
+            str(value)
+            for value in metadata
+            if value
+        )
     )
-
 
 def _activities_summary_html(
     *,
@@ -465,10 +600,9 @@ def _activities_summary_html(
             ),
         ),
         (
-            "Displayed",
-            (
-                f"{min(len(activities), _ACTIVITIES_PAGE_SIZE)}"
-                f" / {len(activities)}"
+            "Matching",
+            str(
+                len(activities)
             ),
         ),
     )
@@ -515,41 +649,6 @@ def _selected_activity_header_html(
         "</div>"
     )
 
-
-def _activity_page_slice(
-    activities,
-    *,
-    page: int,
-):
-    """
-    Returns one compact page of activity rows.
-    """
-
-    if not activities:
-        return ()
-
-    page = max(
-        0,
-        page,
-    )
-
-    start = (
-        page
-        * _ACTIVITIES_PAGE_SIZE
-    )
-
-    end = (
-        start
-        + _ACTIVITIES_PAGE_SIZE
-    )
-
-    return tuple(
-        activities[
-            start:end
-        ]
-    )
-
-
 def _show_selected_activity_dashboard(
     *,
     activity,
@@ -557,8 +656,8 @@ def _show_selected_activity_dashboard(
     athlete,
 ) -> None:
     """
-    Inline dashboard opened directly below the
-    selected activity row.
+    Compact dashboard rendered inside the scrolling
+    activity browser itself.
     """
 
     st.markdown(
@@ -583,7 +682,7 @@ def _show_selected_activity_dashboard(
 
         with planned_column:
             st.metric(
-                "Planned load",
+                "Planned",
                 _format_load(
                     activity.planned_load
                 ),
@@ -591,7 +690,7 @@ def _show_selected_activity_dashboard(
 
         with completed_column:
             st.metric(
-                "Completed load",
+                "Completed",
                 _format_load(
                     activity.completed_load
                 ),
@@ -606,17 +705,17 @@ def _show_selected_activity_dashboard(
                 ),
             )
 
-    (
-        analysis_tab,
-        details_tab,
-    ) = st.tabs(
-        [
-            "Performance",
-            "Details",
-        ]
+    analysis_tab, details_tab = (
+        st.tabs(
+            [
+                "Performance",
+                "Details",
+            ]
+        )
     )
 
     with analysis_tab:
+
         show_activity_analysis(
             workout,
             history=athlete.history,
@@ -625,9 +724,11 @@ def _show_selected_activity_dashboard(
                 f"{activity.workout_id}"
             ),
             show_heading=False,
+            compact=True,
         )
 
     with details_tab:
+
         show_workout_details(
             workout
         )
@@ -824,198 +925,96 @@ def show_activities_page(
 
             return
 
-        if (
-            "activities_browser_page"
-            not in st.session_state
-        ):
-            st.session_state[
-                "activities_browser_page"
-            ] = 0
-
-        page_count = max(
-            1,
-            (
-                len(activities)
-                + _ACTIVITIES_PAGE_SIZE
-                - 1
-            )
-            // _ACTIVITIES_PAGE_SIZE,
-        )
-
-        page = min(
-            st.session_state[
-                "activities_browser_page"
-            ],
-            page_count - 1,
-        )
-
-        st.session_state[
-            "activities_browser_page"
-        ] = page
-
-        visible_activities = (
-            _activity_page_slice(
-                activities,
-                page=page,
-            )
-        )
-
         selected_id = (
             st.session_state.get(
                 "activities_selected_id"
             )
         )
 
-        visible_ids = {
+        activity_ids = {
             str(
                 activity.workout_id
             )
-            for activity
-            in visible_activities
+            for activity in activities
         }
 
         if (
             selected_id is not None
             and selected_id
-            not in visible_ids
+            not in activity_ids
         ):
             selected_id = None
 
-        for activity in (
-            visible_activities
+            st.session_state[
+                "activities_selected_id"
+            ] = None
+
+        with st.container(
+            height=500,
+            border=True,
+            key="activities_browser",
         ):
 
-            activity_id = str(
-                activity.workout_id
-            )
+            for activity in activities:
 
-            is_selected = (
-                selected_id
-                == activity_id
-            )
-
-            clicked = st.button(
-                _activity_row_label(
-                    activity
-                ),
-                key=(
-                    "activity_row_"
-                    f"{activity_id}"
-                ),
-                use_container_width=True,
-                type=(
-                    "primary"
-                    if is_selected
-                    else "secondary"
-                ),
-            )
-
-            if clicked:
-
-                if is_selected:
-                    st.session_state[
-                        "activities_selected_id"
-                    ] = None
-
-                else:
-                    st.session_state[
-                        "activities_selected_id"
-                    ] = activity_id
-
-                st.rerun()
-
-            if not is_selected:
-                continue
-
-            selected_workout = (
-                _workout_for_activity(
-                    athlete.history,
-                    activity,
-                )
-            )
-
-            if selected_workout is None:
-
-                st.warning(
-                    "The selected activity "
-                    "is no longer available."
+                activity_id = str(
+                    activity.workout_id
                 )
 
-                continue
-
-            _show_selected_activity_dashboard(
-                activity=activity,
-                workout=selected_workout,
-                athlete=athlete,
-            )
-
-        # ==============================================
-        # Pagination
-        # ==============================================
-
-        if page_count > 1:
-
-            previous_column, page_column, next_column = (
-                st.columns(
-                    [1, 2, 1],
-                    gap="small",
+                is_selected = (
+                    selected_id
+                    == activity_id
                 )
-            )
 
-            with previous_column:
-
-                if st.button(
-                    "Previous",
-                    disabled=(
-                        page <= 0
+                clicked = st.button(
+                    _activity_row_label(
+                        activity
+                    ),
+                    key=(
+                        "activity_row_"
+                        f"{activity_id}"
                     ),
                     use_container_width=True,
-                    key=(
-                        "activities_previous_page"
+                    type=(
+                        "primary"
+                        if is_selected
+                        else "secondary"
                     ),
-                ):
-                    st.session_state[
-                        "activities_browser_page"
-                    ] = (
-                        page - 1
-                    )
+                )
+
+                if clicked:
 
                     st.session_state[
                         "activities_selected_id"
-                    ] = None
+                    ] = (
+                        None
+                        if is_selected
+                        else activity_id
+                    )
 
                     st.rerun()
 
-            with page_column:
+                if not is_selected:
+                    continue
 
-                st.caption(
-                    (
-                        f"Page {page + 1} "
-                        f"of {page_count}"
+                selected_workout = (
+                    _workout_for_activity(
+                        athlete.history,
+                        activity,
                     )
                 )
 
-            with next_column:
+                if selected_workout is None:
 
-                if st.button(
-                    "Next",
-                    disabled=(
-                        page
-                        >= page_count - 1
-                    ),
-                    use_container_width=True,
-                    key=(
-                        "activities_next_page"
-                    ),
-                ):
-                    st.session_state[
-                        "activities_browser_page"
-                    ] = (
-                        page + 1
+                    st.warning(
+                        "The selected activity is "
+                        "no longer available."
                     )
 
-                    st.session_state[
-                        "activities_selected_id"
-                    ] = None
+                    continue
 
-                    st.rerun()
+                _show_selected_activity_dashboard(
+                    activity=activity,
+                    workout=selected_workout,
+                    athlete=athlete,
+                )

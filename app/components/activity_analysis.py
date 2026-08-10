@@ -797,6 +797,7 @@ def _comparison_chart(
     *,
     metric: str,
     comparison=None,
+    height: int = 250,
 ):
     """
     Overlays one metric from the current activity and,
@@ -989,7 +990,7 @@ def _comparison_chart(
             y="independent"
         )
         .properties(
-            height=250
+            height=height
         )
     )
 
@@ -1025,6 +1026,7 @@ def show_activity_analysis(
     history=None,
     key_prefix: str = "activity_analysis",
     show_heading: bool = True,
+    compact: bool = False,
 ) -> None:
     """
     Shows route, environment and historical performance
@@ -1096,7 +1098,12 @@ def show_activity_analysis(
             )
 
             show_route_map(
-                workout
+                workout,
+                height=(
+                    190
+                    if compact
+                    else 420
+                ),
             )
 
         metrics = (
@@ -1205,6 +1212,11 @@ def show_activity_analysis(
                 workout,
                 metric=metric,
                 comparison=comparison,
+                height=(
+                    190
+                    if compact
+                    else 250
+                ),
             )
         )
 

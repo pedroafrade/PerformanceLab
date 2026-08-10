@@ -23,7 +23,11 @@ from performancelab.presentation import (
 # Route map
 # ======================================================
 
-def show_route_map(workout):
+def show_route_map(
+    workout,
+    *,
+    height: int | None = None,
+):
 
     """
     Displays an interactive workout route.
@@ -104,9 +108,7 @@ def show_route_map(workout):
     )
 
     st.pydeck_chart(
-
         deck,
-
         use_container_width=True,
-
+        height=height,
     )
