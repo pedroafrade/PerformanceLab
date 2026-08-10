@@ -103,7 +103,10 @@ def test_builds_activity_list_item():
     )
     assert activity.elevation_gain == 980
     assert activity.rpe == 7.5
-
+    assert (
+        activity.completed_load
+        == pytest.approx(1140.0)
+    )
 
 def test_orders_activities_newest_first():
 

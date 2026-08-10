@@ -12,7 +12,9 @@ from datetime import date, datetime, time
 from performancelab.text import (
     repair_mojibake,
 )
-
+from performancelab.training.load import (
+    workout_load,
+)
 from .activity_models import (
     ActivityFilters,
     ActivityListItemData,
@@ -158,7 +160,11 @@ class ActivitiesPresenter:
         )
         planned_title = None
         planned_load = None
-        completed_load = None
+        completed_load = (
+            workout_load(
+                workout
+            )
+        )
         load_difference = None
 
         if outcome is not None:
