@@ -10,6 +10,13 @@ from .activity_models import (
 from .activities_presenter import (
     ActivitiesPresenter,
 )
+from .activity_coach_models import (
+    ActivityCoachContextData,
+    ActivityCoachSensorData,
+)
+from .activity_coach_presenter import (
+    ActivityCoachPresenter,
+)
 from .development_models import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
@@ -102,6 +109,9 @@ __all__ = [
     "ActivityFilters",
     "ActivityListItemData",
     "ActivitiesPresenter",
+    "ActivityCoachContextData",
+    "ActivityCoachSensorData",
+    "ActivityCoachPresenter",
 
     # Calendar
     "CalendarDayData",
