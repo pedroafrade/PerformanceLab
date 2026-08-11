@@ -43,6 +43,14 @@ from .activity_signals import (
     ActivitySignalSeverity,
     assess_activity_signals,
 )
+from .activity_coach_generation import (
+    ActivityCoachGenerationResult,
+    ActivityCoachGenerationService,
+    ActivityCoachGenerationStatus,
+    ActivityCoachNarrative,
+    ActivityCoachProviderUnavailable,
+    ActivityCoachTextProvider,
+)
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
 from .stimulus_dose import StimulusDose
@@ -101,6 +109,12 @@ __all__ = [
     "ActivitySignalCategory",
     "ActivitySignalSeverity",
     "assess_activity_signals",
+    "ActivityCoachGenerationResult",
+    "ActivityCoachGenerationService",
+    "ActivityCoachGenerationStatus",
+    "ActivityCoachNarrative",
+    "ActivityCoachProviderUnavailable",
+    "ActivityCoachTextProvider",
     "WeekStructureGenerator",
     "CoachReviewer",
 
