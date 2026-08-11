@@ -82,6 +82,10 @@ def test_builds_json_serializable_prompt_payload():
         "contract_version"
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
+    assert ACTIVITY_COACH_PROMPT_VERSION == (
+        "activity-coach-v2"
+    )
+
     assert payload[
         "assessment"
     ][
@@ -134,6 +138,21 @@ def test_contract_contains_safety_rules():
     )
     assert "missing data" in combined_rules
     assert "state_is_current" in (
+        combined_rules
+    )
+    assert "natural, direct english" in (
+        combined_rules
+    )
+    assert "internal field names" in (
+        combined_rules
+    )
+    assert "raw durations in seconds" in (
+        combined_rules
+    )
+    assert "rigid or alarmist" in (
+        combined_rules
+    )
+    assert "directly relevant" in (
         combined_rules
     )
 
