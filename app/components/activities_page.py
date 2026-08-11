@@ -396,7 +396,30 @@ def _apply_activities_page_styles() -> None:
             font-weight: 500 !important;
             line-height: 1.05 !important;
         }
+        .st-key-activities_browser
+        div[data-testid="stButton"] > button p {
+            width: 100%;
+            overflow: hidden;
+            margin: 0 !important;
 
+            font-family:
+                ui-monospace,
+                SFMono-Regular,
+                Menlo,
+                Monaco,
+                Consolas,
+                "Liberation Mono",
+                monospace !important;
+
+            font-size: 0.67rem !important;
+            font-weight: 500 !important;
+            line-height: 1.05 !important;
+
+            text-align: left !important;
+            text-overflow: clip;
+            white-space: pre !important;
+        }
+        
         .st-key-activities_browser
         div[data-testid="stButton"]
         > button:hover {
@@ -639,57 +662,129 @@ def _apply_activities_page_styles() -> None:
         unsafe_allow_html=True,
     )
 
+def _activity_row_field(
+    value,
+    width: int,
+    *,
+    align_right: bool = False,
+) -> str:
+    """
+    Formats one fixed-width field for a clickable row.
+    """
+
+    text = str(
+        value
+        if value not in (
+            None,
+            "",
+        )
+        else "—"
+    )
+
+    if len(
+        text
+    ) > width:
+
+        text = (
+            text[
+                : width - 1
+            ]
+            + "…"
+        )
+
+    if align_right:
+        return text.rjust(
+            width
+        )
+
+    return text.ljust(
+        width
+    )
 
 def _activity_row_label(
     activity,
 ) -> str:
     """
-    Builds one dense activity-history row.
+    Builds one aligned, clickable activity-history row.
     """
 
-    primary = (
-        f"{format_workout_date(activity.workout_date)}"
-        " · "
-        f"{activity.title or 'Activity'}"
+    date_label = format_workout_date(
+        activity.workout_date
     )
 
-    metadata = [
-        activity.sport or "—",
-        format_distance(
-            activity.distance
+    sport_label = (
+        activity.sport
+        or "—"
+    )
+
+    title_label = (
+        activity.title
+        or "Activity"
+    )
+
+    distance_label = format_distance(
+        activity.distance
+    )
+
+    duration_label = format_duration(
+        activity.duration
+    )
+
+    elevation_label = format_elevation(
+        activity.elevation_gain
+    )
+
+    rpe_label = (
+        f"RPE {activity.rpe:g}"
+        if activity.rpe is not None
+        else "—"
+    )
+
+    result_label = _outcome_label(
+        activity.outcome_status
+    )
+
+    fields = (
+        _activity_row_field(
+            date_label,
+            10,
         ),
-        format_duration(
-            activity.duration
+        _activity_row_field(
+            sport_label,
+            13,
         ),
-    ]
+        _activity_row_field(
+            title_label,
+            30,
+        ),
+        _activity_row_field(
+            distance_label,
+            9,
+            align_right=True,
+        ),
+        _activity_row_field(
+            duration_label,
+            8,
+            align_right=True,
+        ),
+        _activity_row_field(
+            elevation_label,
+            8,
+            align_right=True,
+        ),
+        _activity_row_field(
+            rpe_label,
+            7,
+            align_right=True,
+        ),
+        _activity_row_field(
+            result_label,
+            14,
+        ),
+    )
 
-    if activity.elevation_gain is not None:
-        metadata.append(
-            format_elevation(
-                activity.elevation_gain
-            )
-        )
-
-    if activity.rpe is not None:
-        metadata.append(
-            f"RPE {activity.rpe:g}"
-        )
-
-    if activity.outcome_status:
-        metadata.append(
-            _outcome_label(
-                activity.outcome_status
-            )
-        )
-
-    return (
-        primary
-        + "  ·  "
-        + " · ".join(
-            str(value)
-            for value in metadata
-            if value
-        )
+    return "  ".join(
+        fields
     )
 
 def _activities_summary_html(

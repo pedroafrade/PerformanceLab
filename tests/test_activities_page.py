@@ -561,12 +561,83 @@ def test_builds_compact_activity_row_label():
         )
     )
 
-    assert "Hill Run" in label
-    assert "Running" in label
-    assert "11.58 km" in label
-    assert "1h 42m" in label
-    assert "630 m" in label
-    assert "RPE 7.7" in label
+    assert "·" not in label
+    assert len(
+        label
+    ) == 113
+
+    assert label.index(
+        "2026-08-09"
+    ) == 0
+
+    assert label.index(
+        "Running"
+    ) == 12
+
+    assert label.index(
+        "Hill Run"
+    ) == 27
+
+    assert label.index(
+        "11.58 km"
+    ) == 60
+
+    assert label.index(
+        "1h 42m"
+    ) == 72
+
+    assert label.index(
+        "630 m"
+    ) == 83
+
+    assert label.index(
+        "RPE 7.7"
+    ) == 90
+
+    assert label.index(
+        "Not assessed"
+    ) == 99
+
+def test_truncates_long_activity_row_title():
+
+    activity = create_activity(
+        workout_id="activity-long-title",
+        workout_date=date(
+            2026,
+            8,
+            9,
+        ),
+        title=(
+            "A very long activity title that "
+            "must not displace later fields"
+        ),
+        sport="Running",
+        distance=10,
+        duration=timedelta(
+            hours=1
+        ),
+        elevation_gain=200,
+        rpe=6,
+    )
+
+    label = (
+        _activity_row_label(
+            activity
+        )
+    )
+
+    assert "…" in label
+    assert len(
+        label
+    ) == 113
+
+    assert label.index(
+        "10.00 km"
+    ) == 60
+
+    assert label.index(
+        "1h 00m"
+    ) == 72
 
 def test_builds_unified_activity_metrics():
 
