@@ -5,6 +5,7 @@ from performancelab import (
 )
 from performancelab.presentation import (
     ACTIVITY_COACH_PROMPT_VERSION,
+    ActivityCoachFeedbackData,
     ActivityCoachPresenter,
     ActivityListItemData,
     build_activity_coach_prompt_payload,
@@ -145,3 +146,11 @@ def test_contract_contains_safety_rules():
         "recommendations",
         "data_limitations",
     ]
+
+def test_exports_activity_coach_feedback_data():
+
+    feedback = ActivityCoachFeedbackData(
+        rpe=7.0,
+    )
+
+    assert feedback.rpe == 7.0

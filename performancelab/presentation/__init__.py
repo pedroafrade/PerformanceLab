@@ -14,6 +14,7 @@ from .activity_coach_models import (
     ActivityCoachAssessmentData,
     ActivityCoachContextData,
     ActivityCoachEventData,
+    ActivityCoachFeedbackData,
     ActivityCoachPhysiologyData,
     ActivityCoachPlanData,
     ActivityCoachRecentTrainingData,
