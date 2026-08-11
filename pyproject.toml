@@ -18,7 +18,8 @@ dependencies = [
     "pandas",
     "matplotlib",
     "scipy",
-    "gpxpy"
+    "gpxpy",
+    "google-genai>=2.3"
 ]
 
 [tool.setuptools]

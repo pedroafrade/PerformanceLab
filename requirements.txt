@@ -6,3 +6,4 @@ gpxpy
 streamlit
 fitdecode
 plotly
+google-genai>=2.3
