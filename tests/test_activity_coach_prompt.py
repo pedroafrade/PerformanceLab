@@ -83,7 +83,7 @@ def test_builds_json_serializable_prompt_payload():
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
     assert ACTIVITY_COACH_PROMPT_VERSION == (
-        "activity-coach-v2"
+        "activity-coach-v3"
     )
 
     assert payload[
@@ -155,7 +155,47 @@ def test_contract_contains_safety_rules():
     assert "directly relevant" in (
         combined_rules
     )
+    assert "narrative_structure" in (
+        combined_rules
+    )
+    assert "reported by the athlete" in (
+        combined_rules
+    )
+    assert "single cause" in (
+        combined_rules
+    )
+    assert "existing plan" in (
+        combined_rules
+    )
 
+    narrative_structure = payload[
+        "narrative_structure"
+    ]
+
+    assert len(
+        narrative_structure
+    ) == 7
+
+    combined_structure = " ".join(
+        narrative_structure
+    ).lower()
+
+    assert "practical conclusion" in (
+        combined_structure
+    )
+    assert "subjective response" in (
+        combined_structure
+    )
+    assert "target event" in (
+        combined_structure
+    )
+    assert "conditional" in (
+        combined_structure
+    )
+    assert "balanced overall assessment" in (
+        combined_structure
+    )
+    
     assert payload[
         "required_sections"
     ] == [

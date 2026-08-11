@@ -21,9 +21,42 @@ from .activity_coach_models import (
 
 
 ACTIVITY_COACH_PROMPT_VERSION = (
-    "activity-coach-v2"
+    "activity-coach-v3"
 )
 
+ACTIVITY_COACH_NARRATIVE_STRUCTURE = (
+    (
+        "Open with the most important practical "
+        "conclusion about the session."
+    ),
+    (
+        "Prioritize the athlete's explicitly recorded "
+        "subjective response when it materially changes "
+        "the interpretation."
+    ),
+    (
+        "Interpret cardiovascular and mechanical demand "
+        "in the context of session type, terrain, elevation, "
+        "environment, and recoveries when those data exist."
+    ),
+    (
+        "Explain how the session relates to recent training, "
+        "the current plan phase, and the target event."
+    ),
+    (
+        "State what should be monitored next only when the "
+        "available evidence supports a useful observation."
+    ),
+    (
+        "Make the next-training recommendation conditional "
+        "on the athlete's response and consistent with the "
+        "existing plan."
+    ),
+    (
+        "Finish with a brief, balanced overall assessment "
+        "of progress and relevant caution."
+    ),
+)
 
 ACTIVITY_COACH_PROMPT_RULES = (
     (
@@ -44,6 +77,36 @@ ACTIVITY_COACH_PROMPT_RULES = (
         "Lead with the practical meaning of the "
         "session. Do not turn the interpretation into "
         "an exhaustive technical report."
+    ),
+    (
+        "Follow narrative_structure as a natural flow "
+        "across prudent_interpretation and recommendations. "
+        "Do not print the structure instructions or use "
+        "their wording as literal section headings."
+    ),
+    (
+        "Omit any narrative topic that lacks supporting "
+        "data instead of filling it with generic advice."
+    ),
+    (
+        "Present subjective notes as information reported "
+        "by the athlete. Do not convert an athlete report "
+        "into a diagnosis or independently verified fact."
+    ),
+    (
+        "When heart rate, power, pace, terrain, elevation, "
+        "or environment interact, explain the context and "
+        "uncertainty instead of attributing a single cause."
+    ),
+    (
+        "Relate the session to the target event only when "
+        "event data are available and the comparison is "
+        "meaningful."
+    ),
+    (
+        "Recommendations must respect the existing plan. "
+        "Do not invent a replacement schedule when the "
+        "payload does not contain enough future-plan data."
     ),
     (
         "Mention only measurements that materially "
@@ -276,6 +339,9 @@ def build_activity_coach_prompt_payload(
         ),
         "rules": list(
             ACTIVITY_COACH_PROMPT_RULES
+        ),
+        "narrative_structure": list(
+            ACTIVITY_COACH_NARRATIVE_STRUCTURE
         ),
         "required_sections": list(
             ACTIVITY_COACH_OUTPUT_SECTIONS

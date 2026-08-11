@@ -682,7 +682,7 @@ def test_builds_coach_payload_without_generation():
 
     assert payload[
         "contract_version"
-    ] == "activity-coach-v2"
+    ] == "activity-coach-v3"
 
     assert payload[
         "assessment"
