@@ -359,101 +359,155 @@ def _apply_activities_page_styles() -> None:
         }
 
         /*
-        Activity rows become table-like lines instead
-        of separate floating cards.
+        Activity rows use a real visual grid with one
+        transparent button covering the complete row.
         */
-        .st-key-activities_browser
-        div[data-testid="stButton"] {
+        div[class*="st-key-activity_grid_row_"] {
+            position: relative;
+            min-height: 2.45rem;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            border-bottom:
+                1px solid
+                rgba(128, 128, 128, 0.15);
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        > div[data-testid="stVerticalBlock"] {
+            gap: 0 !important;
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        div[data-testid="stElementContainer"] {
             margin: 0 !important;
             padding: 0 !important;
         }
 
-        .st-key-activities_browser
-        div[data-testid="stButton"] > button {
+        .activity-row-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(6.4rem, 0.9fr)
+                minmax(5.5rem, 0.8fr)
+                minmax(10rem, 2fr)
+                minmax(5rem, 0.75fr)
+                minmax(4.5rem, 0.7fr)
+                minmax(4.2rem, 0.65fr)
+                minmax(4.2rem, 0.65fr)
+                minmax(6.8rem, 1fr);
+
+            column-gap:
+                clamp(0.45rem, 1.2vw, 1rem);
+
+            align-items: center;
+
             width: 100%;
-            min-height: 1.72rem;
-            height: 1.72rem;
-            margin: 0 !important;
-            padding: 0.12rem 0.55rem !important;
+            min-height: 2.45rem;
+            padding: 0.2rem 0.65rem;
 
-            border: 0 !important;
-            border-bottom:
-                1px solid
-                rgba(128, 128, 128, 0.15) !important;
+            box-sizing: border-box;
 
-            border-radius: 0 !important;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 720;
+            line-height: 1.1;
 
-            background:
-                transparent !important;
-
-            box-shadow: none !important;
-
-            justify-content: flex-start !important;
-            text-align: left !important;
-
-            font-size: 0.69rem !important;
-            font-weight: 500 !important;
-            line-height: 1.05 !important;
-        }
-        .st-key-activities_browser
-        div[data-testid="stButton"] > button p {
-            display: block;
-            flex: 1 1 100%;
-            width: 100%;
-            min-width: 0;
-            overflow: hidden;
-            margin: 0 !important;
-
-            font-family: inherit !important;
-            font-size: 0.88rem !important;
-            font-weight: 720 !important;
-            line-height: 1.1 !important;
-
-            text-align: justify !important;
-            text-align-last: justify !important;
-            text-justify: inter-word;
-
-            text-overflow: clip;
-            white-space: nowrap !important;
-        }
-            width: 100%;
-            overflow: hidden;
-            margin: 0 !important;
-
-            font-family: inherit !important;
-            font-size: 0.88rem !important;
-            font-weight: 720 !important;
-            line-height: 1.1 !important;
-
-            text-align: left !important;
-            text-overflow: clip;
-            white-space: pre !important;
-        }
-        
-        .st-key-activities_browser
-        div[data-testid="stButton"]
-        > button:hover {
-            background:
-                rgba(128, 128, 128, 0.055)
-                !important;
+            background: transparent;
+            pointer-events: none;
         }
 
-        /*
-        Primary = currently expanded activity.
-        Keep it subtle instead of a full red row.
-        */
-        .st-key-activities_browser
-        div[data-testid="stButton"]
-        > button[kind="primary"] {
-            background:
-                rgba(255, 75, 75, 0.065)
-                !important;
+        .activity-row-grid.is-selected {
+            padding-left: calc(
+                0.65rem - 2px
+            );
 
             border-left:
-                2px solid #ff4b4b
-                !important;
+                2px solid #ff4b4b;
 
-            color: inherit !important;
+            background:
+                rgba(255, 75, 75, 0.065);
+        }
+
+        .activity-row-cell {
+            min-width: 0;
+            overflow: hidden;
+
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .activity-row-numeric {
+            text-align: right;
+        }
+
+        .activity-row-result {
+            text-align: right;
+        }
+
+        div[class*="st-key-activity_grid_row_"] div[data-testid="stElementContainer"]:has(div[data-testid="stButton"]) {
+            position: absolute !important;
+            inset: 0 !important;
+            z-index: 2;
+
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        div[data-testid="stButton"] {
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        div[data-testid="stButton"] > button {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 2.45rem !important;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        :has(button:hover)
+        .activity-row-grid {
+            background:
+                rgba(128, 128, 128, 0.055);
+        }
+
+        div[class*="st-key-activity_grid_row_"]
+        :has(button:focus-visible) {
+            outline:
+                1px solid rgba(255, 75, 75, 0.55);
+            outline-offset: -1px;
+        }
+
+        @media (max-width: 1200px) {
+            .activity-row-grid {
+                grid-template-columns:
+                    minmax(5.8rem, 0.9fr)
+                    minmax(4.8rem, 0.75fr)
+                    minmax(8rem, 1.7fr)
+                    minmax(4.5rem, 0.7fr)
+                    minmax(4rem, 0.65fr)
+                    minmax(3.8rem, 0.6fr)
+                    minmax(3.8rem, 0.6fr)
+                    minmax(6rem, 1fr);
+
+                column-gap: 0.4rem;
+                font-size: 0.74rem;
+            }
         }
 
         /* =================================================
@@ -672,64 +726,21 @@ def _apply_activities_page_styles() -> None:
         unsafe_allow_html=True,
     )
 
-def _activity_row_field(
-    value,
-    width: int,
-    *,
-    align_right: bool = False,
-) -> str:
-    """
-    Formats one stable field inside a flexible row.
-    """
-
-    text = str(
-        value
-        if value not in (
-            None,
-            "",
-        )
-        else "—"
-    )
-
-    if len(
-        text
-    ) > width:
-
-        text = (
-            text[
-                : width - 1
-            ]
-            + "…"
-        )
-
-    visible_text = text.replace(
-        " ",
-        "\u00a0",
-    )
-
-    padding = "\u2007" * (
-        width - len(
-            text
-        )
-    )
-
-    if align_right:
-        return (
-            padding
-            + visible_text
-        )
-
-    return (
-        visible_text
-        + padding
-    )
-
-def _activity_row_label(
+def _activity_row_html(
     activity,
+    *,
+    selected: bool = False,
 ) -> str:
     """
-    Builds one aligned, fully clickable activity row.
+    Builds one visual activity grid below a transparent
+    full-row selection button.
     """
+
+    row_class = (
+        "activity-row-grid is-selected"
+        if selected
+        else "activity-row-grid"
+    )
 
     date_label = format_workout_date(
         activity.workout_date
@@ -767,48 +778,56 @@ def _activity_row_label(
         activity.outcome_status
     )
 
-    fields = (
-        _activity_row_field(
+    cells = (
+        (
+            "date",
             date_label,
-            10,
         ),
-        _activity_row_field(
+        (
+            "sport",
             sport_label,
-            13,
         ),
-        _activity_row_field(
+        (
+            "title",
             title_label,
-            30,
         ),
-        _activity_row_field(
+        (
+            "distance numeric",
             distance_label,
-            9,
-            align_right=True,
         ),
-        _activity_row_field(
+        (
+            "duration numeric",
             duration_label,
-            8,
-            align_right=True,
         ),
-        _activity_row_field(
+        (
+            "elevation numeric",
             elevation_label,
-            8,
-            align_right=True,
         ),
-        _activity_row_field(
+        (
+            "rpe numeric",
             rpe_label,
-            7,
-            align_right=True,
         ),
-        _activity_row_field(
+        (
+            "result",
             result_label,
-            14,
-            align_right=True,
         ),
     )
 
-    return " ".join(
-        fields
+    content = "".join(
+        (
+            '<div class="activity-row-cell '
+            f'activity-row-{css_class}">'
+            f"{escape(str(value))}"
+            "</div>"
+        )
+        for css_class, value
+        in cells
+    )
+
+    return (
+        f'<div class="{row_class}">'
+        f"{content}"
+        "</div>"
     )
 
 def _activities_summary_html(
@@ -1574,21 +1593,31 @@ def show_activities_page(
                     == activity_id
                 )
 
-                clicked = st.button(
-                    _activity_row_label(
-                        activity
-                    ),
+                with st.container(
                     key=(
-                        "activity_row_"
+                        "activity_grid_row_"
                         f"{activity_id}"
-                    ),
-                    use_container_width=True,
-                    type=(
-                        "primary"
-                        if is_selected
-                        else "secondary"
-                    ),
-                )
+                    )
+                ):
+
+                    st.html(
+                        _activity_row_html(
+                            activity,
+                            selected=is_selected,
+                        )
+                    )
+
+                    clicked = st.button(
+                        (
+                            "Open "
+                            f"{activity.title or 'activity'}"
+                        ),
+                        key=(
+                            "activity_row_"
+                            f"{activity_id}"
+                        ),
+                        use_container_width=True,
+                    )
 
                 if clicked:
 

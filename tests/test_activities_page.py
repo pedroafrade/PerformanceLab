@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from app.components.activities_page import (
     _activity_coach_material,
     _activity_rows,
-    _activity_row_label,
+    _activity_row_html,
     _analysis_available,
     _compact_activity_metrics_html,
     _format_load,
@@ -535,7 +535,7 @@ def test_marks_basic_activity_without_sensor_data():
     assert result == "Basic"
 
 
-def test_builds_compact_activity_row_label():
+def test_builds_activity_row_grid_html():
 
     activity = create_activity(
         workout_id="activity-1",
@@ -555,83 +555,87 @@ def test_builds_compact_activity_row_label():
         rpe=7.7,
     )
 
-    label = (
-        _activity_row_label(
-            activity
-        )
+    html = _activity_row_html(
+        activity,
+        selected=True,
     )
 
-    readable_label = (
-        label
-        .replace(
-            "\u00a0",
-            " ",
-        )
-        .replace(
-            "\u2007",
-            " ",
-        )
+    assert (
+        'class="activity-row-grid is-selected"'
+        in html
     )
 
-    assert "·" not in label
-
-    assert len(
-        label
-    ) == 106
-
-    assert label.count(
-        " "
-    ) == 7
-
-    assert readable_label.index(
-        "2026-08-09"
-    ) == 0
-
-    assert readable_label.index(
-        "Running"
-    ) == 11
-
-    assert readable_label.index(
-        "Hill Run"
-    ) == 25
-
-    assert readable_label.index(
-        "11.58 km"
-    ) == 57
-
-    assert readable_label.index(
-        "1h 42m"
-    ) == 68
-
-    assert readable_label.index(
-        "630 m"
-    ) == 78
-
-    assert readable_label.index(
-        "RPE 7.7"
-    ) == 84
-
-    assert readable_label.index(
-        "Not assessed"
-    ) == 94
-
-    assert label.endswith(
-        "Not\u00a0assessed"
+    assert (
+        "activity-row-date"
+        in html
+    )
+    assert (
+        "activity-row-sport"
+        in html
+    )
+    assert (
+        "activity-row-title"
+        in html
+    )
+    assert (
+        "activity-row-distance numeric"
+        in html
+    )
+    assert (
+        "activity-row-result"
+        in html
     )
 
-def test_truncates_long_activity_row_title():
+    assert ">2026-08-09<" in html
+    assert ">Running<" in html
+    assert ">Hill Run<" in html
+    assert ">11.58 km<" in html
+    assert ">1h 42m<" in html
+    assert ">630 m<" in html
+    assert ">RPE 7.7<" in html
+    assert ">Not assessed<" in html
+
+
+def test_builds_unselected_activity_row():
 
     activity = create_activity(
-        workout_id="activity-long-title",
+        workout_id="activity-2",
         workout_date=date(
             2026,
             8,
             9,
         ),
-        title=(
-            "A very long activity title that "
-            "must not displace later fields"
+        title="Easy Run",
+        sport="Running",
+        distance=8,
+        duration=timedelta(
+            minutes=45
         ),
+        elevation_gain=50,
+        rpe=4,
+    )
+
+    html = _activity_row_html(
+        activity
+    )
+
+    assert (
+        'class="activity-row-grid"'
+        in html
+    )
+    assert "is-selected" not in html
+
+
+def test_escapes_activity_row_content():
+
+    activity = create_activity(
+        workout_id="activity-3",
+        workout_date=date(
+            2026,
+            8,
+            9,
+        ),
+        title="<Hill & Trail>",
         sport="Running",
         distance=10,
         duration=timedelta(
@@ -641,41 +645,15 @@ def test_truncates_long_activity_row_title():
         rpe=6,
     )
 
-    label = (
-        _activity_row_label(
-            activity
-        )
+    html = _activity_row_html(
+        activity
     )
 
-    readable_label = (
-        label
-        .replace(
-            "\u00a0",
-            " ",
-        )
-        .replace(
-            "\u2007",
-            " ",
-        )
+    assert (
+        "&lt;Hill &amp; Trail&gt;"
+        in html
     )
-
-    assert "…" in label
-
-    assert len(
-        label
-    ) == 106
-
-    assert label.count(
-        " "
-    ) == 7
-
-    assert readable_label.index(
-        "10.00 km"
-    ) == 57
-
-    assert readable_label.index(
-        "1h 00m"
-    ) == 68
+    assert "<Hill & Trail>" not in html
 
 def test_builds_unified_activity_metrics():
 
