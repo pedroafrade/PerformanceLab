@@ -541,6 +541,38 @@ def _apply_activities_page_styles() -> None:
            Right utility cards
            ================================================= */
 
+        .activities-coach-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .activities-coach-heading {
+            flex: 0 0 auto;
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .activities-coach-activity {
+            min-width: 0;
+            overflow: hidden;
+            font-size: 0.7rem;
+            line-height: 1.2;
+            opacity: 0.58;
+            text-align: right;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .st-key-activity_coach_card
+        div[data-testid="stMarkdownContainer"] p {
+            font-size: 0.86rem;
+            line-height: 1.45;
+        }
+
         .activities-summary-grid {
             display: grid;
             grid-template-columns:
@@ -1441,8 +1473,23 @@ def show_activities_page(
             key="activity_coach_card",
         ):
 
-            st.markdown(
-                "**Training coach**"
+            coach_activity_title = (
+                selected_activity.title
+                if selected_activity is not None
+                else ""
+            )
+
+            st.html(
+                (
+                    '<div class="activities-coach-header">'
+                    '<div class="activities-coach-heading">'
+                    "Training coach"
+                    "</div>"
+                    '<div class="activities-coach-activity">'
+                    f"{escape(coach_activity_title)}"
+                    "</div>"
+                    "</div>"
+                )
             )
 
             if selected_activity is None:
@@ -1465,10 +1512,6 @@ def show_activities_page(
                 )
 
             else:
-
-                st.caption(
-                    selected_activity.title
-                )
 
                 (
                     coach_payload,
@@ -1537,10 +1580,6 @@ def show_activities_page(
 
                             athlete_changed = True
 
-                            st.success(
-                                "Interpretation regenerated."
-                            )
-
                             _show_activity_coach_narrative(
                                 resolution
                                 .interpretation
@@ -1562,11 +1601,6 @@ def show_activities_page(
                             )
 
                 else:
-
-                    st.caption(
-                        "No interpretation has been "
-                        "generated for the current data."
-                    )
 
                     generate = st.button(
                         "Generate interpretation",
@@ -1606,10 +1640,6 @@ def show_activities_page(
                         ):
 
                             athlete_changed = True
-
-                            st.success(
-                                "Interpretation generated."
-                            )
 
                             _show_activity_coach_narrative(
                                 resolution
