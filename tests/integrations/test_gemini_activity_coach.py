@@ -2,6 +2,8 @@ import json
 
 import pytest
 
+from google.genai import types
+
 from performancelab.coaching import (
     ActivityCoachProviderUnavailable,
 )
@@ -165,15 +167,29 @@ def test_sends_deterministic_json_payload():
         "contract_version"
     ] == "activity-coach-v1"
 
-    assert request[
+    config = request[
         "config"
-    ][
-        "response_format"
-    ][
-        "text"
-    ][
-        "mime_type"
+    ]
+
+    types.GenerateContentConfig(
+        **config
+    )
+
+    assert config[
+        "response_mime_type"
     ] == "application/json"
+
+    assert config[
+        "response_json_schema"
+    ][
+        "required"
+    ] == [
+        "measured_facts",
+        "deterministic_signals",
+        "prudent_interpretation",
+        "recommendations",
+        "data_limitations",
+    ]
 
 
 def test_converts_api_failure_to_unavailable():

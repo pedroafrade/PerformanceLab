@@ -143,16 +143,12 @@ class GeminiActivityCoachProvider:
                         payload
                     ),
                     config={
-                        "response_format": {
-                            "text": {
-                                "mime_type": (
-                                    "application/json"
-                                ),
-                                "schema": (
-                                    _ACTIVITY_COACH_RESPONSE_SCHEMA
-                                ),
-                            },
-                        },
+                        "response_mime_type": (
+                            "application/json"
+                        ),
+                        "response_json_schema": (
+                            _ACTIVITY_COACH_RESPONSE_SCHEMA
+                        ),
                     },
                 )
             )
