@@ -51,6 +51,11 @@ from .activity_coach_generation import (
     ActivityCoachProviderUnavailable,
     ActivityCoachTextProvider,
 )
+from .activity_coach_coordinator import (
+    ActivityCoachCoordinator,
+    ActivityCoachResolutionResult,
+    ActivityCoachResolutionStatus,
+)
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
 from .stimulus_dose import StimulusDose
@@ -115,6 +120,9 @@ __all__ = [
     "ActivityCoachNarrative",
     "ActivityCoachProviderUnavailable",
     "ActivityCoachTextProvider",
+    "ActivityCoachCoordinator",
+    "ActivityCoachResolutionResult",
+    "ActivityCoachResolutionStatus",
     "WeekStructureGenerator",
     "CoachReviewer",
 
