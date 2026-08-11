@@ -23,6 +23,7 @@ from .activity_coach_models import (
     ActivityCoachAssessmentData,
     ActivityCoachContextData,
     ActivityCoachEventData,
+    ActivityCoachFeedbackData,
     ActivityCoachPhysiologyData,
     ActivityCoachPlanData,
     ActivityCoachRecentTrainingData,
@@ -102,6 +103,58 @@ class ActivityCoachPresenter:
             ),
         )
 
+    def _feedback_data(
+        self,
+    ) -> ActivityCoachFeedbackData:
+        """
+        Returns only athlete-recorded subjective feedback.
+        """
+
+        feedback = self.workout.feedback
+
+        notes = str(
+            feedback.notes
+            or ""
+        ).strip()
+
+        return ActivityCoachFeedbackData(
+            rpe=(
+                float(feedback.rpe)
+                if feedback.rpe is not None
+                else None
+            ),
+            feeling=(
+                float(feedback.feeling)
+                if feedback.feeling is not None
+                else None
+            ),
+            sleep_quality=(
+                float(feedback.sleep_quality)
+                if feedback.sleep_quality is not None
+                else None
+            ),
+            motivation=(
+                float(feedback.motivation)
+                if feedback.motivation is not None
+                else None
+            ),
+            stress=(
+                float(feedback.stress)
+                if feedback.stress is not None
+                else None
+            ),
+            muscle_soreness=(
+                float(feedback.muscle_soreness)
+                if feedback.muscle_soreness is not None
+                else None
+            ),
+            notes=(
+                notes
+                if notes
+                else None
+            ),
+        )
+    
     def _recent_training(
         self,
     ) -> ActivityCoachRecentTrainingData:
@@ -487,6 +540,9 @@ class ActivityCoachPresenter:
                 terrain
                 if terrain
                 else None
+            ),
+            feedback=(
+                self._feedback_data()
             ),
             recent_training=(
                 self._recent_training()

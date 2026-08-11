@@ -453,3 +453,64 @@ def test_activity_coach_assessment_is_immutable():
         FrozenInstanceError
     ):
         assessment.signals = ()
+
+
+
+def test_includes_only_recorded_athlete_feedback():
+
+    workout = create_workout()
+
+    workout.feedback.rpe = 7.7
+    workout.feedback.estimated_rpe = 8.5
+    workout.feedback.feeling = 6.0
+    workout.feedback.sleep_quality = 4.0
+    workout.feedback.motivation = 7.0
+    workout.feedback.stress = 5.0
+    workout.feedback.muscle_soreness = 3.0
+    workout.feedback.notes = (
+        "Felt tired on the final climb."
+    )
+
+    assessment = ActivityCoachPresenter(
+        activity=create_activity(),
+        workout=workout,
+    ).build()
+
+    feedback = (
+        assessment.context.feedback
+    )
+
+    assert feedback.rpe == 7.7
+    assert feedback.feeling == 6.0
+    assert feedback.sleep_quality == 4.0
+    assert feedback.motivation == 7.0
+    assert feedback.stress == 5.0
+    assert feedback.muscle_soreness == 3.0
+    assert feedback.notes == (
+        "Felt tired on the final climb."
+    )
+
+    assert not hasattr(
+        feedback,
+        "estimated_rpe",
+    )
+
+
+def test_uses_none_for_unrecorded_feedback():
+
+    assessment = ActivityCoachPresenter(
+        activity=create_activity(),
+        workout=create_workout(),
+    ).build()
+
+    feedback = (
+        assessment.context.feedback
+    )
+
+    assert feedback.rpe is None
+    assert feedback.feeling is None
+    assert feedback.sleep_quality is None
+    assert feedback.motivation is None
+    assert feedback.stress is None
+    assert feedback.muscle_soreness is None
+    assert feedback.notes is None

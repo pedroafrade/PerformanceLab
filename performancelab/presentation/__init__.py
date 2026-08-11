@@ -22,6 +22,12 @@ from .activity_coach_models import (
 from .activity_coach_presenter import (
     ActivityCoachPresenter,
 )
+from .activity_coach_prompt import (
+    ACTIVITY_COACH_OUTPUT_SECTIONS,
+    ACTIVITY_COACH_PROMPT_RULES,
+    ACTIVITY_COACH_PROMPT_VERSION,
+    build_activity_coach_prompt_payload,
+)
 from .development_models import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
@@ -122,6 +128,11 @@ __all__ = [
     "ActivityCoachEventData",
     "ActivityCoachPhysiologyData",
     "ActivityCoachPlanData",
+    "ActivityCoachFeedbackData",
+    "ACTIVITY_COACH_OUTPUT_SECTIONS",
+    "ACTIVITY_COACH_PROMPT_RULES",
+    "ACTIVITY_COACH_PROMPT_VERSION",
+    "build_activity_coach_prompt_payload",
 
     # Calendar
     "CalendarDayData",

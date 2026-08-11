@@ -85,6 +85,22 @@ class ActivityCoachPhysiologyData:
     recovery_score: float | None = None
     load_state: str | None = None
 
+@dataclass(frozen=True)
+class ActivityCoachFeedbackData:
+    """
+    Subjective feedback explicitly recorded by the athlete.
+
+    Estimated RPE is deliberately excluded because it is not
+    athlete-confirmed subjective feedback.
+    """
+
+    rpe: float | None = None
+    feeling: float | None = None
+    sleep_quality: float | None = None
+    motivation: float | None = None
+    stress: float | None = None
+    muscle_soreness: float | None = None
+    notes: str | None = None
 
 @dataclass(frozen=True)
 class ActivityCoachContextData:
@@ -104,6 +120,11 @@ class ActivityCoachContextData:
     temperature: float | None = None
     humidity: float | None = None
     terrain: str | None = None
+    feedback: ActivityCoachFeedbackData = field(
+        default_factory=(
+            ActivityCoachFeedbackData
+        )
+    )
 
     recent_training: (
         ActivityCoachRecentTrainingData
