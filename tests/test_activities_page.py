@@ -561,42 +561,63 @@ def test_builds_compact_activity_row_label():
         )
     )
 
+    readable_label = (
+        label
+        .replace(
+            "\u00a0",
+            " ",
+        )
+        .replace(
+            "\u2007",
+            " ",
+        )
+    )
+
     assert "·" not in label
+
     assert len(
         label
-    ) == 113
+    ) == 106
 
-    assert label.index(
+    assert label.count(
+        " "
+    ) == 7
+
+    assert readable_label.index(
         "2026-08-09"
     ) == 0
 
-    assert label.index(
+    assert readable_label.index(
         "Running"
-    ) == 12
+    ) == 11
 
-    assert label.index(
+    assert readable_label.index(
         "Hill Run"
-    ) == 27
+    ) == 25
 
-    assert label.index(
+    assert readable_label.index(
         "11.58 km"
-    ) == 60
+    ) == 57
 
-    assert label.index(
+    assert readable_label.index(
         "1h 42m"
-    ) == 72
+    ) == 68
 
-    assert label.index(
+    assert readable_label.index(
         "630 m"
-    ) == 83
+    ) == 78
 
-    assert label.index(
+    assert readable_label.index(
         "RPE 7.7"
-    ) == 90
+    ) == 84
 
-    assert label.index(
+    assert readable_label.index(
         "Not assessed"
-    ) == 99
+    ) == 94
+
+    assert label.endswith(
+        "Not\u00a0assessed"
+    )
 
 def test_truncates_long_activity_row_title():
 
@@ -626,18 +647,35 @@ def test_truncates_long_activity_row_title():
         )
     )
 
+    readable_label = (
+        label
+        .replace(
+            "\u00a0",
+            " ",
+        )
+        .replace(
+            "\u2007",
+            " ",
+        )
+    )
+
     assert "…" in label
+
     assert len(
         label
-    ) == 113
+    ) == 106
 
-    assert label.index(
+    assert label.count(
+        " "
+    ) == 7
+
+    assert readable_label.index(
         "10.00 km"
-    ) == 60
+    ) == 57
 
-    assert label.index(
+    assert readable_label.index(
         "1h 00m"
-    ) == 72
+    ) == 68
 
 def test_builds_unified_activity_metrics():
 

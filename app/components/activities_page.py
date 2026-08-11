@@ -31,9 +31,7 @@ from performancelab.presentation import (
 from .activity_analysis import (
     show_activity_analysis,
 )
-from .activity_input import (
-    show_activity_input,
-)
+
 from .workout_table import (
     format_distance,
     format_duration,
@@ -390,6 +388,7 @@ def _apply_activities_page_styles() -> None:
 
             box-shadow: none !important;
 
+            justify-content: flex-start !important;
             text-align: left !important;
 
             font-size: 0.69rem !important;
@@ -398,22 +397,33 @@ def _apply_activities_page_styles() -> None:
         }
         .st-key-activities_browser
         div[data-testid="stButton"] > button p {
+            display: block;
+            flex: 1 1 100%;
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+            margin: 0 !important;
+
+            font-family: inherit !important;
+            font-size: 0.88rem !important;
+            font-weight: 720 !important;
+            line-height: 1.1 !important;
+
+            text-align: justify !important;
+            text-align-last: justify !important;
+            text-justify: inter-word;
+
+            text-overflow: clip;
+            white-space: nowrap !important;
+        }
             width: 100%;
             overflow: hidden;
             margin: 0 !important;
 
-            font-family:
-                ui-monospace,
-                SFMono-Regular,
-                Menlo,
-                Monaco,
-                Consolas,
-                "Liberation Mono",
-                monospace !important;
-
-            font-size: 0.67rem !important;
-            font-weight: 500 !important;
-            line-height: 1.05 !important;
+            font-family: inherit !important;
+            font-size: 0.88rem !important;
+            font-weight: 720 !important;
+            line-height: 1.1 !important;
 
             text-align: left !important;
             text-overflow: clip;
@@ -669,7 +679,7 @@ def _activity_row_field(
     align_right: bool = False,
 ) -> str:
     """
-    Formats one fixed-width field for a clickable row.
+    Formats one stable field inside a flexible row.
     """
 
     text = str(
@@ -692,20 +702,33 @@ def _activity_row_field(
             + "…"
         )
 
+    visible_text = text.replace(
+        " ",
+        "\u00a0",
+    )
+
+    padding = "\u2007" * (
+        width - len(
+            text
+        )
+    )
+
     if align_right:
-        return text.rjust(
-            width
+        return (
+            padding
+            + visible_text
         )
 
-    return text.ljust(
-        width
+    return (
+        visible_text
+        + padding
     )
 
 def _activity_row_label(
     activity,
 ) -> str:
     """
-    Builds one aligned, clickable activity-history row.
+    Builds one aligned, fully clickable activity row.
     """
 
     date_label = format_workout_date(
@@ -780,10 +803,11 @@ def _activity_row_label(
         _activity_row_field(
             result_label,
             14,
+            align_right=True,
         ),
     )
 
-    return "  ".join(
+    return " ".join(
         fields
     )
 
@@ -1884,21 +1908,5 @@ def show_activities_page(
                 )
             )
 
-        # ==============================================
-        # Add activity
-        # ==============================================
-
-        with st.expander(
-            "Add activity",
-            expanded=False,
-        ):
-
-            show_activity_input(
-                athlete,
-                key_prefix=(
-                    "activities_page"
-                ),
-                show_header=False,
-            )
 
     return athlete_changed
