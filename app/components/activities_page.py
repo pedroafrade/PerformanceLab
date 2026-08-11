@@ -1436,7 +1436,9 @@ def show_activities_page(
     with utility_column:
 
         with st.container(
-            border=True
+            height=360,
+            border=True,
+            key="activity_coach_card",
         ):
 
             st.markdown(
