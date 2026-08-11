@@ -364,7 +364,7 @@ def _apply_activities_page_styles() -> None:
         */
         div[class*="st-key-activity_grid_row_"] {
             position: relative;
-            min-height: 2.45rem;
+            min-height: 2.05rem;
             margin: 0 !important;
             padding: 0 !important;
 
@@ -402,8 +402,8 @@ def _apply_activities_page_styles() -> None:
             align-items: center;
 
             width: 100%;
-            min-height: 2.45rem;
-            padding: 0.2rem 0.65rem;
+            min-height: 2.05rem;
+            padding: 0.08rem 0.65rem;
 
             box-sizing: border-box;
 
@@ -466,7 +466,7 @@ def _apply_activities_page_styles() -> None:
         div[data-testid="stButton"] > button {
             width: 100% !important;
             height: 100% !important;
-            min-height: 2.45rem !important;
+            min-height: 2.05rem !important;
             margin: 0 !important;
             padding: 0 !important;
 
@@ -514,32 +514,6 @@ def _apply_activities_page_styles() -> None:
            Expanded activity
            ================================================= */
 
-        .activities-selected-header {
-            margin: 0;
-            padding: 0.48rem 0.6rem;
-
-            border: 0;
-            border-bottom:
-                1px solid rgba(128, 128, 128, 0.16);
-
-            border-radius: 0;
-
-            background:
-                rgba(128, 128, 128, 0.025);
-        }
-
-        .activities-selected-title {
-            font-size: 0.88rem;
-            font-weight: 720;
-            line-height: 1.1;
-        }
-
-        .activities-selected-meta {
-            margin-top: 0.1rem;
-            font-size: 0.62rem;
-            line-height: 1.15;
-            opacity: 0.58;
-        }
         .activities-metrics-grid {
             display: grid;
             grid-template-columns:
@@ -885,26 +859,6 @@ def _activities_summary_html(
     )
 
 
-def _selected_activity_header_html(
-    activity,
-) -> str:
-
-    return (
-        '<div class="activities-selected-header">'
-        '<div class="activities-selected-title">'
-        f"{activity.title}"
-        "</div>"
-        '<div class="activities-selected-meta">'
-        f"{activity.sport}"
-        " · "
-        f"{format_workout_date(activity.workout_date)}"
-        " · "
-        f"{format_distance(activity.distance)}"
-        " · "
-        f"{format_duration(activity.duration)}"
-        "</div>"
-        "</div>"
-    )
 def _sensor_summary_label(
     workout,
     sensor_name: str,
@@ -1138,13 +1092,6 @@ def _show_selected_activity_dashboard(
     Compact dashboard rendered inside the scrolling
     activity browser itself.
     """
-
-    st.markdown(
-        _selected_activity_header_html(
-            activity
-        ),
-        unsafe_allow_html=True,
-    )
 
     st.html(
         _compact_activity_metrics_html(
