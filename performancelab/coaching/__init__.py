@@ -37,6 +37,12 @@ from .daily_guidance import (
     DailyTrainingGuidance,
     build_daily_training_guidance,
 )
+from .activity_signals import (
+    ActivityCoachSignal,
+    ActivitySignalCategory,
+    ActivitySignalSeverity,
+    assess_activity_signals,
+)
 from .reviewer import CoachReviewer
 from .session_purpose import SessionPurpose
 from .stimulus_dose import StimulusDose
@@ -91,6 +97,10 @@ __all__ = [
     "DraftTrainingSlot",
     "DailyTrainingGuidance",
     "build_daily_training_guidance",
+    "ActivityCoachSignal",
+    "ActivitySignalCategory",
+    "ActivitySignalSeverity",
+    "assess_activity_signals",
     "WeekStructureGenerator",
     "CoachReviewer",
 
