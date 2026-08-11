@@ -83,7 +83,7 @@ def test_builds_json_serializable_prompt_payload():
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
     assert ACTIVITY_COACH_PROMPT_VERSION == (
-        "activity-coach-v3"
+        "activity-coach-v4"
     )
 
     assert payload[
@@ -167,7 +167,22 @@ def test_contract_contains_safety_rules():
     assert "existing plan" in (
         combined_rules
     )
-
+    assert "three to five short paragraphs" in (
+        combined_rules
+    )
+    assert "one to three short paragraphs" in (
+        combined_rules
+    )
+    assert "two newline characters" in (
+        combined_rules
+    )
+    assert "one clear coaching idea" in (
+        combined_rules
+    )
+    assert "do not add markdown headings" in (
+        combined_rules
+    )
+    
     narrative_structure = payload[
         "narrative_structure"
     ]

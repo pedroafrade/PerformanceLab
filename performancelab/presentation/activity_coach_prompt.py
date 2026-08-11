@@ -21,7 +21,7 @@ from .activity_coach_models import (
 
 
 ACTIVITY_COACH_PROMPT_VERSION = (
-    "activity-coach-v3"
+    "activity-coach-v4"
 )
 
 ACTIVITY_COACH_NARRATIVE_STRUCTURE = (
@@ -83,6 +83,38 @@ ACTIVITY_COACH_PROMPT_RULES = (
         "across prudent_interpretation and recommendations. "
         "Do not print the structure instructions or use "
         "their wording as literal section headings."
+    ),
+    (
+        "Format prudent_interpretation as three to five "
+        "short paragraphs separated by a blank line. Each "
+        "paragraph should contain one to three sentences "
+        "and develop one clear coaching idea."
+    ),
+    (
+        "Use the first interpretation paragraph for the "
+        "main practical conclusion and the most important "
+        "supporting evidence."
+    ),
+    (
+        "Use separate interpretation paragraphs for the "
+        "athlete-reported response, session demand, recent "
+        "training context, or event relevance only when "
+        "the corresponding data are available."
+    ),
+    (
+        "Format recommendations as one to three short "
+        "paragraphs separated by a blank line. Keep each "
+        "conditional decision together with the evidence "
+        "or athlete response that should trigger it."
+    ),
+    (
+        "Do not produce one continuous block of text. "
+        "Use two newline characters between paragraphs."
+    ),
+    (
+        "Do not add Markdown headings inside "
+        "prudent_interpretation or recommendations because "
+        "the user interface already labels the sections."
     ),
     (
         "Omit any narrative topic that lacks supporting "
