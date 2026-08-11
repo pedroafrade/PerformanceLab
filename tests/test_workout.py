@@ -129,3 +129,56 @@ def test_reconciliation_signature_ignores_title():
         workout.reconciliation_signature
         == original_signature
     )
+
+def test_records_normalized_athlete_notes():
+
+    workout = Workout()
+
+    changed = (
+        workout.feedback.record_notes(
+            "  Mild stiffness after the run.  "
+        )
+    )
+
+    assert changed is True
+    assert workout.feedback.notes == (
+        "Mild stiffness after the run."
+    )
+
+
+def test_does_not_change_identical_athlete_notes():
+
+    workout = Workout()
+
+    workout.feedback.notes = (
+        "Felt good after the run."
+    )
+
+    changed = (
+        workout.feedback.record_notes(
+            "  Felt good after the run.  "
+        )
+    )
+
+    assert changed is False
+    assert workout.feedback.notes == (
+        "Felt good after the run."
+    )
+
+
+def test_can_clear_athlete_notes():
+
+    workout = Workout()
+
+    workout.feedback.notes = (
+        "Previous observation."
+    )
+
+    changed = (
+        workout.feedback.record_notes(
+            ""
+        )
+    )
+
+    assert changed is True
+    assert workout.feedback.notes == ""

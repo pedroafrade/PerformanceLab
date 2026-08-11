@@ -654,7 +654,9 @@ def test_builds_coach_payload_without_generation():
     )
     workout.info.elevation_gain = 600.0
     workout.feedback.rpe = 7.0
-
+    workout.feedback.notes = (
+        "Mild stiffness at the start, then no pain."
+    )
     athlete.history.add(
         workout
     )
@@ -693,7 +695,19 @@ def test_builds_coach_payload_without_generation():
     ][
         "title"
     ] == "Hill Run"
-
+    
+    assert payload[
+        "assessment"
+    ][
+        "context"
+    ][
+        "feedback"
+    ][
+        "notes"
+    ] == (
+        "Mild stiffness at the start, then no pain."
+    )
+    
     assert stored is None
     assert len(
         athlete.activity_coach_interpretations

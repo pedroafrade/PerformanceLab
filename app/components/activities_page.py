@@ -1008,6 +1008,29 @@ def _show_selected_activity_dashboard(
         environment_first=False,
     )
 
+def _save_activity_coach_notes(
+    *,
+    workout,
+    state_key: str,
+) -> None:
+    """
+    Routes athlete-entered notes to the workout domain.
+    """
+
+    changed = (
+        workout.feedback.record_notes(
+            st.session_state.get(
+                state_key,
+                "",
+            )
+        )
+    )
+
+    if changed:
+        st.session_state[
+            "activity_coach_notes_changed"
+        ] = True
+
 def _activity_coach_material(
     *,
     activity,
@@ -1152,7 +1175,12 @@ def show_activities_page(
     """
     Displays a compact scrolling activity browser.
     """
-    athlete_changed = False
+    athlete_changed = bool(
+        st.session_state.pop(
+            "activity_coach_notes_changed",
+            False,
+        )
+    )
 
     _apply_activities_page_styles()
 
@@ -1542,10 +1570,6 @@ def show_activities_page(
 
                     if not regenerate:
 
-                        st.caption(
-                            "Saved interpretation"
-                        )
-
                         _show_activity_coach_narrative(
                             stored_interpretation
                             .narrative
@@ -1668,7 +1692,67 @@ def show_activities_page(
                                 "not be generated. No result "
                                 "was saved."
                             )
+        # ==============================================
+        # Additional athlete information
+        # ==============================================
 
+        if selected_workout is not None:
+
+            with st.container(
+                border=True,
+                key="activity_coach_notes",
+            ):
+
+                st.markdown(
+                    "**Additional information**"
+                )
+
+                st.caption(
+                    "Add observations not available in "
+                    "the activity file, such as pain, "
+                    "stiffness, sleep, stress, motivation, "
+                    "soreness, or how the session felt."
+                )
+
+                notes_key = (
+                    "activity_coach_notes_"
+                    f"{selected_activity.workout_id}"
+                )
+
+                st.text_area(
+                    "Information for the Training Coach",
+                    value=(
+                        selected_workout
+                        .feedback
+                        .notes
+                    ),
+                    placeholder=(
+                        "Example: Mild stiffness during "
+                        "the first kilometre, then no pain."
+                    ),
+                    height=90,
+                    label_visibility="collapsed",
+                    key=notes_key,
+                )
+
+                st.button(
+                    "Save information",
+                    key=(
+                        "save_activity_coach_notes_"
+                        f"{selected_activity.workout_id}"
+                    ),
+                    use_container_width=True,
+                    on_click=(
+                        _save_activity_coach_notes
+                    ),
+                    kwargs={
+                        "workout": (
+                            selected_workout
+                        ),
+                        "state_key": notes_key,
+                    },
+                )
+                
         # ==============================================
         # Activity summary
         # ==============================================

@@ -37,6 +37,30 @@ class AthleteFeedback:
     notes: str = ""
 
     # ======================================================
+    def record_notes(
+        self,
+        notes: str | None,
+    ) -> bool:
+        """
+        Records normalized subjective notes from the athlete.
+
+        Returns True only when the persisted value changes.
+        """
+
+        normalized_notes = (
+            str(
+                notes or ""
+            ).strip()
+        )
+
+        if normalized_notes == self.notes:
+            return False
+
+        self.notes = normalized_notes
+
+        return True
+
+    # ======================================================
 
     @property
     def effective_rpe(self) -> float | None:
