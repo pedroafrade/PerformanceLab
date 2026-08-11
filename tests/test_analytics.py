@@ -7,6 +7,7 @@ Tests for AthleteAnalytics.
 import pytest
 
 from datetime import date
+from datetime import datetime
 from datetime import timedelta
 
 from statistics import pstdev
@@ -476,7 +477,231 @@ def test_first_and_last_workout():
 
 
 # ======================================================
+def test_calculates_hours_since_last_workout_end():
 
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            10,
+            6,
+            30,
+        ),
+        10,
+        timedelta(
+            hours=1,
+            minutes=30,
+        ),
+        100,
+        6,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    timing = (
+        athlete.analytics
+        .recovery_timing(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                14,
+                0,
+            )
+        )
+    )
+
+    assert (
+        timing.last_workout_ended_at
+        == datetime(
+            2026,
+            8,
+            10,
+            8,
+            0,
+        )
+    )
+
+    assert (
+        timing.hours_since_last_workout
+        == 30.0
+    )
+
+
+def test_uses_latest_completed_workout():
+
+    athlete = Athlete()
+
+    earlier = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            10,
+            7,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        6,
+    )
+
+    later = create_workout(
+        "Cycling",
+        datetime(
+            2026,
+            8,
+            11,
+            9,
+            0,
+        ),
+        40,
+        timedelta(hours=2),
+        300,
+        5,
+    )
+
+    athlete.history.add(
+        later
+    )
+    athlete.history.add(
+        earlier
+    )
+
+    timing = (
+        athlete.analytics
+        .recovery_timing(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                17,
+                0,
+            )
+        )
+    )
+
+    assert (
+        timing.last_workout_ended_at
+        == datetime(
+            2026,
+            8,
+            11,
+            11,
+            0,
+        )
+    )
+
+    assert (
+        timing.hours_since_last_workout
+        == 6.0
+    )
+
+
+def test_handles_workout_ending_after_midnight():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            10,
+            23,
+            30,
+        ),
+        15,
+        timedelta(hours=2),
+        200,
+        7,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    timing = (
+        athlete.analytics
+        .recovery_timing(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                4,
+                0,
+            )
+        )
+    )
+
+    assert (
+        timing.last_workout_ended_at
+        == datetime(
+            2026,
+            8,
+            11,
+            1,
+            30,
+        )
+    )
+
+    assert (
+        timing.hours_since_last_workout
+        == 2.5
+    )
+
+
+def test_does_not_invent_time_for_date_only_workout():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        date(
+            2026,
+            8,
+            10,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        6,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    timing = (
+        athlete.analytics
+        .recovery_timing(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                14,
+                0,
+            )
+        )
+    )
+
+    assert (
+        timing.last_workout_ended_at
+        is None
+    )
+
+    assert (
+        timing.hours_since_last_workout
+        is None
+    )
+
+    
 def test_summary():
 
     athlete = Athlete()

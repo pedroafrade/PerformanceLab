@@ -22,6 +22,7 @@ from performancelab.physiology import (
 from performancelab.training import DailyLoadBuilder
 
 from .performance_profile import PerformanceProfile
+from .recovery_timing import RecoveryTiming
 from .heart_rate_profile import (
     HeartRateProfile,
     build_heart_rate_profile,
@@ -263,6 +264,74 @@ class AthleteAnalytics:
             date.today()
             - self.last_training_date
         ).days
+
+    def recovery_timing(
+        self,
+        *,
+        reference_time: datetime,
+    ) -> RecoveryTiming:
+        """
+        Builds the temporal context for recovery.
+
+        Only workouts with an exact start time and valid
+        duration can provide a trustworthy completion time.
+        Date-only workouts are deliberately not assigned an
+        invented time.
+        """
+
+        completed_at = []
+
+        for workout in self.history:
+
+            started_at = workout.date
+            duration = workout.duration
+
+            if (
+                not isinstance(
+                    started_at,
+                    datetime,
+                )
+                or not isinstance(
+                    duration,
+                    timedelta,
+                )
+                or duration.total_seconds() < 0
+            ):
+                continue
+
+            ended_at = (
+                started_at
+                + duration
+            )
+
+            try:
+                already_completed = (
+                    ended_at
+                    <= reference_time
+                )
+            except TypeError:
+                # Naive and timezone-aware datetimes cannot
+                # be compared safely without an explicit
+                # timezone conversion.
+                continue
+
+            if already_completed:
+                completed_at.append(
+                    ended_at
+                )
+
+        last_workout_ended_at = (
+            max(completed_at)
+            if completed_at
+            else None
+        )
+
+        return RecoveryTiming(
+            reference_time=reference_time,
+            last_workout_ended_at=(
+                last_workout_ended_at
+            ),
+        )
 
     @property
     def weekly_frequency(self) -> float:
