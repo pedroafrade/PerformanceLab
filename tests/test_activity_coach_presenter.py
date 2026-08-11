@@ -103,7 +103,7 @@ def test_builds_activity_coach_context():
     context = ActivityCoachPresenter(
         activity=create_activity(),
         workout=create_workout(),
-    ).build()
+    ).build().context
 
     assert context.activity.title == (
         "Long Hill Run"
@@ -134,7 +134,7 @@ def test_activity_coach_context_is_immutable():
     context = ActivityCoachPresenter(
         activity=create_activity(),
         workout=create_workout(),
-    ).build()
+    ).build().context
 
     with pytest.raises(
         FrozenInstanceError
@@ -193,7 +193,7 @@ def test_builds_recent_training_context():
         activity=activity,
         workout=current,
         athlete=athlete,
-    ).build()
+    ).build().context
 
     recent = (
         context.recent_training
@@ -232,7 +232,7 @@ def test_recent_training_context_is_immutable():
         activity=create_activity(),
         workout=create_workout(),
         athlete=athlete,
-    ).build()
+    ).build().context
 
     with pytest.raises(
         FrozenInstanceError
@@ -315,7 +315,7 @@ def test_builds_plan_event_and_physiology_context():
         activity=activity,
         workout=current,
         athlete=athlete,
-    ).build()
+    ).build().context
 
     assert context.plan.phase == "Build"
 
@@ -402,7 +402,7 @@ def test_does_not_present_current_state_as_historical():
         activity=activity,
         workout=selected,
         athlete=athlete,
-    ).build()
+    ).build().context
 
     assert (
         context.physiology.state_is_current
@@ -416,3 +416,40 @@ def test_does_not_present_current_state_as_historical():
         context.physiology.recovery_score
         is None
     )
+
+
+
+def test_builds_activity_coach_assessment():
+
+    assessment = ActivityCoachPresenter(
+        activity=create_activity(),
+        workout=create_workout(),
+    ).build()
+
+    assert assessment.context.activity.title == (
+        "Long Hill Run"
+    )
+
+    signal_codes = tuple(
+        signal.code
+        for signal in assessment.signals
+    )
+
+    assert "load_above_plan" in signal_codes
+    assert isinstance(
+        assessment.signals,
+        tuple,
+    )
+
+
+def test_activity_coach_assessment_is_immutable():
+
+    assessment = ActivityCoachPresenter(
+        activity=create_activity(),
+        workout=create_workout(),
+    ).build()
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        assessment.signals = ()

@@ -9,6 +9,10 @@ from dataclasses import (
     field,
 )
 
+from performancelab.coaching.activity_signals import (
+    ActivityCoachSignal,
+)
+
 from .activity_models import (
     ActivityListItemData,
 )
@@ -128,3 +132,20 @@ class ActivityCoachContextData:
             ActivityCoachPhysiologyData
         )
     )
+
+
+@dataclass(frozen=True)
+class ActivityCoachAssessmentData:
+    """
+    Immutable assessment assembled for one completed activity.
+
+    The factual context remains separate from deterministic
+    domain signals. No generated coaching narrative belongs
+    in this object.
+    """
+
+    context: ActivityCoachContextData
+    signals: tuple[
+        ActivityCoachSignal,
+        ...,
+    ] = ()

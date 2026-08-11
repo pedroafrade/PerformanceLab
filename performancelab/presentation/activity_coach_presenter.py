@@ -9,7 +9,9 @@ from datetime import (
     datetime,
     timedelta,
 )
-
+from performancelab.coaching.activity_signals import (
+    assess_activity_signals,
+)
 from performancelab.coaching.context import (
     CoachContext,
 )
@@ -18,6 +20,7 @@ from performancelab.training.load import (
 )
 
 from .activity_coach_models import (
+    ActivityCoachAssessmentData,
     ActivityCoachContextData,
     ActivityCoachEventData,
     ActivityCoachPhysiologyData,
@@ -434,7 +437,7 @@ class ActivityCoachPresenter:
             physiology,
         )
 
-    def build(
+    def _build_context(
         self,
     ) -> ActivityCoachContextData:
 
@@ -491,4 +494,66 @@ class ActivityCoachPresenter:
             plan=plan,
             event=event,
             physiology=physiology,
+        )
+
+
+    def build(
+        self,
+    ) -> ActivityCoachAssessmentData:
+        """
+        Builds factual context and deterministic domain signals.
+        """
+
+        context = self._build_context()
+
+        duration = (
+            context.activity.duration
+        )
+
+        duration_minutes = (
+            duration.total_seconds()
+            / 60
+            if duration is not None
+            else None
+        )
+
+        signals = assess_activity_signals(
+            planned_load=(
+                context.activity.planned_load
+            ),
+            completed_load=(
+                context.activity.completed_load
+            ),
+            duration_minutes=(
+                duration_minutes
+            ),
+            average_heart_rate=(
+                context.heart_rate.average
+            ),
+            threshold_heart_rate=(
+                context.physiology.threshold_hr
+            ),
+            distance=(
+                context.activity.distance
+            ),
+            elevation_gain=(
+                context.activity.elevation_gain
+            ),
+            event_distance=(
+                context.event.distance
+            ),
+            event_elevation_gain=(
+                context.event.elevation_gain
+            ),
+            readiness=(
+                context.physiology.readiness
+            ),
+            state_is_current=(
+                context.physiology.state_is_current
+            ),
+        )
+
+        return ActivityCoachAssessmentData(
+            context=context,
+            signals=signals,
         )
