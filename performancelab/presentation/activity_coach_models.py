@@ -41,6 +41,48 @@ class ActivityCoachRecentTrainingData:
 
 
 @dataclass(frozen=True)
+class ActivityCoachPlanData:
+    """
+    Training-plan context on the activity day.
+    """
+
+    phase: str | None = None
+
+
+@dataclass(frozen=True)
+class ActivityCoachEventData:
+    """
+    Next competition relative to the activity day.
+    """
+
+    name: str | None = None
+    sport: str | None = None
+    distance: float | None = None
+    elevation_gain: float | None = None
+    terrain: str | None = None
+    priority: str | None = None
+    days_until_event: int | None = None
+
+
+@dataclass(frozen=True)
+class ActivityCoachPhysiologyData:
+    """
+    Physiological references available to the coach.
+
+    Dynamic TrainingState values are exposed only when
+    the selected activity is the latest recorded activity.
+    """
+
+    threshold_hr: int | None = None
+    ftp: float | None = None
+
+    state_is_current: bool = False
+    readiness: str | None = None
+    recovery_score: float | None = None
+    load_state: str | None = None
+
+
+@dataclass(frozen=True)
 class ActivityCoachContextData:
     """
     Factual context for one completed activity.
@@ -64,5 +106,25 @@ class ActivityCoachContextData:
     ) = field(
         default_factory=(
             ActivityCoachRecentTrainingData
+        )
+    )
+
+    plan: ActivityCoachPlanData = field(
+        default_factory=(
+            ActivityCoachPlanData
+        )
+    )
+
+    event: ActivityCoachEventData = field(
+        default_factory=(
+            ActivityCoachEventData
+        )
+    )
+
+    physiology: (
+        ActivityCoachPhysiologyData
+    ) = field(
+        default_factory=(
+            ActivityCoachPhysiologyData
         )
     )

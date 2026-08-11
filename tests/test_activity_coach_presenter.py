@@ -4,6 +4,7 @@ from dataclasses import (
 )
 from datetime import (
     date,
+    datetime,
     timedelta,
 )
 
@@ -12,6 +13,10 @@ import pytest
 from performancelab import (
     Athlete,
     Workout,
+)
+from performancelab.race import (
+    Event,
+    EventEntry,
 )
 from performancelab.presentation import (
     ActivityCoachPresenter,
@@ -237,3 +242,177 @@ def test_recent_training_context_is_immutable():
             .recent_training
             .session_count
         ) = 3
+
+def test_builds_plan_event_and_physiology_context():
+
+    athlete = Athlete(
+        name="Pedro",
+        ftp=220.0,
+        threshold_hr=177,
+    )
+
+    current = create_workout()
+    current.info.title = (
+        "Long Hill Run"
+    )
+    current.info.sport = "Running"
+    current.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    current.info.duration = timedelta(
+        minutes=102
+    )
+    current.feedback.rpe = 7.7
+
+    athlete.history.add(
+        current
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=90
+        ),
+        phase="Build",
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="PéFirme",
+                date=date(
+                    2026,
+                    9,
+                    13,
+                ),
+                sport="Trail Running",
+                distance=23.0,
+                elevation_gain=950.0,
+                terrain="Trail",
+            ),
+            priority="A",
+        )
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            current.workout_id
+        ),
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=current,
+        athlete=athlete,
+    ).build()
+
+    assert context.plan.phase == "Build"
+
+    assert context.event.name == "PéFirme"
+    assert (
+        context.event.distance
+        == 23.0
+    )
+    assert (
+        context.event.elevation_gain
+        == 950.0
+    )
+    assert (
+        context.event.priority
+        == "A"
+    )
+    assert (
+        context.event.days_until_event
+        == 35
+    )
+
+    assert (
+        context.physiology.threshold_hr
+        == 177
+    )
+    assert context.physiology.ftp == 220.0
+    assert (
+        context.physiology.state_is_current
+        is True
+    )
+    assert (
+        context.physiology.readiness
+        is not None
+    )
+    assert (
+        context.physiology.recovery_score
+        is not None
+    )
+
+
+def test_does_not_present_current_state_as_historical():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    selected = create_workout()
+    selected.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    selected.info.duration = timedelta(
+        minutes=60
+    )
+    selected.feedback.rpe = 6.0
+
+    later = Workout()
+    later.info.date = date(
+        2026,
+        8,
+        10,
+    )
+    later.info.duration = timedelta(
+        minutes=45
+    )
+    later.feedback.rpe = 5.0
+
+    athlete.history.add(
+        selected
+    )
+    athlete.history.add(
+        later
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            selected.workout_id
+        ),
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=selected,
+        athlete=athlete,
+    ).build()
+
+    assert (
+        context.physiology.state_is_current
+        is False
+    )
+    assert (
+        context.physiology.readiness
+        is None
+    )
+    assert (
+        context.physiology.recovery_score
+        is None
+    )

@@ -10,12 +10,18 @@ from datetime import (
     timedelta,
 )
 
+from performancelab.coaching.context import (
+    CoachContext,
+)
 from performancelab.training.load import (
     workout_load,
 )
 
 from .activity_coach_models import (
     ActivityCoachContextData,
+    ActivityCoachEventData,
+    ActivityCoachPhysiologyData,
+    ActivityCoachPlanData,
     ActivityCoachRecentTrainingData,
     ActivityCoachSensorData,
 )
@@ -96,10 +102,6 @@ class ActivityCoachPresenter:
     def _recent_training(
         self,
     ) -> ActivityCoachRecentTrainingData:
-        """
-        Summarises the seven-day window ending on the
-        selected activity day.
-        """
 
         activity_day = self._calendar_day(
             self.activity.workout_date
@@ -219,10 +221,8 @@ class ActivityCoachPresenter:
             session_count=len(
                 recent_workouts
             ),
-            total_duration_minutes=(
-                float(
-                    total_duration_minutes
-                )
+            total_duration_minutes=float(
+                total_duration_minutes
             ),
             total_load=float(
                 total_load
@@ -234,12 +234,209 @@ class ActivityCoachPresenter:
             previous_load=previous_load,
         )
 
+    def _is_latest_activity(
+        self,
+        activity_day: date,
+    ) -> bool:
+
+        if self.athlete is None:
+            return False
+
+        workout_days = [
+            workout_day
+            for workout in self.athlete.history
+            if (
+                workout_day
+                := self._calendar_day(
+                    workout.date
+                )
+            )
+            is not None
+        ]
+
+        if not workout_days:
+            return False
+
+        return activity_day == max(
+            workout_days
+        )
+
+    def _training_context(
+        self,
+    ) -> tuple[
+        ActivityCoachPlanData,
+        ActivityCoachEventData,
+        ActivityCoachPhysiologyData,
+    ]:
+
+        activity_day = self._calendar_day(
+            self.activity.workout_date
+        )
+
+        if (
+            self.athlete is None
+            or activity_day is None
+        ):
+            return (
+                ActivityCoachPlanData(),
+                ActivityCoachEventData(),
+                ActivityCoachPhysiologyData(),
+            )
+
+        coach_context = (
+            CoachContext.from_athlete(
+                self.athlete,
+                today=activity_day,
+            )
+        )
+
+        phase = (
+            self.athlete
+            .training_plan
+            .phase_on(
+                activity_day
+            )
+        )
+
+        plan = ActivityCoachPlanData(
+            phase=phase,
+        )
+
+        event_entry = (
+            coach_context.next_event
+        )
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_data = ActivityCoachEventData()
+
+        if event is not None:
+
+            terrain = str(
+                getattr(
+                    event,
+                    "terrain",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            priority = str(
+                getattr(
+                    event_entry,
+                    "priority",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            event_data = ActivityCoachEventData(
+                name=(
+                    str(event.name)
+                    if event.name
+                    else None
+                ),
+                sport=(
+                    str(event.sport)
+                    if event.sport
+                    else None
+                ),
+                distance=(
+                    float(event.distance)
+                    if event.distance
+                    is not None
+                    else None
+                ),
+                elevation_gain=(
+                    float(
+                        event.elevation_gain
+                    )
+                    if event.elevation_gain
+                    is not None
+                    else None
+                ),
+                terrain=(
+                    terrain
+                    if terrain
+                    else None
+                ),
+                priority=(
+                    priority
+                    if priority
+                    else None
+                ),
+                days_until_event=(
+                    coach_context
+                    .days_until_event
+                ),
+            )
+
+        state_is_current = (
+            self._is_latest_activity(
+                activity_day
+            )
+        )
+
+        training_state = (
+            coach_context.training_state
+            if state_is_current
+            else None
+        )
+
+        physiology = (
+            ActivityCoachPhysiologyData(
+                threshold_hr=(
+                    self.athlete
+                    .threshold_hr
+                ),
+                ftp=(
+                    float(
+                        self.athlete.ftp
+                    )
+                    if self.athlete.ftp
+                    is not None
+                    else None
+                ),
+                state_is_current=(
+                    state_is_current
+                ),
+                readiness=(
+                    training_state.readiness
+                    if training_state
+                    is not None
+                    else None
+                ),
+                recovery_score=(
+                    float(
+                        training_state
+                        .recovery_score
+                    )
+                    if training_state
+                    is not None
+                    else None
+                ),
+                load_state=(
+                    training_state.load_state
+                    if training_state
+                    is not None
+                    else None
+                ),
+            )
+        )
+
+        return (
+            plan,
+            event_data,
+            physiology,
+        )
+
     def build(
         self,
     ) -> ActivityCoachContextData:
-        """
-        Returns measured and calculated activity facts.
-        """
 
         environment = (
             self.workout.environment
@@ -249,6 +446,12 @@ class ActivityCoachPresenter:
             environment.terrain
             or ""
         ).strip()
+
+        (
+            plan,
+            event,
+            physiology,
+        ) = self._training_context()
 
         return ActivityCoachContextData(
             activity=self.activity,
@@ -285,4 +488,7 @@ class ActivityCoachPresenter:
             recent_training=(
                 self._recent_training()
             ),
+            plan=plan,
+            event=event,
+            physiology=physiology,
         )

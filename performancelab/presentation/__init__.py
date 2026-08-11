@@ -12,6 +12,9 @@ from .activities_presenter import (
 )
 from .activity_coach_models import (
     ActivityCoachContextData,
+    ActivityCoachEventData,
+    ActivityCoachPhysiologyData,
+    ActivityCoachPlanData,
     ActivityCoachRecentTrainingData,
     ActivityCoachSensorData,
 )
@@ -114,6 +117,9 @@ __all__ = [
     "ActivityCoachRecentTrainingData",
     "ActivityCoachSensorData",
     "ActivityCoachPresenter",
+    "ActivityCoachEventData",
+    "ActivityCoachPhysiologyData",
+    "ActivityCoachPlanData",
 
     # Calendar
     "CalendarDayData",
