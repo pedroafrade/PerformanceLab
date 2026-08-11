@@ -573,6 +573,25 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.45;
         }
 
+        .st-key-activity_coach_notes
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.4rem !important;
+        }
+
+        .st-key-activity_coach_notes
+        div[data-testid="stMarkdownContainer"] p {
+            margin: 0;
+            font-size: 0.82rem;
+            line-height: 1.2;
+        }
+
+        .st-key-activity_coach_notes
+        div[data-testid="stButton"] > button {
+            min-height: 2.1rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
         .activities-summary-grid {
             display: grid;
             grid-template-columns:
@@ -1707,13 +1726,6 @@ def show_activities_page(
                     "**Additional information**"
                 )
 
-                st.caption(
-                    "Add observations not available in "
-                    "the activity file, such as pain, "
-                    "stiffness, sleep, stress, motivation, "
-                    "soreness, or how the session felt."
-                )
-
                 notes_key = (
                     "activity_coach_notes_"
                     f"{selected_activity.workout_id}"
@@ -1727,10 +1739,12 @@ def show_activities_page(
                         .notes
                     ),
                     placeholder=(
-                        "Example: Mild stiffness during "
-                        "the first kilometre, then no pain."
+                        "Add observations not available in "
+                        "the activity file, such as pain, "
+                        "stiffness, sleep, stress, motivation, "
+                        "soreness, or how the session felt."
                     ),
-                    height=90,
+                    height=72,
                     label_visibility="collapsed",
                     key=notes_key,
                 )
