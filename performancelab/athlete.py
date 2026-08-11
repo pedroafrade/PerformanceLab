@@ -9,7 +9,9 @@ Represents an athlete and all associated training data.
 from dataclasses import dataclass, field
 from datetime import date
 from uuid import uuid4
-
+from .activity_coach_records import (
+    ActivityCoachInterpretationBook,
+)
 
 from .analysis import (
     AthleteAnalytics,
@@ -56,6 +58,13 @@ class Athlete:
 
     history: History = field(default_factory=History)
     training_plan: TrainingPlan = field(default_factory=TrainingPlan)
+    activity_coach_interpretations: (
+        ActivityCoachInterpretationBook
+    ) = field(
+        default_factory=(
+            ActivityCoachInterpretationBook
+        )
+    )
 
     availability: AthleteAvailability = field(
         default_factory=AthleteAvailability,

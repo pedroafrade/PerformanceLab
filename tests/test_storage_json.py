@@ -12,12 +12,16 @@ import pytest
 
 from performancelab import (
     Athlete,
+    ActivityCoachInterpretation,
+    ActivityCoachInterpretationBook,
     Event,
     EventEntry,
     Goal,
     Workout,
 )
-
+from performancelab.coaching import (
+    ActivityCoachNarrative,
+)
 from performancelab.analysis import (
     HeartRateZone,
     NutritionProfile,
@@ -229,7 +233,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 9
+    assert data["version"] == 10
 
     assert "id" in data["athlete"]
 
@@ -968,7 +972,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 9
+        == 10
     )
 
     assert (
@@ -1124,7 +1128,7 @@ def test_training_plan_adaptation_round_trip():
         athlete
     )
 
-    assert data["version"] == 9
+    assert data["version"] == 10
 
     assert data["training_plan"][
         "adaptations"
@@ -1137,6 +1141,12 @@ def test_training_plan_adaptation_round_trip():
             "revised_duration": 2280.0,
             "trigger_status": "substitute",
             "load_difference": 744.0,
+            "previous_distance": None,
+            "revised_distance": None,
+            "previous_elevation_gain": None,
+            "revised_elevation_gain": None,
+            "previous_prescription": None,
+            "revised_prescription": None,
         }
     ]
 
@@ -1170,3 +1180,120 @@ def test_loads_plan_without_adaptation_history():
         loaded.training_plan.adaptations
         == ()
     )
+
+
+
+def test_activity_coach_interpretation_round_trip():
+
+    athlete = create_athlete()
+
+    interpretation = (
+        ActivityCoachInterpretation(
+            workout_id="workout-1",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-hash",
+            generated_at=datetime(
+                2026,
+                8,
+                11,
+                14,
+                30,
+            ),
+            narrative=ActivityCoachNarrative(
+                measured_facts=(
+                    "Measured facts."
+                ),
+                deterministic_signals=(
+                    "Load was above plan."
+                ),
+                prudent_interpretation=(
+                    "The session was demanding."
+                ),
+                recommendations=(
+                    "Approach the next session "
+                    "conservatively."
+                ),
+                data_limitations=(
+                    "Sleep was not recorded."
+                ),
+                provider="google-gemini",
+                model="gemini-3.5-flash",
+            ),
+        )
+    )
+
+    athlete.activity_coach_interpretations = (
+        ActivityCoachInterpretationBook(
+            records=(
+                interpretation,
+            )
+        )
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    assert data["version"] == 10
+    assert data[
+        "activity_coach_interpretations"
+    ][0][
+        "context_hash"
+    ] == "context-hash"
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    stored = (
+        loaded
+        .activity_coach_interpretations
+        .find(
+            workout_id="workout-1",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-hash",
+        )
+    )
+
+    assert stored is not None
+    assert stored.generated_at == datetime(
+        2026,
+        8,
+        11,
+        14,
+        30,
+    )
+    assert (
+        stored.narrative.provider
+        == "google-gemini"
+    )
+    assert (
+        stored.narrative.recommendations
+        == (
+            "Approach the next session "
+            "conservatively."
+        )
+    )
+
+
+def test_loads_legacy_data_without_coach_interpretations():
+
+    data = athlete_to_dict(
+        create_athlete()
+    )
+
+    data.pop(
+        "activity_coach_interpretations"
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert len(
+        loaded.activity_coach_interpretations
+    ) == 0

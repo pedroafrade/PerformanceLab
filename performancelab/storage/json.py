@@ -18,7 +18,13 @@ from performancelab import (
     Goal,
     Workout,
 )
-
+from performancelab.activity_coach_records import (
+    ActivityCoachInterpretation,
+    ActivityCoachInterpretationBook,
+)
+from performancelab.coaching.activity_coach_generation import (
+    ActivityCoachNarrative,
+)
 from performancelab.analysis import (
     HeartRateZone,
     NutritionProfile,
@@ -984,7 +990,125 @@ def _event_entry_from_dict(data):
 
     )
 
+# ======================================================
+# Activity Coach interpretation
+# ======================================================
 
+def _activity_coach_interpretation_to_dict(
+    interpretation,
+):
+
+    narrative = (
+        interpretation.narrative
+    )
+
+    return {
+        "workout_id": (
+            interpretation.workout_id
+        ),
+        "contract_version": (
+            interpretation.contract_version
+        ),
+        "context_hash": (
+            interpretation.context_hash
+        ),
+        "generated_at": (
+            _serialize_date(
+                interpretation.generated_at
+            )
+        ),
+        "narrative": {
+            "measured_facts": (
+                narrative.measured_facts
+            ),
+            "deterministic_signals": (
+                narrative.deterministic_signals
+            ),
+            "prudent_interpretation": (
+                narrative.prudent_interpretation
+            ),
+            "recommendations": (
+                narrative.recommendations
+            ),
+            "data_limitations": (
+                narrative.data_limitations
+            ),
+            "provider": narrative.provider,
+            "model": narrative.model,
+        },
+    }
+
+
+def _activity_coach_interpretation_from_dict(
+    data,
+):
+
+    narrative_data = data.get(
+        "narrative",
+        {},
+    )
+
+    return ActivityCoachInterpretation(
+        workout_id=data.get(
+            "workout_id",
+            "",
+        ),
+        contract_version=data.get(
+            "contract_version",
+            "",
+        ),
+        context_hash=data.get(
+            "context_hash",
+            "",
+        ),
+        generated_at=(
+            _deserialize_date(
+                data.get(
+                    "generated_at"
+                )
+            )
+        ),
+        narrative=ActivityCoachNarrative(
+            measured_facts=(
+                narrative_data.get(
+                    "measured_facts",
+                    "",
+                )
+            ),
+            deterministic_signals=(
+                narrative_data.get(
+                    "deterministic_signals",
+                    "",
+                )
+            ),
+            prudent_interpretation=(
+                narrative_data.get(
+                    "prudent_interpretation",
+                    "",
+                )
+            ),
+            recommendations=(
+                narrative_data.get(
+                    "recommendations",
+                    "",
+                )
+            ),
+            data_limitations=(
+                narrative_data.get(
+                    "data_limitations",
+                    "",
+                )
+            ),
+            provider=narrative_data.get(
+                "provider",
+                "",
+            ),
+            model=narrative_data.get(
+                "model",
+                "",
+            ),
+        ),
+    )
 # ======================================================
 # Athlete
 # ======================================================
@@ -995,7 +1119,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 9,
+        "version": 10,
 
         "athlete": {
 
@@ -1065,6 +1189,18 @@ def athlete_to_dict(athlete):
             _event_entry_to_dict(entry)
 
             for entry in athlete.events
+
+        ],
+        "activity_coach_interpretations": [
+
+            _activity_coach_interpretation_to_dict(
+                interpretation
+            )
+
+            for interpretation in (
+                athlete
+                .activity_coach_interpretations
+            )
 
         ],
 
@@ -1208,7 +1344,20 @@ def athlete_from_dict(data):
 
     )
 
-
+    athlete.activity_coach_interpretations = (
+        ActivityCoachInterpretationBook(
+            records=tuple(
+                _activity_coach_interpretation_from_dict(
+                    interpretation_data
+                )
+                for interpretation_data in data.get(
+                    "activity_coach_interpretations",
+                    [],
+                )
+            )
+        )
+    )
+    
     training_plan_data = data.get(
         "training_plan",
         [],
