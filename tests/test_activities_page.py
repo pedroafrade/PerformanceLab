@@ -5,6 +5,7 @@ Tests for the Activities page.
 from datetime import date, timedelta
 
 from app.components.activities_page import (
+    _activity_coach_material,
     _activity_rows,
     _activity_row_label,
     _analysis_available,
@@ -20,6 +21,12 @@ from app.components.activities_page import (
 )
 from performancelab.presentation import (
     ActivityListItemData,
+    ActivitiesPresenter,
+)
+
+from performancelab import (
+    Athlete,
+    Workout,
 )
 
 
@@ -623,3 +630,71 @@ def test_builds_unified_activity_metrics():
     assert "Terrain" in html
     assert "Plan result" in html
     assert "Outside Plan" in html
+
+
+
+def test_builds_coach_payload_without_generation():
+
+    athlete = Athlete(
+        name="Pedro",
+        threshold_hr=177,
+    )
+
+    workout = Workout()
+    workout.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    workout.info.sport = "Running"
+    workout.info.title = "Hill Run"
+    workout.info.distance = 11.0
+    workout.info.duration = timedelta(
+        minutes=90
+    )
+    workout.info.elevation_gain = 600.0
+    workout.feedback.rpe = 7.0
+
+    athlete.history.add(
+        workout
+    )
+
+    activity = ActivitiesPresenter(
+        athlete.history,
+        training_plan=(
+            athlete.training_plan
+        ),
+        reference_day=date(
+            2026,
+            8,
+            9,
+        ),
+    ).build()[0]
+
+    (
+        payload,
+        stored,
+    ) = _activity_coach_material(
+        activity=activity,
+        workout=workout,
+        athlete=athlete,
+    )
+
+    assert payload[
+        "contract_version"
+    ] == "activity-coach-v1"
+
+    assert payload[
+        "assessment"
+    ][
+        "context"
+    ][
+        "activity"
+    ][
+        "title"
+    ] == "Hill Run"
+
+    assert stored is None
+    assert len(
+        athlete.activity_coach_interpretations
+    ) == 0

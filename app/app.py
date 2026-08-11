@@ -624,9 +624,17 @@ elif page == "training":
     )
 elif page == "activities":
 
-    show_activities_page(
-        athlete
+    activities_changed = (
+        show_activities_page(
+            athlete
+        )
     )
+
+    if activities_changed:
+
+        athlete_repository.save(
+            athlete
+        )
 elif page == "athlete":
 
     athlete = show_athlete_panel(
