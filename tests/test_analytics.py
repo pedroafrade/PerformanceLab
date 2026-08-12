@@ -23,6 +23,7 @@ from performancelab.analysis.performance_profile import (
 from performancelab.analysis import (
     HeartRateProfile,
     HeartRateZone,
+    TimeAwareTrainingLoad,
 )
 from performancelab.race import Event
 
@@ -701,7 +702,284 @@ def test_does_not_invent_time_for_date_only_workout():
         is None
     )
 
-    
+def test_intraday_recovery_improves_during_rest_day():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            10,
+            7,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        3,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    morning = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                6,
+                0,
+            )
+        )
+    )
+
+    evening = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                18,
+                0,
+            )
+        )
+    )
+
+    assert isinstance(
+        morning,
+        TimeAwareTrainingLoad,
+    )
+    assert isinstance(
+        evening,
+        TimeAwareTrainingLoad,
+    )
+
+    assert evening.ctl < morning.ctl
+    assert evening.atl < morning.atl
+
+    assert (
+        evening.recovery_score
+        > morning.recovery_score
+    )
+
+
+def test_completed_workout_reduces_intraday_recovery():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            11,
+            9,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        8,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    before_completion = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                9,
+                30,
+            )
+        )
+    )
+
+    after_completion = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                10,
+                30,
+            )
+        )
+    )
+
+    assert (
+        before_completion
+        is not None
+    )
+    assert (
+        after_completion
+        is not None
+    )
+
+    assert (
+        after_completion.recovery_score
+        < before_completion.recovery_score
+    )
+
+
+def test_intraday_load_uses_multiple_completed_workouts():
+
+    athlete = Athlete()
+
+    first = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            11,
+            6,
+            0,
+        ),
+        5,
+        timedelta(hours=1),
+        50,
+        5,
+    )
+
+    second = create_workout(
+        "Cycling",
+        datetime(
+            2026,
+            8,
+            11,
+            12,
+            0,
+        ),
+        30,
+        timedelta(hours=1),
+        100,
+        6,
+    )
+
+    athlete.history.add(
+        first
+    )
+    athlete.history.add(
+        second
+    )
+
+    after_first = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                10,
+                0,
+            )
+        )
+    )
+
+    after_second = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                14,
+                0,
+            )
+        )
+    )
+
+    assert after_first is not None
+    assert after_second is not None
+
+    assert (
+        after_second.atl
+        > after_first.atl
+    )
+
+    assert (
+        after_second.recovery_score
+        < after_first.recovery_score
+    )
+
+
+def test_intraday_load_requires_exact_time_today():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        date(
+            2026,
+            8,
+            11,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        7,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    result = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                18,
+                0,
+            )
+        )
+    )
+
+    assert result is None
+
+
+def test_time_aware_recovery_score_is_bounded():
+
+    fresh = TimeAwareTrainingLoad(
+        reference_time=datetime(
+            2026,
+            8,
+            11,
+            12,
+            0,
+        ),
+        ctl=200,
+        atl=0,
+    )
+
+    fatigued = TimeAwareTrainingLoad(
+        reference_time=datetime(
+            2026,
+            8,
+            11,
+            12,
+            0,
+        ),
+        ctl=0,
+        atl=200,
+    )
+
+    assert fresh.recovery_score == 100
+    assert fatigued.recovery_score == 0
+
 def test_summary():
 
     athlete = Athlete()

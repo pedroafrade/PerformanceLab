@@ -20,6 +20,7 @@ from performancelab.physiology import (
     strain as calculate_training_strain,
 )
 from performancelab.training import DailyLoadBuilder
+from performancelab.training.load import workout_load
 
 from .performance_profile import PerformanceProfile
 from .recovery_timing import RecoveryTiming
@@ -28,6 +29,13 @@ from .heart_rate_profile import (
     build_heart_rate_profile,
 )
 from .training_state import TrainingState
+from .time_aware_load import (
+    ATL_TIME_CONSTANT_DAYS,
+    CTL_TIME_CONSTANT_DAYS,
+    TimeAwareTrainingLoad,
+    decay_training_load,
+    training_load_impulse,
+)
 
 from . import consistency
 from . import time
@@ -332,7 +340,221 @@ class AthleteAnalytics:
                 last_workout_ended_at
             ),
         )
+    def time_aware_training_load(
+        self,
+        *,
+        reference_time: datetime,
+    ) -> TimeAwareTrainingLoad | None:
+        """
+        Calculates CTL and ATL at a specific time.
 
+        Completed calendar days retain the existing daily
+        calculation. The current day is then advanced
+        continuously from midnight, applying workouts when
+        their completion time is reached.
+
+        If a load-bearing workout on the reference day has
+        no exact time, a trustworthy intraday estimate
+        cannot be produced.
+        """
+
+        reference_day = (
+            reference_time.date()
+        )
+
+        daily_series = (
+            DailyLoadBuilder(
+                self.history
+            ).build()
+        )
+
+        previous_loads = [
+            entry.load
+            for entry in daily_series
+            if entry.date < reference_day
+        ]
+
+        previous_state = (
+            PerformanceManagementChart(
+                daily_loads=previous_loads
+            )
+        )
+
+        current_ctl = (
+            previous_state.current_ctl
+        )
+        current_atl = (
+            previous_state.current_atl
+        )
+
+        midnight = (
+            reference_time.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+        )
+
+        impulses = []
+
+        for workout in self.history:
+
+            started_at = workout.date
+            load = workout_load(
+                workout
+            )
+
+            if load is None:
+                continue
+
+            workout_day = (
+                started_at.date()
+                if isinstance(
+                    started_at,
+                    datetime,
+                )
+                else started_at
+            )
+
+            if workout_day != reference_day:
+                continue
+
+            if not isinstance(
+                started_at,
+                datetime,
+            ):
+                return None
+
+            if (
+                workout.duration is None
+                or workout.duration
+                .total_seconds() < 0
+                or load < 0
+            ):
+                return None
+
+            ended_at = (
+                started_at
+                + workout.duration
+            )
+
+            try:
+                completed = (
+                    ended_at
+                    <= reference_time
+                )
+            except TypeError:
+                return None
+
+            if completed:
+                impulses.append(
+                    (
+                        ended_at,
+                        float(load),
+                    )
+                )
+
+        impulses.sort(
+            key=lambda item: item[0]
+        )
+
+        previous_time = midnight
+
+        for ended_at, load in impulses:
+
+            try:
+                elapsed_hours = (
+                    ended_at
+                    - previous_time
+                ).total_seconds() / 3600
+            except TypeError:
+                return None
+
+            if elapsed_hours < 0:
+                return None
+
+            current_ctl = (
+                decay_training_load(
+                    current_ctl,
+                    elapsed_hours=(
+                        elapsed_hours
+                    ),
+                    time_constant_days=(
+                        CTL_TIME_CONSTANT_DAYS
+                    ),
+                )
+            )
+
+            current_atl = (
+                decay_training_load(
+                    current_atl,
+                    elapsed_hours=(
+                        elapsed_hours
+                    ),
+                    time_constant_days=(
+                        ATL_TIME_CONSTANT_DAYS
+                    ),
+                )
+            )
+
+            current_ctl += (
+                training_load_impulse(
+                    load,
+                    time_constant_days=(
+                        CTL_TIME_CONSTANT_DAYS
+                    ),
+                )
+            )
+
+            current_atl += (
+                training_load_impulse(
+                    load,
+                    time_constant_days=(
+                        ATL_TIME_CONSTANT_DAYS
+                    ),
+                )
+            )
+
+            previous_time = ended_at
+
+        try:
+            remaining_hours = (
+                reference_time
+                - previous_time
+            ).total_seconds() / 3600
+        except TypeError:
+            return None
+
+        if remaining_hours < 0:
+            return None
+
+        current_ctl = decay_training_load(
+            current_ctl,
+            elapsed_hours=(
+                remaining_hours
+            ),
+            time_constant_days=(
+                CTL_TIME_CONSTANT_DAYS
+            ),
+        )
+
+        current_atl = decay_training_load(
+            current_atl,
+            elapsed_hours=(
+                remaining_hours
+            ),
+            time_constant_days=(
+                ATL_TIME_CONSTANT_DAYS
+            ),
+        )
+
+        return TimeAwareTrainingLoad(
+            reference_time=reference_time,
+            ctl=current_ctl,
+            atl=current_atl,
+        )
+    
     @property
     def weekly_frequency(self) -> float:
 

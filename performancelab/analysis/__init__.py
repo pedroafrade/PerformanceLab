@@ -16,6 +16,9 @@ from .nutrition_profile import (
 from .recovery_timing import (
     RecoveryTiming,
 )
+from .time_aware_load import (
+    TimeAwareTrainingLoad,
+)
 from .analytics import AthleteAnalytics
 
 
@@ -25,6 +28,7 @@ __all__ = [
     "HeartRateZone",
     "NutritionProfile",
     "RecoveryTiming",
+    "TimeAwareTrainingLoad",
     "build_heart_rate_profile",
     "heart_rate_zone_durations",
 ]
