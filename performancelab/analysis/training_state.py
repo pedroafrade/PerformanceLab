@@ -160,15 +160,25 @@ class TrainingState:
         return "ready"
 
     @property
+    def recovery_balance(self) -> float:
+        """
+        Returns the unclamped recovery balance.
+
+        Negative values remain visible so recovery progress
+        can be observed before the public 0–100 score rises
+        above zero.
+        """
+
+        return self.tsb + 50.0
+
+    @property
     def recovery_score(self) -> float:
         """Returns a simple recovery score between 0 and 100."""
-
-        score = self.tsb + 50
 
         return max(
             0.0,
             min(
-                score,
+                self.recovery_balance,
                 100.0,
             ),
         )

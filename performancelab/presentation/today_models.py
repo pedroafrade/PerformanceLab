@@ -29,6 +29,7 @@ class TodayReadinessData:
     """
 
     recovery_score: float
+    recovery_balance: float
     recovery_status: str
     form: float
     recent_load: float

@@ -59,6 +59,7 @@ def create_development_data():
         current_fatigue=17.0,
         current_form=-7.2,
         recovery_score=42.0,
+        recovery_balance=-8.0,
         recovery_status="Recovery needed",
         recovery_recommendation=(
             "Prioritise recovery."
@@ -254,7 +255,10 @@ def test_builds_development_summary_cards():
         "42"
         in result
     )
-
+    assert (
+        "Balance -8.0"
+        in result
+    )
     assert (
         "120"
         in result
@@ -666,7 +670,8 @@ def test_formats_time_aware_recovery_context():
             development
         )
         == (
-            "30 h since last session"
+            "Balance -8.0"
+            " · 30 h since last session"
             " · Updated 14:05"
         )
     )
@@ -682,5 +687,8 @@ def test_formats_daily_development_fallback():
         _development_recovery_context(
             development
         )
-        == "Daily estimate"
+        == (
+            "Balance -8.0"
+            " · Daily estimate"
+        )
     )

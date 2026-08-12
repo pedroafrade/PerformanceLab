@@ -6,7 +6,7 @@ FIT Importer
 Imports a FIT activity as a Workout.
 """
 
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from io import BytesIO
 from pathlib import Path
 
@@ -583,7 +583,15 @@ class FITImporter(WorkoutImporter):
         records: list[dict],
         session: dict,
         activity: dict,
-    ) -> date | None:
+    ) -> datetime | None:
+        """
+        Returns the earliest exact timestamp available.
+
+        FIT timestamps retain their timezone information so
+        intraday recovery can use the real workout completion
+        time. The presentation layer remains responsible for
+        displaying only the date when appropriate.
+        """
 
         candidates = [
             session.get("start_time"),
@@ -598,14 +606,17 @@ class FITImporter(WorkoutImporter):
         times = [
             value
             for value in candidates
-            if isinstance(value, datetime)
+            if isinstance(
+                value,
+                datetime,
+            )
         ]
 
         if not times:
 
             return None
 
-        return min(times).date()
+        return min(times)
 
     # ======================================================
     # Distance

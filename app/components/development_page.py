@@ -453,7 +453,12 @@ def _development_recovery_context(
     estimate.
     """
 
-    values = []
+    values = [
+        (
+            "Balance "
+            f"{development.recovery_balance:+.1f}"
+        )
+    ]
 
     if (
         development
@@ -1711,7 +1716,7 @@ def show_development_page(
             athlete
         ).build(
             reference_time=(
-                datetime.now()
+                datetime.now().astimezone()
             )
         )
     )

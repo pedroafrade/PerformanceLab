@@ -77,7 +77,11 @@ def _recovery_context_label(
     """
 
     values = [
-        readiness.recovery_status
+        readiness.recovery_status,
+        (
+            "Balance "
+            f"{readiness.recovery_balance:+.1f}"
+        ),
     ]
 
     if (
@@ -1093,7 +1097,7 @@ def show_today_page(
         athlete
     ).build(
         reference_time=(
-            datetime.now()
+            datetime.now().astimezone()
         )
     )
 

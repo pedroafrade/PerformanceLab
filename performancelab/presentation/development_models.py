@@ -100,6 +100,7 @@ class DevelopmentData:
     current_form: float
 
     recovery_score: float
+    recovery_balance: float
     recovery_status: str
     recovery_recommendation: str
 

@@ -207,6 +207,10 @@ class TodayPresenter:
                     training_state
                     .recovery_score
                 ),
+                recovery_balance=(
+                    training_state
+                    .recovery_balance
+                ),
                 recovery_status=(
                     training_state
                     .recovery_status

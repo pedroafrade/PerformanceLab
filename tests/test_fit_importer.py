@@ -106,8 +106,13 @@ def test_fit_workout_creation(monkeypatch):
 
     assert workout.sport == "Running"
 
-    assert workout.date.isoformat() == (
-        "2026-07-01"
+    assert workout.date == datetime(
+        2026,
+        7,
+        1,
+        8,
+        0,
+        tzinfo=timezone.utc,
     )
 
     assert workout.distance == 5.0

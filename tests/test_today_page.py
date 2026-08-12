@@ -259,6 +259,7 @@ def test_formats_time_aware_recovery_context():
 
     readiness = SimpleNamespace(
         recovery_status="Moderate",
+        recovery_balance=-9.4,
         recovery_is_time_aware=True,
         hours_since_last_workout=(
             30.4
@@ -278,6 +279,7 @@ def test_formats_time_aware_recovery_context():
         )
         == (
             "Moderate · "
+            "Balance -9.4 · "
             "30 h since last session"
         )
     )
@@ -296,6 +298,7 @@ def test_formats_daily_recovery_fallback():
         recovery_status=(
             "Recovery needed"
         ),
+        recovery_balance=-18.0,
         recovery_is_time_aware=False,
         hours_since_last_workout=None,
         reference_time=datetime(
@@ -313,6 +316,7 @@ def test_formats_daily_recovery_fallback():
         )
         == (
             "Recovery needed · "
+            "Balance -18.0 · "
             "Daily estimate"
         )
     )
