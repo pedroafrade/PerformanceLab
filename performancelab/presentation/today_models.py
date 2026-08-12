@@ -5,7 +5,7 @@ Today presentation models.
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 from .activity_models import (
     ActivityListItemData,
@@ -28,10 +28,15 @@ class TodayReadinessData:
     the daily training decision.
     """
 
-    recovery_score: int
+    recovery_score: float
     recovery_status: str
     form: float
     recent_load: float
+    reference_time: datetime | None = None
+    hours_since_last_workout: (
+        float | None
+    ) = None
+    recovery_is_time_aware: bool = False
 
 
 @dataclass(frozen=True)

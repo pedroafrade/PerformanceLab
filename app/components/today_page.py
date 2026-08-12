@@ -4,7 +4,7 @@ PerformanceLab
 Today page.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from html import escape
 
 import streamlit as st
@@ -68,6 +68,63 @@ def _readiness_score_label(
 
     return f"{round(value)}/100"
 
+def _recovery_context_label(
+    readiness,
+) -> str:
+    """
+    Explains whether the recovery value uses intraday
+    timing or the daily fallback.
+    """
+
+    values = [
+        readiness.recovery_status
+    ]
+
+    if (
+        readiness.recovery_is_time_aware
+    ):
+        hours = (
+            readiness
+            .hours_since_last_workout
+        )
+
+        if hours is not None:
+            values.append(
+                f"{round(hours)} h since "
+                "last session"
+            )
+        else:
+            values.append(
+                "Time-aware estimate"
+            )
+    else:
+        values.append(
+            "Daily estimate"
+        )
+
+    return " · ".join(
+        values
+    )
+
+
+def _recovery_updated_label(
+    readiness,
+) -> str | None:
+    """
+    Formats the instant represented by the recovery
+    estimate.
+    """
+
+    if (
+        readiness.reference_time
+        is None
+    ):
+        return None
+
+    return (
+        "Updated "
+        f"{readiness.reference_time:%H:%M}"
+    )
 
 def _form_label(
     value: float,
@@ -947,7 +1004,9 @@ def _show_daily_decision(
 
         with recovery_column:
             st.metric(
-                label="Recovery",
+                label=(
+                    "Estimated recovery"
+                ),
                 value=_readiness_score_label(
                     today.readiness
                     .recovery_score
@@ -955,9 +1014,21 @@ def _show_daily_decision(
             )
 
             st.caption(
-                today.readiness
-                .recovery_status
+                _recovery_context_label(
+                    today.readiness
+                )
             )
+
+            updated_label = (
+                _recovery_updated_label(
+                    today.readiness
+                )
+            )
+
+            if updated_label:
+                st.caption(
+                    updated_label
+                )
 
         with form_column:
             st.metric(
@@ -1004,7 +1075,11 @@ def _today_completed_workout(
         ),
         None,
     )
-
+@st.fragment(
+    run_every=timedelta(
+        hours=3,
+    )
+)
 def show_today_page(
     athlete,
 ) -> None:
@@ -1016,7 +1091,11 @@ def show_today_page(
 
     today = TodayPresenter(
         athlete
-    ).build()
+    ).build(
+        reference_time=(
+            datetime.now()
+        )
+    )
 
     today_workout = (
         _today_completed_workout(

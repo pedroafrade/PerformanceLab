@@ -2,7 +2,7 @@
 Tests for the Today page.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 from app.components.today_page import (
@@ -13,6 +13,8 @@ from app.components.today_page import (
     _navigate_to,
     _readiness_score_label,
     _recent_load_label,
+    _recovery_context_label,
+    _recovery_updated_label,
     _session_step_html,
     _today_session_metadata,
     _today_session_status,
@@ -251,4 +253,80 @@ def test_formats_daily_readiness():
             234.94
         )
         == "234.9"
+    )
+
+def test_formats_time_aware_recovery_context():
+
+    readiness = SimpleNamespace(
+        recovery_status="Moderate",
+        recovery_is_time_aware=True,
+        hours_since_last_workout=(
+            30.4
+        ),
+        reference_time=datetime(
+            2026,
+            8,
+            12,
+            14,
+            5,
+        ),
+    )
+
+    assert (
+        _recovery_context_label(
+            readiness
+        )
+        == (
+            "Moderate · "
+            "30 h since last session"
+        )
+    )
+
+    assert (
+        _recovery_updated_label(
+            readiness
+        )
+        == "Updated 14:05"
+    )
+
+
+def test_formats_daily_recovery_fallback():
+
+    readiness = SimpleNamespace(
+        recovery_status=(
+            "Recovery needed"
+        ),
+        recovery_is_time_aware=False,
+        hours_since_last_workout=None,
+        reference_time=datetime(
+            2026,
+            8,
+            12,
+            18,
+            0,
+        ),
+    )
+
+    assert (
+        _recovery_context_label(
+            readiness
+        )
+        == (
+            "Recovery needed · "
+            "Daily estimate"
+        )
+    )
+
+
+def test_omits_missing_recovery_update_time():
+
+    readiness = SimpleNamespace(
+        reference_time=None,
+    )
+
+    assert (
+        _recovery_updated_label(
+            readiness
+        )
+        is None
     )

@@ -294,7 +294,167 @@ def test_exposes_immutable_daily_readiness():
         FrozenInstanceError
     ):
         result.guidance.reasons = ()
+def test_exposes_time_aware_readiness():
 
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=datetime(
+            2026,
+            8,
+            11,
+            7,
+            0,
+        ),
+        distance=10.0,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=100.0,
+        rpe=3.0,
+        title="Easy Run",
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        12,
+        14,
+        0,
+    )
+
+    result = TodayPresenter(
+        athlete
+    ).build(
+        reference_time=reference_time,
+    )
+
+    assert (
+        result.reference_day
+        == reference_time.date()
+    )
+    assert (
+        result.readiness.reference_time
+        == reference_time
+    )
+    assert (
+        result.readiness
+        .hours_since_last_workout
+        == 30.0
+    )
+    assert (
+        result.readiness
+        .recovery_is_time_aware
+        is True
+    )
+
+    assert (
+        result.readiness.recovery_score
+        == athlete.analytics
+        .training_state_at(
+            reference_time=(
+                reference_time
+            )
+        )
+        .recovery_score
+    )
+
+
+def test_today_readiness_falls_back_to_daily_estimate():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=date(
+            2026,
+            8,
+            12,
+        ),
+        distance=10.0,
+        duration=timedelta(
+            hours=1,
+        ),
+        elevation_gain=100.0,
+        rpe=6.0,
+        title="Run without time",
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        12,
+        18,
+        0,
+    )
+
+    result = TodayPresenter(
+        athlete
+    ).build(
+        reference_time=reference_time,
+    )
+
+    assert (
+        result.readiness
+        .recovery_is_time_aware
+        is False
+    )
+    assert (
+        result.readiness
+        .hours_since_last_workout
+        is None
+    )
+    assert (
+        result.readiness.recovery_score
+        == athlete.analytics
+        .training_state
+        .recovery_score
+    )
+
+
+def test_rejects_mismatched_reference_time():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "reference_time must belong "
+            "to reference_day"
+        ),
+    ):
+        TodayPresenter(
+            athlete
+        ).build(
+            reference_day=date(
+                2026,
+                8,
+                11,
+            ),
+            reference_time=datetime(
+                2026,
+                8,
+                12,
+                10,
+                0,
+            ),
+        )
+        
 def test_exposes_latest_plan_adaptation():
 
     athlete = Athlete(

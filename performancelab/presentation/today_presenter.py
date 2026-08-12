@@ -56,11 +56,30 @@ class TodayPresenter:
         self,
         *,
         reference_day: date | None = None,
+        reference_time: (
+            datetime | None
+        ) = None,
     ) -> TodayData:
+
+        if (
+            reference_time is not None
+            and reference_day is not None
+            and reference_time.date()
+            != reference_day
+        ):
+            raise ValueError(
+                "reference_time must belong "
+                "to reference_day"
+            )
 
         reference_day = (
             reference_day
-            or date.today()
+            or (
+                reference_time.date()
+                if reference_time
+                is not None
+                else date.today()
+            )
         )
 
         dashboard = DashboardData(
@@ -148,8 +167,17 @@ class TodayPresenter:
         training_load = (
             dashboard.training_load
         )
+
         training_state = (
             self.athlete.analytics
+            .training_state_at(
+                reference_time=(
+                    reference_time
+                )
+            )
+            if reference_time
+            is not None
+            else self.athlete.analytics
             .training_state
         )
         domain_guidance = (
@@ -176,14 +204,28 @@ class TodayPresenter:
             coach=planning.coach,
             readiness=TodayReadinessData(
                 recovery_score=(
-                    recovery.score
+                    training_state
+                    .recovery_score
                 ),
                 recovery_status=(
-                    recovery.status
+                    training_state
+                    .recovery_status
                 ),
                 form=training_state.form,
                 recent_load=(
                     training_load.acute_load
+                ),
+                reference_time=(
+                    training_state
+                    .reference_time
+                ),
+                hours_since_last_workout=(
+                    training_state
+                    .hours_since_last_workout
+                ),
+                recovery_is_time_aware=(
+                    training_state
+                    .recovery_is_time_aware
                 ),
             ),
             guidance=TodayGuidanceData(
