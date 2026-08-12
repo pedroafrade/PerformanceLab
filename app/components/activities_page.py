@@ -31,6 +31,9 @@ from performancelab.presentation import (
 from .activity_analysis import (
     show_activity_analysis,
 )
+from .workout_editor import (
+    show_workout_editor,
+)
 
 from .workout_table import (
     format_distance,
@@ -1110,6 +1113,14 @@ def _show_selected_activity_dashboard(
         show_heading=False,
         compact=True,
         environment_first=False,
+    )
+    show_workout_editor(
+        athlete,
+        workout,
+        key_prefix=(
+            "activities_inline_editor_"
+            f"{activity.workout_id}"
+        ),
     )
 
 def _save_activity_coach_notes(

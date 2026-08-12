@@ -2,7 +2,12 @@
 Tests for the Streamlit workout editor component.
 """
 
-from datetime import date, timedelta
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+    timezone,
+)
 from types import SimpleNamespace
 
 import app.components.workout_editor as workout_editor
@@ -707,3 +712,57 @@ def test_confirm_delete_removes_multiple_workouts(
     )
 
     assert fake_streamlit.rerun_called is True
+
+def test_edit_preserves_exact_workout_time(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit(
+        button_values={
+            "Save": True,
+        },
+        input_values={
+            "Date": date(
+                2026,
+                8,
+                13,
+            ),
+        },
+    )
+
+    fake_streamlit.session_state.confirm_delete = False
+    fake_streamlit.session_state.edit_workout = True
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+    workout = create_fake_workout()
+
+    workout.info.date = datetime(
+        2026,
+        8,
+        12,
+        11,
+        8,
+        30,
+        tzinfo=timezone.utc,
+    )
+
+    workout_editor.show_workout_editor(
+        athlete,
+        workout,
+    )
+
+    assert workout.info.date == datetime(
+        2026,
+        8,
+        13,
+        11,
+        8,
+        30,
+        tzinfo=timezone.utc,
+    )

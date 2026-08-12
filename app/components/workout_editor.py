@@ -4,7 +4,7 @@ PerformanceLab
 Workout actions and editor component.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import streamlit as st
 
@@ -375,7 +375,25 @@ def show_workout_edit_form(
         ):
             selected_workout.info.title = title
             selected_workout.info.sport = sport
-            selected_workout.info.date = workout_date
+
+            original_date = (
+                selected_workout.info.date
+            )
+
+            if isinstance(
+                original_date,
+                datetime,
+            ):
+                selected_workout.info.date = (
+                    datetime.combine(
+                        workout_date,
+                        original_date.timetz(),
+                    )
+                )
+            else:
+                selected_workout.info.date = (
+                    workout_date
+                )
 
             selected_workout.info.distance = (
                 distance
