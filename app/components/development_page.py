@@ -4,6 +4,7 @@ PerformanceLab
 Athlete development page.
 """
 
+from datetime import datetime, timedelta
 from html import escape
 
 import altair as alt
@@ -444,6 +445,52 @@ def _recovery_status(
 
     return "Low"
 
+def _development_recovery_context(
+    development,
+) -> str:
+    """
+    Explains the temporal source of the current recovery
+    estimate.
+    """
+
+    values = []
+
+    if (
+        development
+        .recovery_is_time_aware
+    ):
+        hours = (
+            development
+            .hours_since_last_workout
+        )
+
+        if hours is not None:
+            values.append(
+                f"{round(hours)} h since "
+                "last session"
+            )
+        else:
+            values.append(
+                "Time-aware estimate"
+            )
+    else:
+        values.append(
+            "Daily estimate"
+        )
+
+    reference_time = (
+        development
+        .recovery_reference_time
+    )
+
+    if reference_time is not None:
+        values.append(
+            f"Updated {reference_time:%H:%M}"
+        )
+
+    return " · ".join(
+        values
+    )
 
 def _load_status(
     acute_load: float,
@@ -481,12 +528,12 @@ def _development_summary_cards_html(
     cards = (
         (
             "♡",
-            "Recovery",
+            "Estimated recovery",
             f"{development.recovery_score:.0f}",
-            _recovery_status(
-                development.recovery_score
+            development.recovery_status,
+            _development_recovery_context(
+                development
             ),
-            "Current",
         ),
         (
             "↗",
@@ -1645,6 +1692,12 @@ def _development_chart_heading_html(
         "</div>"
     )
 
+@st.fragment(
+    run_every=timedelta(
+        hours=3,
+    )
+)
+
 def show_development_page(
     athlete,
 ) -> None:
@@ -1656,7 +1709,11 @@ def show_development_page(
     development = (
         DevelopmentPresenter(
             athlete
-        ).build()
+        ).build(
+            reference_time=(
+                datetime.now()
+            )
+        )
     )
 
     st.markdown(

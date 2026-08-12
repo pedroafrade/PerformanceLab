@@ -3,6 +3,7 @@ PerformanceLab
 
 Development presenter.
 """
+from datetime import datetime
 
 from performancelab.athlete import Athlete
 
@@ -352,7 +353,13 @@ class DevelopmentPresenter:
             )
         )
 
-    def build(self) -> DevelopmentData:
+    def build(
+        self,
+        *,
+        reference_time: (
+            datetime | None
+        ) = None,
+    ) -> DevelopmentData:
 
         dashboard = DashboardData(
             self.athlete
@@ -361,10 +368,22 @@ class DevelopmentPresenter:
         performance = (
             dashboard.performance
         )
-        summary = dashboard.summary
-        recovery = dashboard.recovery
+
         training_load = (
             dashboard.training_load
+        )
+
+        training_state = (
+            self.athlete.analytics
+            .training_state_at(
+                reference_time=(
+                    reference_time
+                )
+            )
+            if reference_time
+            is not None
+            else self.athlete.analytics
+            .training_state
         )
 
         return DevelopmentData(
@@ -384,22 +403,25 @@ class DevelopmentPresenter:
                 performance.tsb
             ),
             current_fitness=(
-                summary.ctl
+                training_state.ctl
             ),
             current_fatigue=(
-                summary.atl
+                training_state.atl
             ),
             current_form=(
-                summary.tsb
+                training_state.tsb
             ),
             recovery_score=(
-                recovery.score
+                training_state
+                .recovery_score
             ),
             recovery_status=(
-                recovery.status
+                training_state
+                .recovery_status
             ),
             recovery_recommendation=(
-                recovery.recommendation
+                training_state
+                .recovery_recommendation
             ),
             acute_load=(
                 training_load.acute_load
@@ -424,5 +446,16 @@ class DevelopmentPresenter:
             ),
             performance_references=(
                 self._performance_references()
+            ),
+            recovery_reference_time=(
+                training_state.reference_time
+            ),
+            hours_since_last_workout=(
+                training_state
+                .hours_since_last_workout
+            ),
+            recovery_is_time_aware=(
+                training_state
+                .recovery_is_time_aware
             ),
         )

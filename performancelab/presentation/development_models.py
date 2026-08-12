@@ -103,6 +103,8 @@ class DevelopmentData:
     recovery_status: str
     recovery_recommendation: str
 
+
+
     acute_load: float
     chronic_load: float
     ramp_rate: float
@@ -124,3 +126,11 @@ class DevelopmentData:
         DevelopmentPerformanceReferencesData
         | None
     ) = None
+
+    recovery_reference_time: (
+        datetime | None
+    ) = None
+    hours_since_last_workout: (
+        float | None
+    ) = None
+    recovery_is_time_aware: bool = False

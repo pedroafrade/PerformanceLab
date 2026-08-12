@@ -4,7 +4,11 @@ PerformanceLab
 Tests for the Development presenter.
 """
 
-from datetime import date, timedelta
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
 
 from performancelab import (
     Athlete,
@@ -171,6 +175,234 @@ def test_exposes_recovery_and_load_guidance():
     assert isinstance(
         result.ramp_rate,
         float,
+    )
+    
+def test_exposes_time_aware_current_state():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=datetime(
+            2026,
+            8,
+            11,
+            7,
+            0,
+        ),
+        distance=10.0,
+        elevation_gain=100.0,
+        duration=timedelta(
+            hours=1,
+        ),
+        rpe=3.0,
+        title="Easy Run",
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        12,
+        14,
+        0,
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
+    state = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
+    assert (
+        result.current_fitness
+        == state.ctl
+    )
+    assert (
+        result.current_fatigue
+        == state.atl
+    )
+    assert (
+        result.current_form
+        == state.tsb
+    )
+    assert (
+        result.recovery_score
+        == state.recovery_score
+    )
+    assert (
+        result.recovery_status
+        == state.recovery_status
+    )
+    assert (
+        result.recovery_reference_time
+        == reference_time
+    )
+    assert (
+        result.hours_since_last_workout
+        == 30.0
+    )
+    assert (
+        result.recovery_is_time_aware
+        is True
+    )
+
+
+def test_preserves_daily_development_series():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=datetime(
+            2026,
+            8,
+            11,
+            7,
+            0,
+        ),
+        distance=10.0,
+        elevation_gain=100.0,
+        duration=timedelta(
+            hours=1,
+        ),
+        rpe=3.0,
+        title="Easy Run",
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=datetime(
+                2026,
+                8,
+                12,
+                14,
+                0,
+            )
+        )
+    )
+
+    assert result.dates == (
+        date(
+            2026,
+            8,
+            11,
+        ),
+        date(
+            2026,
+            8,
+            12,
+        ),
+    )
+
+    assert result.daily_load == (
+        180.0,
+        0.0,
+    )
+
+    assert len(result.fitness) == 2
+    assert len(result.fatigue) == 2
+    assert len(result.form) == 2
+
+    assert (
+        result.current_fitness
+        != result.fitness[-1]
+    )
+    assert (
+        result.current_fatigue
+        != result.fatigue[-1]
+    )
+
+
+def test_development_falls_back_to_daily_state():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout(
+        sport="Running",
+        workout_date=date(
+            2026,
+            8,
+            12,
+        ),
+        distance=10.0,
+        elevation_gain=100.0,
+        duration=timedelta(
+            hours=1,
+        ),
+        rpe=6.0,
+        title="Run without time",
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=datetime(
+                2026,
+                8,
+                12,
+                18,
+                0,
+            )
+        )
+    )
+
+    daily_state = (
+        athlete.analytics.training_state
+    )
+
+    assert (
+        result.recovery_is_time_aware
+        is False
+    )
+    assert (
+        result.hours_since_last_workout
+        is None
+    )
+    assert (
+        result.current_fitness
+        == daily_state.ctl
+    )
+    assert (
+        result.current_fatigue
+        == daily_state.atl
+    )
+    assert (
+        result.current_form
+        == daily_state.tsb
     )
 
 def test_aggregates_completed_volume_by_sport():

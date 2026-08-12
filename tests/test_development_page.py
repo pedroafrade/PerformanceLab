@@ -2,7 +2,7 @@
 Tests for the Development page.
 """
 
-from datetime import date
+from datetime import date, datetime
 
 from app.components.development_page import (
     _daily_load_chart_rows,
@@ -12,6 +12,7 @@ from app.components.development_page import (
     _development_interpretation_html,
     _development_load_form_chart,
     _development_performance_references_html,
+    _development_recovery_context,
     _pace_label,
     _development_overall_status,
     _development_sport_volume_html,
@@ -632,3 +633,54 @@ def test_builds_performance_references_card():
     assert "LT2 pace" in result
     assert "177 bpm" in result
     assert "220 W" in result
+
+def test_formats_time_aware_recovery_context():
+
+    development = (
+        create_development_data()
+    )
+
+    development = type(
+        "TimeAwareDevelopment",
+        (),
+        {
+            **development.__dict__,
+            "recovery_is_time_aware": True,
+            "hours_since_last_workout": (
+                30.4
+            ),
+            "recovery_reference_time": (
+                datetime(
+                    2026,
+                    8,
+                    12,
+                    14,
+                    5,
+                )
+            ),
+        },
+    )()
+
+    assert (
+        _development_recovery_context(
+            development
+        )
+        == (
+            "30 h since last session"
+            " · Updated 14:05"
+        )
+    )
+
+
+def test_formats_daily_development_fallback():
+
+    development = (
+        create_development_data()
+    )
+
+    assert (
+        _development_recovery_context(
+            development
+        )
+        == "Daily estimate"
+    )
