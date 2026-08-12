@@ -950,7 +950,224 @@ def test_intraday_load_requires_exact_time_today():
 
     assert result is None
 
+def test_builds_time_aware_training_state():
 
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            11,
+            7,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        5,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        12,
+        14,
+        0,
+    )
+
+    state = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
+    assert (
+        state.reference_time
+        == reference_time
+    )
+    assert (
+        state.hours_since_last_workout
+        == 30.0
+    )
+    assert (
+        state.recovery_is_time_aware
+        is True
+    )
+
+    assert (
+        state.ctl
+        != athlete.analytics
+        .training_state.ctl
+    )
+    assert (
+        state.atl
+        != athlete.analytics
+        .training_state.atl
+    )
+
+
+def test_time_aware_state_improves_during_rest():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            10,
+            7,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        3,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    morning = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                6,
+                0,
+            )
+        )
+    )
+
+    evening = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                18,
+                0,
+            )
+        )
+    )
+
+    assert (
+        evening.recovery_score
+        > morning.recovery_score
+    )
+
+    assert (
+        evening.hours_since_last_workout
+        > morning.hours_since_last_workout
+    )
+
+
+def test_time_aware_state_falls_back_for_date_only_workout():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        date(
+            2026,
+            8,
+            11,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        6,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    daily_state = (
+        athlete.analytics.training_state
+    )
+
+    result = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=datetime(
+                2026,
+                8,
+                11,
+                18,
+                0,
+            )
+        )
+    )
+
+    assert (
+        result.recovery_is_time_aware
+        is False
+    )
+    assert (
+        result.hours_since_last_workout
+        is None
+    )
+    assert result.ctl == daily_state.ctl
+    assert result.atl == daily_state.atl
+    assert result.tsb == daily_state.tsb
+    assert (
+        result.recovery_score
+        == daily_state.recovery_score
+    )
+
+
+def test_temporal_state_does_not_replace_cached_daily_state():
+
+    athlete = Athlete()
+
+    daily_state = (
+        athlete.analytics.training_state
+    )
+
+    temporal_state = (
+        athlete.analytics
+        .training_state_at(
+            reference_time=datetime(
+                2026,
+                8,
+                12,
+                15,
+                0,
+            )
+        )
+    )
+
+    assert temporal_state is not daily_state
+
+    assert (
+        athlete.analytics.training_state
+        is daily_state
+    )
+
+    assert (
+        daily_state.reference_time
+        is None
+    )
+    assert (
+        daily_state.recovery_is_time_aware
+        is False
+    )
+
+    
 def test_time_aware_recovery_score_is_bounded():
 
     fresh = TimeAwareTrainingLoad(

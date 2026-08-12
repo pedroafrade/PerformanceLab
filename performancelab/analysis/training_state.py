@@ -14,6 +14,7 @@ metrics.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 from performancelab.physiology import (
     risk_score as workload_ratio_band,
@@ -46,6 +47,9 @@ class TrainingState:
     typical_running_long_session_minutes: float = 0.0
     typical_running_long_session_elevation_gain: float = 0.0
     typical_running_long_session_effort_pace: float = 0.0
+    reference_time: datetime | None = None
+    hours_since_last_workout: float | None = None
+    recovery_is_time_aware: bool = False
 
     @property
     def fitness(self) -> float:

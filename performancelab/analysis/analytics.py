@@ -6,6 +6,7 @@ AthleteAnalytics
 Public analytics interface for an athlete.
 """
 
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 from statistics import pstdev
@@ -1857,6 +1858,58 @@ class AthleteAnalytics:
 
         return self._training_state
 
+    def training_state_at(
+        self,
+        *,
+        reference_time: datetime,
+    ) -> TrainingState:
+        """
+        Returns an immutable training-state snapshot for a
+        specific instant.
+
+        The existing daily state remains the fallback when
+        the current day's workout timing is insufficient for
+        a trustworthy intraday calculation.
+        """
+
+        daily_state = (
+            self.training_state
+        )
+
+        time_aware_load = (
+            self.time_aware_training_load(
+                reference_time=reference_time,
+            )
+        )
+
+        timing = self.recovery_timing(
+            reference_time=reference_time,
+        )
+
+        if time_aware_load is None:
+            return replace(
+                daily_state,
+                reference_time=reference_time,
+                hours_since_last_workout=(
+                    timing
+                    .hours_since_last_workout
+                ),
+                recovery_is_time_aware=False,
+            )
+
+        return replace(
+            daily_state,
+            ctl=time_aware_load.ctl,
+            atl=time_aware_load.atl,
+            tsb=time_aware_load.tsb,
+            reference_time=reference_time,
+            hours_since_last_workout=(
+                timing
+                .hours_since_last_workout
+            ),
+            recovery_is_time_aware=True,
+        )
+    
     @property
     def heart_rate_profile(
         self,

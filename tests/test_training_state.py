@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from performancelab.analysis.training_state import TrainingState
 
 
@@ -168,3 +170,58 @@ def test_high_fatigue_prioritises_recovery():
     assert state.fatigue_level == "high"
     assert state.should_reduce_volume is True
     assert state.readiness == "recovery"
+
+def test_training_state_exposes_daily_recovery_source():
+
+    state = make_training_state()
+
+    assert state.reference_time is None
+    assert (
+        state.hours_since_last_workout
+        is None
+    )
+    assert (
+        state.recovery_is_time_aware
+        is False
+    )
+
+
+def test_training_state_accepts_temporal_context():
+
+    reference_time = datetime(
+        2026,
+        8,
+        12,
+        15,
+        0,
+    )
+
+    state = TrainingState(
+        ctl=50.0,
+        atl=55.0,
+        tsb=-5.0,
+        acute_chronic_ratio=1.0,
+        monotony=None,
+        strain=None,
+        consistency=None,
+        weekly_frequency=None,
+        days_since_last_workout=1,
+        recent_training_load=300.0,
+        reference_time=reference_time,
+        hours_since_last_workout=27.0,
+        recovery_is_time_aware=True,
+    )
+
+    assert (
+        state.reference_time
+        == reference_time
+    )
+    assert (
+        state.hours_since_last_workout
+        == 27.0
+    )
+    assert (
+        state.recovery_is_time_aware
+        is True
+    )
+    assert state.recovery_score == 45.0
