@@ -31,6 +31,9 @@ class DailyTrainingDecision(str, Enum):
     PROCEED = "proceed"
     REDUCE_VOLUME = "reduce_volume"
     EASY_ONLY = "easy_only"
+    RECOVERY_AS_PLANNED = (
+        "recovery_as_planned"
+    )
     RECOVERY_ONLY = "recovery_only"
     REST = "rest"
     REVIEW_REQUIRED = "review_required"
@@ -219,6 +222,10 @@ def _temporary_workout_adjustment(
     if decision in {
         DailyTrainingDecision.COMPLETED,
         DailyTrainingDecision.PROCEED,
+        (
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        ),
         DailyTrainingDecision.REST,
         DailyTrainingDecision.REVIEW_REQUIRED,
     }:
@@ -388,6 +395,14 @@ def _daily_training_decision(
         return DailyTrainingDecision.PROCEED
 
     if training_state.readiness == "recovery":
+        if _is_suitable_recovery_session(
+            workout
+        ):
+            return (
+                DailyTrainingDecision
+                .RECOVERY_AS_PLANNED
+            )
+
         return (
             DailyTrainingDecision
             .RECOVERY_ONLY
@@ -442,6 +457,13 @@ def _decision_reason(
         ),
         DailyTrainingDecision.EASY_ONLY: (
             "Replace planned intensity with easy training today."
+        ),
+        (
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        ): (
+            "The planned recovery session already "
+            "matches today's recovery needs."
         ),
         DailyTrainingDecision.RECOVERY_ONLY: (
             "Recovery should replace the planned training stimulus today."
@@ -530,6 +552,24 @@ def _execution_cautions(
     """
     Returns conservative execution boundaries.
     """
+    if (
+        decision
+        is (
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        )
+    ):
+        return (
+            (
+                "Keep the planned recovery session "
+                "very easy and within its duration."
+            ),
+            (
+                "Rest instead if subjective feedback "
+                "indicates that even light activity "
+                "is inappropriate."
+            ),
+        )
 
     if (
         decision
@@ -611,6 +651,45 @@ def _execution_cautions(
 
     return tuple(cautions)
 
+def _is_suitable_recovery_session(
+    workout: PlannedWorkout,
+) -> bool:
+    """
+    Identifies a planned session that already satisfies
+    a conservative recovery recommendation.
+    """
+
+    if workout.duration is None:
+        return False
+
+    duration_minutes = (
+        workout.duration.total_seconds()
+        / 60
+    )
+
+    if (
+        duration_minutes <= 0
+        or duration_minutes > 20
+    ):
+        return False
+
+    title = str(
+        workout.title
+        or ""
+    ).strip().lower()
+
+    intensity = str(
+        workout.intensity
+        or ""
+    ).strip().lower()
+
+    return (
+        "recovery" in title
+        and intensity in {
+            "very easy",
+            "recovery",
+        }
+    )
 
 def _is_race(
     workout: PlannedWorkout,

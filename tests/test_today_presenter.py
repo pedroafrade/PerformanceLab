@@ -624,6 +624,30 @@ def test_exposes_latest_plan_adaptation():
             "than planned."
         )
     )
+def test_presents_recovery_as_planned_decision():
+
+    assert (
+        TodayPresenter
+        ._decision_title(
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        )
+        == "Follow the recovery session"
+    )
+
+    assert (
+        TodayPresenter
+        ._decision_action(
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        )
+        == (
+            "Complete the planned recovery "
+            "session only if it feels "
+            "appropriate. Rest remains a "
+            "valid option."
+        )
+    )
 
 def test_presents_recovery_only_decision():
 

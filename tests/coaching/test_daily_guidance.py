@@ -203,6 +203,64 @@ def test_ready_athlete_can_proceed():
         is DailyTrainingDecision.PROCEED
     )
 
+def test_preserves_suitable_recovery_session():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            13,
+        ),
+        sport="Trail Running",
+        title="Recovery Run",
+        duration=timedelta(
+            minutes=20,
+        ),
+        intensity="Very easy",
+        phase="Regeneration",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state(
+                tsb=-25.0,
+                acute_chronic_ratio=1.6,
+            )
+        ),
+        workout=workout,
+    )
+
+    assert (
+        result.decision
+        is (
+            DailyTrainingDecision
+            .RECOVERY_AS_PLANNED
+        )
+    )
+
+    assert (
+        result.temporary_adjustment
+        is None
+    )
+
+    assert (
+        "The planned recovery session already "
+        "matches today's recovery needs."
+        in result.reasons
+    )
+
+    assert (
+        "Keep the planned recovery session "
+        "very easy and within its duration."
+        in result.cautions
+    )
+
+    assert (
+        "Rest instead if subjective feedback "
+        "indicates that even light activity "
+        "is inappropriate."
+        in result.cautions
+    )
 
 def test_recovery_replaces_large_easy_session():
 

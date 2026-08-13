@@ -349,6 +349,12 @@ class TodayPresenter:
             DailyTrainingDecision.EASY_ONLY: (
                 "Train easy today"
             ),
+            (
+                DailyTrainingDecision
+                .RECOVERY_AS_PLANNED
+            ): (
+                "Follow the recovery session"
+            ),
             DailyTrainingDecision.RECOVERY_ONLY: (
                 "Prioritise recovery today"
             ),
@@ -390,6 +396,14 @@ class TodayPresenter:
             DailyTrainingDecision.EASY_ONLY: (
                 "Replace the planned intensity with "
                 "a shorter easy session."
+            ),
+            (
+                DailyTrainingDecision
+                .RECOVERY_AS_PLANNED
+            ): (
+                "Complete the planned recovery session "
+                "only if it feels appropriate. Rest "
+                "remains a valid option."
             ),
             DailyTrainingDecision.RECOVERY_ONLY: (
                 "Do not perform the planned training "
