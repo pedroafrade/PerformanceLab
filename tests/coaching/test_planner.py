@@ -947,6 +947,156 @@ def test_event_removes_session_before_shakeout_block():
         is SessionPurpose.RACE
         for slot in result
     )
+def test_removes_ordinary_session_before_shakeout_and_race():
+
+    slots = (
+        DraftTrainingSlot(
+            weekday=Weekday.TUESDAY,
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.WEDNESDAY,
+            purpose=SessionPurpose.EASY,
+            duration_minutes=60,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.FRIDAY,
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SATURDAY,
+            purpose=SessionPurpose.SHAKEOUT,
+            duration_minutes=20,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SUNDAY,
+            purpose=SessionPurpose.RACE,
+            duration_minutes=50,
+        ),
+    )
+
+    result = (
+        Planner
+        ._remove_training_before_shakeout_race_blocks(
+            slots=slots,
+        )
+    )
+
+    friday = next(
+        slot
+        for slot in result
+        if slot.weekday == Weekday.FRIDAY
+    )
+
+    assert friday.is_rest
+
+    assert any(
+        slot.weekday == Weekday.TUESDAY
+        and slot.purpose
+        is SessionPurpose.INTENSITY
+        for slot in result
+    )
+
+    assert any(
+        slot.weekday == Weekday.WEDNESDAY
+        and slot.purpose
+        is SessionPurpose.EASY
+        for slot in result
+    )
+
+    assert any(
+        slot.weekday == Weekday.SATURDAY
+        and slot.purpose
+        is SessionPurpose.SHAKEOUT
+        for slot in result
+    )
+
+    assert any(
+        slot.weekday == Weekday.SUNDAY
+        and slot.purpose
+        is SessionPurpose.RACE
+        for slot in result
+    )
+
+
+def test_preserves_long_before_shakeout_and_race():
+
+    slots = (
+        DraftTrainingSlot(
+            weekday=Weekday.FRIDAY,
+            purpose=SessionPurpose.LONG,
+            duration_minutes=75,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SATURDAY,
+            purpose=SessionPurpose.SHAKEOUT,
+            duration_minutes=20,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SUNDAY,
+            purpose=SessionPurpose.RACE,
+            duration_minutes=50,
+        ),
+    )
+
+    result = (
+        Planner
+        ._remove_training_before_shakeout_race_blocks(
+            slots=slots,
+        )
+    )
+
+    friday = next(
+        slot
+        for slot in result
+        if slot.weekday == Weekday.FRIDAY
+    )
+
+    assert (
+        friday.purpose
+        is SessionPurpose.LONG
+    )
+
+
+def test_keeps_training_without_complete_race_block():
+
+    slots = (
+        DraftTrainingSlot(
+            weekday=Weekday.FRIDAY,
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SATURDAY,
+            purpose=SessionPurpose.EASY,
+            duration_minutes=20,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SUNDAY,
+            purpose=SessionPurpose.RACE,
+            duration_minutes=50,
+        ),
+    )
+
+    result = (
+        Planner
+        ._remove_training_before_shakeout_race_blocks(
+            slots=slots,
+        )
+    )
+
+    friday = next(
+        slot
+        for slot in result
+        if slot.weekday == Weekday.FRIDAY
+    )
+
+    assert (
+        friday.purpose
+        is SessionPurpose.INTENSITY
+    )
 
 def test_does_not_limit_recovery_week_after_race():
 

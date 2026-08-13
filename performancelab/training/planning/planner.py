@@ -1687,7 +1687,135 @@ class Planner:
                 )
             )
 
-        return updated_slots
+        return (
+            Planner
+            ._remove_training_before_shakeout_race_blocks(
+                slots=updated_slots,
+            )
+        )
+    # ======================================================
+
+    @staticmethod
+    def _remove_training_before_shakeout_race_blocks(
+        *,
+        slots: tuple[
+            DraftTrainingSlot,
+            ...,
+        ],
+    ) -> tuple[
+        DraftTrainingSlot,
+        ...,
+    ]:
+        """
+        Removes an ordinary session that would create a
+        three-day training sequence ending in a race.
+
+        The protected pattern is:
+
+        ordinary training -> shakeout -> race
+
+        Registered races, shakeouts and unrelated sessions
+        remain unchanged.
+        """
+
+        updated_slots = list(
+            slots
+        )
+
+        slots_by_weekday = {
+            slot.weekday: slot
+            for slot in updated_slots
+        }
+
+        for race_slot in tuple(
+            updated_slots
+        ):
+
+            if (
+                race_slot.purpose
+                is not SessionPurpose.RACE
+            ):
+                continue
+
+            race_value = (
+                race_slot.weekday.value
+            )
+
+            if race_value < 2:
+                continue
+
+            shakeout_weekday = Weekday(
+                race_value - 1
+            )
+            preceding_weekday = Weekday(
+                race_value - 2
+            )
+
+            shakeout_slot = (
+                slots_by_weekday.get(
+                    shakeout_weekday
+                )
+            )
+            preceding_slot = (
+                slots_by_weekday.get(
+                    preceding_weekday
+                )
+            )
+
+            if (
+                shakeout_slot is None
+                or shakeout_slot.purpose
+                is not SessionPurpose.SHAKEOUT
+            ):
+                continue
+
+            if (
+                preceding_slot is None
+                or not preceding_slot.is_training
+                or preceding_slot.purpose
+                in {
+                    SessionPurpose.RACE,
+                    SessionPurpose.SHAKEOUT,
+                    SessionPurpose.LONG,
+                }
+            ):
+                continue
+
+            replacement = (
+                DraftTrainingSlot.rest(
+                    preceding_weekday,
+                    notes=(
+                        "Rest assigned to avoid three "
+                        "consecutive training days before "
+                        "a registered event."
+                    ),
+                )
+            )
+
+            updated_slots = [
+                (
+                    replacement
+                    if (
+                        slot.weekday
+                        == preceding_weekday
+                    )
+                    else slot
+                )
+                for slot in updated_slots
+            ]
+
+            slots_by_weekday[
+                preceding_weekday
+            ] = replacement
+
+        return tuple(
+            sorted(
+                updated_slots,
+                key=lambda slot: (
+                    slot.weekday.value
+                ),
+            )
+        )
 
     # ======================================================
 
