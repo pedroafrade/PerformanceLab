@@ -27,6 +27,7 @@ class DailyTrainingDecision(str, Enum):
     The decision does not mutate the persistent plan.
     """
 
+    COMPLETED = "completed"
     PROCEED = "proceed"
     REDUCE_VOLUME = "reduce_volume"
     EASY_ONLY = "easy_only"
@@ -72,6 +73,7 @@ def build_daily_training_guidance(
     *,
     training_state: TrainingState,
     workout: PlannedWorkout | None,
+    workout_completed: bool = False,
 ) -> DailyTrainingGuidance:
     """
     Builds conservative guidance from domain state
@@ -98,6 +100,43 @@ def build_daily_training_guidance(
     ):
         raise TypeError(
             "workout must be a PlannedWorkout or None."
+        )
+    if not isinstance(
+        workout_completed,
+        bool,
+    ):
+        raise TypeError(
+            "workout_completed must be a bool."
+        )
+
+    if workout_completed:
+        return DailyTrainingGuidance(
+            decision=(
+                DailyTrainingDecision.COMPLETED
+            ),
+            temporary_adjustment=None,
+            reasons=(
+                (
+                    "Today's activity has already "
+                    "been completed."
+                ),
+                (
+                    "The completed activity now "
+                    "provides today's training stimulus."
+                ),
+            ),
+            cautions=(
+                (
+                    "Do not repeat the planned session "
+                    "to compensate for differences from "
+                    "the prescription."
+                ),
+                (
+                    "Use the remaining day for recovery "
+                    "unless a separate session was "
+                    "explicitly planned."
+                ),
+            ),
         )
 
     if (
@@ -178,6 +217,7 @@ def _temporary_workout_adjustment(
     """
 
     if decision in {
+        DailyTrainingDecision.COMPLETED,
         DailyTrainingDecision.PROCEED,
         DailyTrainingDecision.REST,
         DailyTrainingDecision.REVIEW_REQUIRED,
@@ -391,6 +431,9 @@ def _decision_reason(
     """
 
     reasons = {
+        DailyTrainingDecision.COMPLETED: (
+            "Today's training stimulus is complete."
+        ),
         DailyTrainingDecision.PROCEED: (
             "The planned session can proceed."
         ),

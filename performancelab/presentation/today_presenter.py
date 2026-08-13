@@ -186,6 +186,10 @@ class TodayPresenter:
             build_daily_training_guidance(
                 training_state=training_state,
                 workout=planned_workout,
+                workout_completed=(
+                    today_activity_summary
+                    is not None
+                ),
             )
         )
 
@@ -333,6 +337,9 @@ class TodayPresenter:
         """
 
         titles = {
+            DailyTrainingDecision.COMPLETED: (
+                "Today's training is complete"
+            ),
             DailyTrainingDecision.PROCEED: (
                 "Follow the planned session"
             ),
@@ -366,6 +373,11 @@ class TodayPresenter:
         """
 
         actions = {
+            DailyTrainingDecision.COMPLETED: (
+                "The completed activity is today's "
+                "training stimulus. Use the remaining "
+                "day for recovery."
+            ),
             DailyTrainingDecision.PROCEED: (
                 "Complete the planned session within "
                 "its prescribed duration and intensity."

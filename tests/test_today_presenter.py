@@ -299,6 +299,35 @@ def test_completed_today_moves_to_next_workout():
         .date()
         == future_day
     )
+    assert (
+        result.guidance.decision
+        == "completed"
+    )
+
+    assert (
+        result.guidance.title
+        == "Today's training is complete"
+    )
+
+    assert (
+        result.guidance.action
+        == (
+            "The completed activity is today's "
+            "training stimulus. Use the remaining "
+            "day for recovery."
+        )
+    )
+
+    assert (
+        result.guidance
+        .temporary_adjustment
+        is None
+    )
+
+    assert (
+        result.guidance.plan_is_modified
+        is False
+    )
 
     assert (
         result.latest_activity_summary

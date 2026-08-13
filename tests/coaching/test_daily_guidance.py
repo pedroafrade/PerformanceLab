@@ -596,3 +596,65 @@ def test_temporary_adjustment_is_immutable():
         FrozenInstanceError
     ):
         adjustment.title = "Tempo Run"
+
+def test_completed_activity_is_not_recommended_again():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Easy",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state()
+        ),
+        workout=workout,
+        workout_completed=True,
+    )
+
+    assert (
+        result.decision
+        is DailyTrainingDecision.COMPLETED
+    )
+
+    assert (
+        result.temporary_adjustment
+        is None
+    )
+
+    assert (
+        "Today's activity has already been completed."
+        in result.reasons
+    )
+
+    assert (
+        "Do not repeat the planned session "
+        "to compensate for differences from "
+        "the prescription."
+        in result.cautions
+    )
+
+
+def test_rejects_invalid_completed_flag():
+
+    with pytest.raises(
+        TypeError,
+        match="workout_completed",
+    ):
+
+        build_daily_training_guidance(
+            training_state=(
+                create_training_state()
+            ),
+            workout=None,
+            workout_completed="yes",
+        )
