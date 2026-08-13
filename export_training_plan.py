@@ -18,7 +18,11 @@ def monday(day: date) -> date:
 
 
 athlete_files = sorted(
-    Path("data/athletes").glob("*.json")
+    path
+    for path in Path(
+        "data/athletes"
+    ).glob("*.json")
+    if ".backup" not in path.stem
 )
 
 if not athlete_files:
