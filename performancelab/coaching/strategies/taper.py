@@ -57,7 +57,11 @@ class TaperStrategy(CoachStrategy):
             )
         )
 
-        if context.tsb < -10:
+        if getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
+        ):
             volume_factor = 0.50
             intensity_sessions = 0
             recovery_days = 4

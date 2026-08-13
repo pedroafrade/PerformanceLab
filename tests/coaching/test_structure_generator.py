@@ -1093,3 +1093,255 @@ def test_taper_keeps_existing_intensity_allocation(
     )
 
     assert intensity.duration_minutes == 40
+
+def test_keeps_easy_session_shorter_than_long_session(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        target_weekly_minutes=300,
+        long_session_minutes=100,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    easy_session = next(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.EASY
+        )
+    )
+
+    long_session = next(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.LONG
+        )
+    )
+
+    assert (
+        long_session.duration_minutes
+        == 100
+    )
+
+    maximum_easy_duration = round(
+        long_session.duration_minutes
+        * 0.75
+    )
+
+    assert (
+        easy_session.duration_minutes
+        <= maximum_easy_duration
+    )
+
+    assert (
+        easy_session.duration_minutes
+        == 60
+    )
+
+    assert (
+        easy_session.duration_minutes
+        < long_session.duration_minutes
+    )
+
+    assert sum(
+        slot.duration_minutes or 0
+        for slot in slots
+    ) < plan.target_weekly_minutes
+
+def test_does_not_cap_easy_sessions_without_long_session(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        target_sessions=2,
+        intensity_sessions=0,
+        long_sessions=0,
+        target_weekly_minutes=120,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    easy_sessions = tuple(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.EASY
+        )
+    )
+
+    assert tuple(
+        slot.duration_minutes
+        for slot in easy_sessions
+    ) == (
+        60,
+        60,
+    )
+
+def test_caps_regeneration_easy_session_at_sixty_minutes(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        strategy="RegenerationStrategy",
+        phase="Regeneration",
+        target_sessions=2,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=1,
+        target_weekly_minutes=180,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    easy_sessions = tuple(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.EASY
+        )
+    )
+
+    assert easy_sessions
+
+    assert all(
+        (
+            slot.duration_minutes
+            or 0
+        )
+        <= 60
+        for slot in easy_sessions
+    )
+
+def test_caps_taper_easy_sessions_at_sixty_minutes(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        strategy="TaperStrategy",
+        phase="Taper",
+        target_sessions=3,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=0,
+        target_weekly_minutes=240,
+        long_session_minutes=None,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    easy_sessions = tuple(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.EASY
+        )
+    )
+
+    assert len(easy_sessions) == 3
+
+    assert all(
+        (
+            slot.duration_minutes
+            or 0
+        )
+        <= 60
+        for slot in easy_sessions
+    )
+
+    assert sum(
+        slot.duration_minutes or 0
+        for slot in slots
+    ) == 180
+
+def test_caps_easy_session_converted_to_recovery(
+    strategy_plan: StrategyPlan,
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+
+    plan = replace(
+        strategy_plan,
+        target_sessions=5,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=3,
+        target_weekly_minutes=330,
+        long_session_minutes=90,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    recovery_sessions = tuple(
+        slot
+        for slot in slots
+        if (
+            slot.purpose
+            is SessionPurpose.RECOVERY
+        )
+    )
+
+    assert recovery_sessions
+
+    assert all(
+        (
+            slot.duration_minutes
+            or 0
+        )
+        <= 40
+        for slot in recovery_sessions
+    )

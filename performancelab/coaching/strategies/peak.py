@@ -106,7 +106,11 @@ class PeakStrategy(CoachStrategy):
                 )
             )
 
-        if context.tsb < -10:
+        if getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
+        ):
             volume_factor = 0.80
             intensity_sessions = 1
             recovery_days = 3

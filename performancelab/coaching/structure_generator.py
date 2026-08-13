@@ -24,6 +24,11 @@ from .draft_slot import DraftTrainingSlot
 from .session_purpose import SessionPurpose
 from .strategy import StrategyPlan
 
+MAX_EASY_TO_LONG_DURATION_RATIO = 0.75
+MAX_REGENERATION_EASY_MINUTES = 60
+MAX_TAPER_EASY_MINUTES = 60
+MAX_RECOVERY_SESSION_MINUTES = 40
+
 DEFAULT_LONG_DAY = Weekday.SUNDAY
 TRANSITION_TRAINING_DAYS = (
     Weekday.MONDAY,
@@ -103,6 +108,12 @@ class WeekStructureGenerator:
             slots=slots,
             strategy_plan=strategy_plan,
             constraints=constraints,
+        )
+
+        slots = (
+            self._limit_recovery_session_durations(
+                slots
+            )
         )
 
         return tuple(
@@ -723,6 +734,18 @@ class WeekStructureGenerator:
                     durations[weekday]
                 )
 
+        self._limit_easy_session_capacities(
+            durations=durations,
+            capacities=capacities,
+            purposes=purposes,
+        )
+
+        self._limit_phase_session_capacities(
+            capacities=capacities,
+            purposes=purposes,
+            phase=strategy_plan.phase,
+        )
+
         self._distribute_remaining_minutes(
             durations=durations,
             capacities=capacities,
@@ -1016,6 +1039,119 @@ class WeekStructureGenerator:
         return remaining
 
     # ======================================================
+    @staticmethod
+    def _limit_easy_session_capacities(
+        *,
+        durations: dict[Weekday, int],
+        capacities: dict[Weekday, int],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+    ) -> None:
+        """
+        Keeps ordinary easy sessions shorter than the
+        week's long session.
+
+        The weekly target is a ceiling, not an obligation.
+        Minutes that cannot be distributed without
+        distorting session purpose remain unprescribed.
+        """
+
+        long_durations = [
+            durations[weekday]
+            for weekday, purpose
+            in purposes.items()
+            if (
+                purpose is SessionPurpose.LONG
+                and durations[weekday] > 0
+            )
+        ]
+
+        if not long_durations:
+            return
+
+        longest_long_duration = max(
+            long_durations
+        )
+
+        maximum_easy_duration = max(
+            1,
+            round(
+                longest_long_duration
+                * MAX_EASY_TO_LONG_DURATION_RATIO
+            ),
+        )
+
+        for weekday, purpose in (
+            purposes.items()
+        ):
+
+            if (
+                purpose
+                is not SessionPurpose.EASY
+            ):
+                continue
+
+            capacities[weekday] = min(
+                capacities[weekday],
+                maximum_easy_duration,
+            )
+
+    @staticmethod
+    def _limit_phase_session_capacities(
+        *,
+        capacities: dict[
+            Weekday,
+            int,
+        ],
+        purposes: dict[
+            Weekday,
+            SessionPurpose,
+        ],
+        phase: str,
+    ) -> None:
+        """
+        Applies conservative duration ceilings to easy
+        sessions in phases where recovery is the priority.
+
+        Weekly target volume remains a ceiling and is not
+        forced into sessions that should stay short.
+        """
+
+        normalized_phase = str(
+            phase or ""
+        ).strip().lower()
+
+        if normalized_phase == "regeneration":
+
+            maximum_easy_minutes = (
+                MAX_REGENERATION_EASY_MINUTES
+            )
+
+        elif normalized_phase == "taper":
+
+            maximum_easy_minutes = (
+                MAX_TAPER_EASY_MINUTES
+            )
+
+        else:
+            return
+
+        for weekday, purpose in (
+            purposes.items()
+        ):
+
+            if (
+                purpose
+                is not SessionPurpose.EASY
+            ):
+                continue
+
+            capacities[weekday] = min(
+                capacities[weekday],
+                maximum_easy_minutes,
+            )
 
     @staticmethod
     def _distribute_remaining_minutes(
@@ -1309,8 +1445,38 @@ class WeekStructureGenerator:
             for slot in slots
         ]
 
-    # ======================================================
+    @staticmethod
+    def _limit_recovery_session_durations(
+        slots: list[
+            DraftTrainingSlot,
+        ],
+    ) -> list[
+        DraftTrainingSlot,
+    ]:
+        """
+        Keeps active-recovery sessions short, including
+        easy sessions converted to recovery after duration
+        allocation.
+        """
 
+        return [
+            (
+                slot.with_duration(
+                    min(
+                        slot.duration_minutes,
+                        MAX_RECOVERY_SESSION_MINUTES,
+                    )
+                )
+                if (
+                    slot.purpose
+                    is SessionPurpose.RECOVERY
+                    and slot.duration_minutes
+                    is not None
+                )
+                else slot
+            )
+            for slot in slots
+        ]
     # ======================================================
     # Shared helpers
     # ======================================================

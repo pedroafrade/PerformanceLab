@@ -637,3 +637,22 @@ def test_peak_adjustments(
     assert plan.intensity_sessions == expected_intensity
     assert plan.recovery_days == expected_recovery_days
     assert plan.focus == expected_focus
+
+def test_future_peak_does_not_use_current_tsb():
+
+    context = make_context(
+        tsb=-60.0,
+    )
+
+    context.should_reduce_volume = False
+
+    plan = PeakStrategy().build(
+        context
+    )
+
+    assert plan.intensity_sessions == 2
+    assert plan.recovery_days == 2
+    assert (
+        plan.focus
+        == "race-specific intensity"
+    )

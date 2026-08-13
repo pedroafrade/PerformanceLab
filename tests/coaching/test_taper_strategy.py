@@ -518,3 +518,21 @@ def test_taper_adjustments(
     assert plan.intensity_sessions == expected_intensity
     assert plan.recovery_days == expected_recovery_days
     assert plan.focus == expected_focus
+
+def test_future_taper_does_not_use_current_tsb():
+
+    context = make_context(
+        tsb=-60.0,
+    )
+
+    context.should_reduce_volume = False
+
+    plan = TaperStrategy().build(
+        context
+    )
+
+    assert plan.intensity_sessions == 1
+    assert plan.volume_factor == pytest.approx(
+        0.65
+    )
+    assert plan.focus == "race readiness"
