@@ -952,6 +952,61 @@ class WorkoutGenerator:
         )
 
     # ======================================================
+    @staticmethod
+    def _heart_rate_summary(
+        structure: tuple[str, ...],
+    ) -> str | None:
+        """
+        Extracts the numeric heart-rate reference already
+        calculated for the workout structure.
+
+        Semantic zone labels remain in the detailed
+        prescription; the compact summary uses only the
+        actionable bpm reference.
+        """
+
+        prefix = "Heart rate target: "
+
+        guidance = next(
+            (
+                step
+                for step in structure
+                if step.startswith(
+                    prefix
+                )
+            ),
+            None,
+        )
+
+        if guidance is None:
+            return None
+
+        resolved_target = guidance[
+            len(prefix):
+        ]
+
+        separator = " · "
+
+        if separator not in resolved_target:
+            return None
+
+        _, bpm_reference = (
+            resolved_target.split(
+                separator,
+                maxsplit=1,
+            )
+        )
+
+        bpm_reference = (
+            bpm_reference.strip()
+        )
+
+        if not bpm_reference:
+            return None
+
+        return bpm_reference
+
+    # ======================================================
 
     @classmethod
     def _prescription_summary(
@@ -1016,6 +1071,23 @@ class WorkoutGenerator:
             )
 
             if "trail" in normalized_sport:
+
+                heart_rate_reference = (
+                    cls._heart_rate_summary(
+                        structure
+                    )
+                )
+
+                if (
+                    heart_rate_reference
+                    is not None
+                ):
+                    return (
+                        f"{main_minutes} min tempo · "
+                        f"{heart_rate_reference} · "
+                        "RPE 6–7/10"
+                    )
+
                 return (
                     f"{main_minutes} min tempo · "
                     "RPE 6–7/10"

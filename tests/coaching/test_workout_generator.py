@@ -629,6 +629,9 @@ def test_trail_tempo_uses_effort_instead_of_pace():
             performance_profile=SimpleNamespace(
                 tempo_pace=5.25,
             ),
+            heart_rate_profile=SimpleNamespace(
+                threshold_hr=177,
+            ),
         ),
         strategy_plan=make_strategy_plan(
             key_session_focus="tempo",
@@ -645,6 +648,36 @@ def test_trail_tempo_uses_effort_instead_of_pace():
     assert not any(
         "5:15/km" in step
         for step in workout.structure
+    )
+
+    assert (
+        workout.prescription_summary
+        == (
+            "20 min tempo · "
+            "168–175 bpm · "
+            "RPE 6–7/10"
+        )
+    )
+
+def test_trail_tempo_summary_falls_back_to_rpe():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            17,
+        ),
+        template=TEMPO_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(),
+        strategy_plan=make_strategy_plan(
+            key_session_focus="tempo",
+        ),
     )
 
     assert (
@@ -1583,6 +1616,38 @@ def test_formats_bounded_heart_rate_zone():
         )
         == "121–156 bpm"
     )
+
+def test_extracts_numeric_heart_rate_summary():
+
+    result = (
+        WorkoutGenerator
+        ._heart_rate_summary(
+            (
+                "Warm up 15 min",
+                (
+                    "Heart rate target: "
+                    "Z3–Z4 · 168–175 bpm"
+                ),
+            )
+        )
+    )
+
+    assert result == "168–175 bpm"
+
+
+def test_heart_rate_summary_requires_numeric_reference():
+
+    result = (
+        WorkoutGenerator
+        ._heart_rate_summary(
+            (
+                "Warm up 15 min",
+                "Heart rate target: Z3–Z4",
+            )
+        )
+    )
+
+    assert result is None
 
 def test_second_intensity_uses_secondary_focus():
 
