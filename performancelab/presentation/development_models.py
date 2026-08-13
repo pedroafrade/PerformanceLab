@@ -90,6 +90,7 @@ class DevelopmentTrendMetricData:
 
     absolute_change: float | None
     percentage_change: float | None
+    improvement_percentage: float | None
 
     current_samples: int
     previous_samples: int
@@ -108,6 +109,9 @@ class DevelopmentTrendsData:
     )
 
     exercise_distance_per_day: (
+        DevelopmentTrendMetricData
+    )
+    running_pace_per_kilometre: (
         DevelopmentTrendMetricData
     )
 

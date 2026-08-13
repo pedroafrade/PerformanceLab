@@ -135,6 +135,122 @@ class DevelopmentPresenter:
             percentage_change=(
                 percentage_change
             ),
+            improvement_percentage=(
+                percentage_change
+            ),
+            current_samples=current_samples,
+            previous_samples=previous_samples,
+            window_days=window_days,
+        )
+
+    @staticmethod
+    def _is_running_sport(
+        sport,
+    ) -> bool:
+        """
+        Returns whether the sport represents running.
+        """
+
+        normalized_sport = str(
+            sport or ""
+        ).strip().lower()
+
+        return any(
+            token in normalized_sport
+            for token in (
+                "run",
+                "running",
+                "trail",
+                "jog",
+            )
+        )
+
+    @staticmethod
+    def _running_pace_metric(
+        *,
+        current_minutes: float,
+        current_distance: float,
+        previous_minutes: float,
+        previous_distance: float,
+        current_samples: int,
+        previous_samples: int,
+        window_days: int,
+    ) -> DevelopmentTrendMetricData:
+        """
+        Builds distance-weighted running pace comparison.
+
+        Pace is expressed in minutes per kilometre.
+        A reduction in pace value is represented as a
+        positive improvement percentage.
+        """
+
+        current_value = (
+            current_minutes
+            / current_distance
+            if (
+                current_samples > 0
+                and current_distance > 0
+            )
+            else None
+        )
+
+        previous_value = (
+            previous_minutes
+            / previous_distance
+            if (
+                previous_samples > 0
+                and previous_distance > 0
+            )
+            else None
+        )
+
+        comparison_available = (
+            current_value is not None
+            and previous_value is not None
+        )
+
+        absolute_change = (
+            current_value
+            - previous_value
+            if comparison_available
+            else None
+        )
+
+        percentage_change = None
+        improvement_percentage = None
+
+        if (
+            comparison_available
+            and previous_value > 0
+        ):
+            percentage_change = (
+                (
+                    current_value
+                    - previous_value
+                )
+                / previous_value
+                * 100
+            )
+
+            improvement_percentage = (
+                (
+                    previous_value
+                    - current_value
+                )
+                / previous_value
+                * 100
+            )
+
+        return DevelopmentTrendMetricData(
+            current_value=current_value,
+            previous_value=previous_value,
+            absolute_change=absolute_change,
+            percentage_change=(
+                percentage_change
+            ),
+            improvement_percentage=(
+                improvement_percentage
+            ),
             current_samples=current_samples,
             previous_samples=previous_samples,
             window_days=window_days,
@@ -180,11 +296,20 @@ class DevelopmentPresenter:
         current_distance = 0.0
         previous_distance = 0.0
 
+        current_running_minutes = 0.0
+        previous_running_minutes = 0.0
+
+        current_running_distance = 0.0
+        previous_running_distance = 0.0
+
         current_duration_samples = 0
         previous_duration_samples = 0
 
         current_distance_samples = 0
         previous_distance_samples = 0
+
+        current_running_samples = 0
+        previous_running_samples = 0
 
         for workout in self.athlete.history:
 
@@ -255,6 +380,53 @@ class DevelopmentPresenter:
                     )
                     previous_distance_samples += 1
 
+            is_running = (
+                self._is_running_sport(
+                    workout.sport
+                )
+            )
+
+            valid_running_duration = (
+                duration is not None
+                and duration.total_seconds() > 0
+            )
+
+            valid_running_distance = (
+                distance is not None
+                and float(distance) > 0
+            )
+
+            if (
+                is_running
+                and valid_running_duration
+                and valid_running_distance
+            ):
+                running_minutes = (
+                    duration.total_seconds()
+                    / 60
+                )
+
+                running_distance = float(
+                    distance
+                )
+
+                if in_current_window:
+                    current_running_minutes += (
+                        running_minutes
+                    )
+                    current_running_distance += (
+                        running_distance
+                    )
+                    current_running_samples += 1
+                else:
+                    previous_running_minutes += (
+                        running_minutes
+                    )
+                    previous_running_distance += (
+                        running_distance
+                    )
+                    previous_running_samples += 1
+
         return DevelopmentTrendsData(
             exercise_minutes_per_day=(
                 self._trend_metric(
@@ -286,6 +458,29 @@ class DevelopmentPresenter:
                     ),
                     previous_samples=(
                         previous_distance_samples
+                    ),
+                    window_days=window_days,
+                )
+            ),
+            running_pace_per_kilometre=(
+                self._running_pace_metric(
+                    current_minutes=(
+                        current_running_minutes
+                    ),
+                    current_distance=(
+                        current_running_distance
+                    ),
+                    previous_minutes=(
+                        previous_running_minutes
+                    ),
+                    previous_distance=(
+                        previous_running_distance
+                    ),
+                    current_samples=(
+                        current_running_samples
+                    ),
+                    previous_samples=(
+                        previous_running_samples
                     ),
                     window_days=window_days,
                 )

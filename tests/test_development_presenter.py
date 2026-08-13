@@ -91,6 +91,7 @@ def test_builds_empty_historical_development_trends():
     assert minutes.previous_value is None
     assert minutes.absolute_change is None
     assert minutes.percentage_change is None
+    assert minutes.improvement_percentage is None
     assert minutes.current_samples == 0
     assert minutes.previous_samples == 0
     assert minutes.window_days == 28
@@ -99,8 +100,21 @@ def test_builds_empty_historical_development_trends():
     assert distance.previous_value is None
     assert distance.absolute_change is None
     assert distance.percentage_change is None
+    assert distance.improvement_percentage is None
     assert distance.current_samples == 0
     assert distance.previous_samples == 0
+
+    pace = (
+        trends.running_pace_per_kilometre
+    )
+
+    assert pace.current_value is None
+    assert pace.previous_value is None
+    assert pace.absolute_change is None
+    assert pace.percentage_change is None
+    assert pace.improvement_percentage is None
+    assert pace.current_samples == 0
+    assert pace.previous_samples == 0
 
 def test_compares_historical_development_volume_windows():
 
@@ -174,6 +188,10 @@ def test_compares_historical_development_volume_windows():
     assert minutes.previous_value == 5.0
     assert minutes.absolute_change == 5.0
     assert minutes.percentage_change == 100.0
+    assert (
+        minutes.improvement_percentage
+        == 100.0
+    )
     assert minutes.current_samples == 1
     assert minutes.previous_samples == 1
 
@@ -185,8 +203,131 @@ def test_compares_historical_development_volume_windows():
     assert distance.previous_value == 1.0
     assert distance.absolute_change == 1.0
     assert distance.percentage_change == 100.0
+    assert (
+        distance.improvement_percentage
+        == 100.0
+    )
     assert distance.current_samples == 1
     assert distance.previous_samples == 1
+
+def test_compares_distance_weighted_running_pace():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        14,
+        12,
+        0,
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Running",
+            workout_date=date(
+                2026,
+                8,
+                10,
+            ),
+            distance=10.0,
+            elevation_gain=0.0,
+            duration=timedelta(
+                minutes=40,
+            ),
+            rpe=6,
+            title="Current road run",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Trail Running",
+            workout_date=date(
+                2026,
+                8,
+                5,
+            ),
+            distance=5.0,
+            elevation_gain=200.0,
+            duration=timedelta(
+                minutes=20,
+            ),
+            rpe=6,
+            title="Current trail run",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Running",
+            workout_date=date(
+                2026,
+                7,
+                10,
+            ),
+            distance=10.0,
+            elevation_gain=0.0,
+            duration=timedelta(
+                minutes=50,
+            ),
+            rpe=6,
+            title="Previous run",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Cycling",
+            workout_date=date(
+                2026,
+                7,
+                12,
+            ),
+            distance=40.0,
+            elevation_gain=0.0,
+            duration=timedelta(
+                minutes=40,
+            ),
+            rpe=5,
+            title="Fast bike",
+        )
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
+    trends = result.historical_trends
+
+    assert trends is not None
+
+    pace = (
+        trends.running_pace_per_kilometre
+    )
+
+    assert pace.current_value == 4.0
+    assert pace.previous_value == 5.0
+
+    assert pace.absolute_change == -1.0
+    assert pace.percentage_change == -20.0
+
+    assert (
+        pace.improvement_percentage
+        == 20.0
+    )
+
+    assert pace.current_samples == 2
+    assert pace.previous_samples == 1
+    assert pace.window_days == 28
 
 def test_builds_immutable_development_series():
 
