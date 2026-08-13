@@ -33,6 +33,12 @@ from performancelab.training.planning import (
 from performancelab.coaching.strategy import (
     StrategyPlan,
 )
+from performancelab.coaching.draft_slot import (
+    DraftTrainingSlot,
+)
+from performancelab.coaching.session_purpose import (
+    SessionPurpose,
+)
 from performancelab.training.planning.planner import (
     MAX_PLANNED_WEEKLY_LOAD_GROWTH,
     Planner,
@@ -865,6 +871,81 @@ def test_blocks_first_recovery_day_after_short_event(
     )
     assert not result.is_blocked(
         Weekday.TUESDAY
+    )
+    assert not result.allows_intensity(
+        Weekday.MONDAY
+    )
+    assert not result.allows_intensity(
+        Weekday.TUESDAY
+    )
+    assert result.allows_intensity(
+        Weekday.WEDNESDAY
+    )
+
+def test_event_removes_session_before_shakeout_block():
+
+    slots = [
+        DraftTrainingSlot(
+            weekday=Weekday.TUESDAY,
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.WEDNESDAY,
+            purpose=SessionPurpose.EASY,
+            duration_minutes=60,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.FRIDAY,
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SATURDAY,
+            purpose=SessionPurpose.SHAKEOUT,
+            duration_minutes=20,
+        ),
+        DraftTrainingSlot(
+            weekday=Weekday.SUNDAY,
+            purpose=SessionPurpose.RACE,
+            duration_minutes=50,
+        ),
+    ]
+
+    result = (
+        Planner._remove_replaced_training_session(
+            slots=slots,
+            race_weekday=Weekday.SUNDAY,
+        )
+    )
+
+    friday = next(
+        slot
+        for slot in result
+        if slot.weekday == Weekday.FRIDAY
+    )
+
+    assert friday.is_rest
+
+    assert any(
+        slot.weekday == Weekday.WEDNESDAY
+        and slot.purpose
+        is SessionPurpose.EASY
+        for slot in result
+    )
+
+    assert any(
+        slot.weekday == Weekday.SATURDAY
+        and slot.purpose
+        is SessionPurpose.SHAKEOUT
+        for slot in result
+    )
+
+    assert any(
+        slot.weekday == Weekday.SUNDAY
+        and slot.purpose
+        is SessionPurpose.RACE
+        for slot in result
     )
 
 def test_does_not_limit_recovery_week_after_race():

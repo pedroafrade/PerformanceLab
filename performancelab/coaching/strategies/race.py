@@ -42,13 +42,19 @@ class RaceStrategy(CoachStrategy):
         warnings: list[str] = []
 
         volume_factor = 0.40
-        target_sessions = 2
+        target_sessions = 3
         intensity_sessions = 0
         long_sessions = 0
-        recovery_days = 5
+        recovery_days = 4
         focus = "competition"
 
-        if context.tsb < -10:
+        should_reduce_volume = getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
+        )
+
+        if should_reduce_volume:
             volume_factor = 0.30
             target_sessions = 1
             recovery_days = 6
@@ -108,7 +114,7 @@ class RaceStrategy(CoachStrategy):
 
             race_specificity=1.00,
 
-            target_weekly_minutes=80,
+            target_weekly_minutes=120,
             target_weekly_load=250.0 * volume_factor,
             long_session_minutes=None,
 

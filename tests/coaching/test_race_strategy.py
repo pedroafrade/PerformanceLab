@@ -80,10 +80,10 @@ def test_default_race_targets():
     plan = build_plan()
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 2
+    assert plan.target_sessions == 3
     assert plan.intensity_sessions == 0
     assert plan.long_sessions == 0
-    assert plan.recovery_days == 5
+    assert plan.recovery_days == 4
 
 
 def test_default_race_focus():
@@ -95,7 +95,7 @@ def test_default_race_focus():
 def test_default_concrete_weekly_targets():
     plan = build_plan()
 
-    assert plan.target_weekly_minutes == 80
+    assert plan.target_weekly_minutes == 120
     assert plan.target_weekly_load == pytest.approx(100.0)
     assert plan.long_session_minutes is None
 
@@ -163,8 +163,8 @@ def test_tsb_boundary_does_not_trigger_reduction():
     )
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 2
-    assert plan.recovery_days == 5
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
     assert plan.focus == "competition"
 
     assert (
@@ -228,8 +228,8 @@ def test_rpe_below_threshold_does_not_reduce_race():
     )
 
     assert plan.volume_factor == pytest.approx(0.40)
-    assert plan.target_sessions == 2
-    assert plan.recovery_days == 5
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
     assert plan.focus == "competition"
 
     assert (
@@ -243,8 +243,8 @@ def test_missing_rpe_is_supported():
         average_rpe=None,
     )
 
-    assert plan.target_sessions == 2
-    assert plan.recovery_days == 5
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
 
 
 # ==========================================================
@@ -376,7 +376,7 @@ def test_fatigue_reduces_sessions_but_keeps_race_week_valid():
         tsb=-20.0,
     )
 
-    assert normal.target_sessions == 2
+    assert normal.target_sessions == 3
     assert fatigued.target_sessions == 1
     assert fatigued.recovery_days == 6
 
@@ -395,16 +395,16 @@ def test_fatigue_reduces_sessions_but_keeps_race_week_valid():
             0.0,
             None,
             0.40,
-            2,
-            5,
+            3,
+            4,
             "competition",
         ),
         (
             -10.0,
             7.9,
             0.40,
-            2,
-            5,
+            3,
+            4,
             "competition",
         ),
         (
@@ -454,3 +454,23 @@ def test_race_adjustments(
     assert plan.long_sessions == 0
     assert plan.recovery_days == expected_recovery_days
     assert plan.focus == expected_focus
+
+def test_future_race_does_not_use_current_tsb():
+
+    context = make_context(
+        tsb=-60.0,
+    )
+
+    context.should_reduce_volume = False
+
+    plan = RaceStrategy().build(
+        context
+    )
+
+    assert plan.target_sessions == 3
+    assert plan.recovery_days == 4
+
+    assert (
+        plan.focus
+        == "competition"
+    )

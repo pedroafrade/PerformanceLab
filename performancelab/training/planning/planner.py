@@ -52,6 +52,7 @@ MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
 AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS = 2
 
 EVENT_COMPLETE_REST_DAYS = 1
+EVENT_NO_INTENSITY_DAYS = 2
 DEMANDING_EVENT_EFFORT_DISTANCE = 30.0
 DEMANDING_EVENT_COMPLETE_REST_DAYS = 2
 
@@ -2000,6 +2001,15 @@ class Planner:
         selected = min(
             candidates,
             key=lambda slot: (
+                (
+                    0
+                    if (
+                        race_weekday.value
+                        - slot.weekday.value
+                        == 2
+                    )
+                    else 1
+                ),
                 removal_priority.get(
                     slot.purpose,
                     5,
@@ -2082,6 +2092,7 @@ class Planner:
         )
 
         protected_days = []
+        no_intensity_days = []
 
         for day_offset in range(
             recovery_days
@@ -2102,9 +2113,36 @@ class Planner:
                         protected_date.weekday()
                     )
                 )
+        for day_offset in range(
+            EVENT_NO_INTENSITY_DAYS
+        ):
+
+            protected_date = (
+                context.today
+                + timedelta(days=day_offset)
+            )
+
+            if (
+                week_start
+                <= protected_date
+                <= week_end
+            ):
+                no_intensity_days.append(
+                    Weekday(
+                        protected_date.weekday()
+                    )
+                )
 
         return replace(
             constraints,
+            no_intensity_days=tuple(
+                dict.fromkeys(
+                    (
+                        *constraints.no_intensity_days,
+                        *no_intensity_days,
+                    )
+                )
+            ),
             blocked_days=tuple(
                 dict.fromkeys(
                     (
