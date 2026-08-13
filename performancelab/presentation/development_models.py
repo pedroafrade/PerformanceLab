@@ -98,11 +98,10 @@ class DevelopmentTrendMetricData:
     window_days: int = 28
 
 
-@dataclass(frozen=True)
+@dataclass(
+    frozen=True
+)
 class DevelopmentTrendsData:
-    """
-    Historical volume trends prepared for presentation.
-    """
 
     exercise_minutes_per_day: (
         DevelopmentTrendMetricData
@@ -111,9 +110,15 @@ class DevelopmentTrendsData:
     exercise_distance_per_day: (
         DevelopmentTrendMetricData
     )
+
     running_pace_per_kilometre: (
         DevelopmentTrendMetricData
     )
+
+    active_calories_per_day: (
+        DevelopmentTrendMetricData
+    )
+
 
 @dataclass(frozen=True)
 class DevelopmentData:

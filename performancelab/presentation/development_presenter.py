@@ -32,6 +32,7 @@ from performancelab.physiology import (
     pace_zones,
 )
 
+from .chart import sensor_summary
 
 class DevelopmentPresenter:
     """
@@ -256,6 +257,44 @@ class DevelopmentPresenter:
             window_days=window_days,
         )
 
+    @staticmethod
+    def _active_calories(
+        workout: object,
+    ) -> float | None:
+
+        summary = sensor_summary(
+            workout,
+            "active_calories",
+        )
+
+        value = summary[
+            "average"
+        ]
+
+        if (
+            isinstance(
+                value,
+                bool,
+            )
+            or not isinstance(
+                value,
+                (
+                    int,
+                    float,
+                ),
+            )
+        ):
+            return None
+
+        calories = float(
+            value
+        )
+
+        if calories < 0:
+            return None
+
+        return calories
+
     def _historical_trends(
         self,
         *,
@@ -310,6 +349,12 @@ class DevelopmentPresenter:
 
         current_running_samples = 0
         previous_running_samples = 0
+
+        current_active_calories = 0.0
+        current_calorie_samples = 0
+
+        previous_active_calories = 0.0
+        previous_calorie_samples = 0
 
         for workout in self.athlete.history:
 
@@ -427,6 +472,27 @@ class DevelopmentPresenter:
                     )
                     previous_running_samples += 1
 
+            active_calories = (
+                self._active_calories(
+                    workout
+                )
+            )
+
+            if active_calories is None:
+                continue
+
+            if in_current_window:
+                current_active_calories += (
+                    active_calories
+                )
+                current_calorie_samples += 1
+
+            else:
+                previous_active_calories += (
+                    active_calories
+                )
+                previous_calorie_samples += 1
+
         return DevelopmentTrendsData(
             exercise_minutes_per_day=(
                 self._trend_metric(
@@ -481,6 +547,23 @@ class DevelopmentPresenter:
                     ),
                     previous_samples=(
                         previous_running_samples
+                    ),
+                    window_days=window_days,
+                )
+            ),
+            active_calories_per_day=(
+                self._trend_metric(
+                    current_total=(
+                        current_active_calories
+                    ),
+                    previous_total=(
+                        previous_active_calories
+                    ),
+                    current_samples=(
+                        current_calorie_samples
+                    ),
+                    previous_samples=(
+                        previous_calorie_samples
                     ),
                     window_days=window_days,
                 )

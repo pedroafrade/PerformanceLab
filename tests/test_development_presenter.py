@@ -115,6 +115,28 @@ def test_builds_empty_historical_development_trends():
     assert pace.improvement_percentage is None
     assert pace.current_samples == 0
     assert pace.previous_samples == 0
+    calories = (
+        trends.active_calories_per_day
+    )
+
+    assert isinstance(
+        calories,
+        DevelopmentTrendMetricData,
+    )
+
+    assert calories.current_value is None
+    assert calories.previous_value is None
+    assert calories.absolute_change is None
+    assert calories.percentage_change is None
+
+    assert (
+        calories.improvement_percentage
+        is None
+    )
+
+    assert calories.current_samples == 0
+    assert calories.previous_samples == 0
+    assert calories.window_days == 28
 
 def test_compares_historical_development_volume_windows():
 
@@ -905,4 +927,157 @@ def test_builds_performance_references():
     assert (
         references.ftp
         == 220
+    )
+
+def test_builds_active_calorie_daily_trend():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    current_workout = (
+        create_workout(
+            sport="Running",
+            workout_date=datetime(
+                2026,
+                8,
+                10,
+                8,
+                0,
+            ),
+            distance=10.0,
+            elevation_gain=100.0,
+            duration=timedelta(
+                hours=1,
+            ),
+            rpe=5.0,
+            title="Current Run",
+        )
+    )
+
+    current_workout.sensors.add(
+        "active_calories",
+        [
+            {
+                "value": 560.0,
+            },
+        ],
+    )
+
+    previous_workout = (
+        create_workout(
+            sport="Running",
+            workout_date=datetime(
+                2026,
+                7,
+                15,
+                8,
+                0,
+            ),
+            distance=8.0,
+            elevation_gain=50.0,
+            duration=timedelta(
+                minutes=50,
+            ),
+            rpe=4.0,
+            title="Previous Run",
+        )
+    )
+
+    previous_workout.sensors.add(
+        "active_calories",
+        [
+            {
+                "value": 280.0,
+            },
+        ],
+    )
+
+    missing_calories = (
+        create_workout(
+            sport="Cycling",
+            workout_date=datetime(
+                2026,
+                8,
+                12,
+                9,
+                0,
+            ),
+            distance=20.0,
+            elevation_gain=100.0,
+            duration=timedelta(
+                hours=1,
+            ),
+            rpe=4.0,
+            title="Ride without calories",
+        )
+    )
+
+    athlete.history.add(
+        previous_workout
+    )
+    athlete.history.add(
+        current_workout
+    )
+    athlete.history.add(
+        missing_calories
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=datetime(
+                2026,
+                8,
+                14,
+                12,
+                0,
+            )
+        )
+    )
+
+    assert (
+        result.historical_trends
+        is not None
+    )
+
+    calories = (
+        result.historical_trends
+        .active_calories_per_day
+    )
+
+    assert (
+        calories.current_value
+        == 20.0
+    )
+
+    assert (
+        calories.previous_value
+        == 10.0
+    )
+
+    assert (
+        calories.absolute_change
+        == 10.0
+    )
+
+    assert (
+        calories.percentage_change
+        == 100.0
+    )
+
+    assert (
+        calories.improvement_percentage
+        == 100.0
+    )
+
+    assert (
+        calories.current_samples
+        == 1
+    )
+
+    assert (
+        calories.previous_samples
+        == 1
     )
