@@ -93,6 +93,7 @@ class Planner:
         today: date | None = None,
         previous_planned_long_minutes: int | None = None,
         previous_planned_workout=None,
+        previous_planned_phase: str | None = None,
         physiology_is_current: bool = True,
     ) -> WeeklyPlan:
         """
@@ -123,6 +124,22 @@ class Planner:
             raise TypeError(
                 "physiology_is_current must be a bool"
             )
+        if (
+            previous_planned_phase
+            is not None
+            and (
+                not isinstance(
+                    previous_planned_phase,
+                    str,
+                )
+                or not previous_planned_phase.strip()
+            )
+        ):
+            raise TypeError(
+                "previous_planned_phase must be "
+                "a non-empty string or None"
+            )
+
         if availability is not None:
             resolved_availability = availability
 
@@ -204,6 +221,15 @@ class Planner:
 
         strategy_plan = strategy.build(
             context,
+        )
+
+        strategy_plan = (
+            self._smooth_transition_from_regeneration(
+                strategy_plan=strategy_plan,
+                previous_phase=(
+                    previous_planned_phase
+                ),
+            )
         )
 
         strategy_plan = (
@@ -389,6 +415,7 @@ class Planner:
         previous_weekly_load = None
         previous_planned_workout = None
         previous_planned_long_minutes = None
+        previous_planned_phase = None
 
         while week_start <= plan_end_date:
 
@@ -417,6 +444,9 @@ class Planner:
                 ),
                 previous_planned_workout=(
                     previous_planned_workout
+                ),
+                previous_planned_phase=(
+                    previous_planned_phase
                 ),
                 physiology_is_current=(
                     week_start
@@ -506,6 +536,23 @@ class Planner:
                     visible_workouts[-1]
                 )
 
+                current_planned_phase = next(
+                    (
+                        workout.phase
+                        for workout
+                        in reversed(
+                            visible_workouts
+                        )
+                        if workout.phase is not None
+                    ),
+                    None,
+                )
+
+                if current_planned_phase is not None:
+                    previous_planned_phase = (
+                        current_planned_phase
+                    )
+
             week_start += timedelta(
                 days=7
             )
@@ -532,6 +579,57 @@ class Planner:
 
         return (
             week_start < today <= week_end
+        )
+
+    # ======================================================
+    @staticmethod
+    def _smooth_transition_from_regeneration(
+        *,
+        strategy_plan,
+        previous_phase: str | None,
+    ):
+        """
+        Prevents the first Peak week after Regeneration
+        from restoring the full session frequency at once.
+
+        Training quality and the long session are preserved;
+        only one supporting easy session is removed.
+        """
+
+        if (
+            previous_phase != "Regeneration"
+            or strategy_plan.phase != "Peak"
+            or strategy_plan.target_sessions <= 4
+        ):
+            return strategy_plan
+
+        target_sessions = 4
+
+        long_sessions = min(
+            strategy_plan.long_sessions,
+            target_sessions,
+        )
+
+        intensity_sessions = min(
+            strategy_plan.intensity_sessions,
+            max(
+                target_sessions
+                - long_sessions,
+                0,
+            ),
+        )
+
+        return replace(
+            strategy_plan,
+            target_sessions=target_sessions,
+            intensity_sessions=(
+                intensity_sessions
+            ),
+            long_sessions=long_sessions,
+            recovery_days=max(
+                strategy_plan.recovery_days,
+                7 - target_sessions,
+            ),
         )
 
     # ======================================================

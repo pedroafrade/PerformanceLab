@@ -1694,3 +1694,86 @@ def test_weekly_load_limit_preserves_long_run_even_above_limit():
         )
         > 110.0
     )
+
+def test_smooths_first_peak_week_after_regeneration():
+
+    plan = StrategyPlan(
+        strategy="PeakStrategy",
+        phase="Peak",
+        volume_factor=0.85,
+        target_sessions=5,
+        intensity_sessions=2,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=350,
+        long_session_minutes=90,
+    )
+
+    result = (
+        Planner
+        ._smooth_transition_from_regeneration(
+            strategy_plan=plan,
+            previous_phase="Regeneration",
+        )
+    )
+
+    assert result.target_sessions == 4
+    assert result.intensity_sessions == 2
+    assert result.long_sessions == 1
+    assert result.recovery_days == 3
+
+    assert (
+        result.target_weekly_minutes
+        == 350
+    )
+
+    assert (
+        result.long_session_minutes
+        == 90
+    )
+
+
+def test_does_not_reduce_later_peak_weeks():
+
+    plan = StrategyPlan(
+        strategy="PeakStrategy",
+        phase="Peak",
+        volume_factor=0.85,
+        target_sessions=5,
+        intensity_sessions=2,
+        long_sessions=1,
+        recovery_days=2,
+        target_weekly_minutes=350,
+        long_session_minutes=90,
+    )
+
+    result = (
+        Planner
+        ._smooth_transition_from_regeneration(
+            strategy_plan=plan,
+            previous_phase="Peak",
+        )
+    )
+
+    assert result is plan
+
+
+def test_rejects_invalid_previous_planned_phase(
+    athlete,
+    full_availability,
+    default_preferences,
+    default_constraints,
+):
+
+    with pytest.raises(
+        TypeError,
+        match="previous_planned_phase",
+    ):
+
+        Planner().build(
+            athlete=athlete,
+            availability=full_availability,
+            preferences=default_preferences,
+            constraints=default_constraints,
+            previous_planned_phase="",
+        )
