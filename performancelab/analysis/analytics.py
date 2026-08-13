@@ -363,17 +363,45 @@ class AthleteAnalytics:
             reference_time.date()
         )
 
-        daily_series = (
+        load_builder = (
             DailyLoadBuilder(
                 self.history
-            ).build()
+            )
         )
 
-        previous_loads = [
-            entry.load
-            for entry in daily_series
+        complete_series = (
+            load_builder.build()
+        )
+
+        previous_entries = [
+            entry
+            for entry in complete_series
             if entry.date < reference_day
         ]
+
+        if previous_entries:
+
+            previous_series = (
+                load_builder.build(
+                    start_date=(
+                        previous_entries[
+                            0
+                        ].date
+                    ),
+                    end_date=(
+                        reference_day
+                        - timedelta(days=1)
+                    ),
+                )
+            )
+
+            previous_loads = (
+                previous_series.loads
+            )
+
+        else:
+
+            previous_loads = []
 
         previous_state = (
             PerformanceManagementChart(

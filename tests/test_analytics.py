@@ -768,6 +768,90 @@ def test_intraday_recovery_improves_during_rest_day():
         > morning.recovery_score
     )
 
+def test_intraday_recovery_continues_across_midnight():
+
+    athlete = Athlete()
+
+    workout = create_workout(
+        "Running",
+        datetime(
+            2026,
+            8,
+            12,
+            10,
+            0,
+        ),
+        10,
+        timedelta(hours=1),
+        100,
+        8,
+    )
+
+    athlete.history.add(
+        workout
+    )
+
+    before_midnight = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                13,
+                23,
+                59,
+            )
+        )
+    )
+
+    after_midnight = (
+        athlete.analytics
+        .time_aware_training_load(
+            reference_time=datetime(
+                2026,
+                8,
+                14,
+                0,
+                1,
+            )
+        )
+    )
+
+    assert isinstance(
+        before_midnight,
+        TimeAwareTrainingLoad,
+    )
+
+    assert isinstance(
+        after_midnight,
+        TimeAwareTrainingLoad,
+    )
+
+    assert (
+        after_midnight.ctl
+        <= before_midnight.ctl
+    )
+
+    assert (
+        after_midnight.atl
+        <= before_midnight.atl
+    )
+
+    assert (
+        after_midnight.tsb
+        >= before_midnight.tsb
+    )
+
+    assert (
+        after_midnight.recovery_score
+        >= before_midnight.recovery_score
+    )
+
+    assert (
+        after_midnight.recovery_score
+        - before_midnight.recovery_score
+        < 1.0
+    )
 
 def test_completed_workout_reduces_intraday_recovery():
 
