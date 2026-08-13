@@ -39,6 +39,21 @@ class TodayReadinessData:
     ) = None
     recovery_is_time_aware: bool = False
 
+@dataclass(frozen=True)
+class TodayTemporaryAdjustmentData:
+    """
+    Presentation-ready temporary workout adjustment.
+
+    This adjustment applies only to today's execution and
+    does not modify the persistent TrainingPlan.
+    """
+
+    title: str
+    intensity: str
+    maximum_minutes: int
+
+    replaces_planned_session: bool
+    explanation: str
 
 @dataclass(frozen=True)
 class TodayGuidanceData:
@@ -53,6 +68,11 @@ class TodayGuidanceData:
     title: str
     action: str
     plan_is_modified: bool
+
+    temporary_adjustment: (
+        TodayTemporaryAdjustmentData
+        | None
+    )
 
     reasons: tuple[str, ...]
     cautions: tuple[str, ...]

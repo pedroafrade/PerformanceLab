@@ -21,6 +21,7 @@ from app.components.today_page import (
     _recovery_context_label,
     _recovery_updated_label,
     _session_step_html,
+    _show_temporary_adjustment,
     _today_session_metadata,
     _today_session_status,
     _today_session_title,
@@ -370,3 +371,9 @@ def test_today_activity_summary_includes_start_time():
     )
 
     assert "Start time" in result
+
+def test_temporary_adjustment_renderer_exists():
+
+    assert callable(
+        _show_temporary_adjustment
+    )

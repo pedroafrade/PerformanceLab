@@ -990,6 +990,74 @@ def _apply_today_page_styles() -> None:
         unsafe_allow_html=True,
     )
 
+def _show_temporary_adjustment(
+    adjustment,
+) -> None:
+    """
+    Displays today's temporary execution prescription.
+
+    The card is omitted when the original planned session
+    can proceed without adjustment.
+    """
+
+    if adjustment is None:
+        return
+
+    st.markdown(
+        "**Temporary adjustment for today**"
+    )
+
+    (
+        session_column,
+        intensity_column,
+        duration_column,
+    ) = st.columns(
+        [1.8, 1, 1],
+        gap="small",
+    )
+
+    with session_column:
+        st.caption(
+            "Recommended session"
+        )
+        st.markdown(
+            f"**{adjustment.title}**"
+        )
+
+    with intensity_column:
+        st.caption(
+            "Intensity"
+        )
+        st.markdown(
+            f"**{adjustment.intensity}**"
+        )
+
+    with duration_column:
+        st.caption(
+            "Maximum duration"
+        )
+        st.markdown(
+            (
+                f"**{adjustment.maximum_minutes} "
+                "min**"
+            )
+        )
+
+    st.caption(
+        adjustment.explanation
+    )
+
+    if adjustment.replaces_planned_session:
+        st.caption(
+            "This replaces today's planned session "
+            "for execution purposes only."
+        )
+    else:
+        st.caption(
+            "The planned session type is preserved, "
+            "but its volume is temporarily reduced."
+        )
+
 def _show_daily_decision(
     today,
 ) -> None:
@@ -1023,6 +1091,11 @@ def _show_daily_decision(
 
             st.write(
                 today.guidance.action
+            )
+
+            _show_temporary_adjustment(
+                today.guidance
+                .temporary_adjustment
             )
 
             if (

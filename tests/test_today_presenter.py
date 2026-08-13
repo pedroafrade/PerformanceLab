@@ -20,6 +20,7 @@ from performancelab import (
 
 from performancelab.coaching import (
     DailyTrainingDecision,
+    TemporaryWorkoutAdjustment,
 )
 
 from performancelab.presentation import (
@@ -103,6 +104,12 @@ def test_builds_empty_today_context():
     assert (
         result.guidance.plan_is_modified
         is False
+    )
+
+    assert (
+        result.guidance
+        .temporary_adjustment
+        is None
     )
 
     assert result.guidance.reasons == (
@@ -201,6 +208,12 @@ def test_exposes_today_and_next_workout():
     assert (
         result.guidance.plan_is_modified
         is False
+    )
+
+    assert (
+        result.guidance
+        .temporary_adjustment
+        is None
     )
 
     assert (
@@ -630,4 +643,68 @@ def test_presents_easy_only_decision():
             "Replace the planned intensity "
             "with a shorter easy session."
         )
+    )
+
+def test_presents_temporary_workout_adjustment():
+
+    adjustment = TemporaryWorkoutAdjustment(
+        title=(
+            "Rest or very light recovery"
+        ),
+        intensity="Very easy",
+        maximum_duration=timedelta(
+            minutes=20,
+        ),
+        replaces_planned_session=True,
+        explanation=(
+            "Rest is valid. If choosing active "
+            "recovery, keep it very light."
+        ),
+    )
+
+    result = (
+        TodayPresenter
+        ._temporary_adjustment_data(
+            adjustment
+        )
+    )
+
+    assert result is not None
+
+    assert (
+        result.title
+        == "Rest or very light recovery"
+    )
+
+    assert (
+        result.intensity
+        == "Very easy"
+    )
+
+    assert (
+        result.maximum_minutes
+        == 20
+    )
+
+    assert (
+        result.replaces_planned_session
+        is True
+    )
+
+    assert (
+        result.explanation
+        == (
+            "Rest is valid. If choosing active "
+            "recovery, keep it very light."
+        )
+    )
+
+def test_omits_missing_temporary_adjustment():
+
+    assert (
+        TodayPresenter
+        ._temporary_adjustment_data(
+            None
+        )
+        is None
     )

@@ -37,6 +37,7 @@ from .today_models import (
     TodayData,
     TodayGuidanceData,
     TodayReadinessData,
+    TodayTemporaryAdjustmentData,
 )
 
 
@@ -252,6 +253,12 @@ class TodayPresenter:
                     )
                 ),
                 plan_is_modified=False,
+                temporary_adjustment=(
+                    self._temporary_adjustment_data(
+                        domain_guidance
+                        .temporary_adjustment
+                    )
+                ),
                 reasons=(
                     domain_guidance.reasons
                 ),
@@ -280,6 +287,40 @@ class TodayPresenter:
             training_load=training_load,
             next_event=(
                 dashboard.next_event
+            ),
+        )
+
+    @staticmethod
+    def _temporary_adjustment_data(
+        adjustment,
+    ) -> (
+        TodayTemporaryAdjustmentData
+        | None
+    ):
+        """
+        Converts the domain adjustment into immutable
+        presentation data.
+        """
+
+        if adjustment is None:
+            return None
+
+        maximum_minutes = round(
+            adjustment.maximum_duration
+            .total_seconds()
+            / 60
+        )
+
+        return TodayTemporaryAdjustmentData(
+            title=adjustment.title,
+            intensity=adjustment.intensity,
+            maximum_minutes=maximum_minutes,
+            replaces_planned_session=(
+                adjustment
+                .replaces_planned_session
+            ),
+            explanation=(
+                adjustment.explanation
             ),
         )
 
