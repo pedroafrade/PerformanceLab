@@ -16,6 +16,13 @@ from performancelab.presentation import (
 from .activity_analysis import (
     show_activity_analysis,
 )
+
+from .current_state_summary import (
+    CurrentStateSummaryData,
+    current_state_summary_html,
+    current_state_summary_styles,
+)
+
 from .workout_table import (
     format_workout_start_time,
 )
@@ -1058,99 +1065,91 @@ def _show_temporary_adjustment(
             "but its volume is temporarily reduced."
         )
 
+def _today_current_state_summary(
+    today,
+) -> CurrentStateSummaryData:
+    """
+    Maps the Today data into the shared current-state row.
+    """
+
+    return CurrentStateSummaryData(
+        recovery_score=(
+            today.readiness
+            .recovery_score
+        ),
+        recovery_balance=(
+            today.readiness
+            .recovery_balance
+        ),
+        recovery_status=(
+            today.readiness
+            .recovery_status
+        ),
+        chronic_load=(
+            today.training_load
+            .chronic_load
+        ),
+        acute_load=(
+            today.training_load
+            .acute_load
+        ),
+        load_status=(
+            today.training_load
+            .status
+        ),
+        form=(
+            today.readiness.form
+        ),
+        recovery_reference_time=(
+            today.readiness
+            .reference_time
+        ),
+        hours_since_last_workout=(
+            today.readiness
+            .hours_since_last_workout
+        ),
+        recovery_is_time_aware=(
+            today.readiness
+            .recovery_is_time_aware
+        ),
+    )
+
 def _show_daily_decision(
     today,
 ) -> None:
     """
-    Displays the daily decision and the minimum
-    physiological context required to understand it.
+    Displays the daily decision below the shared
+    physiological-state row.
     """
 
     with st.container(
         border=True
     ):
-        (
-            decision_column,
-            recovery_column,
-            form_column,
-            load_column,
-        ) = st.columns(
-            [3.4, 1, 1, 1],
-            gap="medium",
-            vertical_alignment="center",
+        st.caption(
+            "TODAY'S RECOMMENDATION"
         )
 
-        with decision_column:
+        st.markdown(
+            f"### {today.guidance.title}"
+        )
+
+        st.write(
+            today.guidance.action
+        )
+
+        _show_temporary_adjustment(
+            today.guidance
+            .temporary_adjustment
+        )
+
+        if (
+            not today.guidance
+            .plan_is_modified
+        ):
             st.caption(
-                "TODAY'S RECOMMENDATION"
-            )
-
-            st.markdown(
-                f"### {today.guidance.title}"
-            )
-
-            st.write(
-                today.guidance.action
-            )
-
-            _show_temporary_adjustment(
-                today.guidance
-                .temporary_adjustment
-            )
-
-            if (
-                not today.guidance
-                .plan_is_modified
-            ):
-                st.caption(
-                    "This is a temporary daily "
-                    "recommendation. The persistent "
-                    "training plan has not been changed."
-                )
-
-        with recovery_column:
-            st.metric(
-                label=(
-                    "Estimated recovery"
-                ),
-                value=_readiness_score_label(
-                    today.readiness
-                    .recovery_score
-                ),
-            )
-
-            st.caption(
-                _recovery_context_label(
-                    today.readiness
-                )
-            )
-
-            updated_label = (
-                _recovery_updated_label(
-                    today.readiness
-                )
-            )
-
-            if updated_label:
-                st.caption(
-                    updated_label
-                )
-
-        with form_column:
-            st.metric(
-                label="Form",
-                value=_form_label(
-                    today.readiness.form
-                ),
-            )
-
-        with load_column:
-            st.metric(
-                label="Recent load",
-                value=_recent_load_label(
-                    today.readiness
-                    .recent_load
-                ),
+                "This is a temporary daily "
+                "recommendation. The persistent "
+                "training plan has not been changed."
             )
 
 def _today_completed_workout(
@@ -1217,6 +1216,20 @@ def show_today_page(
         today.reference_day.strftime(
             "%A, %d %B %Y"
         )
+    )
+
+    st.markdown(
+        (
+            "<style>"
+            + current_state_summary_styles()
+            + "</style>"
+            + current_state_summary_html(
+                _today_current_state_summary(
+                    today
+                )
+            )
+        ),
+        unsafe_allow_html=True,
     )
 
     _show_daily_decision(

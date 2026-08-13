@@ -22,6 +22,7 @@ from app.components.today_page import (
     _recovery_updated_label,
     _session_step_html,
     _show_temporary_adjustment,
+    _today_current_state_summary,
     _today_session_metadata,
     _today_session_status,
     _today_session_title,
@@ -260,6 +261,43 @@ def test_formats_daily_readiness():
         )
         == "234.9"
     )
+def test_maps_today_current_state_summary():
+
+    today = SimpleNamespace(
+        readiness=SimpleNamespace(
+            recovery_score=19.0,
+            recovery_balance=19.1,
+            recovery_status=(
+                "Recovery needed"
+            ),
+            form=-30.9,
+            reference_time=datetime(
+                2026,
+                8,
+                13,
+                23,
+                7,
+            ),
+            hours_since_last_workout=34.0,
+            recovery_is_time_aware=True,
+        ),
+        training_load=SimpleNamespace(
+            chronic_load=247.0,
+            acute_load=329.9,
+            status="High load",
+        ),
+    )
+
+    result = (
+        _today_current_state_summary(
+            today
+        )
+    )
+
+    assert result.recovery_score == 19.0
+    assert result.chronic_load == 247.0
+    assert result.form == -30.9
+    assert result.acute_load == 329.9
 
 def test_formats_time_aware_recovery_context():
 
