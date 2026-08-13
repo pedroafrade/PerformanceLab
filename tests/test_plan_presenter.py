@@ -1669,7 +1669,7 @@ def test_includes_unplanned_activity_in_completed_load_points():
             start_date=date(
                 2026,
                 8,
-                1,
+                13,
             ),
             end_date=date(
                 2026,
@@ -1705,4 +1705,75 @@ def test_includes_unplanned_activity_in_completed_load_points():
                 682.0
             ),
         ),
+    )
+
+def test_excludes_completed_load_before_initial_plan_week():
+
+    older_activity = Workout(
+        workout_id="older-running"
+    )
+    older_activity.info.date = datetime(
+        2026,
+        8,
+        9,
+        9,
+        0,
+    )
+    older_activity.info.sport = "Running"
+    older_activity.info.title = "Older Run"
+    older_activity.info.duration = timedelta(
+        minutes=60,
+    )
+    older_activity.feedback.rpe = 5.0
+
+    initial_week_activity = Workout(
+        workout_id="initial-week-cycling"
+    )
+    initial_week_activity.info.date = datetime(
+        2026,
+        8,
+        12,
+        11,
+        8,
+    )
+    initial_week_activity.info.sport = "Cycling"
+    initial_week_activity.info.title = "Bicicleta Z2"
+    initial_week_activity.info.duration = timedelta(
+        minutes=110,
+    )
+    initial_week_activity.feedback.rpe = 6.2
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                13,
+            ),
+            end_date=date(
+                2026,
+                10,
+                4,
+            ),
+        ),
+        history=History(
+            workouts=[
+                older_activity,
+                initial_week_activity,
+            ]
+        ),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            13,
+        )
+    )
+
+    assert tuple(
+        point.title
+        for point
+        in result.completed_load_points
+    ) == (
+        "Bicicleta Z2",
     )

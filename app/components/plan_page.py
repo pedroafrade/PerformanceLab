@@ -261,6 +261,9 @@ def _plan_chart_date_scale(
 ):
     """
     Returns the shared complete-plan date scale.
+
+    The scale includes completed activities exposed by the
+    presenter immediately before a midweek plan start.
     """
 
     if (
@@ -269,9 +272,28 @@ def _plan_chart_date_scale(
     ):
         return alt.Scale()
 
+    completed_days = tuple(
+        point.day
+        for point in getattr(
+            plan,
+            "completed_load_points",
+            (),
+        )
+        if point.day is not None
+    )
+
+    chart_start_date = (
+        min(
+            plan.start_date,
+            min(completed_days),
+        )
+        if completed_days
+        else plan.start_date
+    )
+
     return alt.Scale(
         domain=[
-            plan.start_date.isoformat(),
+            chart_start_date.isoformat(),
             plan.end_date.isoformat(),
         ]
     )

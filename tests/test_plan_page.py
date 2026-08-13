@@ -11,6 +11,7 @@ from app.components.plan_page import (
     _ics_escape,
     _plan_calendar_ics,
     _plan_chart_data,
+    _plan_chart_date_scale,
     _plan_header_caption,
     _plan_volume_chart_data,
     _plan_summary_metrics,
@@ -83,6 +84,64 @@ def create_week(
             workout,
         ),
     )
+def test_plan_chart_starts_at_first_completed_activity():
+
+    plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            13,
+        ),
+        end_date=date(
+            2026,
+            10,
+            4,
+        ),
+        completed_load_points=(
+            SimpleNamespace(
+                day=date(
+                    2026,
+                    8,
+                    12,
+                )
+            ),
+        ),
+    )
+
+    scale = _plan_chart_date_scale(
+        plan
+    )
+
+    assert scale.domain == [
+        "2026-08-12",
+        "2026-10-04",
+    ]
+
+
+def test_plan_chart_uses_plan_start_without_completed_history():
+
+    plan = SimpleNamespace(
+        start_date=date(
+            2026,
+            8,
+            13,
+        ),
+        end_date=date(
+            2026,
+            10,
+            4,
+        ),
+        completed_load_points=(),
+    )
+
+    scale = _plan_chart_date_scale(
+        plan
+    )
+
+    assert scale.domain == [
+        "2026-08-13",
+        "2026-10-04",
+    ]
 
 def test_finds_current_plan_week():
 

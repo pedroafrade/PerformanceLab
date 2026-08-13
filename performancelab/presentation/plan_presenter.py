@@ -758,9 +758,28 @@ class PlanPresenter:
 
         This deliberately includes activities that were
         unplanned, outside the plan or substitutes.
+
+        When a plan begins during an incomplete calendar
+        week, completed activities from the beginning of
+        that week remain visible as immediate load context.
         """
 
         points = []
+
+        history_start_date = (
+            self.plan.start_date
+        )
+
+        if history_start_date is not None:
+            history_start_date = (
+                history_start_date
+                - timedelta(
+                    days=(
+                        history_start_date
+                        .weekday()
+                    )
+                )
+            )
 
         for workout in self.history:
 
@@ -788,10 +807,10 @@ class PlanPresenter:
                 continue
 
             if (
-                self.plan.start_date
+                history_start_date
                 is not None
                 and workout_day
-                < self.plan.start_date
+                < history_start_date
             ):
                 continue
 
