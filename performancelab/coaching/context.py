@@ -662,22 +662,13 @@ class CoachContext:
         self,
     ) -> object | None:
         """
-        Returns the event that currently determines the
-        training phase.
+        Returns the event that determines the training phase.
 
-        The primary event guides the general cycle. A nearer
-        event takes precedence inside its taper window.
+        The primary event governs the general cycle, including
+        Peak and Taper. Earlier secondary events remain in the
+        competition calendar without interrupting preparation
+        for the primary event.
         """
-
-        if (
-            self.next_event is not None
-            and self.days_until_event
-            is not None
-            and 0
-            <= self.days_until_event
-            <= 14
-        ):
-            return self.next_event
 
         return (
             self.primary_event

@@ -967,7 +967,7 @@ def test_context_without_events_has_no_plan_metadata():
         is None
     )
 
-def test_near_event_temporarily_determines_phase():
+def test_secondary_event_does_not_override_primary_phase():
 
     athlete = Athlete(
         name="Test Athlete",
@@ -1021,12 +1021,13 @@ def test_near_event_temporarily_determines_phase():
         today=today,
     )
 
+    assert context.next_event is sealand
     assert context.primary_event is trail
-    assert context.phase_event is sealand
+    assert context.phase_event is trail
 
     assert (
         context.days_until_phase_event
-        == 6
+        == 20
     )
 
 

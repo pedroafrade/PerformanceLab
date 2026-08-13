@@ -558,7 +558,7 @@ def test_no_previous_event_uses_normal_event_cycle():
     assert analysis.phase == "Peak"
     assert analysis.strategy == "PeakStrategy"
 
-def test_near_event_determines_phase_inside_taper_window():
+def test_near_secondary_event_does_not_trigger_taper():
 
     next_event = SimpleNamespace(
         event=SimpleNamespace(
@@ -613,26 +613,26 @@ def test_near_event_determines_phase_inside_taper_window():
 
     assert (
         context.phase_event
-        is next_event
+        is primary_event
     )
 
     assert (
         context.days_until_phase_event
-        == 10
+        == 24
     )
 
-    assert analysis.phase == "Taper"
+    assert analysis.phase == "Peak"
 
     assert (
         analysis.strategy
-        == "TaperStrategy"
+        == "PeakStrategy"
     )
 
     assert analysis.summary == (
-        "Taper phase for Preparation Race."
+        "Peak phase for Primary Trail."
     )
 
-def test_near_intermediate_event_uses_race_phase():
+def test_near_secondary_event_does_not_trigger_race_phase():
 
     near_event = SimpleNamespace(
         event=SimpleNamespace(
@@ -675,10 +675,35 @@ def test_near_intermediate_event_uses_race_phase():
         context
     ).analyze()
 
-    assert analysis.phase == "Race"
+    assert (
+        context.next_event
+        is near_event
+    )
+
+    assert (
+        context.primary_event
+        is primary_event
+    )
+
+    assert (
+        context.phase_event
+        is primary_event
+    )
+
+    assert (
+        context.days_until_phase_event
+        == 20
+    )
+
+    assert analysis.phase == "Peak"
+
+    assert (
+        analysis.strategy
+        == "PeakStrategy"
+    )
 
     assert analysis.summary == (
-        "Race phase for Sealand."
+        "Peak phase for Primary Trail."
     )
 
 def test_future_context_ignores_current_fatigue_for_strategy():
