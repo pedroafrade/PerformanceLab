@@ -1590,7 +1590,9 @@ def test_keeps_valid_unicode_unchanged():
         == "III Trail Pé Firme"
     )
 
-def test_uses_resolved_event_name_for_race_workout():
+def test_uses_resolved_event_name_without_console_output(
+    capsys,
+):
 
     race = PlannedWorkout(
         scheduled_at=datetime(
@@ -1636,6 +1638,10 @@ def test_uses_resolved_event_name_for_race_workout():
         .title
         == "III Trail Pé Firme"
     )
+    captured = capsys.readouterr()
+
+    assert captured.out == ""
+    assert captured.err == ""
 
 def test_includes_unplanned_activity_in_completed_load_points():
 

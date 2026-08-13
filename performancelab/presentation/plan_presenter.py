@@ -691,9 +691,6 @@ class PlanPresenter:
                 .strip()
             )
 
-            print("OBJECTIVE:", repr(workout.objective))
-            print("EVENT:", repr(event_title))
-
             if event_title:
                 return event_title
 
