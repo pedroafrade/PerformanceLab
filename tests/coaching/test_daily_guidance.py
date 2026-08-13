@@ -13,6 +13,7 @@ from performancelab.analysis.training_state import (
 from performancelab.coaching import (
     DailyTrainingDecision,
     DailyTrainingGuidance,
+    TemporaryWorkoutAdjustment,
     build_daily_training_guidance,
 )
 from performancelab.training.planning import (
@@ -326,3 +327,272 @@ def test_rest_day_returns_rest_decision():
         result.decision
         is DailyTrainingDecision.REST
     )
+
+def test_proceed_has_no_temporary_adjustment():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=45,
+        ),
+        intensity="Easy",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state()
+        ),
+        workout=workout,
+    )
+
+    assert (
+        result.decision
+        is DailyTrainingDecision.PROCEED
+    )
+
+    assert (
+        result.temporary_adjustment
+        is None
+    )
+
+
+def test_reduces_planned_duration_by_twenty_percent():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Easy",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state(
+                tsb=-5.0,
+                acute_chronic_ratio=1.6,
+            )
+        ),
+        workout=workout,
+    )
+
+    assert (
+        result.decision
+        is DailyTrainingDecision.REDUCE_VOLUME
+    )
+
+    adjustment = (
+        result.temporary_adjustment
+    )
+
+    assert isinstance(
+        adjustment,
+        TemporaryWorkoutAdjustment,
+    )
+
+    assert (
+        adjustment.title
+        == "Easy Run"
+    )
+
+    assert (
+        adjustment.maximum_duration
+        == timedelta(minutes=40)
+    )
+
+    assert (
+        adjustment.replaces_planned_session
+        is False
+    )
+
+    # The persistent planned workout was not mutated.
+    assert (
+        workout.duration
+        == timedelta(minutes=50)
+    )
+
+
+def test_replaces_intensity_with_short_easy_session():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Running",
+        title="LT2 Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Hard",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state(
+                tsb=-5.0,
+                acute_chronic_ratio=1.0,
+            )
+        ),
+        workout=workout,
+    )
+
+    adjustment = (
+        result.temporary_adjustment
+    )
+
+    assert (
+        result.decision
+        is DailyTrainingDecision.EASY_ONLY
+    )
+
+    assert (
+        adjustment.title
+        == "Easy session"
+    )
+
+    assert (
+        adjustment.intensity
+        == "Easy"
+    )
+
+    assert (
+        adjustment.maximum_duration
+        == timedelta(minutes=35)
+    )
+
+    assert (
+        adjustment.replaces_planned_session
+        is True
+    )
+
+
+def test_recovery_allows_rest_or_twenty_minutes():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Running",
+        title="Long Run",
+        duration=timedelta(
+            minutes=115,
+        ),
+        intensity="Easy to moderate",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state(
+                tsb=-25.0,
+                acute_chronic_ratio=1.6,
+            )
+        ),
+        workout=workout,
+    )
+
+    adjustment = (
+        result.temporary_adjustment
+    )
+
+    assert (
+        result.decision
+        is (
+            DailyTrainingDecision
+            .RECOVERY_ONLY
+        )
+    )
+
+    assert (
+        adjustment.title
+        == "Rest or very light recovery"
+    )
+
+    assert (
+        adjustment.intensity
+        == "Very easy"
+    )
+
+    assert (
+        adjustment.maximum_duration
+        == timedelta(minutes=20)
+    )
+
+    assert (
+        adjustment.replaces_planned_session
+        is True
+    )
+
+
+def test_race_review_has_no_automatic_adjustment():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        sport="Trail Running",
+        title="Race",
+        duration=timedelta(
+            hours=3,
+        ),
+        intensity="Race effort",
+        phase="Race",
+    )
+
+    result = build_daily_training_guidance(
+        training_state=(
+            create_training_state(
+                tsb=-25.0,
+                acute_chronic_ratio=1.6,
+            )
+        ),
+        workout=workout,
+    )
+
+    assert (
+        result.decision
+        is (
+            DailyTrainingDecision
+            .REVIEW_REQUIRED
+        )
+    )
+
+    assert (
+        result.temporary_adjustment
+        is None
+    )
+
+
+def test_temporary_adjustment_is_immutable():
+
+    adjustment = TemporaryWorkoutAdjustment(
+        title="Easy session",
+        intensity="Easy",
+        maximum_duration=timedelta(
+            minutes=30,
+        ),
+        replaces_planned_session=True,
+        explanation="Temporary adjustment.",
+    )
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        adjustment.title = "Tempo Run"

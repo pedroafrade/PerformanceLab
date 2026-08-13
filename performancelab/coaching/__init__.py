@@ -36,6 +36,7 @@ from .draft_slot import DraftTrainingSlot
 from .daily_guidance import (
     DailyTrainingDecision,
     DailyTrainingGuidance,
+    TemporaryWorkoutAdjustment,
     build_daily_training_guidance,
 )
 from .activity_signals import (
@@ -111,6 +112,7 @@ __all__ = [
     "DraftTrainingSlot",
     "DailyTrainingDecision",
     "DailyTrainingGuidance",
+    "TemporaryWorkoutAdjustment",
     "build_daily_training_guidance",
     "ActivityCoachSignal",
     "ActivitySignalCategory",

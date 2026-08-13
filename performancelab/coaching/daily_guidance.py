@@ -9,6 +9,7 @@ conservative execution boundaries.
 """
 
 from dataclasses import dataclass
+from datetime import timedelta
 from enum import Enum
 
 from performancelab.analysis.training_state import (
@@ -33,6 +34,22 @@ class DailyTrainingDecision(str, Enum):
     REST = "rest"
     REVIEW_REQUIRED = "review_required"
 
+@dataclass(frozen=True, slots=True)
+class TemporaryWorkoutAdjustment:
+    """
+    Temporary execution prescription for today.
+
+    This object never changes the persistent TrainingPlan.
+    A maximum duration is an upper boundary, not a target
+    that must be completed.
+    """
+
+    title: str
+    intensity: str
+    maximum_duration: timedelta
+
+    replaces_planned_session: bool
+    explanation: str
 
 @dataclass(frozen=True, slots=True)
 class DailyTrainingGuidance:
@@ -41,6 +58,12 @@ class DailyTrainingGuidance:
     """
 
     decision: DailyTrainingDecision
+
+    temporary_adjustment: (
+        TemporaryWorkoutAdjustment
+        | None
+    )
+
     reasons: tuple[str, ...]
     cautions: tuple[str, ...]
 
@@ -85,6 +108,7 @@ def build_daily_training_guidance(
             decision=(
                 DailyTrainingDecision.REST
             ),
+            temporary_adjustment=None,
             reasons=(
                 "No training session is planned today.",
             ),
@@ -96,6 +120,12 @@ def build_daily_training_guidance(
     decision = _daily_training_decision(
         training_state=training_state,
         workout=workout,
+    )
+    temporary_adjustment = (
+        _temporary_workout_adjustment(
+            decision=decision,
+            workout=workout,
+        )
     )
 
     reasons = [
@@ -128,8 +158,165 @@ def build_daily_training_guidance(
 
     return DailyTrainingGuidance(
         decision=decision,
+        temporary_adjustment=(
+            temporary_adjustment
+        ),
         reasons=tuple(reasons),
         cautions=tuple(cautions),
+    )
+
+def _temporary_workout_adjustment(
+    *,
+    decision: DailyTrainingDecision,
+    workout: PlannedWorkout,
+) -> TemporaryWorkoutAdjustment | None:
+    """
+    Builds a conservative execution prescription for today.
+
+    Proceed and race-review decisions do not create a
+    replacement prescription.
+    """
+
+    if decision in {
+        DailyTrainingDecision.PROCEED,
+        DailyTrainingDecision.REST,
+        DailyTrainingDecision.REVIEW_REQUIRED,
+    }:
+        return None
+
+    if workout.duration is None:
+        return None
+
+    if (
+        workout.duration.total_seconds()
+        <= 0
+    ):
+        return None
+
+    if (
+        decision
+        is DailyTrainingDecision.REDUCE_VOLUME
+    ):
+        return TemporaryWorkoutAdjustment(
+            title=(
+                workout.title
+                or "Reduced planned session"
+            ),
+            intensity=(
+                workout.intensity
+                or "Controlled"
+            ),
+            maximum_duration=(
+                _rounded_duration(
+                    workout.duration,
+                    fraction=0.80,
+                    maximum_minutes=None,
+                    minimum_minutes=5,
+                )
+            ),
+            replaces_planned_session=False,
+            explanation=(
+                "Keep the planned training type but use "
+                "no more than 80% of its duration."
+            ),
+        )
+
+    if (
+        decision
+        is DailyTrainingDecision.EASY_ONLY
+    ):
+        return TemporaryWorkoutAdjustment(
+            title="Easy session",
+            intensity="Easy",
+            maximum_duration=(
+                _rounded_duration(
+                    workout.duration,
+                    fraction=0.60,
+                    maximum_minutes=45,
+                    minimum_minutes=20,
+                )
+            ),
+            replaces_planned_session=True,
+            explanation=(
+                "Replace the planned quality work with "
+                "easy continuous training."
+            ),
+        )
+
+    if (
+        decision
+        is DailyTrainingDecision.RECOVERY_ONLY
+    ):
+        return TemporaryWorkoutAdjustment(
+            title="Rest or very light recovery",
+            intensity="Very easy",
+            maximum_duration=(
+                _rounded_duration(
+                    workout.duration,
+                    fraction=1.0,
+                    maximum_minutes=20,
+                    minimum_minutes=5,
+                )
+            ),
+            replaces_planned_session=True,
+            explanation=(
+                "Rest is valid. If choosing active recovery, "
+                "keep it very light and within this maximum."
+            ),
+        )
+
+    return None
+
+
+def _rounded_duration(
+    duration: timedelta,
+    *,
+    fraction: float,
+    maximum_minutes: int | None,
+    minimum_minutes: int,
+) -> timedelta:
+    """
+    Scales a duration and rounds it to a practical
+    five-minute boundary.
+    """
+
+    original_minutes = (
+        duration.total_seconds()
+        / 60
+    )
+
+    adjusted_minutes = (
+        original_minutes
+        * fraction
+    )
+
+    rounded_minutes = int(
+        adjusted_minutes
+        / 5
+        + 0.5
+    ) * 5
+
+    rounded_minutes = max(
+        minimum_minutes,
+        rounded_minutes,
+    )
+
+    if maximum_minutes is not None:
+        rounded_minutes = min(
+            rounded_minutes,
+            maximum_minutes,
+        )
+
+    rounded_minutes = min(
+        rounded_minutes,
+        max(
+            minimum_minutes,
+            int(original_minutes),
+        ),
+    )
+
+    return timedelta(
+        minutes=rounded_minutes
     )
 
 
