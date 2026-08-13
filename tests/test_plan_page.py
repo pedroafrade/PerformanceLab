@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 from app.components.plan_page import (
+    _completed_load_chart_data,
     _current_plan_week,
     _ics_escape,
     _plan_calendar_ics,
@@ -2012,3 +2013,44 @@ def test_builds_completed_load_difference():
     assert result[0][
         "Load difference"
     ] == 99.0
+
+def test_builds_completed_load_chart_from_all_activities():
+
+    points = (
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                12,
+            ),
+            title="Bicicleta Z2",
+            completed_load=682.0,
+        ),
+        SimpleNamespace(
+            day=date(
+                2026,
+                8,
+                13,
+            ),
+            title="Easy Run",
+            completed_load=180.0,
+        ),
+    )
+
+    assert (
+        _completed_load_chart_data(
+            points
+        )
+        == [
+            {
+                "Date": "2026-08-12",
+                "Session": "Bicicleta Z2",
+                "Completed load": 682.0,
+            },
+            {
+                "Date": "2026-08-13",
+                "Session": "Easy Run",
+                "Completed load": 180.0,
+            },
+        ]
+    )

@@ -49,6 +49,16 @@ class PlanChartPointData:
     is_race: bool
     status: str
 
+@dataclass(frozen=True)
+class PlanCompletedLoadPointData:
+    """
+    One completed activity load point prepared for the
+    plan chart.
+    """
+
+    day: date
+    title: str
+    completed_load: float
 
 @dataclass(frozen=True)
 class PlanProgressionPointData:
@@ -148,6 +158,10 @@ class CompletePlanData:
     ]
     chart_points: tuple[
         PlanChartPointData,
+        ...,
+    ]
+    completed_load_points: tuple[
+        PlanCompletedLoadPointData,
         ...,
     ]
     progression: tuple[

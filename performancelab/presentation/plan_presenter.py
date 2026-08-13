@@ -5,12 +5,13 @@ Complete training-plan presenter.
 """
 
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import re
 
 from performancelab.training.load import (
     planned_weekly_load,
     planned_workout_load,
+    workout_load,
 )
 from performancelab.training.planning import (
     TrainingPlanAdaptation,
@@ -20,6 +21,7 @@ from .plan_models import (
     CompletePlanData,
     PlanAdaptationData,
     PlanChartPointData,
+    PlanCompletedLoadPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
     PlanProgressionPointData,
@@ -682,6 +684,89 @@ class PlanPresenter:
             ),
             target_event.scheduled_at.date(),
         )
+
+    def _completed_load_points(
+        self,
+        *,
+        reference_day: date,
+    ) -> tuple[
+        PlanCompletedLoadPointData,
+        ...,
+    ]:
+        """
+        Builds completed-load points directly from every
+        activity in history.
+
+        This deliberately includes activities that were
+        unplanned, outside the plan or substitutes.
+        """
+
+        points = []
+
+        for workout in self.history:
+
+            workout_day = workout.date
+
+            if isinstance(
+                workout_day,
+                datetime,
+            ):
+                workout_day = (
+                    workout_day.date()
+                )
+
+            completed_load = (
+                workout_load(
+                    workout
+                )
+            )
+
+            if (
+                workout_day is None
+                or completed_load is None
+                or workout_day > reference_day
+            ):
+                continue
+
+            if (
+                self.plan.start_date
+                is not None
+                and workout_day
+                < self.plan.start_date
+            ):
+                continue
+
+            if (
+                self.plan.end_date
+                is not None
+                and workout_day
+                > self.plan.end_date
+            ):
+                continue
+
+            points.append(
+                PlanCompletedLoadPointData(
+                    day=workout_day,
+                    title=(
+                        workout.info.title
+                        or workout.sport
+                        or "Activity"
+                    ),
+                    completed_load=float(
+                        completed_load
+                    ),
+                )
+            )
+
+        return tuple(
+            sorted(
+                points,
+                key=lambda point: (
+                    point.day,
+                    point.title,
+                ),
+            )
+        )
     
     def build(
         self,
@@ -958,6 +1043,13 @@ class PlanPresenter:
             reference_day=reference_day,
             weeks=weeks_data,
             chart_points=chart_points,
+            completed_load_points=(
+                self._completed_load_points(
+                    reference_day=(
+                        reference_day
+                    ),
+                )
+            ),
             progression=tuple(
                 progression
             ),

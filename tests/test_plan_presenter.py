@@ -13,6 +13,7 @@ from performancelab.history import (
 from performancelab.presentation import (
     PlanAdaptationData,
     PlanChartPointData,
+    PlanCompletedLoadPointData,
     PlanCurrentPhaseData,
     PlanPhaseData,
     PlanPresenter,
@@ -1496,4 +1497,74 @@ def test_uses_resolved_event_name_for_race_workout():
         .workouts[0]
         .title
         == "III Trail Pé Firme"
+    )
+
+def test_includes_unplanned_activity_in_completed_load_points():
+
+    activity = Workout(
+        workout_id="unplanned-cycling"
+    )
+    activity.info.date = datetime(
+        2026,
+        8,
+        12,
+        11,
+        8,
+    )
+    activity.info.sport = "Cycling"
+    activity.info.title = "Bicicleta Z2"
+    activity.info.duration = timedelta(
+        minutes=110,
+    )
+    activity.feedback.rpe = 6.2
+
+    planned = planned_workout(
+        day=14,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=60,
+        phase="Build",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                1,
+            ),
+            end_date=date(
+                2026,
+                8,
+                31,
+            ),
+            workouts=[
+                planned,
+            ],
+        ),
+        history=History(
+            workouts=[
+                activity,
+            ]
+        ),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            13,
+        )
+    )
+
+    assert result.completed_load_points == (
+        PlanCompletedLoadPointData(
+            day=date(
+                2026,
+                8,
+                12,
+            ),
+            title="Bicicleta Z2",
+            completed_load=pytest.approx(
+                682.0
+            ),
+        ),
     )

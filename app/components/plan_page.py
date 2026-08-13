@@ -345,6 +345,25 @@ def _plan_today_marker(
         )
     )
 
+def _completed_load_chart_data(
+    completed_load_points,
+) -> list[dict]:
+    """
+    Converts every completed historical activity into a
+    chart row, independently of plan reconciliation.
+    """
+
+    return [
+        {
+            "Date": point.day.isoformat(),
+            "Session": point.title,
+            "Completed load": float(
+                point.completed_load
+            ),
+        }
+        for point in completed_load_points
+    ]
+
 def _planned_load_chart_series(
     chart_points,
 ) -> tuple[
@@ -764,16 +783,12 @@ def _planned_load_chart(
             ),
         )
     )
-    completed_rows = [
-        row
-        for row in training_data
-        if (
-            row.get(
-                "Completed load"
-            )
-            is not None
+
+    completed_rows = (
+        _completed_load_chart_data(
+            plan.completed_load_points
         )
-    ]
+    )
 
     completed_base = (
         alt.Chart(
@@ -797,26 +812,12 @@ def _planned_load_chart(
                 ),
                 alt.Tooltip(
                     "Session:N",
-                    title="Session",
-                ),
-                alt.Tooltip(
-                    "Planned load:Q",
-                    title="Planned",
-                    format=".0f",
+                    title="Activity",
                 ),
                 alt.Tooltip(
                     "Completed load:Q",
                     title="Completed",
                     format=".0f",
-                ),
-                alt.Tooltip(
-                    "Load difference:Q",
-                    title="Δ load",
-                    format="+.0f",
-                ),
-                alt.Tooltip(
-                    "Status:N",
-                    title="Status",
                 ),
             ],
         )
