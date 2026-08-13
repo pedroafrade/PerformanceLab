@@ -3188,14 +3188,37 @@ def _compact_plan_layout_styles() -> None:
         """
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 2.4rem;
-            padding-bottom: 1rem;
+            padding-top: 3.65rem;
+            padding-bottom: 0 !important;
         }
 
-        div[data-testid="stMainBlockContainer"] h1 {
-            margin-top: 0;
-            margin-bottom: 0.2rem;
-            line-height: 1.2;
+        section[data-testid="stMain"] > div {
+            padding-bottom: 0 !important;
+        }
+
+        div[data-testid="stMainBlockContainer"]
+        > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .plan-page-header {
+            margin: 0 0 0.45rem 0;
+            padding: 0;
+        }
+
+        .plan-page-title {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 750;
+            line-height: 1.05;
+        }
+
+        .plan-page-subtitle {
+            margin-top: 0.32rem;
+            font-size: 0.76rem;
+            line-height: 1.15;
+            opacity: 0.58;
         }
 
         div[data-testid="stMainBlockContainer"] h2,
@@ -3564,14 +3587,24 @@ def show_plan_page(
 
     with title_column:
 
-        st.title(
-            "Plan"
-        )
-
-        st.caption(
+        plan_subtitle = (
             _plan_header_caption(
                 plan
             )
+        )
+
+        st.markdown(
+            (
+                '<div class="plan-page-header">'
+                '<div class="plan-page-title">'
+                "Plan"
+                "</div>"
+                '<div class="plan-page-subtitle">'
+                f"{escape(plan_subtitle)}"
+                "</div>"
+                "</div>"
+            ),
+            unsafe_allow_html=True,
         )
 
     with action_column:

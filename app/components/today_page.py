@@ -859,12 +859,37 @@ def _apply_today_page_styles() -> None:
         """
         <style>
         div[data-testid="stMainBlockContainer"] {
-            padding-top: 2.25rem;
-            padding-bottom: 0.75rem;
+            padding-top: 3.65rem;
+            padding-bottom: 0 !important;
         }
 
-        div[data-testid="stMainBlockContainer"] h1 {
-            margin-bottom: 0;
+        section[data-testid="stMain"] > div {
+            padding-bottom: 0 !important;
+        }
+
+        div[data-testid="stMainBlockContainer"]
+        > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .today-page-header {
+            margin: 0 0 0.45rem 0;
+            padding: 0;
+        }
+
+        .today-page-title {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 750;
+            line-height: 1.05;
+        }
+
+        .today-page-subtitle {
+            margin-top: 0.32rem;
+            font-size: 0.76rem;
+            line-height: 1.15;
+            opacity: 0.58;
         }
         .today-activity-summary {
             display: grid;
@@ -1208,14 +1233,24 @@ def show_today_page(
             today.today_activity_summary,
         )
     )
-    st.title(
-        "Today"
-    )
-
-    st.caption(
+    today_subtitle = (
         today.reference_day.strftime(
             "%A, %d %B %Y"
         )
+    )
+
+    st.markdown(
+        (
+            '<div class="today-page-header">'
+            '<div class="today-page-title">'
+            "Today"
+            "</div>"
+            '<div class="today-page-subtitle">'
+            f"{escape(today_subtitle)}"
+            "</div>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
     )
 
     st.markdown(
