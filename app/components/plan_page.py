@@ -3179,7 +3179,9 @@ def _plan_styles() -> None:
         """,
         unsafe_allow_html=True,
     )
-def _compact_plan_layout_styles() -> None:
+def _compact_plan_layout_styles(
+    subtitle: str,
+) -> None:
     """
     Balances compactness and readability on the plan page.
     """
@@ -3343,7 +3345,17 @@ def _compact_plan_layout_styles() -> None:
         }
 
         </style>
-        """,
+        """
+        + (
+            '<div class="plan-page-header">'
+            '<div class="plan-page-title">'
+            "Plan"
+            "</div>"
+            '<div class="plan-page-subtitle">'
+            f"{escape(subtitle)}"
+            "</div>"
+            "</div>"
+        ),
         unsafe_allow_html=True,
     )
 def _plan_header_caption(
@@ -3576,8 +3588,6 @@ def show_plan_page(
         reference_day=today
     )
 
-    _compact_plan_layout_styles()
-
     title_column, action_column = (
         st.columns(
             [4.5, 1.5],
@@ -3593,18 +3603,8 @@ def show_plan_page(
             )
         )
 
-        st.markdown(
-            (
-                '<div class="plan-page-header">'
-                '<div class="plan-page-title">'
-                "Plan"
-                "</div>"
-                '<div class="plan-page-subtitle">'
-                f"{escape(plan_subtitle)}"
-                "</div>"
-                "</div>"
-            ),
-            unsafe_allow_html=True,
+        _compact_plan_layout_styles(
+            plan_subtitle
         )
 
     with action_column:

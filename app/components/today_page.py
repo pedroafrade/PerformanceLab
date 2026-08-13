@@ -849,7 +849,9 @@ def _show_guidance_card(
         )
 
 
-def _apply_today_page_styles() -> None:
+def _apply_today_page_styles(
+    subtitle: str,
+) -> None:
     """
     Reduces unused Streamlit spacing on the Today
     page without changing other application pages.
@@ -1018,7 +1020,17 @@ def _apply_today_page_styles() -> None:
             }
         }
         </style>
-        """,
+        """
+        + (
+            '<div class="today-page-header">'
+            '<div class="today-page-title">'
+            "Today"
+            "</div>"
+            '<div class="today-page-subtitle">'
+            f"{escape(subtitle)}"
+            "</div>"
+            "</div>"
+        ),
         unsafe_allow_html=True,
     )
 
@@ -1217,8 +1229,6 @@ def show_today_page(
     Displays the athlete's daily decision page.
     """
 
-    _apply_today_page_styles()
-
     today = TodayPresenter(
         athlete
     ).build(
@@ -1238,19 +1248,8 @@ def show_today_page(
             "%A, %d %B %Y"
         )
     )
-
-    st.markdown(
-        (
-            '<div class="today-page-header">'
-            '<div class="today-page-title">'
-            "Today"
-            "</div>"
-            '<div class="today-page-subtitle">'
-            f"{escape(today_subtitle)}"
-            "</div>"
-            "</div>"
-        ),
-        unsafe_allow_html=True,
+    _apply_today_page_styles(
+        today_subtitle
     )
 
     st.markdown(
