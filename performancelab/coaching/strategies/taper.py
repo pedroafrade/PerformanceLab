@@ -14,6 +14,12 @@ from performancelab.coaching.strategy import (
 )
 
 
+EARLY_TAPER_MIN_DAYS = 8
+EARLY_TAPER_MAX_DAYS = 14
+EARLY_TAPER_LONG_MINUTES = 75
+EARLY_TAPER_EVENT_ELEVATION_RATIO = 0.45
+
+
 class TaperStrategy(CoachStrategy):
 
     name = "TaperStrategy"
@@ -47,8 +53,15 @@ class TaperStrategy(CoachStrategy):
         long_sessions = 0
         recovery_days = 4
         focus = "race readiness"
+
         event_sport = self._event_sport(
             context
+        )
+
+        elevation_demand = (
+            self._event_elevation_demand(
+                context
+            )
         )
 
         key_session_focus = (
@@ -57,13 +70,42 @@ class TaperStrategy(CoachStrategy):
             )
         )
 
-        if getattr(
+        long_session_minutes = None
+        long_session_elevation_gain = None
+
+        if self._uses_reduced_trail_long_session(
+            context=context,
+            event_sport=event_sport,
+        ):
+            long_sessions = 1
+            long_session_minutes = (
+                EARLY_TAPER_LONG_MINUTES
+            )
+            long_session_elevation_gain = (
+                self._reduced_trail_elevation_target(
+                    context
+                )
+            )
+
+            guidelines.append(
+                (
+                    "Retain one reduced trail endurance "
+                    "session early in the taper."
+                )
+            )
+
+        should_reduce_volume = getattr(
             context,
             "should_reduce_volume",
             context.tsb < -10,
-        ):
+        )
+
+        if should_reduce_volume:
             volume_factor = 0.50
             intensity_sessions = 0
+            long_sessions = 0
+            long_session_minutes = None
+            long_session_elevation_gain = None
             recovery_days = 4
             focus = "fatigue reduction"
 
@@ -81,6 +123,9 @@ class TaperStrategy(CoachStrategy):
                 0.50,
             )
             intensity_sessions = 0
+            long_sessions = 0
+            long_session_minutes = None
+            long_session_elevation_gain = None
             recovery_days = max(
                 recovery_days,
                 4,
@@ -91,14 +136,21 @@ class TaperStrategy(CoachStrategy):
                 "Recent perceived effort is high."
             )
 
-        training_state = getattr(
+        training_reference = getattr(
             context,
-            "training_state",
+            "training_reference",
             None,
         )
 
+        if training_reference is None:
+            training_reference = getattr(
+                context,
+                "training_state",
+                None,
+            )
+
         typical_weekly_minutes = getattr(
-            training_state,
+            training_reference,
             "typical_weekly_minutes",
             0.0,
         )
@@ -115,6 +167,12 @@ class TaperStrategy(CoachStrategy):
         else:
 
             target_weekly_minutes = 240
+
+        if long_session_minutes is not None:
+            target_weekly_minutes = max(
+                target_weekly_minutes,
+                long_session_minutes,
+            )
 
         event_name = self._event_name(context)
 
@@ -145,11 +203,20 @@ class TaperStrategy(CoachStrategy):
 
             race_specificity=0.95,
 
+            elevation_demand=elevation_demand,
+
             target_weekly_minutes=(
                 target_weekly_minutes
             ),
-            target_weekly_load=350.0 * volume_factor,
-            long_session_minutes=None,
+            target_weekly_load=(
+                350.0 * volume_factor
+            ),
+            long_session_minutes=(
+                long_session_minutes
+            ),
+            long_session_elevation_gain=(
+                long_session_elevation_gain
+            ),
 
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),
@@ -157,6 +224,98 @@ class TaperStrategy(CoachStrategy):
         )
 
     # ======================================================
+
+    @staticmethod
+    def _uses_reduced_trail_long_session(
+        *,
+        context: CoachContext,
+        event_sport: str | None,
+    ) -> bool:
+        """
+        Keeps one reduced specific endurance session during
+        the first taper week for a trail primary event.
+        """
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        is_trail = (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        )
+
+        return (
+            is_trail
+            and isinstance(
+                days_until_event,
+                int,
+            )
+            and not isinstance(
+                days_until_event,
+                bool,
+            )
+            and EARLY_TAPER_MIN_DAYS
+            <= days_until_event
+            <= EARLY_TAPER_MAX_DAYS
+        )
+
+    # ======================================================
+
+    @classmethod
+    def _reduced_trail_elevation_target(
+        cls,
+        context: CoachContext,
+    ) -> int | None:
+        """
+        Uses a reduced proportion of event elevation to retain
+        trail specificity without reproducing peak load.
+        """
+
+        event_entry = getattr(
+            context,
+            "phase_event",
+            None,
+        )
+
+        event = getattr(
+            event_entry,
+            "event",
+            None,
+        )
+
+        event_elevation_gain = getattr(
+            event,
+            "elevation_gain",
+            None,
+        )
+
+        if (
+            not isinstance(
+                event_elevation_gain,
+                (int, float),
+            )
+            or isinstance(
+                event_elevation_gain,
+                bool,
+            )
+            or event_elevation_gain <= 0
+        ):
+            return None
+
+        target = (
+            float(event_elevation_gain)
+            * EARLY_TAPER_EVENT_ELEVATION_RATIO
+        )
+
+        return cls._round_elevation_to_twenty_five(
+            target
+        )
+
+    # ======================================================
+
     @staticmethod
     def _key_session_focus(
         *,
@@ -179,7 +338,27 @@ class TaperStrategy(CoachStrategy):
         )
 
     # ======================================================
-    
+
+    @staticmethod
+    def _round_elevation_to_twenty_five(
+        elevation_gain: float,
+    ) -> int:
+        """
+        Rounds elevation to a practical twenty-five-metre
+        target.
+        """
+
+        return int(
+            (
+                elevation_gain
+                + 12.5
+            )
+            // 25
+            * 25
+        )
+
+    # ======================================================
+
     @staticmethod
     def _round_to_five(
         minutes: float,

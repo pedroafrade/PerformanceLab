@@ -29,19 +29,31 @@ def make_context(
     average_rpe: float | None = None,
     typical_weekly_minutes: float = 0.0,
     phase_event=None,
+    days_until_phase_event: int | None = None,
 ):
+    training_reference = SimpleNamespace(
+        typical_weekly_minutes=(
+            typical_weekly_minutes
+        ),
+    )
+
     return SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
         next_event=phase_event,
         phase_event=phase_event,
         primary_event=phase_event,
-        training_state=SimpleNamespace(
-            typical_weekly_minutes=(
-                typical_weekly_minutes
-            ),
+        days_until_phase_event=(
+            days_until_phase_event
+        ),
+        training_state=(
+            training_reference
+        ),
+        training_reference=(
+            training_reference
         ),
     )
+
 
 def build_plan(
     *,
@@ -50,6 +62,7 @@ def build_plan(
     event_name: str | None = None,
     typical_weekly_minutes: float = 0.0,
     phase_event=None,
+    days_until_phase_event: int | None = None,
 ):
     strategy = StubTaperStrategy(
         event_name=event_name,
@@ -63,6 +76,9 @@ def build_plan(
                 typical_weekly_minutes
             ),
             phase_event=phase_event,
+            days_until_phase_event=(
+                days_until_phase_event
+            ),
         ),
     )
 
@@ -430,12 +446,139 @@ def test_plan_collections_are_immutable_tuples():
 # ==========================================================
 
 
-def test_taper_has_no_long_session():
+def test_taper_without_early_trail_context_has_no_long():
+
     plan = build_plan()
 
     assert plan.long_sessions == 0
     assert plan.long_session_minutes is None
 
+    assert (
+        plan.long_session_elevation_gain
+        is None
+    )
+
+def test_early_trail_taper_keeps_reduced_long_session():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            elevation_gain=950.0,
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+        days_until_phase_event=13,
+        typical_weekly_minutes=300.0,
+    )
+
+    assert plan.long_sessions == 1
+
+    assert (
+        plan.long_session_minutes
+        == 75
+    )
+
+    assert (
+        plan.long_session_elevation_gain
+        == 425
+    )
+
+    assert (
+        plan.elevation_demand
+        == "mountainous"
+    )
+
+    assert (
+        "Retain one reduced trail endurance "
+        "session early in the taper."
+        in plan.guidelines
+    )
+
+
+def test_road_taper_does_not_add_long_session():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Road Race",
+            sport="Road Running",
+            elevation_demand="rolling",
+            elevation_gain=150.0,
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+        days_until_phase_event=13,
+    )
+
+    assert plan.long_sessions == 0
+    assert plan.long_session_minutes is None
+
+    assert (
+        plan.long_session_elevation_gain
+        is None
+    )
+
+
+def test_final_trail_taper_week_has_no_long_session():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            elevation_gain=950.0,
+        ),
+    )
+
+    plan = build_plan(
+        phase_event=event,
+        days_until_phase_event=7,
+    )
+
+    assert plan.long_sessions == 0
+    assert plan.long_session_minutes is None
+
+    assert (
+        plan.long_session_elevation_gain
+        is None
+    )
+
+
+def test_fatigue_removes_early_taper_long_session():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            elevation_gain=950.0,
+        ),
+    )
+
+    context = make_context(
+        tsb=-20.0,
+        phase_event=event,
+        days_until_phase_event=13,
+    )
+
+    context.should_reduce_volume = True
+
+    plan = TaperStrategy().build(
+        context
+    )
+
+    assert plan.long_sessions == 0
+    assert plan.long_session_minutes is None
+
+    assert (
+        plan.long_session_elevation_gain
+        is None
+    )
 
 def test_intensity_removed_only_when_required():
     normal = build_plan()
