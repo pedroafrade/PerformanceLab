@@ -79,6 +79,39 @@ class DevelopmentPerformanceReferencesData:
     ftp: float | None
 
 @dataclass(frozen=True)
+class DevelopmentTrendMetricData:
+    """
+    One historical development metric compared across
+    two consecutive fixed-duration windows.
+    """
+
+    current_value: float | None
+    previous_value: float | None
+
+    absolute_change: float | None
+    percentage_change: float | None
+
+    current_samples: int
+    previous_samples: int
+
+    window_days: int = 28
+
+
+@dataclass(frozen=True)
+class DevelopmentTrendsData:
+    """
+    Historical volume trends prepared for presentation.
+    """
+
+    exercise_minutes_per_day: (
+        DevelopmentTrendMetricData
+    )
+
+    exercise_distance_per_day: (
+        DevelopmentTrendMetricData
+    )
+
+@dataclass(frozen=True)
 class DevelopmentData:
     """
     Presentation-ready view of the athlete's
@@ -112,6 +145,11 @@ class DevelopmentData:
 
     load_status: str
     load_recommendation: str
+
+    historical_trends: (
+        DevelopmentTrendsData
+        | None
+    ) = None
 
     sport_volume: tuple[
         DevelopmentSportVolumeData,

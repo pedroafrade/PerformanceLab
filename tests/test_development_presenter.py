@@ -17,6 +17,8 @@ from performancelab import (
 from performancelab.presentation import (
     DevelopmentData,
     DevelopmentPresenter,
+    DevelopmentTrendMetricData,
+    DevelopmentTrendsData,
 )
 
 
@@ -45,6 +47,146 @@ def test_builds_empty_development_data():
     assert result.current_fatigue == 0.0
     assert result.current_form == 0.0
 
+def test_builds_empty_historical_development_trends():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=datetime(
+                2026,
+                8,
+                14,
+                12,
+                0,
+            )
+        )
+    )
+
+    trends = result.historical_trends
+
+    assert isinstance(
+        trends,
+        DevelopmentTrendsData,
+    )
+
+    minutes = (
+        trends.exercise_minutes_per_day
+    )
+
+    distance = (
+        trends.exercise_distance_per_day
+    )
+
+    assert isinstance(
+        minutes,
+        DevelopmentTrendMetricData,
+    )
+
+    assert minutes.current_value is None
+    assert minutes.previous_value is None
+    assert minutes.absolute_change is None
+    assert minutes.percentage_change is None
+    assert minutes.current_samples == 0
+    assert minutes.previous_samples == 0
+    assert minutes.window_days == 28
+
+    assert distance.current_value is None
+    assert distance.previous_value is None
+    assert distance.absolute_change is None
+    assert distance.percentage_change is None
+    assert distance.current_samples == 0
+    assert distance.previous_samples == 0
+
+def test_compares_historical_development_volume_windows():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    reference_time = datetime(
+        2026,
+        8,
+        14,
+        12,
+        0,
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Running",
+            workout_date=date(
+                2026,
+                8,
+                10,
+            ),
+            distance=56.0,
+            elevation_gain=0.0,
+            duration=timedelta(
+                minutes=280,
+            ),
+            rpe=5,
+            title="Current window",
+        )
+    )
+
+    athlete.history.add(
+        create_workout(
+            sport="Cycling",
+            workout_date=date(
+                2026,
+                7,
+                10,
+            ),
+            distance=28.0,
+            elevation_gain=0.0,
+            duration=timedelta(
+                minutes=140,
+            ),
+            rpe=4,
+            title="Previous window",
+        )
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
+    trends = result.historical_trends
+
+    assert trends is not None
+
+    minutes = (
+        trends.exercise_minutes_per_day
+    )
+
+    assert minutes.current_value == 10.0
+    assert minutes.previous_value == 5.0
+    assert minutes.absolute_change == 5.0
+    assert minutes.percentage_change == 100.0
+    assert minutes.current_samples == 1
+    assert minutes.previous_samples == 1
+
+    distance = (
+        trends.exercise_distance_per_day
+    )
+
+    assert distance.current_value == 2.0
+    assert distance.previous_value == 1.0
+    assert distance.absolute_change == 1.0
+    assert distance.percentage_change == 100.0
+    assert distance.current_samples == 1
+    assert distance.previous_samples == 1
 
 def test_builds_immutable_development_series():
 

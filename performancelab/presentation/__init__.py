@@ -36,7 +36,10 @@ from .development_models import (
     DevelopmentPaceZoneData,
     DevelopmentPerformanceReferencesData,
     DevelopmentSportVolumeData,
+    DevelopmentTrendMetricData,
+    DevelopmentTrendsData,
 )
+
 from .development_presenter import (
     DevelopmentPresenter,
 )
@@ -169,6 +172,8 @@ __all__ = [
     "DevelopmentPerformanceReferencesData",
     "DevelopmentPresenter",
     "DevelopmentSportVolumeData",
+    "DevelopmentTrendMetricData",
+    "DevelopmentTrendsData",
 
 
     # Dashboard

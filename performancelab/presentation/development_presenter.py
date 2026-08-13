@@ -3,7 +3,11 @@ PerformanceLab
 
 Development presenter.
 """
-from datetime import datetime
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
 
 from performancelab.athlete import Athlete
 
@@ -20,6 +24,8 @@ from .development_models import (
     DevelopmentPaceZoneData,
     DevelopmentPerformanceReferencesData,
     DevelopmentSportVolumeData,
+    DevelopmentTrendMetricData,
+    DevelopmentTrendsData,
 )
 
 from performancelab.physiology import (
@@ -42,6 +48,249 @@ class DevelopmentPresenter:
     ) -> None:
 
         self.athlete = athlete
+
+    @staticmethod
+    def _workout_day(
+        workout,
+    ) -> date | None:
+        """
+        Returns the calendar day of one completed workout.
+        """
+
+        workout_day = workout.date
+
+        if isinstance(
+            workout_day,
+            datetime,
+        ):
+            return workout_day.date()
+
+        if isinstance(
+            workout_day,
+            date,
+        ):
+            return workout_day
+
+        return None
+
+    @staticmethod
+    def _trend_metric(
+        *,
+        current_total: float,
+        previous_total: float,
+        current_samples: int,
+        previous_samples: int,
+        window_days: int,
+    ) -> DevelopmentTrendMetricData:
+        """
+        Converts two window totals into comparable
+        per-day values and changes.
+        """
+
+        current_value = (
+            current_total
+            / window_days
+            if current_samples > 0
+            else None
+        )
+
+        previous_value = (
+            previous_total
+            / window_days
+            if previous_samples > 0
+            else None
+        )
+
+        comparison_available = (
+            current_value is not None
+            and previous_value is not None
+        )
+
+        absolute_change = (
+            current_value
+            - previous_value
+            if comparison_available
+            else None
+        )
+
+        percentage_change = None
+
+        if (
+            comparison_available
+            and previous_value > 0
+        ):
+            percentage_change = (
+                (
+                    current_value
+                    - previous_value
+                )
+                / previous_value
+                * 100
+            )
+
+        return DevelopmentTrendMetricData(
+            current_value=current_value,
+            previous_value=previous_value,
+            absolute_change=absolute_change,
+            percentage_change=(
+                percentage_change
+            ),
+            current_samples=current_samples,
+            previous_samples=previous_samples,
+            window_days=window_days,
+        )
+
+    def _historical_trends(
+        self,
+        *,
+        reference_day: date,
+    ) -> DevelopmentTrendsData:
+        """
+        Compares the latest 28 complete calendar days
+        with the immediately preceding 28 days.
+
+        Missing duration or distance is ignored rather
+        than replaced by an invented value.
+        """
+
+        window_days = 28
+
+        current_start = (
+            reference_day
+            - timedelta(
+                days=window_days - 1
+            )
+        )
+
+        previous_end = (
+            current_start
+            - timedelta(days=1)
+        )
+
+        previous_start = (
+            previous_end
+            - timedelta(
+                days=window_days - 1
+            )
+        )
+
+        current_minutes = 0.0
+        previous_minutes = 0.0
+
+        current_distance = 0.0
+        previous_distance = 0.0
+
+        current_duration_samples = 0
+        previous_duration_samples = 0
+
+        current_distance_samples = 0
+        previous_distance_samples = 0
+
+        for workout in self.athlete.history:
+
+            workout_day = (
+                self._workout_day(
+                    workout
+                )
+            )
+
+            if workout_day is None:
+                continue
+
+            in_current_window = (
+                current_start
+                <= workout_day
+                <= reference_day
+            )
+
+            in_previous_window = (
+                previous_start
+                <= workout_day
+                <= previous_end
+            )
+
+            if not (
+                in_current_window
+                or in_previous_window
+            ):
+                continue
+
+            duration = workout.duration
+
+            if (
+                duration is not None
+                and duration.total_seconds()
+                >= 0
+            ):
+                duration_minutes = (
+                    duration.total_seconds()
+                    / 60
+                )
+
+                if in_current_window:
+                    current_minutes += (
+                        duration_minutes
+                    )
+                    current_duration_samples += 1
+                else:
+                    previous_minutes += (
+                        duration_minutes
+                    )
+                    previous_duration_samples += 1
+
+            distance = workout.distance
+
+            if (
+                distance is not None
+                and float(distance) >= 0
+            ):
+                if in_current_window:
+                    current_distance += float(
+                        distance
+                    )
+                    current_distance_samples += 1
+                else:
+                    previous_distance += float(
+                        distance
+                    )
+                    previous_distance_samples += 1
+
+        return DevelopmentTrendsData(
+            exercise_minutes_per_day=(
+                self._trend_metric(
+                    current_total=(
+                        current_minutes
+                    ),
+                    previous_total=(
+                        previous_minutes
+                    ),
+                    current_samples=(
+                        current_duration_samples
+                    ),
+                    previous_samples=(
+                        previous_duration_samples
+                    ),
+                    window_days=window_days,
+                )
+            ),
+            exercise_distance_per_day=(
+                self._trend_metric(
+                    current_total=(
+                        current_distance
+                    ),
+                    previous_total=(
+                        previous_distance
+                    ),
+                    current_samples=(
+                        current_distance_samples
+                    ),
+                    previous_samples=(
+                        previous_distance_samples
+                    ),
+                    window_days=window_days,
+                )
+            ),
+        )
 
     def _sport_volume(
         self,
@@ -386,6 +635,18 @@ class DevelopmentPresenter:
             .training_state
         )
 
+        reference_day = (
+            reference_time.date()
+            if reference_time is not None
+            else date.today()
+        )
+
+        historical_trends = (
+            self._historical_trends(
+                reference_day=reference_day
+            )
+        )
+
         return DevelopmentData(
             dates=tuple(
                 performance.dates
@@ -441,6 +702,9 @@ class DevelopmentPresenter:
             ),
             load_recommendation=(
                 training_load.recommendation
+            ),
+            historical_trends=(
+                historical_trends
             ),
             sport_volume=(
                 self._sport_volume()
