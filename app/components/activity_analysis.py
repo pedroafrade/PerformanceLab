@@ -5,7 +5,10 @@ Reusable completed-activity analysis.
 """
 
 from bisect import bisect_left
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 from math import (
     asin,
     cos,
@@ -51,6 +54,13 @@ def _parse_time(
 def _workout_datetime(
     workout,
 ) -> datetime | None:
+    """
+    Returns a comparison-safe workout datetime.
+
+    Exact timezone-aware timestamps are normalized to UTC.
+    The timezone marker is then removed so they can be
+    compared with legacy date-only and naive activities.
+    """
 
     value = getattr(
         workout,
@@ -62,6 +72,18 @@ def _workout_datetime(
         value,
         datetime,
     ):
+
+        if value.tzinfo is not None:
+            return (
+                value
+                .astimezone(
+                    timezone.utc
+                )
+                .replace(
+                    tzinfo=None
+                )
+            )
+
         return value
 
     if value is None:

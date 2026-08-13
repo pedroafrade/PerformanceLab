@@ -2,10 +2,15 @@
 Tests for the Today page.
 """
 
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 from types import SimpleNamespace
 
 from app.components.today_page import (
+    _activity_summary_html,
     _adaptation_change_label,
     _duration_label,
     _form_label,
@@ -334,3 +339,34 @@ def test_omits_missing_recovery_update_time():
         )
         is None
     )
+
+def test_today_activity_summary_includes_start_time():
+
+    activity = SimpleNamespace(
+        distance=8.69,
+        duration=timedelta(
+            hours=1,
+            minutes=41,
+        ),
+        elevation_gain=308,
+        rpe=5.9,
+        completed_load=384,
+    )
+
+    workout = SimpleNamespace(
+        date=datetime(
+            2026,
+            8,
+            12,
+            10,
+            8,
+            tzinfo=timezone.utc,
+        )
+    )
+
+    result = _activity_summary_html(
+        activity,
+        workout,
+    )
+
+    assert "Start time" in result

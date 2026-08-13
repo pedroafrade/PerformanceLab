@@ -2,10 +2,16 @@
 Tests for the Activities page.
 """
 
-from datetime import date, timedelta
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+    timezone,
+)
 
 from app.components.activities_page import (
     _activity_coach_material,
+    _activity_date_label,
     _activity_rows,
     _activity_row_html,
     _analysis_available,
@@ -27,6 +33,9 @@ from performancelab.presentation import (
 from performancelab import (
     Athlete,
     Workout,
+)
+from app.components.workout_table import (
+    format_workout_start_time,
 )
 
 
@@ -686,6 +695,14 @@ def test_builds_unified_activity_metrics():
     )
 
     workout = Workout()
+    workout.info.date = datetime(
+        2026,
+        8,
+        12,
+        10,
+        8,
+        tzinfo=timezone.utc,
+    )
     workout.info.sport = "Cycling"
     workout.info.distance = 50.3
     workout.info.duration = timedelta(
@@ -703,6 +720,7 @@ def test_builds_unified_activity_metrics():
     )
 
     assert "Distance" in html
+    assert "Start time" in html
     assert "Duration" in html
     assert "Elevation" in html
     assert "RPE" in html
@@ -799,3 +817,52 @@ def test_builds_coach_payload_without_generation():
     assert len(
         athlete.activity_coach_interpretations
     ) == 0
+
+def test_formats_workout_start_time_in_display_timezone():
+
+    result = format_workout_start_time(
+        datetime(
+            2026,
+            8,
+            12,
+            10,
+            8,
+            tzinfo=timezone.utc,
+        ),
+        display_timezone=timezone(
+            timedelta(
+                hours=1,
+            )
+        ),
+    )
+
+    assert result == "11:08"
+
+
+def test_does_not_invent_missing_workout_start_time():
+
+    assert (
+        format_workout_start_time(
+            date(
+                2026,
+                8,
+                12,
+            )
+        )
+        == "—"
+    )
+
+def test_activity_list_date_omits_start_time():
+
+    result = _activity_date_label(
+        datetime(
+            2026,
+            8,
+            12,
+            10,
+            8,
+            tzinfo=timezone.utc,
+        )
+    )
+
+    assert result == "2026-08-12"

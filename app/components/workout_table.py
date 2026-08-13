@@ -4,7 +4,11 @@ PerformanceLab
 Workout Table Component.
 """
 
-from datetime import datetime, timedelta
+from datetime import (
+    datetime,
+    timedelta,
+    tzinfo,
+)
 
 import pandas as pd
 import streamlit as st
@@ -32,6 +36,43 @@ def format_workout_date(value) -> str:
 
 
 # ======================================================
+def format_workout_start_time(
+    value,
+    *,
+    display_timezone: (
+        tzinfo | None
+    ) = None,
+) -> str:
+    """
+    Formats an exact workout start time.
+
+    Timezone-aware timestamps are converted to the local
+    display timezone. Date-only activities deliberately
+    remain unavailable because no start time was recorded.
+    """
+
+    if not isinstance(
+        value,
+        datetime,
+    ):
+        return "—"
+
+    if value.tzinfo is not None:
+        target_timezone = (
+            display_timezone
+            or datetime.now()
+            .astimezone()
+            .tzinfo
+        )
+
+        if target_timezone is not None:
+            value = value.astimezone(
+                target_timezone
+            )
+
+    return value.strftime(
+        "%H:%M"
+    )
 
 def format_duration(
     value: timedelta | None,

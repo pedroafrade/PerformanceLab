@@ -4,7 +4,11 @@ PerformanceLab
 Activities page.
 """
 
-from datetime import date, timedelta
+from datetime import (
+    date,
+    datetime,
+    timedelta,
+)
 from html import escape
 
 import streamlit as st
@@ -40,6 +44,7 @@ from .workout_table import (
     format_duration,
     format_elevation,
     format_workout_date,
+    format_workout_start_time,
 )
 
 
@@ -76,6 +81,24 @@ def _outcome_label(
         .title()
     )
 
+def _activity_date_label(
+    value,
+) -> str:
+    """
+    Formats the calendar date used in activity lists
+    without exposing an exact workout start time.
+    """
+
+    if isinstance(
+        value,
+        datetime,
+    ):
+        value = value.date()
+
+    return format_workout_date(
+        value
+    )
+
 def _activity_rows(
     activities,
     *,
@@ -87,7 +110,7 @@ def _activity_rows(
 
     return [
         {
-            "Date": format_workout_date(
+            "Date": _activity_date_label(
                 activity.workout_date
             ),
             "Activity": activity.title,
@@ -520,7 +543,7 @@ def _apply_activities_page_styles() -> None:
         .activities-metrics-grid {
             display: grid;
             grid-template-columns:
-                repeat(7, minmax(0, 1fr));
+                repeat(8, minmax(0, 1fr));
             gap: 0;
             margin: 0;
             padding: 0.34rem 0.55rem;
@@ -535,7 +558,7 @@ def _apply_activities_page_styles() -> None:
                 1px solid rgba(128, 128, 128, 0.13);
         }
 
-        .activities-metric:nth-child(7n) {
+        .activities-metric:nth-child(8n) {
             border-right: 0;
         }
 
@@ -564,7 +587,7 @@ def _apply_activities_page_styles() -> None:
                     repeat(4, minmax(0, 1fr));
             }
 
-            .activities-metric:nth-child(7n) {
+            .activities-metric:nth-child(8n) {
                 border-right:
                     1px solid rgba(128, 128, 128, 0.13);
             }
@@ -719,7 +742,7 @@ def _activity_row_html(
         else "activity-row-grid"
     )
 
-    date_label = format_workout_date(
+    date_label = _activity_date_label(
         activity.workout_date
     )
 
@@ -965,6 +988,12 @@ def _compact_activity_metrics_html(
     environment = workout.environment
 
     metrics = (
+        (
+            "Start time",
+            format_workout_start_time(
+                workout.date
+            ),
+        ),
         (
             "Distance",
             format_distance(

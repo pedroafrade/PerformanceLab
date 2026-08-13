@@ -1,10 +1,14 @@
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 
 from performancelab import Workout
 
 from app.components.activity_analysis import (
     _distance_domain,
     _route_similarity_score,
+    _similar_workouts,
 )
 
 
@@ -193,3 +197,65 @@ def test_distance_domain_uses_route_end():
         0.0,
         10.40,
     )
+
+def test_similar_workouts_accepts_aware_and_naive_dates():
+
+    route = [
+        (
+            38.70,
+            -9.40,
+            100,
+        ),
+        (
+            38.705,
+            -9.395,
+            130,
+        ),
+        (
+            38.710,
+            -9.390,
+            160,
+        ),
+    ]
+
+    current = _workout_with_route(
+        route
+    )
+    current.info.date = datetime(
+        2026,
+        8,
+        12,
+        10,
+        8,
+        tzinfo=timezone.utc,
+    )
+
+    previous = _workout_with_route(
+        route
+    )
+    previous.info.date = datetime(
+        2026,
+        8,
+        9,
+        8,
+        0,
+    )
+
+    history = type(
+        "HistoryStub",
+        (),
+        {
+            "workouts": [
+                previous,
+                current,
+            ],
+        },
+    )()
+
+    result = _similar_workouts(
+        current,
+        history,
+    )
+
+    assert len(result) == 1
+    assert result[0][1] is previous

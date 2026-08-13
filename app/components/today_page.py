@@ -16,7 +16,9 @@ from performancelab.presentation import (
 from .activity_analysis import (
     show_activity_analysis,
 )
-
+from .workout_table import (
+    format_workout_start_time,
+)
 
 def _navigate_to(
     page: str,
@@ -331,9 +333,20 @@ def _activity_metric_html(
 
 def _activity_summary_html(
     activity,
+    workout=None,
 ) -> str:
     metrics = (
         _activity_metric_html(
+            label="Start time",
+            value=(
+                format_workout_start_time(
+                    workout.date
+                )
+                if workout is not None
+                else "—"
+            ),
+        )
+        + _activity_metric_html(
             label="Distance",
             value=_activity_distance_label(
                 activity.distance
@@ -377,6 +390,7 @@ def _activity_summary_html(
 def _show_today_session(
     session,
     today_activity,
+    today_workout=None,
 ) -> None:
     """
     Displays either today's prescription or the
@@ -423,7 +437,8 @@ def _show_today_session(
 
             st.html(
                 _activity_summary_html(
-                    today_activity
+                    today_activity,
+                    today_workout,
                 )
             )
 
@@ -1133,6 +1148,7 @@ def show_today_page(
         _show_today_session(
             today.today_session,
             today.today_activity_summary,
+            today_workout,
         )
 
         if today_workout is not None:

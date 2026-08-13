@@ -272,14 +272,22 @@ def test_preserves_daily_development_series():
         name="Pedro"
     )
 
+    reference_day = date.today()
+
+    workout_day = (
+        reference_day
+        - timedelta(
+            days=1,
+        )
+    )
+
     workout = create_workout(
         sport="Running",
-        workout_date=datetime(
-            2026,
-            8,
-            11,
-            7,
-            0,
+        workout_date=datetime.combine(
+            workout_day,
+            datetime.min.time(),
+        ).replace(
+            hour=7,
         ),
         distance=10.0,
         elevation_gain=100.0,
@@ -298,27 +306,20 @@ def test_preserves_daily_development_series():
         DevelopmentPresenter(
             athlete
         ).build(
-            reference_time=datetime(
-                2026,
-                8,
-                12,
-                14,
-                0,
+            reference_time=(
+                datetime.combine(
+                    reference_day,
+                    datetime.min.time(),
+                ).replace(
+                    hour=14,
+                )
             )
         )
     )
 
     assert result.dates == (
-        date(
-            2026,
-            8,
-            11,
-        ),
-        date(
-            2026,
-            8,
-            12,
-        ),
+        workout_day,
+        reference_day,
     )
 
     assert result.daily_load == (
