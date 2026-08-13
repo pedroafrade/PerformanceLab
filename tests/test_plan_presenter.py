@@ -978,18 +978,177 @@ def test_plan_chart_data_is_immutable():
             0
         ].title = "Changed"
 
-def test_exposes_latest_plan_adaptation():
+def test_exposes_next_pending_plan_adaptation():
 
-    older = TrainingPlanAdaptation(
+    completed_session = planned_workout(
+        day=11,
+        title="Hill Run",
+        intensity="Hard",
+        duration_minutes=45,
+        phase="Build",
+    )
+
+    next_session = planned_workout(
+        day=14,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=50,
+        phase="Build",
+    )
+
+    later_session = planned_workout(
+        day=18,
+        title="Long Run",
+        intensity="Easy to moderate",
+        duration_minutes=90,
+        phase="Build",
+    )
+
+    completed_adaptation = (
+        TrainingPlanAdaptation(
+            reconciled_on=date(
+                2026,
+                8,
+                10,
+            ),
+            workout_day=date(
+                2026,
+                8,
+                11,
+            ),
+            workout_title="Hill Run",
+            previous_duration=timedelta(
+                minutes=50,
+            ),
+            revised_duration=timedelta(
+                minutes=45,
+            ),
+            trigger_status=(
+                WorkoutOutcomeStatus
+                .MODIFIED
+            ),
+            load_difference=120.0,
+        )
+    )
+
+    next_adaptation = (
+        TrainingPlanAdaptation(
+            reconciled_on=date(
+                2026,
+                8,
+                11,
+            ),
+            workout_day=date(
+                2026,
+                8,
+                14,
+            ),
+            workout_title="Easy Run",
+            previous_duration=timedelta(
+                minutes=60,
+            ),
+            revised_duration=timedelta(
+                minutes=50,
+            ),
+            trigger_status=(
+                WorkoutOutcomeStatus
+                .MODIFIED
+            ),
+            load_difference=120.0,
+        )
+    )
+
+    later_adaptation = (
+        TrainingPlanAdaptation(
+            reconciled_on=date(
+                2026,
+                8,
+                12,
+            ),
+            workout_day=date(
+                2026,
+                8,
+                18,
+            ),
+            workout_title="Long Run",
+            previous_duration=timedelta(
+                minutes=100,
+            ),
+            revised_duration=timedelta(
+                minutes=90,
+            ),
+            trigger_status=(
+                WorkoutOutcomeStatus
+                .MODIFIED
+            ),
+            load_difference=80.0,
+        )
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[
+                completed_session,
+                next_session,
+                later_session,
+            ],
+            adaptations=(
+                completed_adaptation,
+                next_adaptation,
+                later_adaptation,
+            ),
+        ),
+        history=History(),
+    ).build(
+        reference_day=date(
+            2026,
+            8,
+            13,
+        )
+    )
+
+    assert result.latest_adaptation == (
+        PlanAdaptationData(
+            reconciled_on=date(
+                2026,
+                8,
+                11,
+            ),
+            workout_day=date(
+                2026,
+                8,
+                14,
+            ),
+            workout_title="Easy Run",
+            previous_minutes=60,
+            revised_minutes=50,
+            reason=(
+                "Completed load was higher "
+                "than planned."
+            ),
+        )
+    )
+
+def test_hides_adaptation_after_session_is_completed():
+
+    planned = planned_workout(
+        day=13,
+        title="Easy Run",
+        intensity="Easy",
+        duration_minutes=50,
+        phase="Build",
+    )
+
+    adaptation = TrainingPlanAdaptation(
         reconciled_on=date(
             2026,
             8,
-            3,
+            12,
         ),
         workout_day=date(
             2026,
             8,
-            5,
+            13,
         ),
         workout_title="Easy Run",
         previous_duration=timedelta(
@@ -1001,73 +1160,52 @@ def test_exposes_latest_plan_adaptation():
         trigger_status=(
             WorkoutOutcomeStatus.MODIFIED
         ),
-        load_difference=-40.0,
+        load_difference=90.0,
     )
 
-    latest = TrainingPlanAdaptation(
-        reconciled_on=date(
-            2026,
-            8,
-            5,
-        ),
-        workout_day=date(
-            2026,
-            8,
-            6,
-        ),
-        workout_title="LT2 Run",
-        previous_duration=timedelta(
-            minutes=50,
-        ),
-        revised_duration=timedelta(
-            minutes=38,
-        ),
-        trigger_status=(
-            WorkoutOutcomeStatus.MODIFIED
-        ),
-        load_difference=120.0,
+    completed = Workout(
+        workout_id="completed-easy-run"
     )
-
-    plan = TrainingPlan(
-        adaptations=(
-            older,
-            latest,
-        ),
+    completed.info.date = datetime(
+        2026,
+        8,
+        13,
+        8,
+        0,
     )
+    completed.info.sport = "Running"
+    completed.info.title = "Easy Run"
+    completed.info.duration = timedelta(
+        minutes=50,
+    )
+    completed.feedback.rpe = 3.0
 
     result = PlanPresenter(
-        plan=plan,
-        history=History(),
+        plan=TrainingPlan(
+            workouts=[
+                planned,
+            ],
+            adaptations=(
+                adaptation,
+            ),
+        ),
+        history=History(
+            workouts=[
+                completed,
+            ]
+        ),
     ).build(
         reference_day=date(
             2026,
             8,
-            7,
+            13,
         )
     )
 
-    assert result.latest_adaptation == (
-        PlanAdaptationData(
-            reconciled_on=date(
-                2026,
-                8,
-                5,
-            ),
-            workout_day=date(
-                2026,
-                8,
-                6,
-            ),
-            workout_title="LT2 Run",
-            previous_minutes=50,
-            revised_minutes=38,
-            reason=(
-                "Completed load was higher "
-                "than planned."
-            ),
-        )
+    assert (
+        result.latest_adaptation
+        is None
     )
-
 
 def test_has_no_latest_adaptation():
 

@@ -560,27 +560,86 @@ class PlanPresenter:
         )
 
 
-    def _latest_adaptation_data(
+    def _next_adaptation_data(
         self,
+        *,
+        reference_day: date,
+        outcomes,
     ) -> PlanAdaptationData | None:
         """
-        Returns the most recently reconciled adaptation.
+        Returns the adaptation for the nearest pending
+        session from the reference day onwards.
+
+        Adaptations for past, completed, missed or removed
+        sessions are no longer relevant to the current
+        plan view.
         """
 
-        if not self.plan.adaptations:
+        candidates = []
+
+        for adaptation in (
+            self.plan.adaptations
+        ):
+
+            if (
+                adaptation.workout_day
+                < reference_day
+            ):
+                continue
+
+            adapted_workout = (
+                self._adapted_workout(
+                    adaptation
+                )
+            )
+
+            if adapted_workout is None:
+                continue
+
+            outcome = outcomes.get(
+                adapted_workout
+            )
+
+            if (
+                outcome is not None
+                and outcome.status
+                is not (
+                    WorkoutOutcomeStatus
+                    .PENDING
+                )
+            ):
+                continue
+
+            candidates.append(
+                adaptation
+            )
+
+        if not candidates:
             return None
 
-        latest = max(
-            self.plan.adaptations,
+        next_workout_day = min(
+            adaptation.workout_day
+            for adaptation in candidates
+        )
+
+        next_adaptation = max(
+            (
+                adaptation
+                for adaptation in candidates
+                if (
+                    adaptation.workout_day
+                    == next_workout_day
+                )
+            ),
             key=lambda adaptation: (
-                adaptation.reconciled_on,
-                adaptation.workout_day,
+                adaptation.reconciled_on
             ),
         )
 
         return self._adaptation_data(
-            latest
+            next_adaptation
         )
+    
     @staticmethod
     def _target_event_title(
         workout,
@@ -1076,7 +1135,12 @@ class PlanPresenter:
                 target_event_date
             ),
             latest_adaptation=(
-                self._latest_adaptation_data()
+                self._next_adaptation_data(
+                    reference_day=(
+                        reference_day
+                    ),
+                    outcomes=outcomes,
+                )
             ),
         )
 
