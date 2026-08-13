@@ -17,6 +17,11 @@ from performancelab import (
     Athlete,
     create_workout,
 )
+
+from performancelab.coaching import (
+    DailyTrainingDecision,
+)
+
 from performancelab.presentation import (
     TodayData,
     TodayPresenter,
@@ -77,6 +82,29 @@ def test_builds_empty_today_context():
         result.next_event
         is None
     )
+    assert (
+        result.guidance.decision
+        == "rest"
+    )
+
+    assert (
+        result.guidance.title
+        == "Rest and recover today"
+    )
+
+    assert (
+        result.guidance.action
+        == (
+            "No training stimulus is "
+            "recommended today."
+        )
+    )
+
+    assert (
+        result.guidance.plan_is_modified
+        is False
+    )
+
     assert result.guidance.reasons == (
         "No training session is planned today.",
     )
@@ -150,6 +178,29 @@ def test_exposes_today_and_next_workout():
     assert (
         "The planned session can proceed."
         in result.guidance.reasons
+    )
+    assert (
+        result.guidance.decision
+        == "proceed"
+    )
+
+    assert (
+        result.guidance.title
+        == "Follow the planned session"
+    )
+
+    assert (
+        result.guidance.action
+        == (
+            "Complete the planned session "
+            "within its prescribed duration "
+            "and intensity."
+        )
+    )
+
+    assert (
+        result.guidance.plan_is_modified
+        is False
     )
 
     assert (
@@ -529,5 +580,54 @@ def test_exposes_latest_plan_adaptation():
         == (
             "Completed load was higher "
             "than planned."
+        )
+    )
+
+def test_presents_recovery_only_decision():
+
+    assert (
+        TodayPresenter
+        ._decision_title(
+            DailyTrainingDecision
+            .RECOVERY_ONLY
+        )
+        == "Prioritise recovery today"
+    )
+
+    assert (
+        TodayPresenter
+        ._decision_action(
+            DailyTrainingDecision
+            .RECOVERY_ONLY
+        )
+        == (
+            "Do not perform the planned "
+            "training stimulus. Choose rest "
+            "or very light recovery work "
+            "according to how you feel."
+        )
+    )
+
+
+def test_presents_easy_only_decision():
+
+    assert (
+        TodayPresenter
+        ._decision_title(
+            DailyTrainingDecision
+            .EASY_ONLY
+        )
+        == "Train easy today"
+    )
+
+    assert (
+        TodayPresenter
+        ._decision_action(
+            DailyTrainingDecision
+            .EASY_ONLY
+        )
+        == (
+            "Replace the planned intensity "
+            "with a shorter easy session."
         )
     )

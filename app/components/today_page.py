@@ -1013,13 +1013,27 @@ def _show_daily_decision(
         )
 
         with decision_column:
-            st.markdown(
-                f"### {today.coach.summary}"
+            st.caption(
+                "TODAY'S RECOMMENDATION"
             )
 
-            st.caption(
-                today.coach.recommendation
+            st.markdown(
+                f"### {today.guidance.title}"
             )
+
+            st.write(
+                today.guidance.action
+            )
+
+            if (
+                not today.guidance
+                .plan_is_modified
+            ):
+                st.caption(
+                    "This is a temporary daily "
+                    "recommendation. The persistent "
+                    "training plan has not been changed."
+                )
 
         with recovery_column:
             st.metric(

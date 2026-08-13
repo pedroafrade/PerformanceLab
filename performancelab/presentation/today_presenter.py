@@ -14,6 +14,7 @@ from performancelab.athlete import (
     Athlete,
 )
 from performancelab.coaching import (
+    DailyTrainingDecision,
     build_daily_training_guidance,
 )
 from performancelab.training.planning import (
@@ -233,6 +234,24 @@ class TodayPresenter:
                 ),
             ),
             guidance=TodayGuidanceData(
+                decision=(
+                    domain_guidance
+                    .decision
+                    .value
+                ),
+                title=(
+                    self._decision_title(
+                        domain_guidance
+                        .decision
+                    )
+                ),
+                action=(
+                    self._decision_action(
+                        domain_guidance
+                        .decision
+                    )
+                ),
+                plan_is_modified=False,
                 reasons=(
                     domain_guidance.reasons
                 ),
@@ -263,6 +282,81 @@ class TodayPresenter:
                 dashboard.next_event
             ),
         )
+
+    @staticmethod
+    def _decision_title(
+        decision: DailyTrainingDecision,
+    ) -> str:
+        """
+        Returns a concise athlete-facing daily decision.
+        """
+
+        titles = {
+            DailyTrainingDecision.PROCEED: (
+                "Follow the planned session"
+            ),
+            DailyTrainingDecision.REDUCE_VOLUME: (
+                "Shorten today's planned session"
+            ),
+            DailyTrainingDecision.EASY_ONLY: (
+                "Train easy today"
+            ),
+            DailyTrainingDecision.RECOVERY_ONLY: (
+                "Prioritise recovery today"
+            ),
+            DailyTrainingDecision.REST: (
+                "Rest and recover today"
+            ),
+            DailyTrainingDecision.REVIEW_REQUIRED: (
+                "Review readiness before starting"
+            ),
+        }
+
+        return titles[
+            decision
+        ]
+
+    @staticmethod
+    def _decision_action(
+        decision: DailyTrainingDecision,
+    ) -> str:
+        """
+        Explains what the athlete should do today.
+        """
+
+        actions = {
+            DailyTrainingDecision.PROCEED: (
+                "Complete the planned session within "
+                "its prescribed duration and intensity."
+            ),
+            DailyTrainingDecision.REDUCE_VOLUME: (
+                "Keep the planned type of training, "
+                "but reduce its duration and do not "
+                "add distance, elevation or repetitions."
+            ),
+            DailyTrainingDecision.EASY_ONLY: (
+                "Replace the planned intensity with "
+                "a shorter easy session."
+            ),
+            DailyTrainingDecision.RECOVERY_ONLY: (
+                "Do not perform the planned training "
+                "stimulus. Choose rest or very light "
+                "recovery work according to how you feel."
+            ),
+            DailyTrainingDecision.REST: (
+                "No training stimulus is recommended "
+                "today."
+            ),
+            DailyTrainingDecision.REVIEW_REQUIRED: (
+                "Review symptoms, subjective readiness "
+                "and race priority before deciding "
+                "whether to start."
+            ),
+        }
+
+        return actions[
+            decision
+        ]
 
     @staticmethod
     def _adaptation_prescription(

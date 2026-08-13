@@ -43,8 +43,16 @@ class TodayReadinessData:
 @dataclass(frozen=True)
 class TodayGuidanceData:
     """
-    Presentation-ready reasons and cautions for today.
+    Presentation-ready daily training decision.
+
+    The recommendation is temporary and does not imply
+    that the persistent TrainingPlan was modified.
     """
+
+    decision: str
+    title: str
+    action: str
+    plan_is_modified: bool
 
     reasons: tuple[str, ...]
     cautions: tuple[str, ...]
