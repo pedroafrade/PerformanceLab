@@ -59,31 +59,38 @@ class BuildStrategy(CoachStrategy):
             event_sport=event_sport,
         )
 
-        training_state = getattr(
+        training_reference = getattr(
             context,
-            "training_state",
+            "training_reference",
             None,
         )
 
+        if training_reference is None:
+            training_reference = getattr(
+                context,
+                "training_state",
+                None,
+            )
+
         typical_weekly_minutes = getattr(
-            training_state,
+            training_reference,
             "typical_weekly_minutes",
             0.0,
         )
 
         typical_weekly_sessions = getattr(
-            training_state,
+            training_reference,
             "typical_weekly_sessions",
             0.0,
         )
 
         typical_long_minutes = getattr(
-            training_state,
+            training_reference,
             "typical_running_long_session_minutes",
             0.0,
         )
         typical_long_elevation_gain = getattr(
-            training_state,
+            training_reference,
             (
                 "typical_running_long_session_"
                 "elevation_gain"
@@ -95,6 +102,11 @@ class BuildStrategy(CoachStrategy):
             self._event_elevation_demand(
                 context
             )
+        )
+        should_reduce_volume = getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
         )
         if typical_weekly_sessions > 0:
 
@@ -109,7 +121,7 @@ class BuildStrategy(CoachStrategy):
                 ),
             )
 
-        if context.tsb < -10:
+        if should_reduce_volume:
             volume_factor = 1.00
             intensity_sessions = 1
             focus = "aerobic endurance"
@@ -166,9 +178,9 @@ class BuildStrategy(CoachStrategy):
             )
 
             can_progress_long = getattr(
-                training_state,
+                training_reference,
                 "can_absorb_more_volume",
-                context.tsb > -10,
+                not should_reduce_volume,
             )
 
             if (
@@ -232,7 +244,7 @@ class BuildStrategy(CoachStrategy):
             recovery_priority=(
                 "high"
                 if (
-                    context.tsb < -10
+                    should_reduce_volume
                     or (
                         context.average_rpe is not None
                         and context.average_rpe >= 8

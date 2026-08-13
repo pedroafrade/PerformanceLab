@@ -1804,3 +1804,103 @@ def test_vo2max_repetition_respects_template_limit():
     assert "5 min" not in steps[0]
     assert "6 min" not in steps[0]
 
+def test_future_long_run_uses_historical_effort_pace():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.LONG,
+            duration_minutes=120,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            23,
+        ),
+        template=LONG_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(
+            training_reference=(
+                SimpleNamespace(
+                    typical_running_long_session_effort_pace=(
+                        7.5
+                    ),
+                )
+            ),
+            training_state=None,
+        ),
+        strategy_plan=make_strategy_plan(
+            long_session_elevation_gain=450,
+        ),
+    )
+
+    assert workout.duration.total_seconds() == (
+        120 * 60
+    )
+
+    assert workout.elevation_gain == 450
+    assert workout.distance == 12
+
+    assert (
+        workout.prescription_summary
+        == "≈12 km"
+    )
+
+def test_long_run_falls_back_to_easy_effort_pace():
+
+    distance = (
+        WorkoutGenerator
+        ._planned_long_distance(
+            purpose=SessionPurpose.LONG,
+            duration_minutes=100,
+            elevation_gain=300,
+            training_state=SimpleNamespace(
+                typical_running_long_session_effort_pace=(
+                    0.0
+                ),
+                typical_easy_running_pace=6.5,
+            ),
+        )
+    )
+
+    assert distance == 12
+
+def test_long_run_uses_conservative_general_pace_fallback():
+
+    distance = (
+        WorkoutGenerator
+        ._planned_long_distance(
+            purpose=SessionPurpose.LONG,
+            duration_minutes=120,
+            elevation_gain=450,
+            training_state=SimpleNamespace(
+                typical_running_long_session_effort_pace=(
+                    0.0
+                ),
+                typical_easy_running_pace=0.0,
+                typical_running_pace=7.0,
+            ),
+        )
+    )
+
+    assert distance == 10
+
+def test_long_run_keeps_distance_missing_without_reference():
+
+    distance = (
+        WorkoutGenerator
+        ._planned_long_distance(
+            purpose=SessionPurpose.LONG,
+            duration_minutes=120,
+            elevation_gain=450,
+            training_state=SimpleNamespace(
+                typical_running_long_session_effort_pace=(
+                    0.0
+                ),
+                typical_easy_running_pace=0.0,
+                typical_running_pace=0.0,
+            ),
+        )
+    )
+
+    assert distance is None

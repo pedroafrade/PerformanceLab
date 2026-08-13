@@ -656,3 +656,38 @@ def test_future_peak_does_not_use_current_tsb():
         plan.focus
         == "race-specific intensity"
     )
+
+def test_future_peak_uses_historical_elevation_reference():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            elevation_gain=950,
+        ),
+    )
+
+    context = make_context(
+        phase_event=event,
+        days_until_phase_event=36,
+    )
+
+    context.training_state = None
+    context.training_reference = (
+        SimpleNamespace(
+            typical_running_long_session_elevation_gain=175.0,
+        )
+    )
+    context.should_reduce_volume = False
+
+    plan = PeakStrategy().build(
+        context
+    )
+
+    assert (
+        plan.long_session_elevation_gain
+        == 475
+    )
+    assert plan.intensity_sessions == 2
+    assert plan.recovery_days == 2

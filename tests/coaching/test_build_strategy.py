@@ -888,3 +888,44 @@ def test_repr_contains_strategy_class_and_phase():
 
     assert "BuildStrategy" in representation
     assert "Build" in representation
+
+def test_future_build_uses_historical_training_reference():
+
+    event = make_event(
+        name="Trail Race",
+        sport="Trail Running",
+        elevation_demand="mountainous",
+    )
+
+    context = make_context(
+        tsb=-60.0,
+        primary_event=event,
+    )
+
+    context.training_state = None
+    context.training_reference = (
+        SimpleNamespace(
+            typical_weekly_minutes=300.0,
+            typical_weekly_sessions=4.0,
+            typical_running_long_session_minutes=90.0,
+            typical_running_long_session_elevation_gain=175.0,
+            can_absorb_more_volume=True,
+        )
+    )
+    context.should_reduce_volume = False
+
+    plan = BuildStrategy().build(
+        context
+    )
+
+    assert (
+        plan.target_weekly_minutes
+        == 325
+    )
+    assert plan.target_sessions == 4
+    assert plan.long_session_minutes == 95
+    assert (
+        plan.long_session_elevation_gain
+        is not None
+    )
+    assert plan.intensity_sessions == 2

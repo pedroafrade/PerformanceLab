@@ -27,6 +27,7 @@ from .training_week import TrainingWeek
 from .workout_template import WorkoutTemplate
 from .workout_templates import template_for
 
+LONG_RUN_FALLBACK_PACE_FACTOR = 1.15
 
 class WorkoutGenerator:
     """
@@ -410,6 +411,20 @@ class WorkoutGenerator:
             else None
         )
 
+        training_reference = getattr(
+            coach_context,
+            "training_reference",
+            None,
+        )
+
+        if training_reference is None:
+
+            training_reference = getattr(
+                coach_context,
+                "training_state",
+                None,
+            )
+
         if race_event is not None:
 
             planned_distance = getattr(
@@ -447,10 +462,8 @@ class WorkoutGenerator:
                     elevation_gain=(
                         planned_elevation_gain
                     ),
-                    training_state=getattr(
-                        coach_context,
-                        "training_state",
-                        None,
+                    training_state=(
+                        training_reference
                     ),
                 )
             )
@@ -464,10 +477,8 @@ class WorkoutGenerator:
                         duration_minutes=(
                             duration_minutes
                         ),
-                        training_state=getattr(
-                            coach_context,
-                            "training_state",
-                            None,
+                        training_state=(
+                            training_reference
                         ),
                     )
                 )
@@ -906,7 +917,17 @@ class WorkoutGenerator:
             return (
                 f"{round(distance)} km · Z2"
             )
-
+        if (
+            purpose is SessionPurpose.LONG
+            and cls._is_running(
+                normalized_sport
+            )
+            and distance is not None
+            and distance > 0
+        ):
+            return (
+                f"≈{round(distance)} km"
+            )
         normalized_title = (
             template.title.strip().lower()
         )
@@ -1027,7 +1048,6 @@ class WorkoutGenerator:
             duration_minutes
             / easy_pace
         )
-
         if planned_distance <= 0:
             return None
 
@@ -1046,9 +1066,17 @@ class WorkoutGenerator:
         training_state,
     ) -> float | None:
         """
-        Estimates planned long-run distance from duration,
-        elevation gain and the athlete's recent long-run
-        effort pace.
+        Estimates Long Run distance from duration,
+        elevation and stable historical pace references.
+
+        Reference priority:
+        1. recent long-session effort pace;
+        2. recent easy-running effort pace;
+        3. recent general running pace with a conservative
+           15 percent duration cost.
+
+        Distance remains an estimate. Duration, intensity
+        and elevation define the prescribed training dose.
         """
 
         if (
@@ -1067,6 +1095,29 @@ class WorkoutGenerator:
             ),
             0.0,
         )
+
+        if effort_pace <= 0:
+
+            effort_pace = getattr(
+                training_state,
+                "typical_easy_running_pace",
+                0.0,
+            )
+
+        if effort_pace <= 0:
+
+            typical_running_pace = getattr(
+                training_state,
+                "typical_running_pace",
+                0.0,
+            )
+
+            if typical_running_pace > 0:
+
+                effort_pace = (
+                    typical_running_pace
+                    * LONG_RUN_FALLBACK_PACE_FACTOR
+                )
 
         if effort_pace <= 0:
             return None
@@ -1095,7 +1146,6 @@ class WorkoutGenerator:
         return round(
             planned_distance
         )
-
     # ======================================================
 
     @classmethod

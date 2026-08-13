@@ -78,6 +78,29 @@ class CoachContext:
         )
 
     # ======================================================
+    @property
+    def training_reference(self):
+        """
+        Returns stable historical training references.
+
+        Unlike training_state, these historical pace and
+        volume references remain useful when preparing
+        future weeks. Current readiness, fatigue and load
+        state must not be read through this property.
+        """
+
+        analytics = getattr(
+            self.athlete,
+            "analytics",
+            None,
+        )
+
+        if analytics is None:
+            return None
+
+        return analytics
+
+    # ======================================================
 
     @property
     def needs_recovery(self) -> bool:

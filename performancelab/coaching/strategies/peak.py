@@ -71,14 +71,21 @@ class PeakStrategy(CoachStrategy):
             )
         )
 
-        training_state = getattr(
+        training_reference = getattr(
             context,
-            "training_state",
+            "training_reference",
             None,
         )
 
+        if training_reference is None:
+            training_reference = getattr(
+                context,
+                "training_state",
+                None,
+            )
+
         typical_long_elevation_gain = getattr(
-            training_state,
+            training_reference,
             (
                 "typical_running_long_session_"
                 "elevation_gain"

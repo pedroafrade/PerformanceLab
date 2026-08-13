@@ -1387,3 +1387,46 @@ def test_future_context_does_not_project_current_physiology():
     assert context.can_tolerate_intensity
     assert not context.can_absorb_more_volume
     assert not context.is_fatigue_regeneration
+
+def test_future_context_keeps_historical_training_reference():
+
+    analytics = SimpleNamespace(
+        training_state=object(),
+        typical_running_long_session_effort_pace=(
+            7.5
+        ),
+    )
+
+    context = CoachContext(
+        athlete=SimpleNamespace(
+            name="Test Athlete",
+            analytics=analytics,
+        ),
+        today=date(
+            2026,
+            8,
+            24,
+        ),
+        ctl=30.0,
+        atl=90.0,
+        tsb=-60.0,
+        next_event=None,
+        days_until_event=None,
+        sports=("Trail Running",),
+        average_rpe=6.0,
+        training_plan=object(),
+        physiology_is_current=False,
+    )
+
+    assert context.training_state is None
+
+    assert (
+        context.training_reference
+        is analytics
+    )
+
+    assert (
+        context.training_reference
+        .typical_running_long_session_effort_pace
+        == 7.5
+    )
