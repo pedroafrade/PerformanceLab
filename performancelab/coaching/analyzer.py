@@ -34,28 +34,9 @@ class CoachAnalyzer:
 
         strategy = self._strategy(phase)
 
-        training_state = getattr(
-            self.context,
-            "training_state",
-            None,
+        needs_recovery = (
+            self.context.needs_recovery
         )
-
-        if training_state is not None:
-
-            needs_recovery = (
-                training_state.needs_recovery
-            )
-
-        else:
-
-            needs_recovery = (
-                getattr(
-                    self.context,
-                    "tsb",
-                    0.0,
-                )
-                < -20
-            )
 
         if needs_recovery:
 

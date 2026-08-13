@@ -49,7 +49,7 @@ class CoachContext:
     days_since_event: int | None = None
 
     upcoming_events: tuple[object, ...] = ()
-
+    physiology_is_current: bool = True
     # ======================================================
 
     @property
@@ -60,7 +60,8 @@ class CoachContext:
         Test doubles that do not expose analytics continue to work by
         returning None.
         """
-
+        if not self.physiology_is_current:
+            return None
         analytics = getattr(
             self.athlete,
             "analytics",
@@ -75,7 +76,7 @@ class CoachContext:
             "training_state",
             None,
         )
-    
+
     # ======================================================
 
     @property
@@ -87,9 +88,9 @@ class CoachContext:
         Older tests and lightweight context doubles continue to
         work through the legacy TSB heuristic.
         """
-
+        if not self.physiology_is_current:
+            return False
         training_state = self.training_state
-
         if training_state is not None:
             return training_state.needs_recovery
 
@@ -102,9 +103,10 @@ class CoachContext:
         """
         Returns the athlete's current training readiness.
         """
+        if not self.physiology_is_current:
+            return "unknown"
 
         training_state = self.training_state
-
         if training_state is not None:
             return training_state.readiness
 
@@ -123,12 +125,12 @@ class CoachContext:
         """
         Indicates whether planned volume should be reduced.
         """
+        if not self.physiology_is_current:
+            return False
 
         training_state = self.training_state
-
         if training_state is not None:
             return training_state.should_reduce_volume
-
         return self.tsb < -10
 
     # ======================================================
@@ -138,12 +140,13 @@ class CoachContext:
         """
         Indicates whether intensity sessions are appropriate.
         """
+        if not self.physiology_is_current:
+            return True
 
         training_state = self.training_state
 
         if training_state is not None:
             return training_state.can_tolerate_intensity
-
         return self.tsb >= 0
 
     # ======================================================
@@ -153,14 +156,14 @@ class CoachContext:
         """
         Indicates whether additional volume can be tolerated.
         """
+        if not self.physiology_is_current:
+            return False
 
         training_state = self.training_state
 
         if training_state is not None:
             return training_state.can_absorb_more_volume
-
         return self.tsb > -10
-
     # ======================================================
 
     @property
@@ -224,7 +227,7 @@ class CoachContext:
             "nutrition_profile",
             None,
         )
-    
+
     # ======================================================
 
     @classmethod
@@ -232,6 +235,8 @@ class CoachContext:
         cls,
         athlete: Athlete,
         today: date | None = None,
+        *,
+        physiology_is_current: bool = True,
     ) -> "CoachContext":
         """
         Creates a coaching context from an athlete.
@@ -246,6 +251,14 @@ class CoachContext:
         ):
             raise TypeError(
                 "today must be a date"
+            )
+
+        if not isinstance(
+            physiology_is_current,
+            bool,
+        ):
+            raise TypeError(
+                "physiology_is_current must be a bool"
             )
 
         reference_date = today or date.today()
@@ -304,6 +317,9 @@ class CoachContext:
             previous_event=previous_event,
             days_since_event=days_since_event,
             upcoming_events=upcoming_events,
+            physiology_is_current=(
+                physiology_is_current
+            ),
         )
 
     # ======================================================
@@ -836,7 +852,7 @@ class CoachContext:
         return None
 
     # ======================================================
-    
+
     @property
     def primary_event_duration(
         self,
@@ -1065,7 +1081,7 @@ class CoachContext:
             event_date - self.today
         ).days
     # ======================================================
-    
+
     @property
     def days_between_events(
         self,

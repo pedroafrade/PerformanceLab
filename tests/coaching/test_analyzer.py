@@ -680,3 +680,49 @@ def test_near_intermediate_event_uses_race_phase():
     assert analysis.summary == (
         "Race phase for Sealand."
     )
+
+def test_future_context_ignores_current_fatigue_for_strategy():
+
+    context = make_context(
+        days_until_event=27,
+        tsb=-60.0,
+    )
+
+    context = CoachContext(
+        athlete=context.athlete,
+        today=context.today,
+        ctl=context.ctl,
+        atl=context.atl,
+        tsb=context.tsb,
+        next_event=context.next_event,
+        days_until_event=(
+            context.days_until_event
+        ),
+        sports=context.sports,
+        average_rpe=context.average_rpe,
+        training_plan=context.training_plan,
+        previous_event=(
+            context.previous_event
+        ),
+        days_since_event=(
+            context.days_since_event
+        ),
+        upcoming_events=(
+            context.upcoming_events
+        ),
+        physiology_is_current=False,
+    )
+
+    analysis = CoachAnalyzer(
+        context
+    ).analyze()
+
+    assert analysis.phase == "Peak"
+    assert (
+        analysis.strategy
+        == "PeakStrategy"
+    )
+    assert (
+        "High accumulated fatigue."
+        not in analysis.warnings
+    )

@@ -142,6 +142,31 @@ def test_rejects_invalid_week_start(
             week_start="monday",
         )
 
+def test_rejects_invalid_physiology_validity(
+    athlete,
+    full_availability,
+    default_preferences,
+    default_constraints,
+):
+
+    with pytest.raises(
+        TypeError,
+        match="physiology_is_current",
+    ):
+
+        Planner().build(
+            athlete=athlete,
+            availability=(
+                full_availability
+            ),
+            preferences=(
+                default_preferences
+            ),
+            constraints=(
+                default_constraints
+            ),
+            physiology_is_current="yes",
+        )
 
 def test_normalizes_week_start():
     planner = Planner()

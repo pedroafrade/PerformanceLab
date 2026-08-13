@@ -1353,3 +1353,37 @@ def test_context_without_heart_rate_profile():
         context.heart_rate_profile
         is None
     )
+
+def test_future_context_does_not_project_current_physiology():
+
+    context = CoachContext(
+        athlete=SimpleNamespace(
+            name="Test Athlete",
+        ),
+        today=date(
+            2026,
+            8,
+            17,
+        ),
+        ctl=30.0,
+        atl=90.0,
+        tsb=-60.0,
+        next_event=SimpleNamespace(
+            event=SimpleNamespace(
+                name="Target Race",
+            ),
+        ),
+        days_until_event=27,
+        sports=("Running",),
+        average_rpe=6.0,
+        training_plan=object(),
+        physiology_is_current=False,
+    )
+
+    assert context.training_state is None
+    assert not context.needs_recovery
+    assert context.readiness == "unknown"
+    assert not context.should_reduce_volume
+    assert context.can_tolerate_intensity
+    assert not context.can_absorb_more_volume
+    assert not context.is_fatigue_regeneration

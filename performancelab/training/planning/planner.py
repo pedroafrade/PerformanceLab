@@ -91,6 +91,7 @@ class Planner:
         today: date | None = None,
         previous_planned_long_minutes: int | None = None,
         previous_planned_workout=None,
+        physiology_is_current: bool = True,
     ) -> WeeklyPlan:
         """
         Builds the athlete's weekly training plan.
@@ -107,12 +108,19 @@ class Planner:
             week_start,
             field="week_start",
         )
-        
+
         self._validate_optional_date(
             today,
             field="today",
         )
 
+        if not isinstance(
+            physiology_is_current,
+            bool,
+        ):
+            raise TypeError(
+                "physiology_is_current must be a bool"
+            )
         if availability is not None:
             resolved_availability = availability
 
@@ -171,6 +179,9 @@ class Planner:
         context = CoachContext.from_athlete(
             athlete,
             today=reference_day,
+            physiology_is_current=(
+                physiology_is_current
+            ),
         )
 
         resolved_constraints = (
@@ -404,6 +415,10 @@ class Planner:
                 ),
                 previous_planned_workout=(
                     previous_planned_workout
+                ),
+                physiology_is_current=(
+                    week_start
+                    == first_week_start
                 ),
             )
 
@@ -775,7 +790,7 @@ class Planner:
             MIN_EVENT_BASED_LONG_SESSION_MINUTES,
             rounded_ceiling,
         )
-    
+
     # ======================================================
 
     @staticmethod
@@ -1205,7 +1220,7 @@ class Planner:
         return updated
 
     # ======================================================
-    
+
     @staticmethod
     def _is_demanding_workout(
         workout,
@@ -1295,7 +1310,7 @@ class Planner:
         ).strip().lower()
 
         return "pre-race" in title
-    
+
     # ======================================================
 
     @staticmethod
@@ -1671,7 +1686,7 @@ class Planner:
             )
 
         return updated_slots
-    
+
     # ======================================================
 
     @staticmethod
@@ -1945,7 +1960,7 @@ class Planner:
 
         return minutes
 
-    
+
     @staticmethod
     def _remove_replaced_training_session(
         *,
@@ -2206,7 +2221,7 @@ class Planner:
         )
 
     # ======================================================
-    
+
     @staticmethod
     def _block_past_weekdays(
         *,
