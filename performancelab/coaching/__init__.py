@@ -31,9 +31,10 @@ from .review import (
     ReviewFinding,
     ReviewSeverity,
 )
-
 from .draft_slot import DraftTrainingSlot
+
 from .daily_guidance import (
+    DailyTrainingDecision,
     DailyTrainingGuidance,
     build_daily_training_guidance,
 )
@@ -108,6 +109,7 @@ __all__ = [
     # Generator
     "SessionPurpose",
     "DraftTrainingSlot",
+    "DailyTrainingDecision",
     "DailyTrainingGuidance",
     "build_daily_training_guidance",
     "ActivityCoachSignal",

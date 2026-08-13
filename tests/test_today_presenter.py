@@ -143,7 +143,12 @@ def test_exposes_today_and_next_workout():
         == "Easy Run"
     )
     assert (
-        "The session supports the Build phase."
+        "The planned session supports the Build phase."
+        in result.guidance.reasons
+    )
+
+    assert (
+        "The planned session can proceed."
         in result.guidance.reasons
     )
 
