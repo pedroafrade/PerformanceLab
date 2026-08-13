@@ -527,16 +527,85 @@ class CoachContext:
         return days
 
     # ======================================================
+    @property
+    def previous_event_is_primary(
+        self,
+    ) -> bool:
+        """
+        Indicates whether the most recent completed event was
+        the primary event of the current training plan.
+
+        Stable event identities take precedence. During tests
+        and legacy plans without identities, the current
+        competition block provides a conservative fallback.
+        """
+
+        previous_entry = self.previous_event
+
+        if previous_entry is None:
+            return False
+
+        previous_event = getattr(
+            previous_entry,
+            "event",
+            None,
+        )
+
+        previous_event_id = getattr(
+            previous_event,
+            "event_id",
+            None,
+        )
+
+        planned_primary_event_id = getattr(
+            self.training_plan,
+            "primary_event_id",
+            None,
+        )
+
+        if (
+            isinstance(
+                previous_event_id,
+                str,
+            )
+            and previous_event_id.strip()
+            and isinstance(
+                planned_primary_event_id,
+                str,
+            )
+            and planned_primary_event_id.strip()
+        ):
+            return (
+                previous_event_id
+                == planned_primary_event_id
+            )
+
+        primary_event = self.primary_event
+
+        if primary_event is not None:
+            return (
+                previous_entry
+                is primary_event
+            )
+
+        return self.next_event is None
+
+    # ======================================================
 
     @property
     def is_post_race(self) -> bool:
         """
         Indicates whether the athlete is inside the automatic
-        post-race recovery window.
+        recovery window following the primary event.
+
+        Secondary events receive protected recovery days
+        through planning constraints without replacing the
+        phase of the primary event.
         """
 
         return (
-            self.days_since_event is not None
+            self.previous_event_is_primary
+            and self.days_since_event is not None
             and 0 <= self.days_since_event <= 7
         )
 

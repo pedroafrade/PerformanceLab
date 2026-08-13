@@ -51,6 +51,7 @@ MIN_EVENT_BASED_LONG_SESSION_MINUTES = 90
 MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
 AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS = 2
 
+EVENT_COMPLETE_REST_DAYS = 1
 DEMANDING_EVENT_EFFORT_DISTANCE = 30.0
 DEMANDING_EVENT_COMPLETE_REST_DAYS = 2
 
@@ -185,7 +186,7 @@ class Planner:
         )
 
         resolved_constraints = (
-            self._block_demanding_event_recovery_days(
+            self._block_event_recovery_days(
                 constraints=resolved_constraints,
                 context=context,
                 week_start=start_date,
@@ -2026,21 +2027,22 @@ class Planner:
     # ======================================================
 
     @staticmethod
-    def _block_demanding_event_recovery_days(
+    def _block_event_recovery_days(
         *,
         constraints: TrainingConstraints,
         context: CoachContext,
         week_start: date,
     ) -> TrainingConstraints:
         """
-        Protects the first 48 hours after a demanding
-        competition from planned running.
+        Protects recovery immediately after a competition.
+
+        Every event receives one complete rest day. Events
+        with a demanding effort distance receive 48 hours.
+        Primary-event recovery may additionally select the
+        Regeneration strategy through CoachContext.
         """
 
-        if (
-            not context.is_post_race
-            or context.days_since_event != 1
-        ):
+        if context.days_since_event != 1:
             return constraints
 
         previous_entry = context.previous_event
@@ -2057,12 +2059,22 @@ class Planner:
             None,
         )
 
-        if (
-            effort_distance is None
-            or effort_distance
-            < DEMANDING_EVENT_EFFORT_DISTANCE
-        ):
-            return constraints
+        recovery_days = (
+            DEMANDING_EVENT_COMPLETE_REST_DAYS
+            if (
+                isinstance(
+                    effort_distance,
+                    (int, float),
+                )
+                and not isinstance(
+                    effort_distance,
+                    bool,
+                )
+                and effort_distance
+                >= DEMANDING_EVENT_EFFORT_DISTANCE
+            )
+            else EVENT_COMPLETE_REST_DAYS
+        )
 
         week_end = (
             week_start
@@ -2072,7 +2084,7 @@ class Planner:
         protected_days = []
 
         for day_offset in range(
-            DEMANDING_EVENT_COMPLETE_REST_DAYS
+            recovery_days
         ):
 
             protected_date = (

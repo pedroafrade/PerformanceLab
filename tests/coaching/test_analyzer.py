@@ -527,17 +527,24 @@ def test_event_eight_days_ago_does_not_force_regeneration():
     assert analysis.strategy == "BaseStrategy"
 
 
-def test_recent_event_takes_priority_over_upcoming_event():
+def test_recent_primary_event_uses_regeneration():
+
     context = make_context(
         days_since_event=2,
-        days_until_event=30,
+        days_until_event=None,
     )
 
     analysis = CoachAnalyzer(
         context,
     ).analyze()
 
+    assert (
+        context.previous_event_is_primary
+        is True
+    )
+    assert context.is_post_race is True
     assert analysis.phase == "Regeneration"
+
     assert (
         analysis.strategy
         == "RegenerationStrategy"
@@ -704,6 +711,66 @@ def test_near_secondary_event_does_not_trigger_race_phase():
 
     assert analysis.summary == (
         "Peak phase for Primary Trail."
+    )
+
+def test_recent_secondary_event_resumes_primary_cycle():
+
+    secondary_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Preparation Race",
+            date=date(
+                2026,
+                3,
+                9,
+            ),
+            effort_distance=10.0,
+        ),
+        priority="B",
+        target_time=None,
+    )
+
+    primary_event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Primary Trail",
+            date=date(
+                2026,
+                3,
+                23,
+            ),
+            effort_distance=32.5,
+        ),
+        priority="A",
+        target_time=None,
+    )
+
+    context = make_context(
+        next_event=primary_event,
+        days_until_event=13,
+        previous_event=secondary_event,
+        days_since_event=1,
+        upcoming_events=(
+            primary_event,
+        ),
+    )
+
+    analysis = CoachAnalyzer(
+        context
+    ).analyze()
+
+    assert (
+        context.previous_event_is_primary
+        is False
+    )
+    assert context.is_post_race is False
+    assert analysis.phase == "Taper"
+
+    assert (
+        analysis.strategy
+        == "TaperStrategy"
+    )
+
+    assert analysis.summary == (
+        "Taper phase for Primary Trail."
     )
 
 def test_future_context_ignores_current_fatigue_for_strategy():

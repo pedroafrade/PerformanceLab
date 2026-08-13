@@ -796,7 +796,6 @@ def test_blocks_running_after_demanding_event(
 ):
 
     context = SimpleNamespace(
-        is_post_race=True,
         days_since_event=1,
         today=date(
             2026,
@@ -811,7 +810,7 @@ def test_blocks_running_after_demanding_event(
     )
 
     result = (
-        Planner._block_demanding_event_recovery_days(
+        Planner._block_event_recovery_days(
             constraints=default_constraints,
             context=context,
             week_start=date(
@@ -831,12 +830,11 @@ def test_blocks_running_after_demanding_event(
     assert not result.is_blocked(
         Weekday.WEDNESDAY
     )
-def test_keeps_active_recovery_after_short_event(
+def test_blocks_first_recovery_day_after_short_event(
     default_constraints,
 ):
 
     context = SimpleNamespace(
-        is_post_race=True,
         days_since_event=1,
         today=date(
             2026,
@@ -851,7 +849,7 @@ def test_keeps_active_recovery_after_short_event(
     )
 
     result = (
-        Planner._block_demanding_event_recovery_days(
+        Planner._block_event_recovery_days(
             constraints=default_constraints,
             context=context,
             week_start=date(
@@ -862,7 +860,12 @@ def test_keeps_active_recovery_after_short_event(
         )
     )
 
-    assert result == default_constraints
+    assert result.is_blocked(
+        Weekday.MONDAY
+    )
+    assert not result.is_blocked(
+        Weekday.TUESDAY
+    )
 
 def test_does_not_limit_recovery_week_after_race():
 
