@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from performancelab.analysis import (
     HeartRateProfile,
     HeartRateZone,
+    NutritionProfile,
 )
 
 from performancelab.coaching import (
@@ -1152,6 +1153,65 @@ def test_flat_long_run_keeps_standard_structure():
         "Warm up 10 min",
         "Long aerobic run 105 min",
         "Cool down 5 min",
+    )
+def test_long_run_practises_default_nutrition():
+
+    structure = (
+        WorkoutGenerator._long_structure(
+            duration_minutes=95,
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            target_elevation_gain=625,
+            nutrition_profile=NutritionProfile(),
+        )
+    )
+
+    assert (
+        "Practise a provisional carbohydrate intake "
+        "of 30–45 g/h using familiar products; record "
+        "tolerance before increasing the amount"
+        in structure
+    )
+
+
+def test_long_run_uses_tested_nutrition_profile():
+
+    structure = (
+        WorkoutGenerator._long_structure(
+            duration_minutes=95,
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            target_elevation_gain=625,
+            nutrition_profile=NutritionProfile(
+                carbohydrate_per_hour=70,
+                source="athlete-tested",
+            ),
+        )
+    )
+
+    assert (
+        "Practise the athlete-tested race nutrition "
+        "plan at approximately 70 g of carbohydrate "
+        "per hour"
+        in structure
+    )
+
+
+def test_short_taper_long_has_no_nutrition_target():
+
+    structure = (
+        WorkoutGenerator._long_structure(
+            duration_minutes=75,
+            sport="Trail Running",
+            elevation_demand="mountainous",
+            target_elevation_gain=425,
+            nutrition_profile=NutritionProfile(),
+        )
+    )
+
+    assert not any(
+        "carbohydrate" in step.lower()
+        for step in structure
     )
 
 def test_builds_pre_race_running_title() -> None:

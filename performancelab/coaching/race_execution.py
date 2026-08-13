@@ -14,6 +14,8 @@ from performancelab.analysis import (
     NutritionProfile,
 )
 
+DEFAULT_CARBOHYDRATE_LOWER_G_PER_HOUR = 30
+DEFAULT_CARBOHYDRATE_UPPER_G_PER_HOUR = 60
 
 @dataclass(frozen=True)
 class RaceExecutionPlan:
@@ -373,6 +375,31 @@ def _road_10k_heart_rate_guidance(
         final_text,
     )
 
+def _rounded_carbohydrate_total(
+    *,
+    grams_per_hour: int,
+    duration: timedelta,
+) -> int:
+    """
+    Converts an hourly carbohydrate reference into a
+    practical total rounded to five grams.
+    """
+
+    hours = (
+        duration.total_seconds()
+        / 3600
+    )
+
+    value = (
+        hours
+        * grams_per_hour
+    )
+
+    return int(
+        value / 5
+        + 0.5
+    ) * 5
+
 def _build_long_trail_execution_plan(
     *,
     event,
@@ -479,6 +506,11 @@ def _build_long_trail_execution_plan(
         )
     )
 
+    nutrition_is_tested = (
+        resolved_nutrition_profile
+        .is_athlete_tested
+    )
+
     carbohydrate_per_hour = (
         resolved_nutrition_profile
         .carbohydrate_per_hour
@@ -511,6 +543,24 @@ def _build_long_trail_execution_plan(
         - gel_carbohydrate,
     )
 
+    default_carbohydrate_lower = (
+        _rounded_carbohydrate_total(
+            grams_per_hour=(
+                DEFAULT_CARBOHYDRATE_LOWER_G_PER_HOUR
+            ),
+            duration=expected_duration,
+        )
+    )
+
+    default_carbohydrate_upper = (
+        _rounded_carbohydrate_total(
+            grams_per_hour=(
+                DEFAULT_CARBOHYDRATE_UPPER_G_PER_HOUR
+            ),
+            duration=expected_duration,
+        )
+    )
+
     hydration = (
         (
             "Start normally hydrated. For the estimated "
@@ -538,34 +588,69 @@ def _build_long_trail_execution_plan(
         ),
     )
 
-    nutrition = (
-        (
-            "Use a familiar pre-race meal. Approximately "
-            f"{resolved_nutrition_profile.pre_race_carbohydrate_lower}–"
-            f"{resolved_nutrition_profile.pre_race_carbohydrate_upper} "
-            "g of carbohydrate in the final hour "
-            "may be used only if already well tolerated."
-        ),
-        (
-            f"Target approximately {carbohydrate_per_hour} "
-            "g of carbohydrate per hour, corresponding to "
-            f"about {total_carbohydrate} g across the "
-            "estimated race duration."
-        ),
-        (
-            f"One practical option is {gel_count} gels of "
-            f"{gel_size} g, approximately every 30 minutes, "
-            f"providing {gel_carbohydrate} g. Obtain the "
-            f"remaining approximately "
-            f"{remaining_carbohydrate} g from a tested "
-            "carbohydrate drink or familiar food."
-        ),
-        (
-            "Begin intake during the first 20–30 minutes "
-            "instead of waiting for hunger or fatigue. "
-            "Small, regular doses are preferred."
-        ),
-    )
+    if nutrition_is_tested:
+
+        nutrition = (
+            (
+                "Use the athlete-tested pre-race meal. "
+                f"Approximately "
+                f"{resolved_nutrition_profile.pre_race_carbohydrate_lower}–"
+                f"{resolved_nutrition_profile.pre_race_carbohydrate_upper} "
+                "g of carbohydrate in the final hour may "
+                "be used as already tolerated."
+            ),
+            (
+                "Use the athlete-tested target of "
+                f"{carbohydrate_per_hour} g of carbohydrate "
+                "per hour, corresponding to about "
+                f"{total_carbohydrate} g across the "
+                "estimated race duration."
+            ),
+            (
+                f"One tested implementation may use "
+                f"{gel_count} gels of {gel_size} g, "
+                "approximately every 30 minutes, providing "
+                f"{gel_carbohydrate} g. Obtain the remaining "
+                f"approximately {remaining_carbohydrate} g "
+                "from the athlete-tested drink or familiar "
+                "food."
+            ),
+            (
+                "Begin intake during the first 20–30 minutes. "
+                "Use the timing and products already tolerated "
+                "during training."
+            ),
+        )
+
+    else:
+
+        nutrition = (
+            (
+                "Use a familiar pre-race meal and avoid "
+                "introducing new food, supplements or "
+                "quantities on race day."
+            ),
+            (
+                "No athlete-tested carbohydrate intake is "
+                "recorded. Use 30–60 g of carbohydrate per "
+                "hour as a provisional range, beginning near "
+                "the lower end unless higher intake has "
+                "already been tolerated."
+            ),
+            (
+                "For the estimated duration, this provisional "
+                f"range corresponds to approximately "
+                f"{default_carbohydrate_lower}–"
+                f"{default_carbohydrate_upper} g in total. "
+                "Do not assume that 80–90 g/h is tolerated "
+                "without progressive practice."
+            ),
+            (
+                "Begin intake during the first 20–30 minutes "
+                "and use small, regular doses. Adjust or stop "
+                "if gastrointestinal discomfort develops."
+            ),
+        )
 
     return RaceExecutionPlan(
         expected_duration=expected_duration,

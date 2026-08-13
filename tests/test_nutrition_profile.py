@@ -131,3 +131,18 @@ def test_profile_is_immutable():
         FrozenInstanceError
     ):
         profile.carbohydrate_per_hour = 90
+
+def test_default_profile_is_not_athlete_tested():
+
+    profile = NutritionProfile()
+
+    assert profile.is_athlete_tested is False
+
+
+def test_recorded_profile_is_athlete_tested():
+
+    profile = NutritionProfile(
+        source="athlete-tested",
+    )
+
+    assert profile.is_athlete_tested is True

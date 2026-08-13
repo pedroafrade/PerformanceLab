@@ -1524,6 +1524,11 @@ class WorkoutGenerator:
                     "long_session_elevation_gain",
                     None,
                 ),
+                nutrition_profile=getattr(
+                    coach_context,
+                    "nutrition_profile",
+                    None,
+                ),
             )
 
         if purpose is SessionPurpose.CROSS_TRAINING:
@@ -1899,6 +1904,7 @@ class WorkoutGenerator:
         sport: str | None,
         elevation_demand: str | None = None,
         target_elevation_gain: int | None = None,
+        nutrition_profile=None,
     ) -> tuple[str, ...]:
         """
         Builds a long aerobic session appropriate to the
@@ -1945,6 +1951,24 @@ class WorkoutGenerator:
                 structure[-1],
             )
 
+        nutrition_guidance = (
+            cls._long_nutrition_guidance(
+                duration_minutes=(
+                    duration_minutes
+                ),
+                nutrition_profile=(
+                    nutrition_profile
+                ),
+            )
+        )
+
+        if nutrition_guidance is not None:
+            structure = (
+                *structure[:-1],
+                nutrition_guidance,
+                structure[-1],
+            )
+
         if elevation_demand == "mountainous":
             return (
                 *structure[:-1],
@@ -1970,6 +1994,60 @@ class WorkoutGenerator:
             )
 
         return structure
+    # ======================================================
+
+    @staticmethod
+    def _long_nutrition_guidance(
+        *,
+        duration_minutes: int,
+        nutrition_profile,
+    ) -> str | None:
+        """
+        Adds nutrition practice only to sessions long enough
+        to provide a useful tolerance test.
+        """
+
+        if (
+            duration_minutes < 90
+            or nutrition_profile is None
+        ):
+            return None
+
+        if getattr(
+            nutrition_profile,
+            "is_athlete_tested",
+            False,
+        ):
+            carbohydrate_per_hour = getattr(
+                nutrition_profile,
+                "carbohydrate_per_hour",
+                None,
+            )
+
+            if (
+                isinstance(
+                    carbohydrate_per_hour,
+                    int,
+                )
+                and not isinstance(
+                    carbohydrate_per_hour,
+                    bool,
+                )
+                and carbohydrate_per_hour > 0
+            ):
+                return (
+                    "Practise the athlete-tested race "
+                    "nutrition plan at approximately "
+                    f"{carbohydrate_per_hour} g of "
+                    "carbohydrate per hour"
+                )
+
+        return (
+            "Practise a provisional carbohydrate intake "
+            "of 30–45 g/h using familiar products; record "
+            "tolerance before increasing the amount"
+        )
+
     # ======================================================
 
     @classmethod

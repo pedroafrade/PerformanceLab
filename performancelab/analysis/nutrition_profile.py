@@ -115,6 +115,18 @@ class NutritionProfile:
         )
 
     # ======================================================
+    @property
+    def is_athlete_tested(
+        self,
+    ) -> bool:
+        """
+        Indicates whether the values were explicitly recorded
+        for the athlete rather than supplied as defaults.
+        """
+
+        return self.source != "default"
+
+    # ======================================================
 
     def carbohydrate_for(
         self,

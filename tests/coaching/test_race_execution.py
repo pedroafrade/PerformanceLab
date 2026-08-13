@@ -252,22 +252,29 @@ def test_builds_long_trail_execution_plan():
     )
 
     assert any(
-        "80 g of carbohydrate per hour"
+        "No athlete-tested carbohydrate intake"
         in step
         for step in plan.nutrition
     )
 
     assert any(
-        "about 270 g"
+        "30–60 g of carbohydrate per hour"
         in step
         for step in plan.nutrition
     )
 
     assert any(
-        "6 gels"
+        "approximately 100–200 g in total"
         in step
         for step in plan.nutrition
     )
+
+    assert any(
+        "Do not assume that 80–90 g/h is tolerated"
+        in step
+        for step in plan.nutrition
+    )
+
 def test_long_trail_uses_athlete_nutrition_profile():
 
     event = SimpleNamespace(
@@ -328,7 +335,7 @@ def test_long_trail_uses_athlete_nutrition_profile():
     )
 
     assert any(
-        "70 g of carbohydrate per hour"
+        "athlete-tested target of 70 g"
         in step
         for step in plan.nutrition
     )
