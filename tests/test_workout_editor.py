@@ -95,6 +95,7 @@ class FakeStreamlit:
     def columns(
         self,
         count,
+        **kwargs,
     ):
 
         return [
@@ -765,4 +766,67 @@ def test_edit_preserves_exact_workout_time(
         8,
         30,
         tzinfo=timezone.utc,
+    )
+
+def test_edit_button_opens_workout_modal(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit(
+        button_values={
+            "workout_editor_edit": True,
+        },
+    )
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+    workout = create_fake_workout()
+
+    workout_editor.show_workout_editor(
+        athlete,
+        workout,
+    )
+
+    assert (
+        fake_streamlit
+        .session_state
+        .edit_workout
+        is True
+    )
+
+    assert (
+        "Edit workout"
+        in fake_streamlit.messages
+    )
+
+    assert fake_streamlit.rerun_called is True
+
+def test_edit_modal_remains_closed_without_request(
+    monkeypatch,
+):
+
+    fake_streamlit = FakeStreamlit()
+
+    monkeypatch.setattr(
+        workout_editor,
+        "st",
+        fake_streamlit,
+    )
+
+    athlete = create_fake_athlete()
+    workout = create_fake_workout()
+
+    workout_editor.show_workout_editor(
+        athlete,
+        workout,
+    )
+
+    assert (
+        "Edit workout"
+        not in fake_streamlit.messages
     )

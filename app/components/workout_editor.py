@@ -197,23 +197,16 @@ def show_workout_delete_action(
                 st.session_state.confirm_delete = False
                 st.rerun()
         
-def show_workout_edit_form(
+def _show_workout_edit_fields(
     athlete,
     selected_workout,
     *,
-    key_prefix: str = "workout_edit_form",
+    key_prefix: str,
 ) -> None:
-    """Display the form used to edit the selected workout."""
-    _initialize_workout_editor_state()
-
-    if (
-        selected_workout is None
-        or not st.session_state.edit_workout
-    ):
-        return
-
-    st.divider()
-    st.subheader("Edit workout")
+    """
+    Displays the editable workout fields inside the
+    active modal.
+    """
 
     title = st.text_input(
         "Title",
@@ -435,6 +428,41 @@ def show_workout_edit_form(
             st.session_state.edit_workout = False
             st.rerun()
 
+def show_workout_edit_form(
+    athlete,
+    selected_workout,
+    *,
+    key_prefix: str = "workout_edit_form",
+) -> None:
+    """
+    Opens the workout editor in a modal without changing
+    the height of the activity browser.
+    """
+
+    _initialize_workout_editor_state()
+
+    if (
+        selected_workout is None
+        or not st.session_state.edit_workout
+    ):
+        return
+
+    def show_dialog_content() -> None:
+
+        _show_workout_edit_fields(
+            athlete,
+            selected_workout,
+            key_prefix=key_prefix,
+        )
+
+    edit_dialog = st.dialog(
+        "Edit workout",
+        width="large",
+    )(
+        show_dialog_content
+    )
+
+    edit_dialog()
 
 def show_workout_editor(
     athlete,
@@ -450,10 +478,11 @@ def show_workout_editor(
         st.session_state.edit_workout = False
         return
 
-    st.divider()
-
-    action_spacer, edit_column, delete_column = (
-        st.columns(3)
+    edit_column, delete_column = (
+        st.columns(
+            2,
+            gap="small",
+        )
     )
 
     with edit_column:
