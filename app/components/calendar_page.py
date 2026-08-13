@@ -186,6 +186,194 @@ def _calendar_html(
 
 def _calendar_styles() -> None:
     """
+    Applies the standard page header and calendar-specific
+    visual styling.
+    """
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 3.65rem;
+            padding-bottom: 0 !important;
+        }
+
+        section[data-testid="stMain"] > div {
+            padding-bottom: 0 !important;
+        }
+
+        div[data-testid="stMainBlockContainer"]
+        > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .calendar-page-header {
+            margin: 0 0 0.45rem 0;
+            padding: 0;
+        }
+
+        .calendar-page-title {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 750;
+            line-height: 1.05;
+        }
+
+        .calendar-page-subtitle {
+            margin-top: 0.32rem;
+            font-size: 0.76rem;
+            line-height: 1.15;
+            opacity: 0.58;
+        }
+
+        .training-calendar-scroll {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .training-calendar-grid {
+            min-width: 980px;
+            display: grid;
+            grid-template-columns:
+                repeat(7, minmax(130px, 1fr));
+            gap: 1px;
+            padding: 1px;
+            border:
+                1px solid rgba(128, 128, 128, 0.25);
+            border-radius: 0.65rem;
+            background: rgba(128, 128, 128, 0.22);
+            overflow: hidden;
+        }
+
+        .training-calendar-weekday {
+            padding: 0.65rem;
+            background:
+                var(--secondary-background-color);
+            color: rgba(128, 128, 128, 0.95);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .training-calendar-day {
+            min-height: 118px;
+            padding: 0.5rem;
+            background: var(--background-color);
+        }
+
+        .training-calendar-day.outside-month {
+            opacity: 0.42;
+        }
+
+        .training-calendar-day.today {
+            box-shadow:
+                inset 0 0 0 2px
+                var(--primary-color);
+        }
+
+        .training-calendar-day-header {
+            min-height: 1.35rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.3rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .training-calendar-phase {
+            overflow: hidden;
+            color: rgba(128, 128, 128, 0.95);
+            font-size: 0.62rem;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .training-calendar-item {
+            margin-top: 0.28rem;
+            padding: 0.3rem 0.4rem;
+            overflow: hidden;
+            border-left: 3px solid;
+            border-radius: 0.3rem;
+            font-size: 0.7rem;
+            line-height: 1.15;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .training-calendar-item.planned {
+            border-color: #4f86f7;
+            background: rgba(79, 134, 247, 0.13);
+        }
+
+        .training-calendar-item.completed {
+            border-color: #39a96b;
+            background: rgba(57, 169, 107, 0.13);
+        }
+
+        .training-calendar-item.event {
+            border-color: #e05a5a;
+            background: rgba(224, 90, 90, 0.15);
+            font-weight: 700;
+        }
+
+        .training-calendar-item.status-missed {
+            border-color: #d28b27;
+            background: rgba(210, 139, 39, 0.15);
+        }
+
+        .training-calendar-item.status-substitute,
+        .training-calendar-item.status-modified {
+            border-style: dashed;
+        }
+
+        .training-calendar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            color: rgba(128, 128, 128, 0.95);
+            font-size: 0.75rem;
+        }
+
+        .training-calendar-legend span::before {
+            content: "";
+            display: inline-block;
+            width: 0.65rem;
+            height: 0.65rem;
+            margin-right: 0.3rem;
+            border-radius: 0.15rem;
+            vertical-align: -0.05rem;
+        }
+
+        .training-calendar-legend .planned::before {
+            background: #4f86f7;
+        }
+
+        .training-calendar-legend .completed::before {
+            background: #39a96b;
+        }
+
+        .training-calendar-legend .event::before {
+            background: #e05a5a;
+        }
+        </style>
+
+        <div class="calendar-page-header">
+            <div class="calendar-page-title">
+                Calendar
+            </div>
+            <div class="calendar-page-subtitle">
+                See planned training, completed activities
+                and events in one timeline.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    """
     Applies calendar-specific visual styling.
     """
 
@@ -334,14 +522,7 @@ def show_calendar_page(
     Displays the athlete's monthly training calendar.
     """
 
-    st.title(
-        "Calendar"
-    )
-
-    st.caption(
-        "See planned training, completed activities "
-        "and events in one timeline."
-    )
+    _calendar_styles()
 
     today = date.today()
 
@@ -430,8 +611,6 @@ def show_calendar_page(
         month=anchor.month,
         reference_day=today,
     )
-
-    _calendar_styles()
 
     st.markdown(
         _calendar_html(

@@ -10,6 +10,63 @@ from .athlete_panel import (
     show_athlete_panel,
 )
 
+def _settings_page_header() -> None:
+    """
+    Displays the standard page header used throughout
+    the main application pages.
+    """
+
+    st.markdown(
+        """
+        <style>
+        div[data-testid="stMainBlockContainer"] {
+            padding-top: 3.65rem;
+            padding-bottom: 0 !important;
+        }
+
+        section[data-testid="stMain"] > div {
+            padding-bottom: 0 !important;
+        }
+
+        div[data-testid="stMainBlockContainer"]
+        > div:last-child {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .settings-page-header {
+            margin: 0 0 0.45rem 0;
+            padding: 0;
+        }
+
+        .settings-page-title {
+            margin: 0;
+            font-size: 2.25rem;
+            font-weight: 750;
+            line-height: 1.05;
+        }
+
+        .settings-page-subtitle {
+            margin-top: 0.32rem;
+            font-size: 0.76rem;
+            line-height: 1.15;
+            opacity: 0.58;
+        }
+        </style>
+
+        <div class="settings-page-header">
+            <div class="settings-page-title">
+                Settings
+            </div>
+            <div class="settings-page-subtitle">
+                Manage the personal, physiological,
+                nutrition and availability information
+                used by PerformanceLab.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def show_settings_page(
     athlete,
@@ -19,15 +76,7 @@ def show_settings_page(
     existing validated athlete editor.
     """
 
-    st.title(
-        "Settings"
-    )
-
-    st.caption(
-        "Manage the personal, physiological, nutrition "
-        "and availability information used by "
-        "PerformanceLab."
-    )
+    _settings_page_header()
 
     st.info(
         "Changes to physiological values, heart-rate "
