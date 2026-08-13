@@ -609,7 +609,49 @@ def test_tempo_workout_uses_athlete_pace() -> None:
         workout.prescription_summary
         == "9 km at 5:15/km"
     )
-    
+
+def test_trail_tempo_uses_effort_instead_of_pace():
+
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        scheduled_day=date(
+            2026,
+            8,
+            17,
+        ),
+        template=TEMPO_TEMPLATE.for_sport(
+            "Trail Running"
+        ),
+        coach_context=SimpleNamespace(
+            performance_profile=SimpleNamespace(
+                tempo_pace=5.25,
+            ),
+        ),
+        strategy_plan=make_strategy_plan(
+            key_session_focus="tempo",
+        ),
+    )
+
+    assert (
+        "Tempo effort 20 min at RPE 6–7/10; "
+        "keep the effort controlled and regulate "
+        "pace by terrain"
+        in workout.structure
+    )
+
+    assert not any(
+        "5:15/km" in step
+        for step in workout.structure
+    )
+
+    assert (
+        workout.prescription_summary
+        == "20 min tempo · RPE 6–7/10"
+    )
+
 def test_returns_hills_template_for_hills_focus() -> None:
 
     template = template_for(
@@ -1465,6 +1507,83 @@ def test_threshold_uses_threshold_heart_rate_range():
         "Heart rate target: "
         "Z4 · 177–181 bpm"
     )
+
+def test_template_focus_overrides_generic_strategy_focus():
+
+    guidance = (
+        WorkoutGenerator
+        ._heart_rate_guidance(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=make_strategy_plan(
+                key_session_focus="threshold",
+                focus="threshold",
+            ),
+            coach_context=SimpleNamespace(
+                heart_rate_profile=(
+                    SimpleNamespace(
+                        threshold_hr=177,
+                    )
+                ),
+            ),
+            focus="tempo",
+        )
+    )
+
+    assert guidance == (
+        "Heart rate target: "
+        "Z3–Z4 · 168–175 bpm"
+    )
+
+def test_template_focus_overrides_generic_strategy_focus():
+
+    guidance = (
+        WorkoutGenerator
+        ._heart_rate_guidance(
+            purpose=SessionPurpose.INTENSITY,
+            strategy_plan=make_strategy_plan(
+                key_session_focus="threshold",
+                focus="threshold",
+            ),
+            coach_context=SimpleNamespace(
+                heart_rate_profile=(
+                    SimpleNamespace(
+                        threshold_hr=177,
+                    )
+                ),
+            ),
+            focus="tempo",
+        )
+    )
+
+    assert guidance == (
+        "Heart rate target: "
+        "Z3–Z4 · 168–175 bpm"
+    )
+
+
+def test_formats_open_lower_heart_rate_zone():
+
+    assert (
+        WorkoutGenerator
+        ._format_heart_rate_range(
+            lower_bpm=1,
+            upper_bpm=120,
+        )
+        == "≤120 bpm"
+    )
+
+
+def test_formats_bounded_heart_rate_zone():
+
+    assert (
+        WorkoutGenerator
+        ._format_heart_rate_range(
+            lower_bpm=121,
+            upper_bpm=156,
+        )
+        == "121–156 bpm"
+    )
+
 def test_second_intensity_uses_secondary_focus():
 
     strategy_plan = make_strategy_plan(

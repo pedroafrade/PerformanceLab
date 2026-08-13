@@ -391,6 +391,11 @@ class WorkoutGenerator:
                 purpose=slot.purpose,
                 strategy_plan=strategy_plan,
                 coach_context=coach_context,
+                focus=(
+                    self._template_focus(
+                        template
+                    )
+                ),
             )
         )
 
@@ -534,6 +539,71 @@ class WorkoutGenerator:
         )
 
     # ======================================================
+    @staticmethod
+    def _template_focus(
+        template: WorkoutTemplate,
+    ) -> str | None:
+        """
+        Returns the physiological focus represented by the
+        concrete workout template.
+
+        This keeps heart-rate guidance aligned with the
+        session that was actually generated.
+        """
+
+        title = (
+            template.title
+            .strip()
+            .lower()
+        )
+
+        focus_markers = (
+            (
+                (
+                    "lt2",
+                    "threshold",
+                ),
+                "threshold",
+            ),
+            (
+                (
+                    "tempo",
+                ),
+                "tempo",
+            ),
+            (
+                (
+                    "hill",
+                ),
+                "hills",
+            ),
+            (
+                (
+                    "vo₂",
+                    "vo2",
+                ),
+                "vo2max",
+            ),
+            (
+                (
+                    "speed",
+                ),
+                "speed",
+            ),
+        )
+
+        for markers, focus in focus_markers:
+
+            if any(
+                marker in title
+                for marker in markers
+            ):
+                return focus
+
+        return None
+
+    # ======================================================
+
     @staticmethod
     def _tempo_pace(
         coach_context,
@@ -937,13 +1007,6 @@ class WorkoutGenerator:
             and duration_minutes is not None
             and duration_minutes >= 30
         ):
-            tempo_pace = cls._tempo_pace(
-                coach_context
-            )
-
-            if tempo_pace is None:
-                return None
-
             (
                 _,
                 _,
@@ -951,6 +1014,22 @@ class WorkoutGenerator:
             ) = cls._intensity_timing(
                 duration_minutes
             )
+
+            if "trail" in normalized_sport:
+                return (
+                    f"{main_minutes} min tempo · "
+                    "RPE 6–7/10"
+                )
+
+            tempo_pace = cls._tempo_pace(
+                coach_context
+            )
+
+            if tempo_pace is None:
+                return (
+                    f"{main_minutes} min tempo · "
+                    "RPE 6–7/10"
+                )
 
             main_distance = round(
                 main_minutes / tempo_pace
@@ -1147,6 +1226,28 @@ class WorkoutGenerator:
             planned_distance
         )
     # ======================================================
+    @staticmethod
+    def _format_heart_rate_range(
+        *,
+        lower_bpm: int,
+        upper_bpm: int,
+    ) -> str:
+        """
+        Formats a resolved heart-rate range for presentation.
+
+        Zone definitions may use one bpm as an internal lower
+        sentinel. That value is presented as an upper limit
+        rather than as a physiological target.
+        """
+
+        if lower_bpm <= 1:
+            return f"≤{upper_bpm} bpm"
+
+        return (
+            f"{lower_bpm}–{upper_bpm} bpm"
+        )
+
+    # ======================================================
 
     @classmethod
     def _heart_rate_guidance(
@@ -1155,15 +1256,17 @@ class WorkoutGenerator:
         purpose: SessionPurpose,
         strategy_plan: StrategyPlan | None,
         coach_context: CoachContext,
+        focus: str | None = None,
     ) -> str | None:
         """
         Resolves a semantic session target against the
         athlete's current heart-rate profile.
         """
 
-        focus = None
-
-        if strategy_plan is not None:
+        if (
+            focus is None
+            and strategy_plan is not None
+        ):
 
             focus = cls._focus_for_slot(
                 purpose=purpose,
@@ -1217,10 +1320,17 @@ class WorkoutGenerator:
                 * upper_ratio
             )
 
+            resolved_range = (
+                cls._format_heart_rate_range(
+                    lower_bpm=lower_bpm,
+                    upper_bpm=upper_bpm,
+                )
+            )
+
             return (
                 "Heart rate target: "
                 f"{target.label} · "
-                f"{lower_bpm}–{upper_bpm} bpm"
+                f"{resolved_range}"
             )
 
         resolved_zones = []
@@ -1252,10 +1362,17 @@ class WorkoutGenerator:
             for zone in resolved_zones
         )
 
+        resolved_range = (
+            cls._format_heart_rate_range(
+                lower_bpm=lower_bpm,
+                upper_bpm=upper_bpm,
+            )
+        )
+
         return (
             "Heart rate target: "
             f"{target.label} · "
-            f"{lower_bpm}–{upper_bpm} bpm"
+            f"{resolved_range}"
         )
 
     # ======================================================
@@ -2008,23 +2125,48 @@ class WorkoutGenerator:
 
         elif "tempo" in normalized_title:
 
-            tempo_pace = cls._tempo_pace(
-                coach_context
+            normalized_sport = str(
+                template.sport or ""
+            ).strip().lower()
+
+            is_trail = (
+                "trail" in normalized_sport
             )
 
-            pace_text = (
-                f" at {cls._format_pace(tempo_pace)}"
-                if tempo_pace is not None
-                else ""
-            )
+            if is_trail:
 
-            main_steps = (
-                (
-                    f"Tempo effort "
-                    f"{available_minutes} min"
-                    f"{pace_text}"
-                ),
-            )
+                main_steps = (
+                    (
+                        f"Tempo effort "
+                        f"{available_minutes} min at "
+                        "RPE 6–7/10; keep the effort "
+                        "controlled and regulate pace "
+                        "by terrain"
+                    ),
+                )
+
+            else:
+
+                tempo_pace = cls._tempo_pace(
+                    coach_context
+                )
+
+                pace_text = (
+                    (
+                        " at "
+                        f"{cls._format_pace(tempo_pace)}"
+                    )
+                    if tempo_pace is not None
+                    else " at RPE 6–7/10"
+                )
+
+                main_steps = (
+                    (
+                        f"Tempo effort "
+                        f"{available_minutes} min"
+                        f"{pace_text}"
+                    ),
+                )
 
         elif "hill" in normalized_title:
             (
