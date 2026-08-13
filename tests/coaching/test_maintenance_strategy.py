@@ -27,10 +27,22 @@ def make_context(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
+    should_reduce_volume: (
+        bool | None
+    ) = None,
 ):
+    values = {
+        "tsb": tsb,
+        "average_rpe": average_rpe,
+    }
+
+    if should_reduce_volume is not None:
+        values[
+            "should_reduce_volume"
+        ] = should_reduce_volume
+
     return SimpleNamespace(
-        tsb=tsb,
-        average_rpe=average_rpe,
+        **values
     )
 
 
@@ -38,6 +50,9 @@ def build_plan(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
+    should_reduce_volume: (
+        bool | None
+    ) = None,
     event_name: str | None = None,
 ):
     strategy = StubMaintenanceStrategy(
@@ -48,6 +63,9 @@ def build_plan(
         make_context(
             tsb=tsb,
             average_rpe=average_rpe,
+            should_reduce_volume=(
+                should_reduce_volume
+            ),
         ),
     )
 
@@ -173,6 +191,40 @@ def test_tsb_boundary_does_not_trigger_reduction():
         not in plan.warnings
     )
 
+def test_current_volume_signal_reduces_maintenance():
+
+    plan = build_plan(
+        tsb=5.0,
+        should_reduce_volume=True,
+    )
+
+    assert plan.volume_factor == pytest.approx(
+        0.90
+    )
+    assert plan.intensity_sessions == 0
+    assert plan.recovery_days == 3
+    assert (
+        plan.recovery_priority
+        == "high"
+    )
+
+
+def test_current_volume_signal_overrides_legacy_tsb():
+
+    plan = build_plan(
+        tsb=-20.0,
+        should_reduce_volume=False,
+    )
+
+    assert plan.volume_factor == pytest.approx(
+        1.00
+    )
+    assert plan.intensity_sessions == 1
+    assert plan.recovery_days == 2
+    assert (
+        plan.recovery_priority
+        == "normal"
+    )
 
 # ==========================================================
 # RPE handling

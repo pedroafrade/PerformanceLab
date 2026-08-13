@@ -48,7 +48,13 @@ class MaintenanceStrategy(CoachStrategy):
         recovery_days = 2
         focus = "fitness maintenance"
 
-        if context.tsb < -10:
+        should_reduce_volume = getattr(
+            context,
+            "should_reduce_volume",
+            context.tsb < -10,
+        )
+
+        if should_reduce_volume:
             volume_factor = 0.90
             intensity_sessions = 0
             recovery_days = 3
@@ -78,12 +84,28 @@ class MaintenanceStrategy(CoachStrategy):
                 "Recent perceived effort is high."
             )
 
-        event_name = self._event_name(context)
+        event_name = self._event_name(
+            context
+        )
 
         if event_name is not None:
             objectives.append(
                 f"Maintain readiness for {event_name}."
             )
+
+        recovery_priority = (
+            "high"
+            if (
+                should_reduce_volume
+                or (
+                    context.average_rpe
+                    is not None
+                    and context.average_rpe
+                    >= 8
+                )
+            )
+            else "normal"
+        )
 
         return StrategyPlan(
             strategy=self.name,
@@ -102,24 +124,25 @@ class MaintenanceStrategy(CoachStrategy):
             secondary_focus="aerobic endurance",
 
             recovery_priority=(
-                "high"
-                if (
-                    context.tsb < -10
-                    or (
-                        context.average_rpe is not None
-                        and context.average_rpe >= 8
-                    )
-                )
-                else "normal"
+                recovery_priority
             ),
 
             race_specificity=0.40,
 
             target_weekly_minutes=360,
-            target_weekly_load=400.0 * volume_factor,
+            target_weekly_load=(
+                400.0
+                * volume_factor
+            ),
             long_session_minutes=90,
 
-            objectives=tuple(objectives),
-            guidelines=tuple(guidelines),
-            warnings=tuple(warnings),
+            objectives=tuple(
+                objectives
+            ),
+            guidelines=tuple(
+                guidelines
+            ),
+            warnings=tuple(
+                warnings
+            ),
         )
