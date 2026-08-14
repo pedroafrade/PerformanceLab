@@ -8,7 +8,6 @@ from types import SimpleNamespace
 from app.components.calendar_page import (
     _calendar_html,
     _calendar_item_label,
-    _parse_selected_day,
     _phase_label,
     _shift_month,
     show_calendar_page,
@@ -128,34 +127,6 @@ def test_plain_item_label_uses_title():
         item
     ) == "Long Run"
 
-def test_parses_selected_calendar_day():
-
-    fallback = date(
-        2026,
-        8,
-        14,
-    )
-
-    assert (
-        _parse_selected_day(
-            "2026-08-20",
-            fallback=fallback,
-        )
-        == date(
-            2026,
-            8,
-            20,
-        )
-    )
-
-    assert (
-        _parse_selected_day(
-            "invalid",
-            fallback=fallback,
-        )
-        == fallback
-    )
-
 
 def test_formats_calendar_phase_progress():
 
@@ -227,8 +198,13 @@ def test_calendar_html_contains_day_details():
     )
 
     assert (
-        "?calendar_day=2026-08-14"
+        "#calendar-detail-2026-08-14"
         in html
+    )
+
+    assert (
+        "?calendar_day="
+        not in html
     )
 
     assert (
@@ -280,3 +256,43 @@ def test_calendar_html_marks_rest_day():
         "training-calendar-rest"
         in html
     )
+
+def test_calendar_selection_does_not_reload_page():
+
+    calendar_day = CalendarDayData(
+        day=date(
+            2026,
+            8,
+            14,
+        ),
+        is_current_month=True,
+        is_today=True,
+        phase="Peak",
+    )
+
+    calendar = CalendarMonthData(
+        year=2026,
+        month=8,
+        weeks=(
+            (
+                calendar_day,
+            ),
+        ),
+    )
+
+    html = _calendar_html(
+        calendar,
+        selected_day=date(
+            2026,
+            8,
+            14,
+        ),
+    )
+
+    assert (
+        'href="#calendar-detail-2026-08-14"'
+        in html
+    )
+
+    assert 'target="_self"' not in html
+    assert "?calendar_day=" not in html

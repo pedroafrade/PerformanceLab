@@ -56,31 +56,6 @@ def _set_calendar_month(
         anchor
     )
 
-    st.query_params[
-        "calendar_day"
-    ] = anchor.isoformat()
-
-
-def _parse_selected_day(
-    value,
-    *,
-    fallback: date,
-) -> date:
-    """
-    Parses the selected calendar day from the URL.
-    """
-
-    if not value:
-        return fallback
-
-    try:
-        return date.fromisoformat(
-            str(value)
-        )
-    except ValueError:
-        return fallback
-
-
 def _calendar_item_label(
     item,
 ) -> str:
@@ -194,10 +169,11 @@ def _calendar_html(
             parts.append(
                 (
                     '<a class="training-calendar-day-link" '
-                    f'href="?calendar_day={day_value}" '
-                    'target="_self" '
+                    f'href="#calendar-detail-{day_value}" '
                     f'aria-label="Select {day_value}">'
-                    f'<div class="{" ".join(classes)}">'
+                    '<div '
+                    f'class="{" ".join(classes)}" '
+                    f'data-calendar-day="{day_value}">'
                     '<div class="training-calendar-day-header">'
                     f"<strong>{calendar_day.day.day}</strong>"
                 )
@@ -372,6 +348,52 @@ def _selected_day_html(
 
     return "".join(parts)
 
+def _selected_days_html(
+    calendar,
+    *,
+    default_day: date,
+) -> str:
+    """
+    Builds one locally selectable detail panel for every
+    day in the visible calendar grid.
+    """
+
+    parts = [
+        '<div class="calendar-selected-day-stack">'
+    ]
+
+    for week in calendar.weeks:
+        for calendar_day in week:
+            day_value = (
+                calendar_day.day.isoformat()
+            )
+
+            classes = [
+                "calendar-selected-panel",
+            ]
+
+            if (
+                calendar_day.day
+                == default_day
+            ):
+                classes.append(
+                    "calendar-selected-default"
+                )
+
+            parts.append(
+                (
+                    f'<div id="calendar-detail-{day_value}" '
+                    f'class="{" ".join(classes)}">'
+                    f"{_selected_day_html(calendar_day)}"
+                    "</div>"
+                )
+            )
+
+    parts.append(
+        "</div>"
+    )
+
+    return "".join(parts)
 
 def _upcoming_events_html(
     events,
@@ -560,10 +582,19 @@ def _calendar_styles() -> None:
             text-transform: uppercase;
         }
 
-        .training-calendar-day-link {
+        .training-calendar-day-link,
+        .training-calendar-day-link:link,
+        .training-calendar-day-link:visited,
+        .training-calendar-day-link:hover,
+        .training-calendar-day-link:active {
             min-width: 0;
-            color: inherit;
-            text-decoration: none;
+            color: #000 !important;
+            text-decoration: none !important;
+        }
+
+        .training-calendar-day-link * {
+            color: #000 !important;
+            text-decoration: none !important;
         }
 
         .training-calendar-day-link:nth-last-child(-n + 7) {
@@ -599,7 +630,30 @@ def _calendar_styles() -> None:
             z-index: 2;
             box-shadow:
                 inset 0 0 0 2px
-                rgba(0, 0, 0, 0.95);
+                rgba(0, 0, 0, 0.95) !important;
+        }
+
+        .calendar-selected-day-stack {
+            display: block;
+        }
+
+        .calendar-selected-panel {
+            display: none;
+            scroll-margin-top: 5rem;
+        }
+
+        .calendar-selected-panel.calendar-selected-default {
+            display: block;
+        }
+
+        .calendar-selected-day-stack:
+        has(.calendar-selected-panel:target)
+        .calendar-selected-panel.calendar-selected-default {
+            display: none;
+        }
+
+        .calendar-selected-panel:target {
+            display: block;
         }
 
         .training-calendar-day-header {
@@ -664,9 +718,10 @@ def _calendar_styles() -> None:
 
         .training-calendar-rest {
             margin-top: 0.42rem;
-            color: rgba(0, 0, 0, 0.3);
+            color: rgba(0, 0, 0, 0.3) !important;
             font-size: 0.64rem;
             line-height: 1.1;
+            text-decoration: none !important;
         }
 
         .training-calendar-item.planned {
@@ -850,6 +905,20 @@ def _calendar_styles() -> None:
                 overflow-x: auto;
             }
         }
+        .stApp:has(
+            .calendar-selected-panel:target
+        )
+        .training-calendar-day.selected {
+            box-shadow: none;
+        }
+
+        .stApp:has(
+            #calendar-detail-2026-01-01:target
+        ) .training-calendar-day.today {
+            box-shadow:
+                inset 0 0 0 2px
+                rgba(0, 0, 0, 0.95) !important;
+        }
         </style>
 
         <div class="calendar-page-header">
@@ -929,10 +998,12 @@ def _show_month_navigation(
 
 
 def _show_selected_day(
-    calendar_day,
+    calendar,
+    *,
+    default_day: date,
 ) -> None:
     """
-    Displays the selected calendar day.
+    Displays the locally selected calendar day.
     """
 
     with st.container(
@@ -948,8 +1019,9 @@ def _show_selected_day(
         )
 
         st.html(
-            _selected_day_html(
-                calendar_day
+            _selected_days_html(
+                calendar,
+                default_day=default_day,
             )
         )
 
@@ -1026,11 +1098,13 @@ def show_calendar_page(
         .calendar_month_anchor
     )
 
-    selected_day = _parse_selected_day(
-        st.query_params.get(
-            "calendar_day"
-        ),
-        fallback=today,
+    default_selected_day = (
+        today
+        if (
+            anchor.year == today.year
+            and anchor.month == today.month
+        )
+        else anchor
     )
 
     previous_month = _shift_month(
@@ -1053,7 +1127,9 @@ def show_calendar_page(
         year=anchor.year,
         month=anchor.month,
         reference_day=today,
-        selected_day=selected_day,
+        selected_day=(
+            default_selected_day
+        ),
     )
 
     (
@@ -1075,7 +1151,9 @@ def show_calendar_page(
         st.markdown(
             _calendar_html(
                 calendar,
-                selected_day=selected_day,
+                selected_day=(
+                    default_selected_day
+                ),
             ),
             unsafe_allow_html=True,
         )
@@ -1093,7 +1171,10 @@ def show_calendar_page(
 
     with sidebar_column:
         _show_selected_day(
-            calendar.selected_day
+            calendar,
+            default_day=(
+                default_selected_day
+            ),
         )
 
         _show_upcoming_events(
