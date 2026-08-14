@@ -8,6 +8,11 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 import re
 
+from performancelab.coaching.context import (
+    COMPETITION_CLUSTER_MAX_DAYS,
+    CoachContext,
+)
+
 from performancelab.training.load import (
     planned_weekly_load,
     planned_workout_load,
@@ -17,18 +22,266 @@ from performancelab.training.planning import (
     TrainingPlanAdaptation,
     WorkoutOutcomeStatus,
 )
+from performancelab.training.planning.planner import (
+    POST_PRIMARY_EVENT_RECOVERY_DAYS,
+)
 from .plan_models import (
     CompletePlanData,
     PlanAdaptationData,
     PlanChartPointData,
     PlanCompletedLoadPointData,
     PlanCurrentPhaseData,
+    PlanGenerationEventData,
+    PlanGenerationNoticeData,
     PlanPhaseData,
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
 )
 
+class PlanGenerationNoticePresenter:
+    """
+    Builds the factual notice shown before generating a
+    new persistent training plan.
+    """
+
+    def __init__(
+        self,
+        athlete,
+    ) -> None:
+
+        self.athlete = athlete
+
+    @staticmethod
+    def _event_name(
+        entry,
+    ) -> str:
+        """
+        Returns a readable registered event name.
+        """
+
+        event = getattr(
+            entry,
+            "event",
+            None,
+        )
+
+        return str(
+            getattr(
+                event,
+                "name",
+                None,
+            )
+            or "Unnamed event"
+        )
+
+    @staticmethod
+    def _event_date(
+        entry,
+    ) -> date | None:
+        """
+        Returns the factual date of an event entry.
+        """
+
+        event = getattr(
+            entry,
+            "event",
+            None,
+        )
+
+        event_date = getattr(
+            event,
+            "date",
+            None,
+        )
+
+        return (
+            event_date
+            if isinstance(
+                event_date,
+                date,
+            )
+            else None
+        )
+
+    def build(
+        self,
+        *,
+        reference_day: date,
+    ) -> PlanGenerationNoticeData:
+        """
+        Describes the horizon that the Planner will use.
+        """
+
+        context = (
+            CoachContext.from_athlete(
+                self.athlete,
+                today=reference_day,
+            )
+        )
+
+        primary_entry = (
+            context.primary_event
+        )
+
+        primary_event_date = (
+            self._event_date(
+                primary_entry
+            )
+        )
+
+        if primary_event_date is None:
+            week_start = (
+                reference_day
+                - timedelta(
+                    days=(
+                        reference_day.weekday()
+                    )
+                )
+            )
+
+            plan_end_date = (
+                week_start
+                + timedelta(days=6)
+            )
+
+            return PlanGenerationNoticeData(
+                plan_end_date=(
+                    plan_end_date
+                ),
+                primary_event_name=None,
+                primary_event_date=None,
+                recovery_days=(
+                    POST_PRIMARY_EVENT_RECOVERY_DAYS
+                ),
+                competition_block_max_days=(
+                    COMPETITION_CLUSTER_MAX_DAYS
+                ),
+                horizon_message=(
+                    "No future primary event is available. "
+                    "The generated plan will cover the "
+                    "current planning week, ending on "
+                    f"{plan_end_date:%d %B %Y}."
+                ),
+                later_block_message=None,
+            )
+
+        primary_event_name = (
+            self._event_name(
+                primary_entry
+            )
+        )
+
+        plan_end_date = (
+            primary_event_date
+            + timedelta(
+                days=(
+                    POST_PRIMARY_EVENT_RECOVERY_DAYS
+                )
+            )
+        )
+
+        competition_block = tuple(
+            context.competition_block_events
+        )
+
+        later_entries = tuple(
+            context.upcoming_events[
+                len(competition_block):
+            ]
+        )
+
+        later_events = tuple(
+            PlanGenerationEventData(
+                name=self._event_name(
+                    entry
+                ),
+                event_date=event_date,
+            )
+            for entry in later_entries
+            if (
+                event_date
+                := self._event_date(
+                    entry
+                )
+            )
+            is not None
+        )
+
+        later_block_message = None
+
+        if (
+            later_events
+            and competition_block
+        ):
+            last_block_date = (
+                self._event_date(
+                    competition_block[-1]
+                )
+            )
+
+            first_later_event = (
+                later_events[0]
+            )
+
+            gap_days = (
+                (
+                    first_later_event
+                    .event_date
+                    - last_block_date
+                ).days
+                if last_block_date
+                is not None
+                else None
+            )
+
+            if gap_days is not None:
+                later_block_message = (
+                    f"{first_later_event.name} on "
+                    f"{first_later_event.event_date:%d %B %Y} "
+                    "belongs to a later competition block "
+                    f"because it is {gap_days} days after "
+                    "the preceding event. Events in the "
+                    "same block may be separated by no more "
+                    f"than {COMPETITION_CLUSTER_MAX_DAYS} "
+                    "days."
+                )
+            else:
+                later_block_message = (
+                    "The remaining registered events belong "
+                    "to later competition blocks."
+                )
+
+        return PlanGenerationNoticeData(
+            plan_end_date=plan_end_date,
+            primary_event_name=(
+                primary_event_name
+            ),
+            primary_event_date=(
+                primary_event_date
+            ),
+            recovery_days=(
+                POST_PRIMARY_EVENT_RECOVERY_DAYS
+            ),
+            competition_block_max_days=(
+                COMPETITION_CLUSTER_MAX_DAYS
+            ),
+            horizon_message=(
+                "The plan will be generated through "
+                f"{primary_event_name} on "
+                f"{primary_event_date:%d %B %Y}, "
+                f"followed by "
+                f"{POST_PRIMARY_EVENT_RECOVERY_DAYS} "
+                "recovery days, ending on "
+                f"{plan_end_date:%d %B %Y}."
+            ),
+            later_block_message=(
+                later_block_message
+            ),
+            later_events=(
+                later_events
+            ),
+        )
 
 class PlanPresenter:
     """

@@ -64,12 +64,15 @@ from .plan_models import (
     PlanChartPointData,
     PlanCompletedLoadPointData,
     PlanCurrentPhaseData,
+    PlanGenerationEventData,
+    PlanGenerationNoticeData,
     PlanPhaseData,
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
 )
 from .plan_presenter import (
+    PlanGenerationNoticePresenter,
     PlanPresenter,
 )
 from .today_models import (
@@ -159,6 +162,9 @@ __all__ = [
     "PlanChartPointData",
     "PlanCompletedLoadPointData",
     "PlanCurrentPhaseData",
+    "PlanGenerationEventData",
+    "PlanGenerationNoticeData",
+    "PlanGenerationNoticePresenter",
     "PlanProgressionPointData",
     "PlanPresenter",
     "PlanWeekData",

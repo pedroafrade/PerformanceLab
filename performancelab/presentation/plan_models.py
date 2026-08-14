@@ -140,7 +140,38 @@ class PlanAdaptationData:
     previous_prescription: str | None = None
     revised_prescription: str | None = None
 
-    
+@dataclass(frozen=True)
+class PlanGenerationEventData:
+    """
+    One registered event belonging to a later cycle.
+    """
+
+    name: str
+    event_date: date
+
+
+@dataclass(frozen=True)
+class PlanGenerationNoticeData:
+    """
+    Factual preview shown before replacing the plan.
+    """
+
+    plan_end_date: date
+
+    primary_event_name: str | None
+    primary_event_date: date | None
+
+    recovery_days: int
+    competition_block_max_days: int
+
+    horizon_message: str
+    later_block_message: str | None
+
+    later_events: tuple[
+        PlanGenerationEventData,
+        ...,
+    ] = ()
+
 @dataclass(frozen=True)
 class CompletePlanData:
     """

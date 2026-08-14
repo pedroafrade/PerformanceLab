@@ -15,6 +15,7 @@ from performancelab.presentation import (
     PlanChartPointData,
     PlanCompletedLoadPointData,
     PlanCurrentPhaseData,
+    PlanGenerationNoticePresenter,
     PlanPhaseData,
     PlanPresenter,
     PlanProgressionPointData,
@@ -27,6 +28,14 @@ from performancelab.training.planning import (
 )
 from performancelab.workout import (
     Workout,
+)
+from performancelab import (
+    Athlete,
+)
+from performancelab.race import (
+    Event,
+    EventBook,
+    EventEntry,
 )
 
 
@@ -1783,3 +1792,141 @@ def test_excludes_completed_load_before_initial_plan_week():
     ) == (
         "Bicicleta Z2",
     )
+
+def test_explains_plan_generation_horizon():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.events = EventBook(
+        entries=[
+            EventEntry(
+                event=Event(
+                    event_id="sealand",
+                    name="Sealand",
+                    date=date(
+                        2026,
+                        9,
+                        13,
+                    ),
+                    sport="Road Running",
+                    distance=10,
+                ),
+                priority="A",
+            ),
+            EventEntry(
+                event=Event(
+                    event_id="pe-firme",
+                    name=(
+                        "III Trail Pé Firme"
+                    ),
+                    date=date(
+                        2026,
+                        9,
+                        27,
+                    ),
+                    sport="Trail Running",
+                    distance=23,
+                ),
+                priority="A",
+            ),
+            EventEntry(
+                event=Event(
+                    event_id="sao-silvestre",
+                    name=(
+                        "Lidl São Silvestre"
+                    ),
+                    date=date(
+                        2026,
+                        12,
+                        26,
+                    ),
+                    sport="Road Running",
+                    distance=10,
+                ),
+                priority="A",
+            ),
+        ]
+    )
+
+    result = (
+        PlanGenerationNoticePresenter(
+            athlete
+        ).build(
+            reference_day=date(
+                2026,
+                8,
+                14,
+            )
+        )
+    )
+
+    assert (
+        result.primary_event_name
+        == "III Trail Pé Firme"
+    )
+
+    assert (
+        result.primary_event_date
+        == date(
+            2026,
+            9,
+            27,
+        )
+    )
+
+    assert (
+        result.plan_end_date
+        == date(
+            2026,
+            10,
+            4,
+        )
+    )
+
+    assert result.recovery_days == 7
+
+    assert (
+        result.competition_block_max_days
+        == 56
+    )
+
+    assert (
+        "ending on 04 October 2026"
+        in result.horizon_message
+    )
+
+    assert (
+        result.later_events[0].name
+        == "Lidl São Silvestre"
+    )
+
+    assert (
+        "90 days after"
+        in result.later_block_message
+    )
+
+
+def test_plan_generation_notice_is_immutable():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    result = (
+        PlanGenerationNoticePresenter(
+            athlete
+        ).build(
+            reference_day=date(
+                2026,
+                8,
+                14,
+            )
+        )
+    )
+
+    with pytest.raises(
+        FrozenInstanceError
+    ):
+        result.recovery_days = 10

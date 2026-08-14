@@ -11,6 +11,7 @@ import altair as alt
 import streamlit as st
 
 from performancelab.presentation import (
+    PlanGenerationNoticePresenter,
     PlanPresenter,
 )
 from .phase_timeline import (
@@ -3570,6 +3571,92 @@ def _plan_calendar_ics(
         + "\r\n"
     )
 
+@st.dialog(
+    "Generate training plan"
+)
+def _show_plan_generation_confirmation(
+    athlete,
+    on_generate_plan,
+) -> None:
+    """
+    Confirms the factual plan horizon before replacing the
+    current persistent training plan.
+    """
+
+    notice = (
+        PlanGenerationNoticePresenter(
+            athlete
+        ).build(
+            reference_day=date.today()
+        )
+    )
+
+    st.warning(
+        "Generating a new plan will replace the current "
+        "persistent training plan."
+    )
+
+    st.markdown(
+        "**Plan horizon**"
+    )
+
+    st.write(
+        notice.horizon_message
+    )
+
+    if notice.later_block_message:
+        st.info(
+            notice.later_block_message
+        )
+
+    if notice.later_events:
+        st.markdown(
+            "**Registered events in later cycles**"
+        )
+
+        for event in notice.later_events:
+            st.markdown(
+                (
+                    "- "
+                    f"{event.name} — "
+                    f"{event.event_date:%d %B %Y}"
+                )
+            )
+
+        st.caption(
+            "These events remain registered and can guide "
+            "subsequent training cycles."
+        )
+
+    cancel_column, generate_column = (
+        st.columns(
+            2,
+            gap="small",
+        )
+    )
+
+    with cancel_column:
+        if st.button(
+            "Cancel",
+            use_container_width=True,
+            key=(
+                "cancel-plan-generation"
+            ),
+        ):
+            st.rerun()
+
+    with generate_column:
+        if st.button(
+            "Generate plan",
+            type="primary",
+            use_container_width=True,
+            key=(
+                "confirm-plan-generation"
+            ),
+        ):
+            on_generate_plan()
+            st.rerun()
+
 def show_plan_page(
     athlete,
     *,
@@ -3614,16 +3701,19 @@ def show_plan_page(
             unsafe_allow_html=True,
         )
 
-        st.button(
-            "Generate plan",
-            icon=":material/auto_awesome:",
-            type="primary",
-            use_container_width=True,
-            key="plan_generate",
-            on_click=on_generate_plan,
-            disabled=(
-                on_generate_plan is None
-            ),
+        generate_plan_requested = (
+            st.button(
+                "Generate plan",
+                icon=(
+                    ":material/auto_awesome:"
+                ),
+                type="primary",
+                use_container_width=True,
+                key="plan_generate",
+                disabled=(
+                    on_generate_plan is None
+                ),
+            )
         )
 
         calendar_data = (
@@ -3651,6 +3741,11 @@ def show_plan_page(
                 )
             ),
         )
+        if generate_plan_requested:
+            _show_plan_generation_confirmation(
+                athlete,
+                on_generate_plan,
+            )
 
     if not plan.weeks:
 
