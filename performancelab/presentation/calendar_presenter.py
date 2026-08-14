@@ -95,14 +95,38 @@ class CalendarPresenter:
         distance: float | None,
     ) -> str | None:
         """
-        Formats a factual distance.
+        Formats a factual distance with at most two
+        decimal places.
         """
 
         if distance is None:
             return None
 
-        return f"{distance:g} km"
+        formatted = (
+            f"{distance:.2f}"
+            .rstrip("0")
+            .rstrip(".")
+        )
 
+        return f"{formatted} km"
+    
+    @staticmethod
+    def _elevation_label(
+        elevation_gain: float | None,
+    ) -> str | None:
+        """
+        Formats factual elevation gain.
+        """
+
+        if elevation_gain is None:
+            return None
+
+        formatted = (
+            f"{elevation_gain:.0f}"
+        )
+
+        return f"+{formatted} m"
+    
     @staticmethod
     def _execution_target(
         workout,
@@ -622,6 +646,9 @@ class CalendarPresenter:
                     self._distance_label(
                         event.distance
                     ),
+                    self._elevation_label(
+                        event.elevation_gain
+                                       ),
                 )
                 if value
             )

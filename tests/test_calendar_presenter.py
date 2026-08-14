@@ -606,3 +606,81 @@ def test_omits_planned_race_when_event_exists():
         selected_day.items[0].title
         == "III Trail Pé Firme"
     )
+
+def test_formats_calendar_distance_concisely():
+
+    assert (
+        CalendarPresenter
+        ._distance_label(
+            11.5817
+        )
+        == "11.58 km"
+    )
+
+    assert (
+        CalendarPresenter
+        ._distance_label(
+            11.5
+        )
+        == "11.5 km"
+    )
+
+    assert (
+        CalendarPresenter
+        ._distance_label(
+            10.0
+        )
+        == "10 km"
+    )
+
+
+def test_includes_event_elevation_in_summary():
+
+    event_day = date(
+        2026,
+        9,
+        27,
+    )
+
+    event = Event(
+        event_id="trail-event",
+        name="III Trail Pé Firme",
+        date=event_day,
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    result = CalendarPresenter(
+        history=History(),
+        training_plan=TrainingPlan(),
+        events=EventBook(
+            entries=[
+                EventEntry(
+                    event=event,
+                    priority="A",
+                ),
+            ]
+        ),
+    ).build(
+        year=2026,
+        month=9,
+        reference_day=date(
+            2026,
+            8,
+            14,
+        ),
+    )
+
+    selected_day = calendar_day(
+        result,
+        event_day,
+    )
+
+    assert (
+        selected_day.items[0].summary
+        == (
+            "Trail Running · "
+            "23 km · +950 m"
+        )
+    )
