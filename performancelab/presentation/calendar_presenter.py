@@ -500,8 +500,39 @@ class CalendarPresenter:
 
         planned_by_day = {}
 
+        event_days = {
+            event_day
+            for entry in self.events
+            for event_day in (
+                self._calendar_day(
+                    entry.event.date
+                ),
+            )
+            if event_day is not None
+        }
+
         for workout in self.training_plan:
-            if workout.is_rest:
+            is_race_session = (
+                str(
+                    workout.intensity
+                    or ""
+                ).strip().lower()
+                == "race effort"
+                or str(
+                    workout.title
+                    or ""
+                ).strip().lower()
+                == "race"
+            )
+
+            if (
+                workout.is_rest
+                or (
+                    workout.day
+                    in event_days
+                    and is_race_session
+                )
+            ):
                 continue
 
             planned_by_day.setdefault(

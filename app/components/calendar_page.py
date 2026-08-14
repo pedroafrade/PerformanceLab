@@ -603,7 +603,7 @@ def _calendar_styles() -> None:
 
         .training-calendar-day {
             min-width: 0;
-            min-height: 97px;
+            min-height: 102px;
             height: 100%;
             padding: 0.38rem 0.4rem;
             background: transparent;
@@ -646,8 +646,9 @@ def _calendar_styles() -> None:
             display: block;
         }
 
-        .calendar-selected-day-stack:
-        has(.calendar-selected-panel:target)
+        .calendar-selected-day-stack:has(
+            .calendar-selected-panel:target
+        )
         .calendar-selected-panel.calendar-selected-default {
             display: none;
         }
@@ -686,34 +687,41 @@ def _calendar_styles() -> None:
 
         .training-calendar-item {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.28rem;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 0.12rem;
             min-width: 0;
             margin-top: 0.2rem;
-            padding: 0.24rem 0.3rem;
+            padding: 0.2rem 0.28rem;
             overflow: hidden;
             border-left: 3px solid;
-            border-radius: 0.26rem;
+            border-radius: 0.2rem;
             font-size: 0.62rem;
             line-height: 1.1;
-            white-space: nowrap;
         }
 
         .training-calendar-item-title {
+            width: 100%;
             min-width: 0;
             overflow: hidden;
             font-weight: 650;
+            text-align: left;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .training-calendar-item-summary {
-            flex: 0 0 auto;
+            width: 100%;
+            min-width: 0;
             overflow: hidden;
-            max-width: 58%;
+            max-width: 100%;
             font-size: 0.56rem;
+            line-height: 1.1;
             opacity: 0.72;
+            text-align: left;
             text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .training-calendar-rest {
@@ -726,12 +734,12 @@ def _calendar_styles() -> None:
 
         .training-calendar-item.planned {
             border-color: #4f86f7;
-            background: rgba(79, 134, 247, 0.13);
+            background: transparent;
         }
 
         .training-calendar-item.completed {
             border-color: #39a96b;
-            background: rgba(57, 169, 107, 0.13);
+            background: transparent;
         }
 
         .training-calendar-item.event {
@@ -742,7 +750,7 @@ def _calendar_styles() -> None:
 
         .training-calendar-item.status-missed {
             border-color: #d28b27;
-            background: rgba(210, 139, 39, 0.15);
+            background: transparent;
         }
 
         .training-calendar-item.status-substitute,
@@ -912,13 +920,6 @@ def _calendar_styles() -> None:
             box-shadow: none;
         }
 
-        .stApp:has(
-            #calendar-detail-2026-01-01:target
-        ) .training-calendar-day.today {
-            box-shadow:
-                inset 0 0 0 2px
-                rgba(0, 0, 0, 0.95) !important;
-        }
         </style>
 
         <div class="calendar-page-header">

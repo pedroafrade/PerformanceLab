@@ -519,3 +519,90 @@ def test_exposes_selected_day_and_six_month_events():
         result.upcoming_events[0].priority
         == "A"
     )
+
+def test_omits_planned_race_when_event_exists():
+
+    race_day = date(
+        2026,
+        9,
+        27,
+    )
+
+    planned_race = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            27,
+            9,
+            0,
+        ),
+        sport="Trail Running",
+        title="Race",
+        duration=timedelta(
+            hours=3,
+            minutes=30,
+        ),
+        intensity="Race effort",
+        phase="Race",
+    )
+
+    event = Event(
+        event_id="event-race",
+        name="III Trail Pé Firme",
+        date=race_day,
+        sport="Trail Running",
+        distance=23,
+        elevation_gain=950,
+    )
+
+    result = CalendarPresenter(
+        history=History(),
+        training_plan=TrainingPlan(
+            start_date=date(
+                2026,
+                9,
+                1,
+            ),
+            end_date=date(
+                2026,
+                10,
+                4,
+            ),
+            workouts=[
+                planned_race,
+            ],
+        ),
+        events=EventBook(
+            entries=[
+                EventEntry(
+                    event=event,
+                    priority="A",
+                ),
+            ]
+        ),
+    ).build(
+        year=2026,
+        month=9,
+        reference_day=date(
+            2026,
+            8,
+            14,
+        ),
+    )
+
+    selected_day = calendar_day(
+        result,
+        race_day,
+    )
+
+    assert tuple(
+        item.kind
+        for item in selected_day.items
+    ) == (
+        "event",
+    )
+
+    assert (
+        selected_day.items[0].title
+        == "III Trail Pé Firme"
+    )
