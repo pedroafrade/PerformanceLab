@@ -300,3 +300,222 @@ def test_rejects_invalid_month():
                 3,
             ),
         )
+
+def test_builds_calendar_execution_summaries():
+
+    planned = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Easy Run",
+        duration=timedelta(
+            hours=1,
+            minutes=5,
+        ),
+        intensity="Easy",
+        structure=(
+            "Easy aerobic running",
+            (
+                "Heart rate target: "
+                "Z2 · 121–156 bpm"
+            ),
+        ),
+        phase="Peak",
+    )
+
+    result = CalendarPresenter(
+        history=History(),
+        training_plan=TrainingPlan(
+            start_date=date(
+                2026,
+                8,
+                1,
+            ),
+            end_date=date(
+                2026,
+                8,
+                31,
+            ),
+            workouts=[
+                planned,
+            ],
+        ),
+        events=EventBook(),
+    ).build(
+        year=2026,
+        month=8,
+        reference_day=date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    selected = calendar_day(
+        result,
+        date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert (
+        selected.items[0].summary
+        == "1h05 · Z2 · 121–156 bpm"
+    )
+
+
+def test_marks_rest_days_and_phase_progress():
+
+    training_plan = TrainingPlan(
+        start_date=date(
+            2026,
+            8,
+            3,
+        ),
+        end_date=date(
+            2026,
+            8,
+            9,
+        ),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(
+                    2026,
+                    8,
+                    4,
+                    8,
+                    0,
+                ),
+                sport="Running",
+                title="Easy Run",
+                duration=timedelta(
+                    minutes=45,
+                ),
+                phase="Regeneration",
+            ),
+        ],
+    )
+
+    result = CalendarPresenter(
+        history=History(),
+        training_plan=training_plan,
+        events=EventBook(),
+    ).build(
+        year=2026,
+        month=8,
+        reference_day=date(
+            2026,
+            8,
+            3,
+        ),
+    )
+
+    third_august = calendar_day(
+        result,
+        date(
+            2026,
+            8,
+            3,
+        ),
+    )
+
+    fourth_august = calendar_day(
+        result,
+        date(
+            2026,
+            8,
+            4,
+        ),
+    )
+
+    assert (
+        third_august.is_rest_day
+        is True
+    )
+
+    assert (
+        fourth_august.phase
+        == "Regeneration"
+    )
+
+    assert (
+        fourth_august.phase_day_number
+        == 2
+    )
+
+    assert (
+        fourth_august.phase_total_days
+        == 7
+    )
+
+
+def test_exposes_selected_day_and_six_month_events():
+
+    event = Event(
+        event_id="event-future",
+        name="Autumn Trail",
+        date=date(
+            2026,
+            11,
+            8,
+        ),
+        sport="Trail Running",
+        distance=25,
+        elevation_gain=1200,
+    )
+
+    result = CalendarPresenter(
+        history=History(),
+        training_plan=TrainingPlan(),
+        events=EventBook(
+            entries=[
+                EventEntry(
+                    event=event,
+                    priority="A",
+                ),
+            ]
+        ),
+    ).build(
+        year=2026,
+        month=8,
+        reference_day=date(
+            2026,
+            8,
+            4,
+        ),
+        selected_day=date(
+            2026,
+            8,
+            9,
+        ),
+    )
+
+    assert (
+        result.selected_day.day
+        == date(
+            2026,
+            8,
+            9,
+        )
+    )
+
+    assert len(
+        result.upcoming_events
+    ) == 1
+
+    assert (
+        result.upcoming_events[0].name
+        == "Autumn Trail"
+    )
+
+    assert (
+        result.upcoming_events[0].priority
+        == "A"
+    )

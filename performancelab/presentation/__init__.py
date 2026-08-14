@@ -52,6 +52,7 @@ from .calendar_models import (
     CalendarDayData,
     CalendarItemData,
     CalendarMonthData,
+    CalendarUpcomingEventData,
 )
 from .calendar_presenter import (
     CalendarPresenter,
@@ -150,6 +151,7 @@ __all__ = [
     "CalendarItemData",
     "CalendarMonthData",
     "CalendarPresenter",
+    "CalendarUpcomingEventData",
 
     # Complete plan
     "CompletePlanData",
