@@ -37,6 +37,7 @@ from .today_models import (
     TodayData,
     TodayGuidanceData,
     TodayReadinessData,
+    TodaySessionCardData,
     TodayTemporaryAdjustmentData,
 )
 
@@ -207,6 +208,16 @@ class TodayPresenter:
             next_workout=(
                 planning.next_workout
             ),
+            session_card=(
+                self._session_card_data(
+                    today_session=(
+                        today_session
+                    ),
+                    next_workout=(
+                        planning.next_workout
+                    ),
+                )
+            ),
             coach=planning.coach,
             readiness=TodayReadinessData(
                 recovery_score=(
@@ -292,6 +303,146 @@ class TodayPresenter:
             next_event=(
                 dashboard.next_event
             ),
+        )
+
+    @staticmethod
+    def _session_duration_label(
+        duration,
+    ) -> str | None:
+        """
+        Formats a planned session duration.
+        """
+
+        if duration is None:
+            return None
+
+        total_minutes = round(
+            duration.total_seconds()
+            / 60
+        )
+
+        hours, minutes = divmod(
+            total_minutes,
+            60,
+        )
+
+        if hours and minutes:
+            return (
+                f"{hours}h {minutes:02d}m"
+            )
+
+        if hours:
+            return f"{hours}h"
+
+        return f"{minutes} min"
+
+    @classmethod
+    def _session_card_data(
+        cls,
+        *,
+        today_session,
+        next_workout,
+    ) -> TodaySessionCardData:
+        """
+        Selects the session presented on the Today page.
+
+        Today's planned session takes priority. On a rest
+        day, the next future planned session is previewed.
+        """
+
+        if (
+            today_session is not None
+            and today_session.title
+        ):
+            metadata = tuple(
+                value
+                for value in (
+                    today_session.sport,
+                    cls._session_duration_label(
+                        today_session.duration
+                    ),
+                    today_session.intensity,
+                )
+                if value
+            )
+
+            status = (
+                today_session.outcome_status
+                .replace("_", " ")
+                .title()
+                if (
+                    today_session
+                    .outcome_status
+                )
+                else "Planned"
+            )
+
+            return TodaySessionCardData(
+                heading="Today's session",
+                title=today_session.title,
+                metadata=(
+                    " · ".join(metadata)
+                    or "Planned training session"
+                ),
+                status=status,
+                structure=tuple(
+                    today_session.structure
+                ),
+            )
+
+        if next_workout is not None:
+            scheduled_at = (
+                next_workout.scheduled_at
+            )
+
+            scheduled_label = (
+                (
+                    f"{scheduled_at:%A}, "
+                    f"{scheduled_at.day} "
+                    f"{scheduled_at:%B}"
+                )
+                if scheduled_at
+                is not None
+                else None
+            )
+
+            metadata = tuple(
+                value
+                for value in (
+                    scheduled_label,
+                    next_workout.sport,
+                    cls._session_duration_label(
+                        next_workout.duration
+                    ),
+                    next_workout.intensity,
+                )
+                if value
+            )
+
+            return TodaySessionCardData(
+                heading="Next Session",
+                title=(
+                    next_workout.title
+                    or "Planned session"
+                ),
+                metadata=(
+                    " · ".join(metadata)
+                    or "Next planned training session"
+                ),
+                status="Planned",
+                structure=tuple(
+                    next_workout.structure
+                ),
+            )
+
+        return TodaySessionCardData(
+            heading="Today's session",
+            title="Rest day",
+            metadata=(
+                "No future training is currently planned."
+            ),
+            status="Recovery",
+            structure=(),
         )
 
     @staticmethod

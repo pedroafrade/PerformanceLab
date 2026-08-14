@@ -100,6 +100,20 @@ class TodayAdaptationData:
     previous_prescription: str | None = None
     revised_prescription: str | None = None
 
+@dataclass(frozen=True)
+class TodaySessionCardData:
+    """
+    Presentation-ready session shown on the Today page.
+
+    When today has no planned workout, the card may
+    preview the next future planned session.
+    """
+
+    heading: str
+    title: str
+    metadata: str
+    status: str
+    structure: tuple[str, ...]
 
 @dataclass(frozen=True)
 class TodayData:
@@ -117,6 +131,10 @@ class TodayData:
     next_workout: (
         NextWorkoutData
         | None
+    )
+
+    session_card: (
+        TodaySessionCardData
     )
 
     coach: CoachRecommendationData

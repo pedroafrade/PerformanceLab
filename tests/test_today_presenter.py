@@ -120,6 +120,15 @@ def test_builds_empty_today_context():
         "Use the day for recovery and preparation.",
     )
 
+    assert (
+        result.session_card.heading
+        == "Today's session"
+    )
+
+    assert (
+        result.session_card.title
+        == "Rest day"
+    )
 
 def test_exposes_today_and_next_workout():
 
@@ -221,6 +230,79 @@ def test_exposes_today_and_next_workout():
         in result.guidance.cautions
     )
 
+def test_previews_next_session_on_rest_day():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    future_day = (
+        REFERENCE_DAY
+        + timedelta(days=2)
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime.combine(
+            future_day,
+            time.min,
+        ),
+        sport="Running",
+        title="Tempo Run",
+        duration=timedelta(
+            minutes=60,
+        ),
+        intensity="Hard",
+        structure=(
+            "15 min easy",
+            "3×8 min controlled",
+            "10 min easy",
+        ),
+    )
+
+    result = TodayPresenter(
+        athlete
+    ).build(
+        reference_day=(
+            REFERENCE_DAY
+        )
+    )
+
+    assert (
+        result.today_session.title
+        is None
+    )
+
+    assert (
+        result.session_card.heading
+        == "Next Session"
+    )
+
+    assert (
+        result.session_card.title
+        == "Tempo Run"
+    )
+
+    assert (
+        result.session_card.metadata
+        == (
+            "Thursday, 6 August · "
+            "Running · 1h · Hard"
+        )
+    )
+
+    assert (
+        result.session_card.status
+        == "Planned"
+    )
+
+    assert (
+        result.session_card.structure
+        == (
+            "15 min easy",
+            "3×8 min controlled",
+            "10 min easy",
+        )
+    )
 
 def test_completed_today_moves_to_next_workout():
 

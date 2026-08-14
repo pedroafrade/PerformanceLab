@@ -76,6 +76,7 @@ from .today_models import (
     TodayData,
     TodayGuidanceData,
     TodayReadinessData,
+    TodaySessionCardData,
 )
 from .today_presenter import (
     TodayPresenter,
@@ -167,6 +168,7 @@ __all__ = [
     "TodayGuidanceData",
     "TodayPresenter",
     "TodayReadinessData",
+    "TodaySessionCardData",
 
 
     # Development

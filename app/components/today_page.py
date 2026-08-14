@@ -395,17 +395,13 @@ def _activity_summary_html(
     )
 
 def _show_today_session(
-    session,
+    session_card,
     today_activity,
     today_workout=None,
 ) -> None:
     """
-    Displays either today's prescription or the
-    completed activity summary.
-
-    Once today's activity has been completed, the
-    completed session remains the main daily context
-    until the calendar day changes.
+    Displays either today's completed activity or the
+    presentation-ready planned session card.
     """
 
     completed_today = (
@@ -419,7 +415,9 @@ def _show_today_session(
             (
                 "**Today's activity**"
                 if completed_today
-                else "**Today's session**"
+                else (
+                    f"**{session_card.heading}**"
+                )
             )
         )
 
@@ -506,28 +504,21 @@ def _show_today_session(
 
         else:
             st.subheader(
-                _today_session_title(
-                    session
-                )
+                session_card.title
             )
 
             st.caption(
-                _today_session_metadata(
-                    session
-                )
+                session_card.metadata
             )
 
-            if (
-                session is not None
-                and session.structure
-            ):
+            if session_card.structure:
                 steps = "".join(
                     _session_step_html(
                         index=index,
                         step=step,
                     )
                     for index, step in enumerate(
-                        session.structure,
+                        session_card.structure,
                         start=1,
                     )
                 )
@@ -547,7 +538,7 @@ def _show_today_session(
             st.caption(
                 (
                     "Status · "
-                    f"{_today_session_status(session)}"
+                    f"{session_card.status}"
                 )
             )
 
@@ -585,7 +576,6 @@ def _show_today_session(
                 on_click=_navigate_to,
                 args=("calendar",),
             )
-
 
 def _guidance_item_html(
     *,
@@ -1005,6 +995,27 @@ def _apply_today_page_styles(
             font-weight: 700;
             opacity: 0.55;
         }
+        .st-key-today-recommendation-card {
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .st-key-today-recommendation-card
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.32rem;
+        }
+
+        .st-key-today-recommendation-card h3 {
+            margin-top: 0.08rem;
+            margin-bottom: 0.12rem;
+            font-size: 1.42rem;
+            line-height: 1.15;
+        }
+
+        .st-key-today-recommendation-card p {
+            margin-top: 0;
+            margin-bottom: 0.18rem;
+        }
 
         @media (max-width: 760px) {
             .today-adaptation-comparison {
@@ -1160,7 +1171,8 @@ def _show_daily_decision(
     """
 
     with st.container(
-        border=True
+        border=True,
+        key="today-recommendation-card",
     ):
         st.caption(
             "TODAY'S RECOMMENDATION"
@@ -1280,7 +1292,7 @@ def show_today_page(
 
     with session_column:
         _show_today_session(
-            today.today_session,
+            today.session_card,
             today.today_activity_summary,
             today_workout,
         )
