@@ -12,6 +12,8 @@ from datetime import (
 
 from performancelab import (
     Athlete,
+    VO2MaxObservation,
+    VO2MaxObservationBook,
     create_workout,
 )
 from performancelab.presentation import (
@@ -19,6 +21,7 @@ from performancelab.presentation import (
     DevelopmentPresenter,
     DevelopmentTrendMetricData,
     DevelopmentTrendsData,
+    DevelopmentVO2MaxObservationData,
 )
 
 
@@ -137,6 +140,32 @@ def test_builds_empty_historical_development_trends():
     assert calories.current_samples == 0
     assert calories.previous_samples == 0
     assert calories.window_days == 28
+
+    vo2max = trends.vo2max
+
+    assert isinstance(
+        vo2max,
+        DevelopmentTrendMetricData,
+    )
+
+    assert vo2max.current_value is None
+    assert vo2max.previous_value is None
+    assert vo2max.absolute_change is None
+    assert vo2max.percentage_change is None
+
+    assert (
+        vo2max.improvement_percentage
+        is None
+    )
+
+    assert vo2max.current_samples == 0
+    assert vo2max.previous_samples == 0
+    assert vo2max.window_days == 28
+
+    assert (
+        trends.vo2max_observations
+        == ()
+    )
 
 def test_compares_historical_development_volume_windows():
 
@@ -1080,4 +1109,137 @@ def test_builds_active_calorie_daily_trend():
     assert (
         calories.previous_samples
         == 1
+    )
+
+def test_compares_factual_vo2max_observation_windows():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.vo2max_observations = (
+        VO2MaxObservationBook(
+            observations=(
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        5,
+                        10,
+                    ),
+                    value=45.0,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-old",
+                ),
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        7,
+                        1,
+                    ),
+                    value=50.0,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-previous",
+                ),
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        8,
+                        1,
+                    ),
+                    value=52.0,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-current-1",
+                ),
+                VO2MaxObservation(
+                    observed_at=datetime(
+                        2026,
+                        8,
+                        10,
+                        8,
+                        30,
+                    ),
+                    value=54.0,
+                    source="laboratory",
+                    method="laboratory-test",
+                    workout_id="workout-current-2",
+                ),
+            )
+        )
+    )
+
+    result = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=datetime(
+                2026,
+                8,
+                14,
+                12,
+                0,
+            )
+        )
+    )
+
+    trends = result.historical_trends
+
+    assert trends is not None
+
+    vo2max = trends.vo2max
+
+    assert vo2max.current_value == 53.0
+    assert vo2max.previous_value == 50.0
+    assert vo2max.absolute_change == 3.0
+    assert vo2max.percentage_change == 6.0
+
+    assert (
+        vo2max.improvement_percentage
+        == 6.0
+    )
+
+    assert vo2max.current_samples == 2
+    assert vo2max.previous_samples == 1
+    assert vo2max.window_days == 28
+
+    observations = (
+        trends.vo2max_observations
+    )
+
+    assert len(observations) == 4
+
+    assert all(
+        isinstance(
+            observation,
+            DevelopmentVO2MaxObservationData,
+        )
+        for observation in observations
+    )
+
+    assert [
+        observation.value
+        for observation in observations
+    ] == [
+        45.0,
+        50.0,
+        52.0,
+        54.0,
+    ]
+
+    assert (
+        observations[-1].source
+        == "laboratory"
+    )
+
+    assert (
+        observations[-1].method
+        == "laboratory-test"
     )

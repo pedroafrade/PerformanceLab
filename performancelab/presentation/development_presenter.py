@@ -26,6 +26,7 @@ from .development_models import (
     DevelopmentSportVolumeData,
     DevelopmentTrendMetricData,
     DevelopmentTrendsData,
+    DevelopmentVO2MaxObservationData,
 )
 
 from performancelab.physiology import (
@@ -75,6 +76,33 @@ class DevelopmentPresenter:
         return None
 
     @staticmethod
+    def _observation_day(
+        observation,
+    ) -> date | None:
+        """
+        Returns the calendar day of one factual VO2max
+        observation.
+        """
+
+        observed_at = (
+            observation.observed_at
+        )
+
+        if isinstance(
+            observed_at,
+            datetime,
+        ):
+            return observed_at.date()
+
+        if isinstance(
+            observed_at,
+            date,
+        ):
+            return observed_at
+
+        return None
+
+    @staticmethod
     def _trend_metric(
         *,
         current_total: float,
@@ -98,6 +126,79 @@ class DevelopmentPresenter:
         previous_value = (
             previous_total
             / window_days
+            if previous_samples > 0
+            else None
+        )
+
+        comparison_available = (
+            current_value is not None
+            and previous_value is not None
+        )
+
+        absolute_change = (
+            current_value
+            - previous_value
+            if comparison_available
+            else None
+        )
+
+        percentage_change = None
+
+        if (
+            comparison_available
+            and previous_value > 0
+        ):
+            percentage_change = (
+                (
+                    current_value
+                    - previous_value
+                )
+                / previous_value
+                * 100
+            )
+
+        return DevelopmentTrendMetricData(
+            current_value=current_value,
+            previous_value=previous_value,
+            absolute_change=absolute_change,
+            percentage_change=(
+                percentage_change
+            ),
+            improvement_percentage=(
+                percentage_change
+            ),
+            current_samples=current_samples,
+            previous_samples=previous_samples,
+            window_days=window_days,
+        )
+
+    @staticmethod
+    def _average_trend_metric(
+        *,
+        current_total: float,
+        previous_total: float,
+        current_samples: int,
+        previous_samples: int,
+        window_days: int,
+    ) -> DevelopmentTrendMetricData:
+        """
+        Compares the mean of factual observations in two
+        consecutive windows.
+
+        Unlike exercise volume, VO2max is not divided by the
+        number of calendar days.
+        """
+
+        current_value = (
+            current_total
+            / current_samples
+            if current_samples > 0
+            else None
+        )
+
+        previous_value = (
+            previous_total
+            / previous_samples
             if previous_samples > 0
             else None
         )
@@ -356,6 +457,12 @@ class DevelopmentPresenter:
         previous_active_calories = 0.0
         previous_calorie_samples = 0
 
+        current_vo2max = 0.0
+        current_vo2max_samples = 0
+
+        previous_vo2max = 0.0
+        previous_vo2max_samples = 0
+
         for workout in self.athlete.history:
 
             workout_day = (
@@ -493,6 +600,55 @@ class DevelopmentPresenter:
                 )
                 previous_calorie_samples += 1
 
+        vo2max_observations = []
+
+        for observation in (
+            self.athlete
+            .vo2max_observations
+        ):
+
+            observation_day = (
+                self._observation_day(
+                    observation
+                )
+            )
+
+            if observation_day is None:
+                continue
+
+            vo2max_observations.append(
+                DevelopmentVO2MaxObservationData(
+                    observed_at=(
+                        observation.observed_at
+                    ),
+                    value=float(
+                        observation.value
+                    ),
+                    source=observation.source,
+                    method=observation.method,
+                )
+            )
+
+            if (
+                current_start
+                <= observation_day
+                <= reference_day
+            ):
+                current_vo2max += float(
+                    observation.value
+                )
+                current_vo2max_samples += 1
+
+            elif (
+                previous_start
+                <= observation_day
+                <= previous_end
+            ):
+                previous_vo2max += float(
+                    observation.value
+                )
+                previous_vo2max_samples += 1
+
         return DevelopmentTrendsData(
             exercise_minutes_per_day=(
                 self._trend_metric(
@@ -567,6 +723,26 @@ class DevelopmentPresenter:
                     ),
                     window_days=window_days,
                 )
+            ),
+            vo2max=(
+                self._average_trend_metric(
+                    current_total=(
+                        current_vo2max
+                    ),
+                    previous_total=(
+                        previous_vo2max
+                    ),
+                    current_samples=(
+                        current_vo2max_samples
+                    ),
+                    previous_samples=(
+                        previous_vo2max_samples
+                    ),
+                    window_days=window_days,
+                )
+            ),
+            vo2max_observations=tuple(
+                vo2max_observations
             ),
         )
 

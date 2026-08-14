@@ -79,6 +79,17 @@ class DevelopmentPerformanceReferencesData:
     ftp: float | None
 
 @dataclass(frozen=True)
+class DevelopmentVO2MaxObservationData:
+    """
+    Presentation-ready factual VO2max observation.
+    """
+
+    observed_at: date | datetime
+    value: float
+    source: str
+    method: str
+
+@dataclass(frozen=True)
 class DevelopmentTrendMetricData:
     """
     One historical development metric compared across
@@ -118,6 +129,15 @@ class DevelopmentTrendsData:
     active_calories_per_day: (
         DevelopmentTrendMetricData
     )
+
+    vo2max: (
+        DevelopmentTrendMetricData
+    )
+
+    vo2max_observations: tuple[
+        DevelopmentVO2MaxObservationData,
+        ...,
+    ] = ()
 
 
 @dataclass(frozen=True)
