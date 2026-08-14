@@ -8,6 +8,8 @@ from types import SimpleNamespace
 from app.components.calendar_page import (
     _calendar_html,
     _calendar_item_label,
+    _parse_selected_day,
+    _phase_label,
     _shift_month,
     show_calendar_page,
 )
@@ -111,7 +113,7 @@ def test_calendar_html_escapes_titles():
     assert dangerous_title not in html
     assert "&lt;script&gt;" in html
     assert "training-calendar-day today" in html
-    assert "Peak" in html
+    assert "PEAK" in html
 
 
 def test_plain_item_label_uses_title():
@@ -125,3 +127,156 @@ def test_plain_item_label_uses_title():
     assert _calendar_item_label(
         item
     ) == "Long Run"
+
+def test_parses_selected_calendar_day():
+
+    fallback = date(
+        2026,
+        8,
+        14,
+    )
+
+    assert (
+        _parse_selected_day(
+            "2026-08-20",
+            fallback=fallback,
+        )
+        == date(
+            2026,
+            8,
+            20,
+        )
+    )
+
+    assert (
+        _parse_selected_day(
+            "invalid",
+            fallback=fallback,
+        )
+        == fallback
+    )
+
+
+def test_formats_calendar_phase_progress():
+
+    calendar_day = CalendarDayData(
+        day=date(
+            2026,
+            8,
+            14,
+        ),
+        is_current_month=True,
+        is_today=True,
+        phase="Regeneration",
+        phase_day_number=2,
+        phase_total_days=5,
+    )
+
+    assert (
+        _phase_label(
+            calendar_day
+        )
+        == "REGENERATION - d2 of 5"
+    )
+
+
+def test_calendar_html_contains_day_details():
+
+    item = CalendarItemData(
+        kind="planned",
+        title="Easy Run",
+        sport="Running",
+        summary=(
+            "1h05 · Z2 · 121–156 bpm"
+        ),
+    )
+
+    calendar_day = CalendarDayData(
+        day=date(
+            2026,
+            8,
+            14,
+        ),
+        is_current_month=True,
+        is_today=True,
+        phase="Regeneration",
+        items=(
+            item,
+        ),
+        phase_day_number=2,
+        phase_total_days=5,
+    )
+
+    calendar = CalendarMonthData(
+        year=2026,
+        month=8,
+        weeks=(
+            (
+                calendar_day,
+            ),
+        ),
+    )
+
+    html = _calendar_html(
+        calendar,
+        selected_day=date(
+            2026,
+            8,
+            14,
+        ),
+    )
+
+    assert (
+        "?calendar_day=2026-08-14"
+        in html
+    )
+
+    assert (
+        "training-calendar-day selected today"
+        in html
+    )
+
+    assert (
+        "1h05 · Z2 · 121–156 bpm"
+        in html
+    )
+
+    assert (
+        "REGENERATION - d2 of 5"
+        in html
+    )
+
+
+def test_calendar_html_marks_rest_day():
+
+    calendar_day = CalendarDayData(
+        day=date(
+            2026,
+            8,
+            15,
+        ),
+        is_current_month=True,
+        is_today=False,
+        phase="Regeneration",
+        is_rest_day=True,
+    )
+
+    calendar = CalendarMonthData(
+        year=2026,
+        month=8,
+        weeks=(
+            (
+                calendar_day,
+            ),
+        ),
+    )
+
+    html = _calendar_html(
+        calendar
+    )
+
+    assert "Rest day" in html
+    assert (
+        "training-calendar-rest"
+        in html
+    )
