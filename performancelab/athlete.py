@@ -9,10 +9,10 @@ Represents an athlete and all associated training data.
 from dataclasses import dataclass, field
 from datetime import date
 from uuid import uuid4
+
 from .activity_coach_records import (
     ActivityCoachInterpretationBook,
 )
-
 from .analysis import (
     AthleteAnalytics,
     HeartRateZone,
@@ -27,6 +27,9 @@ from .training.config import (
     TrainingConstraints,
 )
 from .training.planning import TrainingPlan
+from .vo2max_observations import (
+    VO2MaxObservationBook,
+)
 
 
 @dataclass
@@ -53,17 +56,26 @@ class Athlete:
     nutrition_profile: NutritionProfile = field(
         default_factory=NutritionProfile,
     )
-    
+
     train_any_day: bool = True
 
-    history: History = field(default_factory=History)
-    training_plan: TrainingPlan = field(default_factory=TrainingPlan)
+    history: History = field(
+        default_factory=History
+    )
+    training_plan: TrainingPlan = field(
+        default_factory=TrainingPlan
+    )
     activity_coach_interpretations: (
         ActivityCoachInterpretationBook
     ) = field(
         default_factory=(
             ActivityCoachInterpretationBook
         )
+    )
+    vo2max_observations: (
+        VO2MaxObservationBook
+    ) = field(
+        default_factory=VO2MaxObservationBook
     )
 
     availability: AthleteAvailability = field(
@@ -76,12 +88,21 @@ class Athlete:
         default_factory=TrainingConstraints,
     )
 
-    goals: GoalBook = field(default_factory=GoalBook)
-    events: EventBook = field(default_factory=EventBook)
+    goals: GoalBook = field(
+        default_factory=GoalBook
+    )
+    events: EventBook = field(
+        default_factory=EventBook
+    )
 
-    analytics: AthleteAnalytics = field(init=False, repr=False)
+    analytics: AthleteAnalytics = field(
+        init=False,
+        repr=False,
+    )
 
-    def __post_init__(self) -> None:
+    def __post_init__(
+        self,
+    ) -> None:
 
         self.analytics = AthleteAnalytics(
             self
@@ -92,7 +113,10 @@ class Athlete:
             .invalidate_training_state
         )
 
-    def __repr__(self) -> str:
+    def __repr__(
+        self,
+    ) -> str:
+
         return (
             "Athlete("
             f"name={self.name!r}, "

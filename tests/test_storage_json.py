@@ -17,6 +17,8 @@ from performancelab import (
     Event,
     EventEntry,
     Goal,
+    VO2MaxObservation,
+    VO2MaxObservationBook,
     Workout,
 )
 from performancelab.coaching import (
@@ -233,7 +235,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 10
+    assert data["version"] == 11
 
     assert "id" in data["athlete"]
 
@@ -972,7 +974,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 10
+        == 11
     )
 
     assert (
@@ -1128,7 +1130,7 @@ def test_training_plan_adaptation_round_trip():
         athlete
     )
 
-    assert data["version"] == 10
+    assert data["version"] == 11
 
     assert data["training_plan"][
         "adaptations"
@@ -1236,7 +1238,7 @@ def test_activity_coach_interpretation_round_trip():
         athlete
     )
 
-    assert data["version"] == 10
+    assert data["version"] == 11
     assert data[
         "activity_coach_interpretations"
     ][0][
@@ -1296,4 +1298,95 @@ def test_loads_legacy_data_without_coach_interpretations():
 
     assert len(
         loaded.activity_coach_interpretations
+    ) == 0
+
+# ======================================================
+
+def test_vo2max_observations_round_trip():
+
+    athlete = create_athlete()
+
+    athlete.vo2max_observations = (
+        VO2MaxObservationBook(
+            observations=(
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        8,
+                        14,
+                    ),
+                    value=52.4,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-1",
+                ),
+            )
+        )
+    )
+
+    data = athlete_to_dict(
+        athlete
+    )
+
+    assert data["version"] == 11
+    assert data[
+        "vo2max_observations"
+    ] == [
+        {
+            "observed_at": "2026-08-14",
+            "value": 52.4,
+            "source": "manual",
+            "method": (
+                "apple-watch-estimate"
+            ),
+            "workout_id": "workout-1",
+        }
+    ]
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    observations = tuple(
+        loaded.vo2max_observations
+    )
+
+    assert len(observations) == 1
+    assert observations[0] == (
+        VO2MaxObservation(
+            observed_at=date(
+                2026,
+                8,
+                14,
+            ),
+            value=52.4,
+            source="manual",
+            method=(
+                "apple-watch-estimate"
+            ),
+            workout_id="workout-1",
+        )
+    )
+
+
+# ======================================================
+
+def test_loads_legacy_data_without_vo2max_observations():
+
+    data = athlete_to_dict(
+        create_athlete()
+    )
+
+    data.pop(
+        "vo2max_observations"
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert len(
+        loaded.vo2max_observations
     ) == 0

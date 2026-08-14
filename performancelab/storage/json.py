@@ -22,6 +22,10 @@ from performancelab.activity_coach_records import (
     ActivityCoachInterpretation,
     ActivityCoachInterpretationBook,
 )
+from performancelab.vo2max_observations import (
+    VO2MaxObservation,
+    VO2MaxObservationBook,
+)
 from performancelab.coaching.activity_coach_generation import (
     ActivityCoachNarrative,
 )
@@ -1110,6 +1114,51 @@ def _activity_coach_interpretation_from_dict(
         ),
     )
 # ======================================================
+# VO2max observations
+# ======================================================
+
+def _vo2max_observation_to_dict(
+    observation,
+):
+
+    return {
+        "observed_at": _serialize_date(
+            observation.observed_at
+        ),
+        "value": observation.value,
+        "source": observation.source,
+        "method": observation.method,
+        "workout_id": observation.workout_id,
+    }
+
+
+# ======================================================
+
+def _vo2max_observation_from_dict(
+    data,
+):
+
+    return VO2MaxObservation(
+        observed_at=_deserialize_date(
+            data.get("observed_at")
+        ),
+        value=float(
+            data.get("value")
+        ),
+        source=data.get(
+            "source",
+            "unknown",
+        ),
+        method=data.get(
+            "method",
+            "unknown",
+        ),
+        workout_id=data.get(
+            "workout_id"
+        ),
+    )
+
+# ======================================================
 # Athlete
 # ======================================================
 
@@ -1119,7 +1168,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 10,
+        "version": 11,
 
         "athlete": {
 
@@ -1200,6 +1249,17 @@ def athlete_to_dict(athlete):
             for interpretation in (
                 athlete
                 .activity_coach_interpretations
+            )
+
+        ],
+        "vo2max_observations": [
+
+            _vo2max_observation_to_dict(
+                observation
+            )
+
+            for observation in (
+                athlete.vo2max_observations
             )
 
         ],
@@ -1352,6 +1412,19 @@ def athlete_from_dict(data):
                 )
                 for interpretation_data in data.get(
                     "activity_coach_interpretations",
+                    [],
+                )
+            )
+        )
+    )
+    athlete.vo2max_observations = (
+        VO2MaxObservationBook(
+            observations=tuple(
+                _vo2max_observation_from_dict(
+                    observation_data
+                )
+                for observation_data in data.get(
+                    "vo2max_observations",
                     [],
                 )
             )

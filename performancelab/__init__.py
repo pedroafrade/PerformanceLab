@@ -10,6 +10,10 @@ from .activity_coach_records import (
     ActivityCoachInterpretationBook,
     activity_coach_context_hash,
 )
+from .vo2max_observations import (
+    VO2MaxObservation,
+    VO2MaxObservationBook,
+)
 from .workout import Workout
 
 from .history import History
@@ -34,6 +38,8 @@ __all__ = [
     "ActivityCoachInterpretation",
     "ActivityCoachInterpretationBook",
     "activity_coach_context_hash",
+    "VO2MaxObservation",
+    "VO2MaxObservationBook",
     "Workout",
     "History",
     "Goal",
