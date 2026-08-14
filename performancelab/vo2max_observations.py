@@ -7,6 +7,18 @@ Historical factual VO2max observations.
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date, datetime
+import re
+
+
+_VO2MAX_PATTERN = re.compile(
+    (
+        r"\bvo(?:2|₂)\s*max"
+        r"\s*[:=]\s*"
+        r"(?P<value>\d{1,3}(?:[.,]\d{1,2})?)"
+        r"\b"
+    ),
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -139,3 +151,165 @@ class VO2MaxObservationBook:
         self._observations.append(
             observation
         )
+
+    def replace_for_workout(
+        self,
+        *,
+        workout_id: str,
+        observation: (
+            VO2MaxObservation
+            | None
+        ),
+    ) -> bool:
+        """
+        Reconciles the observation associated with one
+        activity.
+
+        Removing VO2max from the activity notes removes the
+        corresponding manual observation.
+        """
+
+        if (
+            observation is not None
+            and observation.workout_id
+            != workout_id
+        ):
+            raise ValueError(
+                "observation workout_id must match"
+            )
+
+        previous = tuple(
+            self._observations
+        )
+
+        self._observations = [
+            existing
+            for existing in self._observations
+            if existing.workout_id != workout_id
+        ]
+
+        if observation is not None:
+            self.add(
+                observation
+            )
+
+        return (
+            tuple(
+                self._observations
+            )
+            != previous
+        )
+
+
+def _manual_method(
+    notes: str,
+) -> str:
+    """
+    Identifies only an explicitly declared measurement
+    method. It does not infer one from the activity.
+    """
+
+    normalized = notes.casefold()
+
+    if "apple watch" in normalized:
+
+        return "apple-watch-estimate"
+
+    if (
+        "laboratory" in normalized
+        or "laboratório" in normalized
+        or re.search(
+            r"\blab\b",
+            normalized,
+        )
+    ):
+
+        return "laboratory-test"
+
+    if "garmin" in normalized:
+
+        return "garmin-estimate"
+
+    return "unspecified-estimate"
+
+
+def parse_vo2max_observation(
+    *,
+    notes: str,
+    observed_at: (
+        date
+        | datetime
+        | None
+    ),
+    workout_id: str,
+) -> VO2MaxObservation | None:
+    """
+    Extracts an explicit VO2max declaration from activity
+    notes.
+
+    Accepted examples include:
+
+    VO2max: 52.4 Apple Watch
+    VO₂max = 52,4
+    """
+
+    if observed_at is None:
+
+        return None
+
+    match = _VO2MAX_PATTERN.search(
+        notes
+    )
+
+    if match is None:
+
+        return None
+
+    value = float(
+        match.group(
+            "value"
+        ).replace(
+            ",",
+            ".",
+        )
+    )
+
+    return VO2MaxObservation(
+        observed_at=observed_at,
+        value=value,
+        source="manual",
+        method=_manual_method(
+            notes
+        ),
+        workout_id=workout_id,
+    )
+
+
+def synchronize_vo2max_observation_from_notes(
+    *,
+    observations: VO2MaxObservationBook,
+    notes: str,
+    observed_at: (
+        date
+        | datetime
+        | None
+    ),
+    workout_id: str,
+) -> bool:
+    """
+    Synchronizes one activity's explicit VO2max declaration
+    with the athlete's factual history.
+    """
+
+    observation = (
+        parse_vo2max_observation(
+            notes=notes,
+            observed_at=observed_at,
+            workout_id=workout_id,
+        )
+    )
+
+    return observations.replace_for_workout(
+        workout_id=workout_id,
+        observation=observation,
+    )

@@ -13,6 +13,8 @@ from .activity_coach_records import (
 from .vo2max_observations import (
     VO2MaxObservation,
     VO2MaxObservationBook,
+    parse_vo2max_observation,
+    synchronize_vo2max_observation_from_notes,
 )
 from .workout import Workout
 
@@ -40,6 +42,8 @@ __all__ = [
     "activity_coach_context_hash",
     "VO2MaxObservation",
     "VO2MaxObservationBook",
+    "parse_vo2max_observation",
+    "synchronize_vo2max_observation_from_notes",
     "Workout",
     "History",
     "Goal",

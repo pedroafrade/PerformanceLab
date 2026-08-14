@@ -15,6 +15,7 @@ import streamlit as st
 
 from performancelab import (
     activity_coach_context_hash,
+    synchronize_vo2max_observation_from_notes,
 )
 from performancelab.coaching import (
     ActivityCoachCoordinator,
@@ -1154,23 +1155,41 @@ def _show_selected_activity_dashboard(
 
 def _save_activity_coach_notes(
     *,
+    athlete,
     workout,
     state_key: str,
 ) -> None:
     """
-    Routes athlete-entered notes to the workout domain.
+    Routes athlete-entered notes to the workout domain and
+    synchronizes an explicit VO2max observation.
     """
 
-    changed = (
+    notes = st.session_state.get(
+        state_key,
+        "",
+    )
+
+    notes_changed = (
         workout.feedback.record_notes(
-            st.session_state.get(
-                state_key,
-                "",
-            )
+            notes
         )
     )
 
-    if changed:
+    vo2max_changed = (
+        synchronize_vo2max_observation_from_notes(
+            observations=(
+                athlete.vo2max_observations
+            ),
+            notes=notes,
+            observed_at=workout.date,
+            workout_id=workout.workout_id,
+        )
+    )
+
+    if (
+        notes_changed
+        or vo2max_changed
+    ):
         st.session_state[
             "activity_coach_notes_changed"
         ] = True
@@ -1877,7 +1896,8 @@ def show_activities_page(
                         "Add observations not available in "
                         "the activity file, such as pain, "
                         "stiffness, sleep, stress, motivation, "
-                        "soreness, or how the session felt."
+                        "soreness, how the session felt, or "
+                        "VO2max: 52.4 ."
                     ),
                     height=72,
                     label_visibility="collapsed",
@@ -1895,6 +1915,7 @@ def show_activities_page(
                         _save_activity_coach_notes
                     ),
                     kwargs={
+                        "athlete": athlete,
                         "workout": (
                             selected_workout
                         ),
