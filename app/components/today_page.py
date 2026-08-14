@@ -883,6 +883,15 @@ def _apply_today_page_styles(
             line-height: 1.15;
             opacity: 0.58;
         }
+
+        div[data-testid="stMainBlockContainer"] h3 {
+            margin-top: 0.3rem;
+            margin-bottom: 0.25rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
         .today-activity-summary {
             display: grid;
             grid-template-columns:
@@ -1008,8 +1017,9 @@ def _apply_today_page_styles(
         .st-key-today-recommendation-card h3 {
             margin-top: 0.08rem;
             margin-bottom: 0.12rem;
-            font-size: 1.42rem;
-            line-height: 1.15;
+            font-size: 1.35rem;
+            font-weight: 700;
+            line-height: 1.1;
         }
 
         .st-key-today-recommendation-card p {
