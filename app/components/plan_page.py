@@ -3571,6 +3571,101 @@ def _plan_calendar_ics(
         + "\r\n"
     )
 
+def _plan_generation_notice_html(
+    notice,
+) -> str:
+    """
+    Builds a compact monochrome plan-horizon summary.
+    """
+
+    rows = []
+
+    if notice.primary_event_name:
+        rows.extend(
+            [
+                (
+                    "Primary event",
+                    notice.primary_event_name,
+                ),
+                (
+                    "Race date",
+                    notice.primary_event_date.strftime(
+                        "%d %B %Y"
+                    ),
+                ),
+                (
+                    "Plan ends",
+                    notice.plan_end_date.strftime(
+                        "%d %B %Y"
+                    ),
+                ),
+                (
+                    "Recovery",
+                    (
+                        f"{notice.recovery_days} "
+                        "days after the race"
+                    ),
+                ),
+            ]
+        )
+    else:
+        rows.append(
+            (
+                "Plan ends",
+                notice.plan_end_date.strftime(
+                    "%d %B %Y"
+                ),
+            )
+        )
+
+    rows_html = "".join(
+        (
+            '<div class="plan-generation-row">'
+            '<span class="plan-generation-label">'
+            f"{escape(label)}"
+            "</span>"
+            '<span class="plan-generation-value">'
+            f"{escape(value)}"
+            "</span>"
+            "</div>"
+        )
+        for label, value in rows
+    )
+
+    later_cycle_html = ""
+
+    if notice.later_block_message:
+        later_cycle_html = (
+            '<div class="plan-generation-later">'
+            '<div class="plan-generation-section-title">'
+            "Later competition cycle"
+            "</div>"
+            '<p class="plan-generation-copy">'
+            f"{escape(notice.later_block_message)}"
+            "</p>"
+            '<p class="plan-generation-note">'
+            "Later events remain registered and can guide "
+            "the next training cycle."
+            "</p>"
+            "</div>"
+        )
+
+    return (
+        '<div class="plan-generation-notice">'
+        '<p class="plan-generation-intro">'
+        "Generating a new plan will replace the current "
+        "persistent training plan."
+        "</p>"
+        '<div class="plan-generation-section-title">'
+        "Plan horizon"
+        "</div>"
+        '<div class="plan-generation-facts">'
+        f"{rows_html}"
+        "</div>"
+        f"{later_cycle_html}"
+        "</div>"
+    )
+
 @st.dialog(
     "Generate training plan"
 )
@@ -3591,42 +3686,112 @@ def _show_plan_generation_confirmation(
         )
     )
 
-    st.warning(
-        "Generating a new plan will replace the current "
-        "persistent training plan."
-    )
-
     st.markdown(
-        "**Plan horizon**"
+        """
+        <style>
+        .plan-generation-notice {
+            color: #000;
+            font-size: 0.84rem;
+            line-height: 1.4;
+        }
+
+        .plan-generation-intro {
+            margin: 0 0 1rem 0;
+            color: #000;
+        }
+
+        .plan-generation-section-title {
+            margin: 0 0 0.42rem 0;
+            color: #000;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .plan-generation-facts {
+            border-top:
+                1px solid rgba(0, 0, 0, 0.18);
+            border-bottom:
+                1px solid rgba(0, 0, 0, 0.18);
+        }
+
+        .plan-generation-row {
+            display: grid;
+            grid-template-columns:
+                minmax(7rem, 0.8fr)
+                minmax(0, 1.4fr);
+            gap: 1rem;
+            align-items: baseline;
+            padding: 0.42rem 0;
+            border-bottom:
+                1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-generation-row:last-child {
+            border-bottom: 0;
+        }
+
+        .plan-generation-label {
+            color: #000;
+            font-size: 0.7rem;
+        }
+
+        .plan-generation-value {
+            color: #000;
+            font-size: 0.76rem;
+            font-weight: 650;
+            text-align: right;
+        }
+
+        .plan-generation-later {
+            margin-top: 1rem;
+        }
+
+        .plan-generation-copy {
+            margin: 0;
+            color: #000;
+            font-size: 0.76rem;
+            line-height: 1.42;
+        }
+
+        .plan-generation-note {
+            margin: 0.5rem 0 0 0;
+            color: #000;
+            font-size: 0.68rem;
+            line-height: 1.35;
+        }
+
+        .st-key-cancel-plan-generation button,
+        .st-key-confirm-plan-generation button {
+            min-height: 2.4rem;
+            color: #000 !important;
+            background: transparent !important;
+            border-color:
+                rgba(0, 0, 0, 0.32) !important;
+            box-shadow: none !important;
+        }
+
+        .st-key-cancel-plan-generation button:hover,
+        .st-key-confirm-plan-generation button:hover {
+            color: #000 !important;
+            background:
+                rgba(0, 0, 0, 0.035) !important;
+            border-color:
+                rgba(0, 0, 0, 0.6) !important;
+        }
+
+        .st-key-confirm-plan-generation button {
+            font-weight: 700;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
 
-    st.write(
-        notice.horizon_message
+    st.html(
+        _plan_generation_notice_html(
+            notice
+        )
     )
-
-    if notice.later_block_message:
-        st.info(
-            notice.later_block_message
-        )
-
-    if notice.later_events:
-        st.markdown(
-            "**Registered events in later cycles**"
-        )
-
-        for event in notice.later_events:
-            st.markdown(
-                (
-                    "- "
-                    f"{event.name} — "
-                    f"{event.event_date:%d %B %Y}"
-                )
-            )
-
-        st.caption(
-            "These events remain registered and can guide "
-            "subsequent training cycles."
-        )
 
     cancel_column, generate_column = (
         st.columns(
@@ -3648,7 +3813,6 @@ def _show_plan_generation_confirmation(
     with generate_column:
         if st.button(
             "Generate plan",
-            type="primary",
             use_container_width=True,
             key=(
                 "confirm-plan-generation"

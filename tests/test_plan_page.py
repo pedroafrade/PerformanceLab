@@ -16,6 +16,7 @@ from app.components.plan_page import (
     _plan_volume_chart_data,
     _plan_summary_metrics,
     _weekly_planned_load_curve_data,
+    _plan_generation_notice_html,
     _plan_today_marker_data,
     _planned_load_chart_series,
     _sidebar_adaptation_html,
@@ -2113,3 +2114,43 @@ def test_builds_completed_load_chart_from_all_activities():
             },
         ]
     )
+
+def test_builds_compact_plan_generation_notice():
+
+    notice = SimpleNamespace(
+        primary_event_name=(
+            "III Trail Pé Firme"
+        ),
+        primary_event_date=date(
+            2026,
+            9,
+            27,
+        ),
+        plan_end_date=date(
+            2026,
+            10,
+            4,
+        ),
+        recovery_days=7,
+        later_block_message=(
+            "Lidl São Silvestre belongs to "
+            "a later competition block."
+        ),
+    )
+
+    html = (
+        _plan_generation_notice_html(
+            notice
+        )
+    )
+
+    assert "Primary event" in html
+    assert "III Trail Pé Firme" in html
+    assert "27 September 2026" in html
+    assert "04 October 2026" in html
+    assert "7 days after the race" in html
+    assert "Later competition cycle" in html
+    assert "Lidl São Silvestre" in html
+
+    assert "warning" not in html.lower()
+    assert "info" not in html.lower()
