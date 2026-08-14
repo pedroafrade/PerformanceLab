@@ -139,6 +139,18 @@ class DevelopmentTrendsData:
         ...,
     ] = ()
 
+@dataclass(frozen=True)
+class DevelopmentSummaryCardData:
+    """
+    Presentation-ready historical development card.
+    """
+
+    key: str
+    icon: str
+    label: str
+    value: str
+    trend: str
+    context: str
 
 @dataclass(frozen=True)
 class DevelopmentData:
@@ -179,6 +191,11 @@ class DevelopmentData:
         DevelopmentTrendsData
         | None
     ) = None
+
+    summary_cards: tuple[
+        DevelopmentSummaryCardData,
+        ...,
+    ] = ()
 
     sport_volume: tuple[
         DevelopmentSportVolumeData,

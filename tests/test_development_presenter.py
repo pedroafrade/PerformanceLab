@@ -50,6 +50,20 @@ def test_builds_empty_development_data():
     assert result.current_fatigue == 0.0
     assert result.current_form == 0.0
 
+    assert len(
+        result.summary_cards
+    ) == 4
+
+    assert [
+        card.key
+        for card in result.summary_cards
+    ] == [
+        "exercise-time",
+        "running-pace",
+        "active-calories",
+        "vo2max",
+    ]
+
 def test_builds_empty_historical_development_trends():
 
     athlete = Athlete(

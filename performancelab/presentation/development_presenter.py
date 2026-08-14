@@ -17,6 +17,10 @@ from performancelab.analysis import (
 
 from .dashboard import DashboardData
 
+from .development_summary_presenter import (
+    DevelopmentSummaryPresenter,
+)
+
 from .development_models import (
     DevelopmentData,
     DevelopmentHeartRateZoneData,
@@ -1101,6 +1105,11 @@ class DevelopmentPresenter:
             )
         )
 
+        summary_cards = (
+            DevelopmentSummaryPresenter(
+                historical_trends
+            ).build()
+        )
         return DevelopmentData(
             dates=tuple(
                 performance.dates
@@ -1159,6 +1168,9 @@ class DevelopmentPresenter:
             ),
             historical_trends=(
                 historical_trends
+            ),
+            summary_cards=(
+                summary_cards
             ),
             sport_volume=(
                 self._sport_volume()

@@ -524,78 +524,36 @@ def _load_status(
 
 
 def _development_summary_cards_html(
-    development,
+    cards,
 ) -> str:
     """
-    Builds the four development summary cards.
+    Renders presentation-ready historical development
+    cards.
     """
-
-    cards = (
-        (
-            "♡",
-            "Estimated recovery",
-            f"{development.recovery_score:.0f}",
-            development.recovery_status,
-            _development_recovery_context(
-                development
-            ),
-        ),
-        (
-            "↗",
-            "Chronic load",
-            f"{development.chronic_load:.0f}",
-            _load_status(
-                development.acute_load,
-                development.chronic_load,
-            ),
-            "Current training state",
-        ),
-        (
-            "⚖",
-            "Form",
-            f"{development.current_form:+.1f}",
-            _form_status(
-                development.current_form
-            ),
-            "Today",
-        ),
-        (
-            "▥",
-            "Acute load",
-            f"{development.acute_load:.0f}",
-            development.load_status,
-            "Recent training load",
-        ),
-    )
 
     cards_html = []
 
-    for (
-        icon,
-        label,
-        value,
-        status,
-        context,
-    ) in cards:
+    for card in cards:
 
         cards_html.append(
             (
-                '<section class="development-kpi-card">'
+                '<section class="development-kpi-card" '
+                f'data-card-key="{escape(card.key)}">'
                 '<div class="development-kpi-icon">'
-                f"{icon}"
+                f"{escape(card.icon)}"
                 "</div>"
                 '<div class="development-kpi-content">'
                 '<div class="development-kpi-label">'
-                f"{label}"
+                f"{escape(card.label)}"
                 "</div>"
                 '<div class="development-kpi-value">'
-                f"{value}"
+                f"{escape(card.value)}"
                 "</div>"
                 '<div class="development-kpi-status">'
-                f"{status}"
+                f"{escape(card.trend)}"
                 "</div>"
                 '<div class="development-kpi-context">'
-                f"{context}"
+                f"{escape(card.context)}"
                 "</div>"
                 "</div>"
                 "</section>"
@@ -609,7 +567,6 @@ def _development_summary_cards_html(
         )
         + "</div>"
     )
-
 
 def _development_summary_styles() -> str:
     """
@@ -1829,7 +1786,7 @@ def show_development_page(
             + _development_summary_styles()
             + "</style>"
             + _development_summary_cards_html(
-                development
+                development.summary_cards
             )
         ),
         unsafe_allow_html=True,

@@ -30,6 +30,7 @@ from performancelab.presentation import (
     DevelopmentIntensityData,
     DevelopmentPaceZoneData,
     DevelopmentPerformanceReferencesData,
+    DevelopmentSummaryCardData,
 )
 
 
@@ -217,12 +218,54 @@ def test_interprets_load_status():
         == "Reduced"
     )
 
-
 def test_builds_development_summary_cards():
+
+    cards = (
+        DevelopmentSummaryCardData(
+            key="exercise-time",
+            icon="◷",
+            label="Exercise time/day",
+            value="42.5 min/day",
+            trend="↑ 21.4%",
+            context=(
+                "2 activities · latest 28 days"
+            ),
+        ),
+        DevelopmentSummaryCardData(
+            key="running-pace",
+            icon="≈",
+            label="Running pace",
+            value="5:12 min/km",
+            trend="↓ 5.5%",
+            context=(
+                "2 runs · latest 28 days"
+            ),
+        ),
+        DevelopmentSummaryCardData(
+            key="active-calories",
+            icon="◉",
+            label="Active calories/day",
+            value="320 active kcal/day",
+            trend="↑ 14.3%",
+            context=(
+                "2 activities · latest 28 days"
+            ),
+        ),
+        DevelopmentSummaryCardData(
+            key="vo2max",
+            icon="O₂",
+            label="VO₂max",
+            value="52.4 ml/kg/min",
+            trend="↑ 4.8%",
+            context=(
+                "1 observation · latest 28 days"
+            ),
+        ),
+    )
 
     result = (
         _development_summary_cards_html(
-            create_development_data()
+            cards
         )
     )
 
@@ -231,46 +274,26 @@ def test_builds_development_summary_cards():
         in result
     )
 
+    assert "Exercise time/day" in result
+    assert "Running pace" in result
+    assert "Active calories/day" in result
+    assert "VO₂max" in result
+
+    assert "42.5 min/day" in result
+    assert "5:12 min/km" in result
+
     assert (
-        "Recovery"
+        "320 active kcal/day"
         in result
     )
 
     assert (
-        "Chronic load"
+        "52.4 ml/kg/min"
         in result
     )
 
     assert (
-        "Form"
-        in result
-    )
-
-    assert (
-        "Acute load"
-        in result
-    )
-
-    assert (
-        "42"
-        in result
-    )
-    assert (
-        "Balance -8.0"
-        in result
-    )
-    assert (
-        "120"
-        in result
-    )
-
-    assert (
-        "-7.2"
-        in result
-    )
-
-    assert (
-        "150"
+        'data-card-key="vo2max"'
         in result
     )
 
