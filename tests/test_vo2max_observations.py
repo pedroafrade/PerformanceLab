@@ -378,3 +378,61 @@ def test_synchronization_is_idempotent():
 
     assert changed is False
     assert len(observations) == 1
+
+def test_finds_observation_for_workout():
+
+    observations = (
+        VO2MaxObservationBook(
+            observations=(
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        8,
+                        13,
+                    ),
+                    value=50.1,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-1",
+                ),
+                VO2MaxObservation(
+                    observed_at=date(
+                        2026,
+                        8,
+                        14,
+                    ),
+                    value=52.4,
+                    source="manual",
+                    method=(
+                        "apple-watch-estimate"
+                    ),
+                    workout_id="workout-2",
+                ),
+            )
+        )
+    )
+
+    observation = (
+        observations.find_for_workout(
+            "workout-2"
+        )
+    )
+
+    assert observation is not None
+    assert observation.value == 52.4
+
+
+def test_returns_none_for_workout_without_observation():
+
+    observations = (
+        VO2MaxObservationBook()
+    )
+
+    assert (
+        observations.find_for_workout(
+            "missing-workout"
+        )
+        is None
+    )

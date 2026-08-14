@@ -953,11 +953,29 @@ def _environment_metric_label(
 
     return str(value)
 
+def _vo2max_metric_label(
+    observation,
+) -> str:
+    """
+    Formats one factual VO2max observation.
+    """
+
+    if observation is None:
+
+        return "—"
+
+    return (
+        f"{observation.value:.1f} "
+        "ml/kg/min"
+    )
+
+
 
 def _compact_activity_metrics_html(
     *,
     activity,
     workout,
+    vo2max_observation=None,
 ) -> str:
     """
     Builds one uniform metrics grid above the route map.
@@ -1092,6 +1110,12 @@ def _compact_activity_metrics_html(
                 activity.outcome_status
             ),
         ),
+        (
+            "VO₂max",
+            _vo2max_metric_label(
+                vo2max_observation
+            ),
+        ),
     )
 
     content = "".join(
@@ -1126,10 +1150,20 @@ def _show_selected_activity_dashboard(
     activity browser itself.
     """
 
+    vo2max_observation = (
+        athlete.vo2max_observations
+        .find_for_workout(
+            workout.workout_id
+        )
+    )
+
     st.html(
         _compact_activity_metrics_html(
             activity=activity,
             workout=workout,
+            vo2max_observation=(
+                vo2max_observation
+            ),
         )
     )
 

@@ -152,6 +152,28 @@ class VO2MaxObservationBook:
             observation
         )
 
+    def find_for_workout(
+        self,
+        workout_id: str,
+    ) -> VO2MaxObservation | None:
+        """
+        Returns the factual observation associated with one
+        activity.
+        """
+
+        return next(
+            (
+                observation
+                for observation in self._observations
+                if (
+                    observation.workout_id
+                    == workout_id
+                )
+            ),
+            None,
+        )
+
+
     def replace_for_workout(
         self,
         *,

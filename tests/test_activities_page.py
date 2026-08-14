@@ -21,6 +21,7 @@ from app.components.activities_page import (
     _outcome_label,
     _period_start_date,
     _total_duration,
+    _vo2max_metric_label,
     _workout_for_activity,
     show_activities_page,
 
@@ -32,6 +33,7 @@ from performancelab.presentation import (
 
 from performancelab import (
     Athlete,
+    VO2MaxObservation,
     Workout,
 )
 from app.components.workout_table import (
@@ -712,10 +714,31 @@ def test_builds_unified_activity_metrics():
     workout.info.elevation_gain = 980
     workout.feedback.rpe = 7.5
 
+    vo2max_observation = (
+        VO2MaxObservation(
+            observed_at=date(
+                2026,
+                8,
+                12,
+            ),
+            value=52.4,
+            source="manual",
+            method=(
+                "apple-watch-estimate"
+            ),
+            workout_id=(
+                workout.workout_id
+            ),
+        )
+    )
+
     html = (
         _compact_activity_metrics_html(
             activity=activity,
             workout=workout,
+            vo2max_observation=(
+                vo2max_observation
+            ),
         )
     )
 
@@ -735,6 +758,8 @@ def test_builds_unified_activity_metrics():
     assert "Terrain" in html
     assert "Plan result" in html
     assert "Outside Plan" in html
+    assert "VO₂max" in html
+    assert "52.4 ml/kg/min" in html
 
 
 
@@ -866,3 +891,34 @@ def test_activity_list_date_omits_start_time():
     )
 
     assert result == "2026-08-12"
+
+def test_formats_activity_vo2max_observation():
+
+    observation = VO2MaxObservation(
+        observed_at=date(
+            2026,
+            8,
+            12,
+        ),
+        value=52.44,
+        source="manual",
+        method="device-estimate",
+        workout_id="workout-1",
+    )
+
+    assert (
+        _vo2max_metric_label(
+            observation
+        )
+        == "52.4 ml/kg/min"
+    )
+
+
+def test_formats_missing_activity_vo2max():
+
+    assert (
+        _vo2max_metric_label(
+            None
+        )
+        == "—"
+    )
