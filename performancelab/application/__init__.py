@@ -25,7 +25,10 @@ from .update_workout import (
     UpdateWorkoutResult,
     WorkoutUpdate,
 )
-
+from .provision_invited_user import (
+    ProvisionInvitedUser,
+    ProvisionInvitedUserResult,
+)
 
 __all__ = [
     "DeleteWorkouts",
@@ -36,6 +39,8 @@ __all__ = [
     "ImportActivitiesResult",
     "LoadActiveAthlete",
     "LoadActiveAthleteResult",
+    "ProvisionInvitedUser",
+    "ProvisionInvitedUserResult",
     "UpdateWorkout",
     "UpdateWorkoutResult",
     "WorkoutUpdate",
