@@ -1,378 +1,573 @@
-# PerformanceLab — Roadmap até à primeira aplicação pública
+# PerformanceLab — Roadmap até à alpha privada
 
-**Data:** 2 de agosto de 2026  
-**Ponto de partida:** branch `main` após conclusão da reconciliação e adaptação incremental do plano  
-**Objetivo:** publicar uma primeira UI segura, compreensível e utilizável por atletas reais.
+**Atualizado:** 14 de agosto de 2026  
+**Fonte auditada:** branch `main`, commit `043bc343f010ed05464d202958236c3b77c5b9a5` (`Simplify plan generation modal`)  
+**Objetivo:** disponibilizar uma primeira fase privada de testes a 3–5 atletas convidados, com dados reais isolados por utilizador, persistência remota e operação controlada.
 
-## 1. Definição de aplicação pública
+## 1. Definição da alpha privada
 
-Neste roadmap, “aplicação pública” significa uma aplicação online que:
+A alpha privada não é apenas a aplicação Streamlit atual colocada online.
 
-- permite contas reais;
-- guarda dados pessoais e atividades reais;
-- apresenta um plano persistente;
-- adapta o futuro após atividades realizadas ou falhadas;
-- oferece autenticação, autorização, persistência e recuperação adequadas;
-- possui uma experiência suficientemente clara para utilização sem acompanhamento técnico.
+Para este roadmap, a alpha privada é uma aplicação que:
 
-Não significa apenas disponibilizar publicamente a aplicação Streamlit de desenvolvimento.
+- só pode ser usada por pessoas convidadas;
+- autentica cada pessoa através de um fornecedor de identidade;
+- associa cada conta ao respetivo atleta;
+- impede acesso aos dados de outros atletas;
+- guarda os dados fora do sistema de ficheiros local da aplicação;
+- suporta reinícios sem perda de dados;
+- protege segredos e ficheiros importados;
+- permite diagnosticar falhas sem expor dados pessoais;
+- explica o caráter experimental das recomendações;
+- possui um processo simples de suporte, exportação e eliminação;
+- pode ser retirada ou revertida rapidamente se surgir um problema crítico.
+
+A alpha privada não implica ainda:
+
+- abertura anónima ao público;
+- indexação em motores de pesquisa;
+- integração automática com Apple, Garmin ou Strava;
+- funcionalidades completas de treinador;
+- pagamentos;
+- garantias clínicas ou aconselhamento médico;
+- escala para um número elevado de utilizadores.
 
 ## 2. Princípios de execução
 
+- GitHub `main` é a única fonte da verdade.
 - Um commit lógico de cada vez.
 - Alterações pequenas, testáveis e reversíveis.
-- GitHub `main` como única fonte de verdade.
-- O domínio calcula; a UI apresenta.
-- Objetos de domínio imutáveis quando apropriado.
-- Métricas científicas devem ser explicáveis.
-- Valores apresentados devem possuir unidade, período e precisão adequados.
-- Nenhuma alteração visual deve esconder um problema científico ou arquitetural.
-- Não avançar de fase sem cumprir os respetivos critérios de conclusão.
+- A aplicação local deve continuar funcional durante a transição.
+- O domínio não depende de Streamlit, autenticação, JSON ou base de dados.
+- A UI apresenta e encaminha; casos de uso coordenam; repositórios persistem.
+- Nenhuma identidade recebida do browser autoriza diretamente um recurso.
+- Toda a leitura ou escrita de dados pessoais é limitada ao utilizador autenticado.
+- Os ficheiros locais `data/` nunca são enviados para GitHub nem usados em produção.
+- Segredos nunca são guardados no repositório ou apresentados em logs.
+- Dados enviados ao Gemini são minimizados e identificados como processamento externo.
+- Não se avança para convites reais enquanto existir um bloqueador de segurança ou integridade.
 
-## 3. Fase 1 — Documentação e contrato do produto
+## 3. Auditoria confirmada do estado atual
 
-### Objetivo
+### 3.1. Base funcional já existente
 
-Estabelecer uma fonte de verdade coerente antes de novas alterações estruturais ou visuais.
+O produto já possui uma base adequada para continuar:
 
-### Trabalho (Fase concluída)
+- domínio centrado em `Athlete`;
+- identificadores persistentes para atleta, utilizador e atividades;
+- histórico, eventos, plano, reconciliação e adaptações persistidos;
+- modelos de VO₂max factual e interpretações do Training Coach;
+- importação FIT, FIT.GZ, GPX e Strava CSV;
+- serialização JSON versionada e testada;
+- `User` com papéis `athlete` e `coach`;
+- protocolos de repositório;
+- testes extensos de domínio, apresentação, importação e armazenamento;
+- separação parcial entre domínio, presenters e Streamlit.
 
-1. Adicionar a auditoria do estado atual.
-2. Adicionar este roadmap.
-3. Criar `docs/PRODUCT_VISION.md`.
-4. Reescrever `docs/DOMAIN_MODEL.md`.
-5. Reescrever `docs/ARCHITECTURE.md`.
-6. Criar `docs/TRAINING_SCIENCE.md`.
-7. Criar `docs/PLANNING.md`.
-8. Reescrever `README.md`.
-9. Substituir o roadmap antigo por um único roadmap normativo.
-10. Mover documentos históricos para `docs/archive/`.
-11. Registar decisões estruturais em `docs/decisions/`.
+Estas capacidades devem ser preservadas. A passagem à alpha é uma troca controlada das fronteiras de aplicação e infraestrutura, não uma reescrita do domínio.
 
-### Critérios de conclusão
+### 3.2. Persistência
 
-- O estado documentado corresponde ao código existente.
-- Não existem dois roadmaps normativos concorrentes.
-- A primeira versão pública possui âmbito explícito.
-- Estão documentadas as fronteiras entre domínio, apresentação e infraestrutura.
-- Está documentada a diferença entre carga fisiológica e especificidade da modalidade.
+Estado confirmado:
 
-## 4. Fase 2 — Auditoria de correção científica
+- `app/app.py` instancia diretamente `JsonAthleteRepository` e `JsonUserRepository`;
+- atletas são guardados em `data/athletes/<athlete_id>.json`;
+- utilizadores são guardados em `data/users/<user_id>.json`;
+- `JsonAthleteRepository` suporta `get`, `list`, `save` e `delete`;
+- o protocolo `AthleteRepository` ainda descreve sobretudo o modo antigo de atleta único;
+- a gravação do atleta ocorre em vários pontos da UI;
+- parte da gravação depende de `st.session_state.notice`;
+- histórico, plano e interpretações são guardados como um único agregado JSON;
+- não existe transação entre operações concorrentes;
+- duas sessões podem carregar a mesma versão e a última gravação substituir a anterior;
+- o disco efémero de um alojamento Streamlit não constitui persistência durável.
 
-### Objetivo
+Conclusão:
 
-Garantir que métricas e adaptações publicadas não são enganadoras ou incompletas.
+> O JSON local é adequado para desenvolvimento e migração, mas bloqueia a alpha privada com vários utilizadores.
 
-### Trabalho (Fase concluída)
+### 3.3. Identidade e autorização
 
-1. Inventariar todas as intensidades geradas pelo Planner.
-2. Garantir tradução de carga para todas as intensidades planeadas.
-3. Rever cargas de Recovery, Easy, Endurance, Tempo, LT2, Threshold, Long, Pre-Race, Shakeout e Race.
-4. Documentar a unidade e escala de CTL, ATL e TSB.
-5. Documentar a construção do Recovery Score.
-6. Documentar o Training Load Score e o ramp rate.
-7. Definir precisão de apresentação para cada métrica.
-8. Definir estados de dados insuficientes.
-9. Rever transferência de carga entre modalidades.
-10. Criar testes para invariantes científicos e semânticos.
-11. Rever limites de progressão semanal.
-12. Rever a resposta cumulativa a várias atividades tardias ou revistas.
+Estado confirmado:
 
-### Critérios de conclusão
+- `AuthenticationService.login()` autentica apenas através do endereço de email;
+- não existe prova de identidade, password, OIDC ou sessão de servidor validada;
+- o objeto autenticado vive em `st.session_state`;
+- quando não existem utilizadores, a aplicação cria automaticamente contas de demonstração;
+- uma conta de atleta carrega o `athlete_id` associado;
+- uma conta `coach` carrega implicitamente o primeiro atleta por ordem alfabética;
+- a página Accounts lista utilizadores a qualquer conta com papel `coach`;
+- não existe relação explícita e autorizada treinador–atleta;
+- não existem testes end-to-end de isolamento entre dois utilizadores autenticados.
 
-- Nenhum treino gerado fica sem carga por uma intensidade desconhecida.
-- Cada métrica pública possui definição, unidade, período e limitação.
-- Dados insuficientes não produzem falsa precisão.
-- As regras entre modalidades preservam a especificidade da prova.
-- Os testes cobrem as principais invariantes de segurança.
+Conclusão:
 
-## 5. Fase 3 — Arquitetura de informação do dashboard
+> O modelo atual é uma simulação de autenticação local. Não pode proteger dados reais numa aplicação remota.
 
-### Objetivo
+### 3.4. Casos de uso e gravação
 
-Definir o que o atleta deve compreender ao abrir a aplicação, antes de alterar o aspeto visual.
+Estado confirmado:
 
-### Perguntas principais
+- `app/app.py` coordena autenticação, criação de demonstração, carregamento, reconciliação, navegação e persistência;
+- `app/components/import_panel.py` coordena leitura, merge, RPE, reconciliação e mensagens;
+- editar, eliminar, importar, gerar plano e reconciliar não passam por uma unidade de trabalho comum;
+- a UI conhece repositórios concretos e decide quando guardar;
+- ainda não existe controlo de concorrência otimista nem versão persistente do agregado.
 
-O dashboard deve responder, por esta ordem:
+Conclusão:
 
-1. O que devo fazer hoje?
-2. Como estou neste momento?
-3. O meu plano foi adaptado? Porquê?
-4. Qual é o meu próximo objetivo?
-5. O que aconteceu recentemente?
-6. Como estou a evoluir?
+> Antes da base de dados, os fluxos que alteram vários elementos do atleta devem ser extraídos para casos de uso atómicos e testáveis sem Streamlit.
 
-### Estrutura recomendada
+### 3.5. Uploads
 
-#### Primeira linha
+Estado confirmado:
 
-- sessão de hoje ou próxima sessão;
-- estado atual e recomendação;
-- próxima prova.
+- o tipo do ficheiro é escolhido principalmente pela extensão;
+- FIT.GZ é descomprimido integralmente em memória;
+- não existe limite de tamanho descomprimido no domínio da aplicação;
+- não existe validação explícita de assinatura ou conteúdo antes de importar;
+- uma importação em lote captura `Exception` e apresenta apenas uma contagem genérica;
+- os originais não são necessários depois da importação atual, mas esta política não está documentada;
+- não existe teste de ficheiro comprimido malicioso, tamanho excessivo ou concorrência de imports.
 
-#### Segunda linha
+Conclusão:
 
-- plano móvel de sete dias;
-- aviso e explicação da última adaptação.
+> A alpha deve processar uploads temporariamente, impor limites antes e depois da descompressão e eliminar os originais após o processamento, salvo decisão explícita em contrário.
 
-#### Terceira linha
+### 3.6. Gemini e serviços externos
 
-- carga das últimas quatro semanas;
-- atividade recente;
-- resumo dos últimos sete dias.
+Estado confirmado:
 
-#### Área detalhada
+- a chave é obtida através de `GEMINI_API_KEY` pelo SDK oficial;
+- `gemini-3.5-flash` é o modelo configurado;
+- a interpretação estruturada e a persistência já funcionam;
+- diferentes falhas do provider são convertidas no mesmo estado genérico;
+- não existe limite de utilização por utilizador;
+- não existe registo operacional de latência, resultado ou consumo;
+- o payload contém dados da atividade e contexto do atleta;
+- ainda não existe consentimento ou informação de privacidade específica para este envio.
 
-- tendências fisiológicas;
-- performance;
-- resumos mensais;
-- histórico.
+Conclusão:
 
-### Trabalho
+> O Training Coach pode participar na alpha apenas com transparência, minimização, limites e possibilidade de ser desativado sem afetar o resto da aplicação.
 
-1. Criar wireframe da nova hierarquia.
-2. Escolher períodos explícitos para todos os resumos.
-3. Decidir a relação entre Weekly Plan e Next Workout.
-4. Definir apresentação da fase atual.
-5. Definir estados vazios.
-6. Definir apresentação das adaptações.
-7. Definir navegação para detalhes.
-8. Aprovar o wireframe antes de implementar CSS.
+### 3.7. Dependências, testes e operação
 
-### Critérios de conclusão
+Estado confirmado:
 
-- Cada cartão responde a uma pergunta concreta.
-- Nenhuma métrica aparece sem período ou unidade.
-- A ação principal é visível sem scroll.
-- O plano adaptado é explicável.
-- Não existe duplicação significativa de informação.
+- `requirements.txt` e `pyproject.toml` não contêm exatamente as mesmas dependências;
+- as dependências críticas não possuem limites superiores ou lock reproduzível;
+- não existe workflow em `.github/workflows/` para executar pytest;
+- não existe mecanismo de migrações de base de dados;
+- não existe logging estruturado nem monitorização externa;
+- não existe health check;
+- não existe procedimento testado de backup, recuperação ou rollback;
+- `app/app_backup.py`, `.coverage` e `PLANO_DE_TREINO.txt` permanecem versionados;
+- `.gitignore` ignora `data/athletes/` e `data/users/`, mas não define ainda uma política completa para secrets e artefactos locais.
 
-## 6. Fase 4 — Sistema de apresentação
+Conclusão:
 
-### Objetivo
+> O deployment só deve acontecer depois de a construção ser reproduzível, os testes correrem automaticamente e existir recuperação operacional mínima.
 
-Construir uma UI coerente, reutilizável e independente da matemática do domínio.
+### 3.8. Privacidade e direitos do utilizador
 
-### Trabalho
+Estado confirmado:
 
-1. Criar formatadores comuns para duração, distância, ritmo, elevação, carga e percentagens.
-2. Arredondar métricas segundo contratos explícitos.
-3. Criar componentes comuns para cartões e estados vazios.
-4. Unificar resumos semanais e mensais.
-5. Reduzir CSS inline e duplicado.
-6. Remover dependências Streamlit da camada `performancelab.presentation`.
-7. Definir um modelo de cores semânticas acessível.
-8. Definir tipografia e espaçamento.
-9. Definir comportamento responsivo.
-10. Escolher português, inglês ou internacionalização completa.
-11. Remover componentes legados e `app/app_backup.py`.
-12. Ocultar elementos técnicos do Streamlit na configuração de produção.
+- não existe política de privacidade na aplicação;
+- não existe consentimento de participação na alpha;
+- não existe exportação completa da conta e dos dados do atleta;
+- não existe eliminação integral de conta, atleta e dados relacionados;
+- não existe política de retenção;
+- não existe registo de aceitação de termos ou versão da política;
+- alguns dados incluem localização, frequência cardíaca, desempenho, recuperação e feedback subjetivo.
 
-### Critérios de conclusão
+Conclusão:
 
-- Não existem valores com precisão interna na UI.
-- Os componentes principais são reutilizáveis.
-- A apresentação não executa lógica de domínio.
-- O dashboard funciona nos tamanhos de ecrã suportados.
-- A terminologia é consistente.
+> A alpha necessita de informação clara, consentimento, minimização e processos de exportação e eliminação antes de aceitar dados reais.
 
-## 7. Fase 5 — Fluxos essenciais do atleta
+## 4. Bloqueadores atuais da alpha
 
-### Objetivo
+São bloqueadores absolutos:
 
-Permitir que um atleta conclua sozinho as tarefas fundamentais.
+1. login apenas por email;
+2. seleção implícita do primeiro atleta para contas coach;
+3. persistência em `data/` local;
+4. ausência de autorização por recurso;
+5. ausência de transações ou controlo de concorrência;
+6. criação automática de dados e contas de demonstração;
+7. uploads sem limites explícitos de segurança;
+8. ausência de exportação e eliminação integral;
+9. ausência de CI, backups testados e rollback;
+10. ausência de informação e consentimento para dados pessoais e Gemini.
 
-### Fluxos
+A melhoria visual, o pop-over de VO₂max e o arredondamento dos treinos para blocos de cinco minutos não removem estes bloqueadores. Podem continuar em paralelo apenas quando não atrasarem a sequência estrutural.
 
-1. Criar ou completar perfil.
-2. Configurar FC, zonas e dados fisiológicos.
-3. Definir disponibilidade e preferências.
-4. Criar uma prova.
-5. Gerar o primeiro plano.
-6. Consultar o treino de hoje.
-7. Importar atividades.
-8. Rever novas, atualizadas e duplicadas.
-9. Compreender a adaptação aplicada.
-10. Editar RPE ou corrigir atividade.
-11. Consultar o plano completo e a janela semanal.
-12. Exportar ou eliminar dados.
+## 5. Arquitetura alvo mínima
 
-### Melhorias de importação
+```text
+Browser
+  → Streamlit UI
+  → identidade OIDC validada
+  → casos de uso da aplicação
+  → autorização por user_id e athlete_id
+  → repositórios abstratos
+  → PostgreSQL transacional
 
-- mover a importação para um fluxo dedicado;
-- validar ficheiros antes de persistir;
-- mostrar atividades encontradas;
-- identificar duplicados;
-- apresentar resultados por atividade;
-- explicar alterações aplicadas ao plano;
-- não esconder erros atrás de uma contagem genérica.
+Uploads
+  → validação e limites
+  → memória/ficheiro temporário
+  → importador FIT/GPX
+  → caso de uso transacional
+  → eliminação do original temporário
 
-### Critérios de conclusão
+Training Coach
+  → consentimento e limite por utilizador
+  → payload minimizado
+  → Gemini
+  → resultado ou erro classificado
+  → persistência associada ao atleta autorizado
+```
 
-- Um atleta novo consegue chegar a um plano sem ajuda técnica.
-- Uma importação falhada explica o problema.
-- Uma adaptação indica o treino afetado e a razão.
-- A correção de uma atividade volta a reconciliar apenas o necessário.
+O domínio continua independente desta infraestrutura.
 
-## 8. Fase 6 — Persistência, identidade e segurança
-
-### Objetivo
-
-Permitir utilização pública com dados pessoais reais.
-
-### Trabalho
-
-1. Escolher autenticação própria segura ou fornecedor externo.
-2. Introduzir password com hash seguro quando aplicável.
-3. Implementar sessões persistentes e expiração.
-4. Implementar recuperação de conta.
-5. Autorizar cada acesso ao atleta correto.
-6. Definir relação entre treinador e atletas.
-7. Migrar persistência pública para base de dados transacional.
-8. Criar migrações de esquema.
-9. Implementar backups e recuperação.
-10. Proteger ficheiros de atividade.
-11. Implementar exportação de dados.
-12. Implementar eliminação de conta e dados.
-13. Definir política de retenção.
-14. Gerir segredos fora do repositório.
-15. Garantir que logs não expõem dados sensíveis.
-
-### Critérios de conclusão
-
-- Um utilizador não consegue aceder aos dados de outro.
-- Passwords nunca são guardadas em texto simples.
-- Existe recuperação testada de backups.
-- Existe processo de exportação e eliminação.
-- A aplicação pode executar em mais de uma instância sem corrupção.
-
-## 9. Fase 7 — Qualidade, entrega e operação
+## 6. Fase A — Fechar contratos de aplicação
 
 ### Objetivo
 
-Tornar a aplicação reproduzível, observável e segura para publicar.
+Retirar da UI a responsabilidade de coordenar alterações persistentes.
 
-### Trabalho
+### Commits previstos
 
-1. Unificar dependências em `pyproject.toml`.
-2. Definir versões suportadas de Python.
-3. Fixar ou limitar versões críticas de dependências.
-4. Criar GitHub Actions para testes.
-5. Adicionar lint e formatação.
-6. Adicionar testes de migração.
-7. Adicionar testes dos fluxos públicos principais.
-8. Melhorar tratamento de erros de importação.
-9. Criar logging estruturado.
-10. Adicionar monitorização e alertas.
-11. Criar página de erro adequada.
-12. Separar configuração de desenvolvimento e produção.
-13. Remover criação automática de contas de demonstração em produção.
-14. Definir processo de deployment e rollback.
+1. Atualizar `AthleteRepository` para o contrato multiatleta realmente usado: `get`, `save`, `delete` e, apenas para administração autorizada, `list`.
+2. Remover do contrato público `path`, `load()` sem identidade e `exists()` sem identidade.
+3. Criar resultado explícito para `LoadActiveAthlete` e reconciliação idempotente.
+4. Criar caso de uso `ImportActivities` com resultados por ficheiro.
+5. Criar caso de uso `GenerateTrainingPlan`.
+6. Criar casos de uso para editar e eliminar atividades.
+7. Fazer cada caso de uso persistir apenas depois de todas as regras terminarem com sucesso.
+8. Fazer os componentes Streamlit receberem callbacks/resultados, não repositórios concretos.
 
-### Critérios de conclusão
+### Testes obrigatórios
 
-- Cada push é validado automaticamente.
-- O ambiente pode ser reconstruído a partir do repositório.
-- Falhas importantes são detetadas e diagnosticáveis.
-- Existe rollback documentado.
-- Produção não cria nem expõe dados de demonstração.
+- casos de uso com repositórios em memória;
+- nenhuma gravação quando uma regra falha;
+- uma gravação por alteração lógica;
+- reconciliação idempotente;
+- mensagens de resultado sem dependência de Streamlit.
 
-## 10. Fase 8 — Alpha privada
+### Critério de conclusão
+
+Os principais fluxos de escrita podem ser executados e testados sem iniciar Streamlit e sem conhecer JSON ou PostgreSQL.
+
+## 7. Fase B — Identidade externa e autorização
 
 ### Objetivo
 
-Validar o comportamento com atletas reais antes da abertura pública.
+Provar a identidade e autorizar cada recurso antes de o carregar.
 
-### Grupo inicial
+### Decisão proposta
 
-- 3 a 5 atletas;
-- diferentes volumes de histórico;
-- diferentes modalidades;
-- provas de distâncias diferentes;
-- atividades completas, tardias, revistas e falhadas.
+Usar autenticação OIDC suportada pelo Streamlit, inicialmente com Google, sem guardar passwords no PerformanceLab.
 
-### Validação
+### Commits previstos
 
-1. Rever manualmente os planos gerados.
-2. Rever cada adaptação inesperada.
-3. Confirmar proteção de provas e taper.
-4. Confirmar ausência de adaptações repetidas.
-5. Medir compreensão do dashboard.
-6. Medir sucesso da importação.
-7. Recolher dúvidas recorrentes.
-8. Registar problemas de confiança nas recomendações.
+1. Introduzir um modelo imutável de identidade autenticada externa: `subject`, `issuer`, email verificado e nome opcional.
+2. Separar identidade externa de `User` persistido.
+3. Criar um serviço de provisão apenas para emails previamente convidados.
+4. Associar de forma única `(issuer, subject)` a um `user_id` interno.
+5. Substituir o formulário de email por `st.login()` e `st.logout()`.
+6. Validar a sessão em cada execução antes de carregar o atleta.
+7. Criar `AuthorizationService` ou políticas equivalentes para `user_id → athlete_id`.
+8. Remover o acesso implícito do coach ao primeiro atleta.
+9. Desativar o papel coach na primeira alpha, salvo relação treinador–atleta explicitamente persistida e testada.
+10. Remover criação automática de utilizadores e atleta de demonstração em configuração alpha/produção.
+11. Manter o modo de desenvolvimento local atrás de configuração explícita.
+
+### Testes obrigatórios
+
+- utilizador não convidado é recusado;
+- identidade externa repetida resolve sempre o mesmo utilizador;
+- atleta A não consegue carregar, alterar ou eliminar atleta B;
+- URL, estado de sessão ou parâmetros adulterados não mudam a autorização;
+- sessão terminada deixa de aceder aos dados;
+- conta sem atleta apresenta onboarding, não dados de outro atleta.
+
+### Critério de conclusão
+
+Nenhum atleta é carregado antes da autenticação e autorização, e não existe seleção implícita de outro atleta.
+
+## 8. Fase C — Persistência PostgreSQL
+
+### Objetivo
+
+Substituir o disco local por persistência transacional e concorrente.
+
+### Estratégia
+
+Na primeira iteração, preservar `Athlete` como agregado e guardar uma representação versionada, juntamente com índices relacionais mínimos. Não decompor prematuramente todo o domínio em dezenas de tabelas.
+
+### Estrutura mínima proposta
+
+- `users`;
+- `external_identities`;
+- `athletes`;
+- `user_athlete_access`;
+- `athlete_snapshots` ou documento versionado equivalente;
+- `schema_migrations`;
+- `alpha_invitations`;
+- `consents`;
+- `ai_usage_events`;
+- `audit_events` para operações sensíveis sem payload fisiológico.
+
+### Commits previstos
+
+1. Escolher biblioteca de base de dados e ferramenta de migrações.
+2. Introduzir configuração `local`, `test` e `alpha`.
+3. Implementar repositórios PostgreSQL através dos mesmos protocolos.
+4. Adicionar versão do agregado ou `updated_at` para concorrência otimista.
+5. Executar importação, edição, eliminação, reconciliação e geração dentro de transações.
+6. Criar migração inicial e comando de aplicação/rollback de migrações.
+7. Criar ferramenta explícita de migração de um atleta JSON para a base de dados.
+8. Validar round-trip entre JSON atual, domínio e persistência PostgreSQL.
+9. Impedir que o ambiente alpha arranque com repositórios JSON.
+
+### Testes obrigatórios
+
+- integração contra PostgreSQL de teste;
+- migrações do zero e atualização entre versões;
+- rollback de transação após falha;
+- conflito entre duas edições concorrentes;
+- isolamento por `athlete_id` em todas as consultas;
+- migração de um atleta real anonimizado;
+- reinício da aplicação sem perda de dados.
+
+### Critério de conclusão
+
+O ambiente alpha não lê nem escreve em `data/`, todas as alterações lógicas são transacionais e conflitos não causam substituição silenciosa.
+
+## 9. Fase D — Uploads e dados externos
+
+### Objetivo
+
+Permitir importação sem conservar ficheiros desnecessários nem aceitar cargas perigosas.
+
+### Commits previstos
+
+1. Definir formatos, número máximo de ficheiros e tamanho máximo por upload.
+2. Definir limite máximo depois da descompressão de FIT.GZ.
+3. Validar extensão, assinatura e estrutura antes de construir `Workout`.
+4. Processar uploads em memória ou diretório temporário isolado.
+5. Eliminar sempre o original temporário após sucesso ou falha.
+6. Devolver resultado individual: importado, atualizado, duplicado, ignorado ou inválido.
+7. Não incluir caminhos, conteúdo bruto ou dados fisiológicos nos logs.
+8. Adicionar proteção contra repetição rápida e importações concorrentes.
+9. Documentar que os ficheiros originais não são conservados na alpha.
+
+### Testes obrigatórios
+
+- extensão falsa;
+- formato não suportado;
+- ficheiro vazio ou truncado;
+- gzip excessivamente expandido;
+- lote parcialmente inválido;
+- duplicados;
+- limpeza dos temporários;
+- importações simultâneas do mesmo atleta.
+
+### Critério de conclusão
+
+Nenhum upload ultrapassa os limites definidos, os originais são eliminados e cada falha é explicável ao utilizador.
+
+## 10. Fase E — Training Coach controlado
+
+### Objetivo
+
+Manter a funcionalidade de IA na alpha sem criar exposição ou custo ilimitado.
+
+### Commits previstos
+
+1. Apresentar informação clara antes da primeira geração sobre dados enviados e finalidade.
+2. Registar consentimento versionado e permitir retirar consentimento.
+3. Rever e minimizar o payload, removendo identificadores e factos desnecessários.
+4. Introduzir limite diário por utilizador e limite global configurável.
+5. Impedir pedidos duplicados enquanto uma geração está em curso.
+6. Classificar erros de configuração, autenticação, quota, pedido, segurança e indisponibilidade.
+7. Registar apenas metadados operacionais: utilizador interno, instante, modelo, estado, latência e contagem disponível de utilização.
+8. Permitir desativar o provider por configuração sem impedir o uso de Activities.
+9. Rever retenção das interpretações e respetivo processo de eliminação.
+
+### Testes obrigatórios
+
+- ausência de consentimento impede geração;
+- limite por utilizador;
+- falhas não descontam indevidamente ou não duplicam consumo;
+- payload não contém email nem identificadores externos;
+- provider indisponível não corrompe a atividade;
+- eliminação da conta remove interpretações persistidas.
+
+### Critério de conclusão
+
+O Training Coach é opcional, limitado, transparente e isolado das restantes funções.
+
+## 11. Fase F — Privacidade e controlo do utilizador
+
+### Objetivo
+
+Dar ao participante informação e controlo adequados sobre os seus dados.
+
+### Commits previstos
+
+1. Criar aviso de alpha e consentimento informado, com versão e data.
+2. Criar política de privacidade adequada ao âmbito real e aos fornecedores usados.
+3. Indicar responsável, contacto, finalidade, categorias de dados, fornecedores, retenção e direitos.
+4. Criar exportação completa e legível dos dados do utilizador.
+5. Criar eliminação integral com confirmação forte e prazo definido.
+6. Definir política de retenção para contas inativas, backups, logs e convites.
+7. Criar procedimento manual documentado para pedidos de acesso, correção ou eliminação durante a alpha.
+8. Identificar claramente recomendações como apoio ao treino, não aconselhamento médico.
+9. Rever juridicamente os textos antes de convidar participantes.
+
+### Testes obrigatórios
+
+- consentimento obrigatório e versionado;
+- exportação contém todos os dados associados;
+- eliminação remove ou agenda de forma verificável todos os dados ativos;
+- utilizador eliminado não consegue voltar a aceder sem novo convite;
+- logs e backups seguem a política documentada.
+
+### Critério de conclusão
+
+Cada participante sabe o que é guardado e consegue obter ou eliminar os seus dados através de um processo testado.
+
+## 12. Fase G — Qualidade, segurança e operação
+
+### Objetivo
+
+Tornar a alpha reproduzível, observável e recuperável.
+
+### Commits previstos
+
+1. Tornar `pyproject.toml` a fonte única de dependências da aplicação.
+2. Incluir Streamlit, Plotly, fitdecode e todas as dependências de runtime.
+3. Definir versões suportadas e estratégia de atualização.
+4. Criar GitHub Actions para pytest e verificações estáticas mínimas.
+5. Criar testes dos fluxos críticos com dois utilizadores.
+6. Introduzir logging estruturado com identificadores de correlação e sem dados sensíveis.
+7. Adicionar captura e alerta de exceções no ambiente alpha.
+8. Criar health check ou verificação equivalente da aplicação, base de dados e configuração.
+9. Configurar backups automáticos da base de dados.
+10. Executar e documentar um restauro real de backup.
+11. Documentar deployment, migrações, rollback e resposta a incidente.
+12. Remover `app/app_backup.py` e artefactos versionados não pertencentes ao produto num commit separado e confirmado.
+13. Completar `.gitignore` para `data/`, secrets, `.env`, coberturas, backups e exportações locais.
 
 ### Critérios de conclusão
 
-- Nenhum plano é corrompido.
-- Nenhuma adaptação é aplicada repetidamente.
-- Provas e sessões críticas permanecem protegidas.
-- Os atletas compreendem a ação principal do dashboard.
-- A importação é confiável.
-- Os problemas críticos da alpha estão resolvidos.
+- cada push relevante é validado automaticamente;
+- o ambiente é reconstruível a partir do repositório e secrets;
+- uma falha possui correlação e diagnóstico sem expor dados pessoais;
+- existe backup restaurado com sucesso;
+- existe rollback documentado e ensaiado;
+- nenhum dado de demonstração é criado no ambiente alpha.
 
-## 11. Fase 9 — Primeira UI pública
+## 13. Fase H — Deployment e convite
 
-### Funcionalidades incluídas
+### Objetivo
 
-- conta de atleta;
-- perfil;
-- eventos;
-- disponibilidade e preferências;
-- geração inicial do plano;
-- plano persistente;
-- dashboard orientado ao dia atual;
-- importação FIT, FIT.GZ e GPX;
-- histórico;
-- reconciliação;
-- adaptação incremental;
-- apresentação da adaptação;
-- explicação básica das métricas;
-- exportação e eliminação dos dados.
+Disponibilizar a aplicação apenas ao grupo inicial e aprender com utilização real.
 
-### Funcionalidades excluídas
+### Estratégia proposta
 
-- interface conversacional;
-- recomendações geradas por IA;
-- comparação científica avançada de sensores;
-- marketplace de planos;
-- funcionalidades completas de treinador;
-- previsões complexas de performance;
-- integrações automáticas com todas as plataformas externas.
+- Streamlit Community Cloud ou alojamento equivalente para a primeira alpha;
+- aplicação privada;
+- repositório privado ou acesso de deployment devidamente limitado;
+- secrets configurados no alojamento;
+- PostgreSQL gerido com backups;
+- domínio `streamlit.app` inicialmente suficiente;
+- 3–5 participantes convidados por email;
+- uma conta interna de administração separada das contas de atleta;
+- deployment alpha derivado de um commit confirmado da `main`;
+- sem indexação pública e sem inscrição livre.
 
-### Critérios de publicação
+### Checklist antes do primeiro convite
 
-- autenticação e autorização seguras;
-- persistência transacional;
-- backups testados;
-- CI sem erros;
-- fluxos essenciais testados;
-- dashboard compreensível;
-- métricas documentadas;
-- política de privacidade e termos adequados;
-- monitorização ativa;
-- processo de suporte e resposta a incidentes.
+- [ ] pytest completo e CI sem erros;
+- [ ] autenticação OIDC funcional;
+- [ ] allowlist de convites funcional;
+- [ ] teste de isolamento com atleta A e atleta B;
+- [ ] PostgreSQL obrigatório no ambiente alpha;
+- [ ] migrações aplicadas e rollback disponível;
+- [ ] backup e restauro confirmados;
+- [ ] uploads limitados e temporários;
+- [ ] Gemini limitado, opcional e explicado;
+- [ ] política de privacidade e consentimento disponíveis;
+- [ ] exportação e eliminação testadas;
+- [ ] logs e alertas ativos;
+- [ ] dados de demonstração desativados;
+- [ ] contacto de suporte visível;
+- [ ] plano de incidente e suspensão da aplicação disponível;
+- [ ] teste em desktop, Android e iOS nos fluxos essenciais.
 
-## 12. Sequência imediata de documentos
+### Plano de entrada
 
-Antes de qualquer redesign visual, executar:
+1. Testar com duas contas internas e dados descartáveis.
+2. Importar um conjunto anonimizado e validar cálculos e plano.
+3. Convidar um participante durante alguns dias.
+4. Rever erros, custos, compreensão e integridade dos dados.
+5. Convidar os restantes participantes gradualmente.
+6. Suspender novos convites sempre que surgir um problema crítico.
 
-1. `AUDIT_CURRENT_STATE.md`;
-2. `ROADMAP_PUBLIC_UI.md`;
-3. `docs/PRODUCT_VISION.md`;
-4. `docs/DOMAIN_MODEL.md`;
-5. `docs/ARCHITECTURE.md`;
-6. `docs/TRAINING_SCIENCE.md`;
-7. `docs/PLANNING.md`;
-8. `README.md`;
-9. arquivo dos roadmaps históricos.
+### Feedback mínimo a recolher
 
-## 13. Regra de avanço
+- sucesso ou falha do onboarding;
+- tempo até criar o primeiro plano;
+- sucesso das importações;
+- compreensão de Today, Plan, Activities, Calendar e Development;
+- recomendações consideradas inesperadas;
+- adaptações não compreendidas;
+- erros e perdas de estado;
+- desempenho em telemóvel;
+- utilização e custo do Gemini;
+- confiança e dúvidas sobre privacidade.
 
-Cada fase deve resultar em commits pequenos e verificáveis. Não se deve iniciar a fase seguinte enquanto permanecer um bloqueador estrutural da fase atual.
+### Critério de conclusão da alpha inicial
 
-O primeiro trabalho após a aprovação destes documentos será:
+- nenhuma fuga ou mistura de dados;
+- nenhuma perda ou corrupção de dados;
+- nenhum plano alterado repetidamente pela mesma reconciliação;
+- backups recuperáveis;
+- fluxos essenciais concluídos sem assistência constante;
+- problemas críticos corrigidos antes de aumentar o grupo.
 
-> Reescrever `docs/PRODUCT_VISION.md` para definir de forma inequívoca o produto, o atleta-alvo e os limites da primeira aplicação pública.
+## 14. Ordem dos primeiros commits
 
+Depois deste documento, a sequência inicial recomendada é:
+
+1. alinhar o protocolo `AthleteRepository` com operações multiatleta;
+2. criar repositório em memória para testes de casos de uso;
+3. extrair `LoadActiveAthlete` e reconciliação de `app/app.py`;
+4. extrair `ImportActivities` de `app/components/import_panel.py`;
+5. extrair geração, edição e eliminação para casos de uso;
+6. introduzir identidade externa e autorização;
+7. só depois implementar PostgreSQL através dos contratos estabilizados.
+
+Não se deve começar pelo deployment nem pelo botão de login isolado. Primeiro é necessário garantir que carregar e alterar um atleta passa por uma fronteira autorizável e transacional.
+
+## 15. Trabalho funcional mantido na calha
+
+Não pertence ao caminho crítico da alpha, mas permanece registado:
+
+- corrigir durações planeadas para blocos de cinco minutos;
+- adicionar pop-over com histórico de VO₂max;
+- continuar a auditoria científica do plano;
+- investigar adaptações futuras ausentes;
+- completar feedback subjetivo diário;
+- continuar a uniformização visual e responsiva.
+
+Estes itens devem manter commits separados dos commits de identidade, persistência e segurança.
+
+## 16. Regra de avanço
+
+Cada fase só termina quando os respetivos testes e critérios forem confirmados.
+
+Uma funcionalidade visualmente pronta não compensa uma lacuna de autenticação, autorização, persistência, privacidade ou recuperação. Se surgir dúvida sobre isolamento ou integridade dos dados, a alpha não avança até existir prova através de testes.
