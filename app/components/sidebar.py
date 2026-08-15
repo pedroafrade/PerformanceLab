@@ -465,13 +465,9 @@ def _set_page(
     st.session_state.page = page
 
 
-def _show_navigation(
-    current_user,
-) -> str:
+def _show_navigation() -> str:
     """
-    Display the application navigation.
-
-    Coach accounts receive access to the Accounts page.
+    Display the private-alpha application navigation.
     """
 
     if "page" not in st.session_state:
@@ -480,17 +476,6 @@ def _show_navigation(
     with st.container(
         key="sidebar_navigation",
     ):
-
-        if current_user.is_coach:
-
-            st.button(
-                "Accounts",
-                icon=":material/group:",
-                use_container_width=True,
-                key="sidebar_nav_accounts",
-                on_click=_set_page,
-                args=("accounts",),
-            )
 
         for page, label_key, icon in _NAVIGATION_ITEMS:
 
@@ -511,23 +496,13 @@ def _show_navigation(
 
 def _show_user_account(
     athlete,
-    current_user,
     on_logout,
 ) -> None:
     """
-    Display the authenticated account and its actions.
+    Display the authenticated athlete and account actions.
     """
 
-    if current_user.is_coach:
-        account_name = "Coach"
-    else:
-        account_name = str(athlete.name)
-
     account_name = escape(
-        account_name
-    )
-
-    athlete_name = escape(
         str(athlete.name)
     )
 
@@ -567,12 +542,6 @@ def _show_user_account(
         ):
             on_logout()
 
-    if current_user.is_coach:
-
-        st.caption(
-            f"Viewing: {athlete_name}"
-        )
-
 
 # ======================================================
 # Sidebar
@@ -581,7 +550,6 @@ def _show_user_account(
 def show_sidebar(
     athlete,
     *,
-    current_user,
     on_logout,
     on_import_activities,
     on_generate_plan=None,
@@ -619,15 +587,12 @@ def show_sidebar(
 
             _show_user_account(
                 athlete,
-                current_user,
                 on_logout,
             )
 
             st.divider()
 
-            _show_navigation(
-                current_user
-            )
+            _show_navigation()
 
             st.divider()
 

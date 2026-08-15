@@ -410,46 +410,6 @@ def logout() -> None:
 
     st.logout()
 
-def show_accounts_page() -> None:
-    """
-    Display the existing PerformanceLab accounts.
-    """
-
-    st.title("Accounts")
-
-    st.write(
-        "View the accounts that can access PerformanceLab."
-    )
-
-    users = user_repository.list()
-
-    if not users:
-        st.info(
-            "No accounts found."
-        )
-        return
-
-    rows = []
-
-    for user in users:
-        rows.append(
-            {
-                "Email": user.email,
-                "Role": user.role,
-                "Athlete ID": (
-                    user.athlete_id
-                    if user.athlete_id is not None
-                    else "—"
-                ),
-            }
-        )
-
-    st.dataframe(
-        rows,
-        use_container_width=True,
-        hide_index=True,
-    )
-
 def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
@@ -481,15 +441,6 @@ def initialize_session_state() -> None:
 
         user_repository.save(
             athlete_user
-        )
-
-        coach_user = User(
-            email="coach@performancelab.local",
-            role="coach",
-        )
-
-        user_repository.save(
-            coach_user
         )
 
     # --------------------------------------------------
@@ -666,7 +617,6 @@ should_save_athlete = (
 
 athlete = show_sidebar(
     athlete,
-    current_user=current_user,
     on_logout=logout,
     on_import_activities=(
         import_completed_activities
@@ -778,15 +728,6 @@ elif page == "settings":
     athlete = show_settings_page(
         athlete
     )
-elif page == "accounts":
-
-    if not current_user.is_coach:
-        st.error(
-            "Only coaches can access account management."
-        )
-        st.stop()
-
-    show_accounts_page()
 
 else:
 
@@ -808,15 +749,13 @@ else:
         "🚧 Página em desenvolvimento."
     )
 
-if page != "accounts":
+st.session_state.athlete = athlete
 
-    st.session_state.athlete = athlete
+if should_save_athlete:
 
-    if should_save_athlete:
-
-        athlete_repository.save(
-            athlete,
-        )
+    athlete_repository.save(
+        athlete,
+    )
 
 if (
     page == "athlete"

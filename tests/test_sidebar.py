@@ -2,8 +2,14 @@
 Tests for sidebar component.
 """
 
+from inspect import (
+    signature,
+)
+
 from app.components.sidebar import (
     _NAVIGATION_ITEMS,
+    _show_navigation,
+    _show_user_account,
     show_sidebar,
 )
 
@@ -46,4 +52,41 @@ def test_sidebar_uses_semantic_translation_keys():
         "nav.calendar",
         "nav.development",
         "nav.settings",
+    )
+
+
+def test_private_alpha_navigation_has_no_user_role():
+
+    parameters = signature(
+        _show_navigation
+    ).parameters
+
+    assert tuple(
+        parameters
+    ) == ()
+
+
+def test_private_alpha_account_uses_athlete_only():
+
+    parameters = signature(
+        _show_user_account
+    ).parameters
+
+    assert tuple(
+        parameters
+    ) == (
+        "athlete",
+        "on_logout",
+    )
+
+
+def test_sidebar_has_no_current_user_parameter():
+
+    parameters = signature(
+        show_sidebar
+    ).parameters
+
+    assert (
+        "current_user"
+        not in parameters
     )
