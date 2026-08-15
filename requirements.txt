@@ -3,7 +3,7 @@ pandas
 matplotlib
 scipy
 gpxpy
-streamlit
+streamlit[auth]
 fitdecode
 plotly
 google-genai>=2.3
