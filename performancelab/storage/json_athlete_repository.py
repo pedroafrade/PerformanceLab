@@ -93,20 +93,36 @@ class JsonAthleteRepository:
             for path in self._athlete_files()
         ]
 
-    def save(self, athlete: Athlete) -> Path:
-        """Save an athlete using its persistent ID as the filename."""
-        target_path = self._path_for(athlete.athlete_id)
-        saved_path = save_athlete(
+    def save(
+        self,
+        athlete: Athlete,
+    ) -> None:
+        """
+        Save an athlete using its persistent ID as the
+        filename.
+        """
+
+        target_path = self._path_for(
+            athlete.athlete_id
+        )
+
+        save_athlete(
             athlete,
             target_path,
         )
 
-        # Remove the old single-athlete filename after a successful save.
-        legacy_path = self.directory / "athlete.json"
-        if legacy_path != target_path and legacy_path.exists():
-            legacy_path.unlink()
+        # Remove the old single-athlete filename after a
+        # successful save.
+        legacy_path = (
+            self.directory
+            / "athlete.json"
+        )
 
-        return saved_path
+        if (
+            legacy_path != target_path
+            and legacy_path.exists()
+        ):
+            legacy_path.unlink()
 
     def delete(self, athlete_id: str) -> None:
         """Delete an athlete by ID."""

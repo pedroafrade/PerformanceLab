@@ -3,51 +3,77 @@ PerformanceLab
 
 Athlete repository interface.
 
-Defines the persistence contract used to load and save athletes.
+Defines the persistence contract used to load and save
+multiple athletes.
 """
 
-from pathlib import Path
-from typing import Protocol
+from typing import (
+    Protocol,
+    runtime_checkable,
+)
 
-from performancelab.athlete import Athlete
+from performancelab.athlete import (
+    Athlete,
+)
 
 
-class AthleteRepository(Protocol):
+@runtime_checkable
+class AthleteRepository(
+    Protocol
+):
     """
-    Persistence interface for Athlete objects.
+    Persistence interface for Athlete aggregates.
 
     Implementations may store athletes in JSON files,
     databases or remote services.
+
+    Authorization must be completed before an athlete ID
+    is passed to this repository. Listing every athlete is
+    reserved for explicitly authorized application flows.
     """
 
-    @property
-    def path(self) -> Path:
+    def get(
+        self,
+        athlete_id: str,
+    ) -> Athlete:
         """
-        Return the storage location used by the repository.
-        """
-        ...
-
-    def exists(self) -> bool:
-        """
-        Return True when stored athlete data exists.
-        """
-        ...
-
-    def load(self) -> Athlete:
-        """
-        Load and return the stored athlete.
+        Return the athlete identified by athlete_id.
 
         Raises:
             FileNotFoundError:
-                If no stored athlete exists.
+                If the athlete does not exist.
+        """
+        ...
+
+    def list(
+        self,
+    ) -> list[Athlete]:
+        """
+        Return every stored athlete.
+
+        This operation must only be used by an explicitly
+        authorized application flow.
         """
         ...
 
     def save(
         self,
         athlete: Athlete,
-    ) -> Path:
+    ) -> None:
         """
-        Persist an athlete and return the storage path.
+        Persist the complete athlete aggregate.
+        """
+        ...
+
+    def delete(
+        self,
+        athlete_id: str,
+    ) -> None:
+        """
+        Delete the athlete identified by athlete_id.
+
+        Raises:
+            FileNotFoundError:
+                If the athlete does not exist.
         """
         ...
