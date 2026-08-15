@@ -4,6 +4,10 @@ PerformanceLab
 Application use cases.
 """
 
+from .delete_workouts import (
+    DeleteWorkouts,
+    DeleteWorkoutsResult,
+)
 from .generate_training_plan import (
     GenerateTrainingPlan,
     GenerateTrainingPlanResult,
@@ -24,6 +28,8 @@ from .update_workout import (
 
 
 __all__ = [
+    "DeleteWorkouts",
+    "DeleteWorkoutsResult",
     "GenerateTrainingPlan",
     "GenerateTrainingPlanResult",
     "ImportActivities",
