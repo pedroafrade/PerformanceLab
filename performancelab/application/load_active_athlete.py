@@ -14,6 +14,9 @@ from datetime import (
 from performancelab.athlete import (
     Athlete,
 )
+from performancelab.authorization import (
+    AthleteAuthorizationService,
+)
 from performancelab.identity import (
     User,
 )
@@ -39,21 +42,33 @@ class LoadActiveAthleteResult:
 
 class LoadActiveAthlete:
     """
-    Load the active athlete and reconcile closed days.
+    Load an explicitly authorized athlete profile.
 
-    Athlete selection for coach users is temporary and
-    preserves the current local application behaviour.
-    Explicit authorization will replace it before alpha.
+    Authentication establishes who the user is. A persisted
+    owner access grant establishes which athlete profile that
+    user is allowed to load.
     """
 
     def __init__(
         self,
         *,
         repository: AthleteRepository,
+        authorization: AthleteAuthorizationService,
         reconciler: TrainingPlanReconciler | None = None,
     ) -> None:
 
+        if not isinstance(
+            authorization,
+            AthleteAuthorizationService,
+        ):
+            raise TypeError(
+                "authorization must be an "
+                "AthleteAuthorizationService."
+            )
+
         self._repository = repository
+        self._authorization = authorization
+
         self._reconciler = (
             reconciler
             or TrainingPlanReconciler()
@@ -66,7 +81,7 @@ class LoadActiveAthlete:
         today: date | None = None,
     ) -> LoadActiveAthleteResult:
         """
-        Load, reconcile and conditionally persist an athlete.
+        Authorize, load and reconcile an athlete.
         """
 
         athlete = self._load_for_user(
@@ -101,6 +116,7 @@ class LoadActiveAthlete:
         )
 
         if plan_changed:
+
             self._repository.save(
                 athlete
             )
@@ -115,32 +131,38 @@ class LoadActiveAthlete:
         user: User,
     ) -> Athlete:
         """
-        Resolve the athlete currently available to a user.
+        Resolve only the athlete explicitly owned by the user.
         """
 
-        if user.is_athlete:
-
-            if user.athlete_id is None:
-                raise ValueError(
-                    "Athlete user has no athlete profile."
-                )
-
-            return self._repository.get(
-                user.athlete_id
+        if not isinstance(
+            user,
+            User,
+        ):
+            raise TypeError(
+                "user must be a User."
             )
 
-        athletes = (
-            self._repository.list()
+        if not user.is_athlete:
+
+            raise PermissionError(
+                "Only athlete accounts are enabled "
+                "for the private alpha."
+            )
+
+        if user.athlete_id is None:
+
+            raise ValueError(
+                "Athlete user has no athlete profile."
+            )
+
+        self._authorization.require_access(
+            user_id=user.user_id,
+            athlete_id=user.athlete_id,
+            allowed_permissions=(
+                "owner",
+            ),
         )
 
-        if not athletes:
-            raise LookupError(
-                "No athlete profiles are available."
-            )
-
-        return min(
-            athletes,
-            key=lambda athlete: (
-                athlete.name.lower()
-            ),
+        return self._repository.get(
+            user.athlete_id
         )

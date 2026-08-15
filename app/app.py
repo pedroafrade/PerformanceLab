@@ -36,7 +36,9 @@ from performancelab.application import (
     ProvisionInvitedUser,
     UpdateWorkout,
 )
-
+from performancelab.authorization import (
+    AthleteAuthorizationService,
+)
 from performancelab.identity import User
 from performancelab.oidc_identity import (
     external_identity_from_claims,
@@ -123,6 +125,11 @@ alpha_invitation_repository = (
 athlete_access_repository = (
     JsonAthleteAccessRepository(
         ATHLETE_ACCESS_DATA_DIR
+    )
+)
+athlete_authorization = (
+    AthleteAuthorizationService(
+        athlete_access_repository
     )
 )
 
@@ -411,7 +418,10 @@ if "athlete" not in st.session_state:
             LoadActiveAthlete(
                 repository=(
                     athlete_repository
-                )
+                ),
+                authorization=(
+                    athlete_authorization
+                ),
             )
             .execute(
                 current_user
@@ -421,6 +431,20 @@ if "athlete" not in st.session_state:
         st.session_state.athlete = (
             load_result.athlete
         )
+
+    except PermissionError:
+
+        st.error(
+            "Esta conta não está autorizada "
+            "a aceder a este perfil de atleta."
+        )
+
+        st.button(
+            "Sign out",
+            on_click=st.logout,
+        )
+
+        st.stop()
 
     except (
         FileNotFoundError,

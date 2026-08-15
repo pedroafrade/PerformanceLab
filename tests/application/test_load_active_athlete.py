@@ -10,11 +10,20 @@ from performancelab.application import (
 from performancelab.athlete import (
     Athlete,
 )
+from performancelab.athlete_access import (
+    AthleteAccessGrant,
+)
+from performancelab.authorization import (
+    AthleteAuthorizationService,
+)
 from performancelab.identity import (
     User,
 )
 from performancelab.storage.in_memory_athlete_repository import (
     InMemoryAthleteRepository,
+)
+from performancelab.storage.json_athlete_access_repository import (
+    JsonAthleteAccessRepository,
 )
 from performancelab.training.planning import (
     TrainingPlan,
@@ -61,6 +70,7 @@ class FakeReconciler:
         self.replacement_plan = (
             replacement_plan
         )
+
         self.call = None
 
     def reconcile_closed_days(
@@ -92,10 +102,12 @@ class FakeReconciler:
 
 def athlete_user(
     athlete,
+    *,
+    email="pedro@example.com",
 ):
 
     return User(
-        email="pedro@example.com",
+        email=email,
         role="athlete",
         athlete_id=(
             athlete.athlete_id
@@ -103,13 +115,65 @@ def athlete_user(
     )
 
 
-def test_loads_athlete_associated_with_user():
+def owner_grant(
+    user,
+    athlete,
+):
+
+    return AthleteAccessGrant(
+        user_id=user.user_id,
+        athlete_id=athlete.athlete_id,
+        permission="owner",
+    )
+
+
+def build_loader(
+    tmp_path,
+    repository,
+    *,
+    grants=(),
+    reconciler=None,
+):
+
+    access_repository = (
+        JsonAthleteAccessRepository(
+            tmp_path
+            / "athlete_access"
+        )
+    )
+
+    for grant in grants:
+
+        access_repository.save(
+            grant
+        )
+
+    return LoadActiveAthlete(
+        repository=repository,
+        authorization=(
+            AthleteAuthorizationService(
+                access_repository
+            )
+        ),
+        reconciler=reconciler,
+    )
+
+
+def test_loads_only_athlete_associated_with_user(
+    tmp_path,
+):
 
     pedro = Athlete(
         name="Pedro"
     )
+
     maria = Athlete(
         name="Maria"
+    )
+
+    user = athlete_user(
+        maria,
+        email="maria@example.com",
     )
 
     repository = (
@@ -121,13 +185,18 @@ def test_loads_athlete_associated_with_user():
         )
     )
 
-    result = LoadActiveAthlete(
-        repository=repository,
+    result = build_loader(
+        tmp_path,
+        repository,
+        grants=(
+            owner_grant(
+                user,
+                maria,
+            ),
+        ),
         reconciler=FakeReconciler(),
     ).execute(
-        athlete_user(
-            maria
-        ),
+        user,
         today=date(
             2026,
             8,
@@ -139,13 +208,23 @@ def test_loads_athlete_associated_with_user():
         result.athlete.athlete_id
         == maria.athlete_id
     )
-    assert result.athlete.name == "Maria"
+
+    assert (
+        result.athlete.name
+        == "Maria"
+    )
 
 
-def test_passes_loaded_domain_state_to_reconciler():
+def test_passes_loaded_domain_state_to_reconciler(
+    tmp_path,
+):
 
     athlete = Athlete(
         name="Pedro"
+    )
+
+    user = athlete_user(
+        athlete
     )
 
     repository = (
@@ -155,6 +234,7 @@ def test_passes_loaded_domain_state_to_reconciler():
             )
         )
     )
+
     reconciler = FakeReconciler()
 
     reference_day = date(
@@ -163,13 +243,18 @@ def test_passes_loaded_domain_state_to_reconciler():
         15,
     )
 
-    result = LoadActiveAthlete(
-        repository=repository,
+    result = build_loader(
+        tmp_path,
+        repository,
+        grants=(
+            owner_grant(
+                user,
+                athlete,
+            ),
+        ),
         reconciler=reconciler,
     ).execute(
-        athlete_user(
-            athlete
-        ),
+        user,
         today=reference_day,
     )
 
@@ -177,14 +262,17 @@ def test_passes_loaded_domain_state_to_reconciler():
         reconciler.call["plan"]
         is result.athlete.training_plan
     )
+
     assert (
         reconciler.call["history"]
         is result.athlete.history
     )
+
     assert (
         reconciler.call["today"]
         == reference_day
     )
+
     assert (
         reconciler.call[
             "training_state"
@@ -193,10 +281,16 @@ def test_passes_loaded_domain_state_to_reconciler():
     )
 
 
-def test_does_not_save_when_plan_is_unchanged():
+def test_does_not_save_when_plan_is_unchanged(
+    tmp_path,
+):
 
     athlete = Athlete(
         name="Pedro"
+    )
+
+    user = athlete_user(
+        athlete
     )
 
     repository = (
@@ -207,24 +301,36 @@ def test_does_not_save_when_plan_is_unchanged():
         )
     )
 
-    result = LoadActiveAthlete(
-        repository=repository,
+    result = build_loader(
+        tmp_path,
+        repository,
+        grants=(
+            owner_grant(
+                user,
+                athlete,
+            ),
+        ),
         reconciler=FakeReconciler(),
     ).execute(
-        athlete_user(
-            athlete
-        )
+        user
     )
 
     assert result.plan_changed is False
     assert repository.save_calls == 0
 
 
-def test_saves_when_reconciliation_replaces_plan():
+def test_saves_when_reconciliation_replaces_plan(
+    tmp_path,
+):
 
     athlete = Athlete(
         name="Pedro"
     )
+
+    user = athlete_user(
+        athlete
+    )
+
     replacement_plan = (
         TrainingPlan()
     )
@@ -237,17 +343,22 @@ def test_saves_when_reconciliation_replaces_plan():
         )
     )
 
-    result = LoadActiveAthlete(
-        repository=repository,
+    result = build_loader(
+        tmp_path,
+        repository,
+        grants=(
+            owner_grant(
+                user,
+                athlete,
+            ),
+        ),
         reconciler=FakeReconciler(
             replacement_plan=(
                 replacement_plan
             )
         ),
     ).execute(
-        athlete_user(
-            athlete
-        )
+        user
     )
 
     stored = repository.get(
@@ -256,47 +367,101 @@ def test_saves_when_reconciliation_replaces_plan():
 
     assert result.plan_changed is True
     assert repository.save_calls == 1
+
     assert (
         result.athlete.training_plan
         is replacement_plan
     )
+
     assert (
         stored.training_plan
         is not replacement_plan
     )
 
 
-def test_missing_athlete_raises():
+def test_missing_athlete_raises_after_authorization(
+    tmp_path,
+):
+
+    missing_athlete = Athlete(
+        name="Missing"
+    )
+
+    user = athlete_user(
+        missing_athlete
+    )
 
     repository = (
         RecordingAthleteRepository()
-    )
-
-    user = User(
-        email="pedro@example.com",
-        role="athlete",
-        athlete_id="missing-athlete",
     )
 
     with pytest.raises(
         FileNotFoundError,
         match="does not exist",
     ):
-        LoadActiveAthlete(
-            repository=repository,
+        build_loader(
+            tmp_path,
+            repository,
+            grants=(
+                owner_grant(
+                    user,
+                    missing_athlete,
+                ),
+            ),
             reconciler=FakeReconciler(),
         ).execute(
             user
         )
 
 
-def test_coach_temporarily_loads_first_athlete():
+def test_missing_access_grant_is_rejected(
+    tmp_path,
+):
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    user = athlete_user(
+        athlete
+    )
+
+    repository = (
+        RecordingAthleteRepository(
+            (
+                athlete,
+            )
+        )
+    )
+
+    with pytest.raises(
+        PermissionError,
+        match="not authorized",
+    ):
+        build_loader(
+            tmp_path,
+            repository,
+            reconciler=FakeReconciler(),
+        ).execute(
+            user
+        )
+
+
+def test_user_cannot_load_another_athlete(
+    tmp_path,
+):
 
     pedro = Athlete(
         name="Pedro"
     )
+
     maria = Athlete(
         name="Maria"
+    )
+
+    user = athlete_user(
+        maria,
+        email="maria@example.com",
     )
 
     repository = (
@@ -308,37 +473,128 @@ def test_coach_temporarily_loads_first_athlete():
         )
     )
 
-    coach = User(
-        email="coach@example.com",
-        role="coach",
+    with pytest.raises(
+        PermissionError,
+        match="not authorized",
+    ):
+        build_loader(
+            tmp_path,
+            repository,
+            grants=(
+                AthleteAccessGrant(
+                    user_id=user.user_id,
+                    athlete_id=pedro.athlete_id,
+                    permission="owner",
+                ),
+            ),
+            reconciler=FakeReconciler(),
+        ).execute(
+            user
+        )
+
+
+def test_coach_grant_is_not_accepted_for_alpha_owner(
+    tmp_path,
+):
+
+    athlete = Athlete(
+        name="Pedro"
     )
 
-    result = LoadActiveAthlete(
-        repository=repository,
-        reconciler=FakeReconciler(),
-    ).execute(
-        coach
+    user = athlete_user(
+        athlete
     )
 
-    assert result.athlete.name == "Maria"
-
-
-def test_coach_without_athletes_raises():
-
-    coach = User(
-        email="coach@example.com",
-        role="coach",
+    repository = (
+        RecordingAthleteRepository(
+            (
+                athlete,
+            )
+        )
     )
 
     with pytest.raises(
-        LookupError,
-        match="No athlete profiles",
+        PermissionError,
+        match="permission_not_allowed",
     ):
-        LoadActiveAthlete(
-            repository=(
-                RecordingAthleteRepository()
+        build_loader(
+            tmp_path,
+            repository,
+            grants=(
+                AthleteAccessGrant(
+                    user_id=user.user_id,
+                    athlete_id=athlete.athlete_id,
+                    permission="coach",
+                ),
+            ),
+            reconciler=FakeReconciler(),
+        ).execute(
+            user
+        )
+
+
+def test_coach_account_cannot_load_any_athlete(
+    tmp_path,
+):
+
+    pedro = Athlete(
+        name="Pedro"
+    )
+
+    maria = Athlete(
+        name="Maria"
+    )
+
+    coach = User(
+        email="coach@example.com",
+        role="coach",
+    )
+
+    repository = (
+        RecordingAthleteRepository(
+            (
+                pedro,
+                maria,
+            )
+        )
+    )
+
+    with pytest.raises(
+        PermissionError,
+        match="Only athlete accounts",
+    ):
+        build_loader(
+            tmp_path,
+            repository,
+            grants=(
+                AthleteAccessGrant(
+                    user_id=coach.user_id,
+                    athlete_id=pedro.athlete_id,
+                    permission="coach",
+                ),
             ),
             reconciler=FakeReconciler(),
         ).execute(
             coach
+        )
+
+
+def test_rejects_invalid_user(
+    tmp_path,
+):
+
+    repository = (
+        RecordingAthleteRepository()
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="user must be a User",
+    ):
+        build_loader(
+            tmp_path,
+            repository,
+            reconciler=FakeReconciler(),
+        ).execute(
+            None
         )
