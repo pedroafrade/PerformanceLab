@@ -28,9 +28,11 @@ from performancelab import (
     create_workout,
 )
 from performancelab.application import (
+    DeleteWorkouts,
     GenerateTrainingPlan,
     ImportActivities,
     LoadActiveAthlete,
+    UpdateWorkout,
 )
 from performancelab.authentication import AuthenticationService
 from performancelab.identity import User
@@ -248,6 +250,56 @@ def import_completed_activities(
     ).execute(
         athlete.athlete_id,
         workouts,
+    )
+
+    st.session_state.athlete = (
+        result.athlete
+    )
+
+    return result
+
+def update_completed_workout(
+    workout_id,
+    update,
+):
+    """
+    Update and persist one completed workout.
+    """
+
+    athlete = (
+        st.session_state.athlete
+    )
+
+    result = UpdateWorkout(
+        repository=athlete_repository
+    ).execute(
+        athlete.athlete_id,
+        workout_id,
+        update,
+    )
+
+    st.session_state.athlete = (
+        result.athlete
+    )
+
+    return result
+
+def delete_completed_workouts(
+    workout_ids,
+):
+    """
+    Delete and persist completed workouts.
+    """
+
+    athlete = (
+        st.session_state.athlete
+    )
+
+    result = DeleteWorkouts(
+        repository=athlete_repository
+    ).execute(
+        athlete.athlete_id,
+        workout_ids,
     )
 
     st.session_state.athlete = (
@@ -580,8 +632,13 @@ if page == "dashboard":
     )
 
     show_workout_editor(
-        athlete,
         selected_workout,
+        on_update_workout=(
+            update_completed_workout
+        ),
+        on_delete_workouts=(
+            delete_completed_workouts
+        ),
     )
 
     show_selected_workout_route(
@@ -607,7 +664,13 @@ elif page == "activities":
 
     activities_changed = (
         show_activities_page(
-            athlete
+            athlete,
+            on_update_workout=(
+                update_completed_workout
+            ),
+            on_delete_workouts=(
+                delete_completed_workouts
+            ),
         )
     )
 

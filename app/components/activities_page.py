@@ -1144,6 +1144,8 @@ def _show_selected_activity_dashboard(
     activity,
     workout,
     athlete,
+    on_update_workout,
+    on_delete_workouts,
 ) -> None:
     """
     Compact dashboard rendered inside the scrolling
@@ -1179,8 +1181,13 @@ def _show_selected_activity_dashboard(
         environment_first=False,
     )
     show_workout_editor(
-        athlete,
         workout,
+        on_update_workout=(
+            on_update_workout
+        ),
+        on_delete_workouts=(
+            on_delete_workouts
+        ),
         key_prefix=(
             "activities_inline_editor_"
             f"{activity.workout_id}"
@@ -1368,6 +1375,9 @@ def _resolve_activity_coach(
 
 def show_activities_page(
     athlete,
+    *,
+    on_update_workout=None,
+    on_delete_workouts=None,
 ) -> bool:
     """
     Displays a compact scrolling activity browser.
@@ -1694,6 +1704,12 @@ def show_activities_page(
                     activity=activity,
                     workout=workout,
                     athlete=athlete,
+                    on_update_workout=(
+                        on_update_workout
+                    ),
+                    on_delete_workouts=(
+                        on_delete_workouts
+                    ),
                 )
 
     # ==================================================
