@@ -36,3 +36,8 @@ data/users/
 data/external_identities/
 data/alpha_invitations/
 data/athlete_access/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
