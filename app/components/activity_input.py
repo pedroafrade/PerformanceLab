@@ -17,6 +17,7 @@ from .import_panel import (
 def show_activity_input(
     athlete,
     *,
+    on_import_activities,
     key_prefix: str = "activity",
     show_header: bool = True,
 ):
@@ -58,6 +59,9 @@ def show_activity_input(
 
         show_import_panel(
             athlete,
+            on_import_activities=(
+                on_import_activities
+            ),
             key_prefix=key_prefix,
         )
 

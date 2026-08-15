@@ -3,12 +3,17 @@ PerformanceLab
 
 Import Panel Component.
 """
-from datetime import date, datetime
-from gzip import decompress
-from io import BytesIO
 
-from csv import DictReader
-from io import StringIO
+from csv import (
+    DictReader,
+)
+from gzip import (
+    decompress,
+)
+from io import (
+    BytesIO,
+    StringIO,
+)
 
 import streamlit as st
 
@@ -19,22 +24,17 @@ from performancelab.importers import (
 from performancelab.text import (
     repair_mojibake,
 )
-from performancelab.training.planning import (
-    TrainingPlanReconciler,
-)
-
 from performancelab.workout import (
     estimate_workout_rpe,
 )
 
-# ======================================================
 
 def _estimate_imported_workout_rpe(
     workout,
     athlete,
 ) -> float | None:
     """
-    Applies automatic RPE estimation using the athlete profile.
+    Apply automatic RPE estimation using the athlete profile.
     """
 
     return estimate_workout_rpe(
@@ -50,59 +50,24 @@ def _estimate_imported_workout_rpe(
             None,
         ),
     )
-# ======================================================
 
-def _store_imported_workout(
-    workout,
-    athlete,
-) -> bool:
-    """
-    Stores a new workout or enriches an existing one.
-
-    Returns whether a new workout was added.
-    """
-
-    _, added = athlete.history.merge(
-        workout
-    )
-
-    return added
-# ======================================================
-def _reconcile_training_plan(
-    athlete,
-    *,
-    through_day: date,
-) -> None:
-    """
-    Reconciles the persistent plan after imported
-    activities have updated the athlete's history.
-    """
-
-    athlete.training_plan = (
-        TrainingPlanReconciler().reconcile(
-            plan=athlete.training_plan,
-            history=athlete.history,
-            training_state=(
-                athlete.analytics.training_state
-            ),
-            through_day=through_day,
-        )
-    )
-
-# ======================================================
 
 def _prepare_uploaded_file(
     uploaded_file,
 ):
     """
-    Prepares an uploaded activity for its importer.
+    Prepare an uploaded activity for its importer.
 
     Strava FIT files may be compressed as .fit.gz.
     """
 
-    file_name = uploaded_file.name.lower()
+    file_name = (
+        uploaded_file.name.lower()
+    )
 
-    if file_name.endswith(".fit.gz"):
+    if file_name.endswith(
+        ".fit.gz"
+    ):
 
         source = BytesIO(
             decompress(
@@ -118,36 +83,45 @@ def _prepare_uploaded_file(
 
     extension = (
         file_name
-        .rsplit(".", 1)[-1]
+        .rsplit(
+            ".",
+            1,
+        )[-1]
     )
 
     return uploaded_file, extension
 
-# ======================================================
 
 def _normalized_file_name(
     value,
 ) -> str:
     """
-    Returns only the normalized file name.
+    Return only the normalized file name.
     """
 
     return (
-        str(value or "")
-        .replace("\\", "/")
-        .rsplit("/", 1)[-1]
+        str(
+            value
+            or ""
+        )
+        .replace(
+            "\\",
+            "/",
+        )
+        .rsplit(
+            "/",
+            1,
+        )[-1]
         .strip()
         .lower()
     )
 
 
-# ======================================================
-
 def _read_strava_titles(
     uploaded_files,
 ) -> dict[str, str]:
     """
-    Reads activity titles from Strava's activities.csv.
+    Read activity titles from Strava's activities.csv.
     """
 
     titles = {}
@@ -162,11 +136,15 @@ def _read_strava_titles(
 
         content = (
             uploaded_file.getvalue()
-            .decode("utf-8-sig")
+            .decode(
+                "utf-8-sig"
+            )
         )
 
         rows = DictReader(
-            StringIO(content)
+            StringIO(
+                content
+            )
         )
 
         for row in rows:
@@ -178,7 +156,8 @@ def _read_strava_titles(
                         _normalized_file_name(
                             value
                         )
-                        for value in row.values()
+                        for value
+                        in row.values()
                     )
                     if candidate.endswith(
                         (
@@ -193,7 +172,9 @@ def _read_strava_titles(
             )
 
             title = str(
-                row.get("Activity Name")
+                row.get(
+                    "Activity Name"
+                )
                 or row.get(
                     "Nome da atividade"
                 )
@@ -202,19 +183,19 @@ def _read_strava_titles(
 
             if file_name and title:
 
-                titles[file_name] = title
+                titles[
+                    file_name
+                ] = title
 
     return titles
 
-
-# ======================================================
 
 def _activity_title(
     uploaded_file,
     strava_titles,
 ) -> str:
     """
-    Returns the Strava title or a file-name fallback.
+    Return the Strava title or a file-name fallback.
     """
 
     normalized_name = (
@@ -235,29 +216,35 @@ def _activity_title(
             strava_title
         )
 
-    file_name = uploaded_file.name
+    file_name = (
+        uploaded_file.name
+    )
 
     if file_name.lower().endswith(
         ".fit.gz"
     ):
 
-        file_name = file_name[:-3]
+        file_name = (
+            file_name[:-3]
+        )
 
     return repair_mojibake(
-        file_name
-        .rsplit(".", 1)[0]
+        file_name.rsplit(
+            ".",
+            1,
+        )[0]
     )
-# ======================================================
+
 
 def _import_uploaded_file(
     uploaded_file,
     athlete,
     strava_titles=None,
-) -> tuple[bool, date | None]:
+):
     """
-    Imports one uploaded activity.
+    Parse one uploaded file into a Workout.
 
-    Returns whether a new workout was added.
+    This adapter does not change or persist the athlete.
     """
 
     source, extension = (
@@ -267,12 +254,15 @@ def _import_uploaded_file(
     )
 
     if extension == "gpx":
+
         importer = GPXImporter()
 
     elif extension == "fit":
+
         importer = FITImporter()
 
     else:
+
         raise ValueError(
             "Unsupported file format."
         )
@@ -295,52 +285,28 @@ def _import_uploaded_file(
             athlete,
         )
 
-    added = _store_imported_workout(
-        workout,
-        athlete,
-    )
+    return workout
 
-    workout_day = workout.date
-
-    if isinstance(
-        workout_day,
-        datetime,
-    ):
-        workout_day = (
-            workout_day.date()
-        )
-
-    if not isinstance(
-        workout_day,
-        date,
-    ):
-        workout_day = None
-
-    return (
-        added,
-        workout_day,
-    )
-
-# ======================================================
 
 def _import_uploaded_files(
     uploaded_files,
     athlete,
+    on_import_activities,
 ) -> tuple[int, int, int]:
     """
-    Imports multiple activities.
+    Parse files and send valid workouts to the use case.
 
     Returns added, updated and failed counts.
     """
+
     strava_titles = (
         _read_strava_titles(
             uploaded_files
         )
     )
-    added_count = 0
-    updated_count = 0
+
+    workouts = []
     failed_count = 0
-    imported_days = []
 
     for uploaded_file in uploaded_files:
 
@@ -352,56 +318,54 @@ def _import_uploaded_files(
 
         try:
 
-            (
-                added,
-                workout_day,
-            ) = _import_uploaded_file(
-                uploaded_file,
-                athlete,
-                strava_titles,
+            workout = (
+                _import_uploaded_file(
+                    uploaded_file,
+                    athlete,
+                    strava_titles,
+                )
             )
 
         except Exception:
 
             failed_count += 1
-
             continue
-        if workout_day is not None:
-            imported_days.append(
-                workout_day
-            )
-        if added:
-            added_count += 1
 
-        else:
-            updated_count += 1
-    if imported_days:
-        _reconcile_training_plan(
-            athlete,
-            through_day=max(
-                imported_days
-            ),
+        workouts.append(
+            workout
         )
+
+    if not workouts:
+
+        return (
+            0,
+            0,
+            failed_count,
+        )
+
+    result = on_import_activities(
+        tuple(
+            workouts
+        )
+    )
+
     return (
-        added_count,
-        updated_count,
+        result.added_count,
+        result.updated_count,
         failed_count,
     )
-# ======================================================
-# Import panel
-# ======================================================
+
 
 def show_import_panel(
     athlete,
     *,
+    on_import_activities,
     key_prefix: str = "activity",
 ) -> None:
     """
-    Displays the activity file import panel.
-
-    Multiple selected files are imported together.
+    Display the activity file import panel.
     """
-    
+
     uploader_version_key = (
         f"{key_prefix}_file_uploader_version"
     )
@@ -432,17 +396,28 @@ def show_import_panel(
 
         return
 
+    try:
 
-    (
-        added_count,
-        updated_count,
-        failed_count,
-    ) = _import_uploaded_files(
-        uploaded_files,
-        athlete,
-    )
+        (
+            added_count,
+            updated_count,
+            failed_count,
+        ) = _import_uploaded_files(
+            uploaded_files,
+            athlete,
+            on_import_activities,
+        )
 
-    st.session_state.notice = (
+    except Exception:
+
+        st.error(
+            "Import failed before the athlete "
+            "could be updated."
+        )
+
+        return
+
+    st.session_state.persisted_notice = (
         f"Import complete: "
         f"{added_count} added, "
         f"{updated_count} updated, "

@@ -1,21 +1,18 @@
-from datetime import date, datetime, timedelta
-from gzip import compress
-
-from types import SimpleNamespace
+from gzip import (
+    compress,
+)
+from types import (
+    SimpleNamespace,
+)
 
 import app.components.import_panel as import_panel
 
-from performancelab import History, Workout
-from performancelab.analysis.training_state import (
-    TrainingState,
-)
-from performancelab.training.planning import (
-    PlannedWorkout,
-    TrainingPlan,
+from performancelab import (
+    Workout,
 )
 
 
-def test_import_panel_uses_athlete_profile_for_rpe(
+def test_uses_athlete_profile_for_rpe(
     monkeypatch,
 ):
 
@@ -48,7 +45,8 @@ def test_import_panel_uses_athlete_profile_for_rpe(
     )
 
     estimate = (
-        import_panel._estimate_imported_workout_rpe(
+        import_panel
+        ._estimate_imported_workout_rpe(
             workout,
             athlete,
         )
@@ -59,58 +57,74 @@ def test_import_panel_uses_athlete_profile_for_rpe(
     assert calls["max_hr"] == 190
     assert calls["resting_hr"] == 50
 
-def test_import_panel_merges_workout_into_history():
 
-    workout = object()
-    stored_workout = object()
+def test_parses_fit_without_changing_athlete(
+    monkeypatch,
+):
 
-    calls = {}
-
-    class FakeHistory:
-
-        def merge(
-            self,
-            received_workout,
-        ):
-
-            calls["workout"] = (
-                received_workout
-            )
-
-            return (
-                stored_workout,
-                False,
-            )
-
-    athlete = SimpleNamespace(
-        history=FakeHistory(),
+    parsed_workout = Workout(
+        workout_id="parsed-workout"
     )
 
-    added = (
-        import_panel._store_imported_workout(
-            workout,
+    class FakeFITImporter:
+
+        def read(
+            self,
+            source,
+        ):
+
+            return parsed_workout
+
+    monkeypatch.setattr(
+        import_panel,
+        "FITImporter",
+        FakeFITImporter,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_estimate_imported_workout_rpe",
+        lambda workout, athlete: None,
+    )
+
+    uploaded_file = SimpleNamespace(
+        name="morning.fit"
+    )
+
+    athlete = SimpleNamespace(
+        history=object(),
+    )
+
+    result = (
+        import_panel._import_uploaded_file(
+            uploaded_file,
             athlete,
         )
     )
 
-    assert calls["workout"] is workout
-    assert added is False
+    assert result is parsed_workout
+    assert (
+        parsed_workout.info.title
+        == "morning"
+    )
 
-def test_imports_multiple_files_and_counts_results(
+
+def test_imports_valid_files_through_callback(
     monkeypatch,
 ):
 
-    new_file = SimpleNamespace(
-        name="new.fit"
+    first_file = SimpleNamespace(
+        name="first.fit"
     )
-
-    existing_file = SimpleNamespace(
-        name="existing.fit"
+    second_file = SimpleNamespace(
+        name="second.fit"
     )
-
     failed_file = SimpleNamespace(
         name="failed.fit"
     )
+
+    first_workout = object()
+    second_workout = object()
 
     def fake_import(
         uploaded_file,
@@ -118,60 +132,44 @@ def test_imports_multiple_files_and_counts_results(
         strava_titles=None,
     ):
 
-        if uploaded_file is new_file:
-            return (
-                True,
-                date(
-                    2026,
-                    8,
-                    1,
-                ),
-            )
+        if uploaded_file is first_file:
+            return first_workout
 
-        if uploaded_file is existing_file:
-            return (
-                False,
-                date(
-                    2026,
-                    8,
-                    2,
-                ),
-            )
+        if uploaded_file is second_file:
+            return second_workout
 
         raise ValueError(
             "Invalid activity"
         )
+
     monkeypatch.setattr(
         import_panel,
         "_import_uploaded_file",
         fake_import,
     )
-    reconciled = {}
 
-    def fake_reconcile(
-        athlete,
-        *,
-        through_day,
+    calls = {}
+
+    def on_import_activities(
+        workouts,
     ):
 
-        reconciled["athlete"] = athlete
-        reconciled["through_day"] = (
-            through_day
+        calls["workouts"] = workouts
+
+        return SimpleNamespace(
+            added_count=1,
+            updated_count=1,
         )
 
-    monkeypatch.setattr(
-        import_panel,
-        "_reconcile_training_plan",
-        fake_reconcile,
-    )
     counts = (
         import_panel._import_uploaded_files(
             [
-                new_file,
-                existing_file,
+                first_file,
+                second_file,
                 failed_file,
             ],
             SimpleNamespace(),
+            on_import_activities,
         )
     )
 
@@ -180,14 +178,106 @@ def test_imports_multiple_files_and_counts_results(
         1,
         1,
     )
-    assert (
-        reconciled["through_day"]
-        == date(
-            2026,
-            8,
-            2,
+
+    assert calls["workouts"] == (
+        first_workout,
+        second_workout,
+    )
+
+
+def test_no_valid_files_do_not_call_use_case(
+    monkeypatch,
+):
+
+    failed_file = SimpleNamespace(
+        name="failed.fit"
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_import_uploaded_file",
+        lambda *args, **kwargs: (
+            (_ for _ in ())
+            .throw(
+                ValueError(
+                    "Invalid activity"
+                )
+            )
+        ),
+    )
+
+    calls = {
+        "count": 0,
+    }
+
+    def on_import_activities(
+        workouts,
+    ):
+
+        calls["count"] += 1
+
+    counts = (
+        import_panel._import_uploaded_files(
+            [
+                failed_file,
+            ],
+            SimpleNamespace(),
+            on_import_activities,
         )
     )
+
+    assert counts == (
+        0,
+        0,
+        1,
+    )
+    assert calls["count"] == 0
+
+
+def test_skips_strava_csv_as_activity(
+    monkeypatch,
+):
+
+    csv_file = SimpleNamespace(
+        name="activities.csv",
+        getvalue=lambda: (
+            (
+                '"Nome da atividade",'
+                '"Nome do ficheiro"\n'
+            ).encode(
+                "utf-8"
+            )
+        ),
+    )
+
+    calls = {
+        "count": 0,
+    }
+
+    def on_import_activities(
+        workouts,
+    ):
+
+        calls["count"] += 1
+
+    counts = (
+        import_panel._import_uploaded_files(
+            [
+                csv_file,
+            ],
+            SimpleNamespace(),
+            on_import_activities,
+        )
+    )
+
+    assert counts == (
+        0,
+        0,
+        0,
+    )
+    assert calls["count"] == 0
+
+
 def test_prepares_compressed_fit_upload():
 
     uploaded_file = SimpleNamespace(
@@ -204,12 +294,15 @@ def test_prepares_compressed_fit_upload():
     )
 
     assert extension == "fit"
+
     assert source.name == (
         "strava_activity.fit"
     )
+
     assert source.read() == (
         b"FIT activity data"
     )
+
 
 def test_reads_strava_activity_titles():
 
@@ -217,16 +310,21 @@ def test_reads_strava_activity_titles():
         name="activities.csv",
         getvalue=lambda: (
             (
-                '"Nome da atividade","Nome do ficheiro"\n'
+                '"Nome da atividade",'
+                '"Nome do ficheiro"\n'
                 '"T68- 6x20 + Z2 (pt 2)",'
                 '"activities\\20284257187.fit.gz"\n'
-            ).encode("utf-8")
+            ).encode(
+                "utf-8"
+            )
         ),
     )
 
     titles = (
         import_panel._read_strava_titles(
-            [csv_file]
+            [
+                csv_file,
+            ]
         )
     )
 
@@ -237,255 +335,21 @@ def test_reads_strava_activity_titles():
     }
 
 
-def test_uses_strava_activity_title():
-
-    uploaded_file = SimpleNamespace(
-        name="20284257187.fit.gz",
-    )
-
-    title = import_panel._activity_title(
-        uploaded_file,
-        {
-            "20284257187.fit.gz": (
-                "Morning Run"
-            ),
-        },
-    )
-
-    assert title == "Morning Run"
-
-def test_reconciliation_updates_athlete_plan(
-    monkeypatch,
-):
-
-    original_plan = object()
-    adapted_plan = object()
-    history = object()
-    training_state = object()
-
-    athlete = SimpleNamespace(
-        training_plan=original_plan,
-        history=history,
-        analytics=SimpleNamespace(
-            training_state=training_state,
-        ),
-    )
-
-    calls = {}
-
-    class FakeReconciler:
-
-        def reconcile(
-            self,
-            *,
-            plan,
-            history,
-            training_state,
-            through_day,
-        ):
-
-            calls["plan"] = plan
-            calls["history"] = history
-            calls["training_state"] = (
-                training_state
-            )
-            calls["through_day"] = (
-                through_day
-            )
-
-            return adapted_plan
-
-    monkeypatch.setattr(
-        import_panel,
-        "TrainingPlanReconciler",
-        FakeReconciler,
-    )
-
-    import_panel._reconcile_training_plan(
-        athlete,
-        through_day=date(
-            2026,
-            8,
-            2,
-        ),
-    )
-
-    assert calls["plan"] is original_plan
-    assert calls["history"] is history
-
-    assert (
-        calls["training_state"]
-        is training_state
-    )
-
-    assert (
-        calls["through_day"]
-        == date(
-            2026,
-            8,
-            2,
-        )
-    )
-
-    assert (
-        athlete.training_plan
-        is adapted_plan
-    )
-
-def test_imported_activity_adapts_athlete_plan():
-
-    plan = TrainingPlan(
-        plan_id="import-flow-plan",
-        start_date=date(
-            2026,
-            8,
-            1,
-        ),
-        end_date=date(
-            2026,
-            8,
-            31,
-        ),
-        workouts=[
-            PlannedWorkout(
-                scheduled_at=datetime(
-                    2026,
-                    8,
-                    4,
-                    8,
-                    0,
-                ),
-                sport="Running",
-                title="Easy Run",
-                duration=timedelta(
-                    minutes=60,
-                ),
-                intensity="Easy",
-            ),
-            PlannedWorkout(
-                scheduled_at=datetime(
-                    2026,
-                    8,
-                    6,
-                    8,
-                    0,
-                ),
-                sport="Running",
-                title="Tempo Run",
-                duration=timedelta(
-                    minutes=50,
-                ),
-                intensity="Tempo",
-            ),
-        ],
-    )
-
-    training_state = TrainingState(
-        ctl=40.0,
-        atl=65.0,
-        tsb=-25.0,
-        acute_chronic_ratio=1.4,
-        monotony=1.0,
-        strain=650.0,
-        consistency=0.8,
-        weekly_frequency=4.0,
-        days_since_last_workout=0,
-        recent_training_load=500.0,
-    )
-
-    athlete = SimpleNamespace(
-        training_plan=plan,
-        history=History(),
-        analytics=SimpleNamespace(
-            training_state=training_state,
-        ),
-    )
-
-    completed = Workout(
-        workout_id="imported-overload",
-    )
-
-    completed.info.date = datetime(
-        2026,
-        8,
-        4,
-        9,
-        0,
-    )
-
-    completed.info.sport = "Running"
-
-    completed.info.duration = timedelta(
-        minutes=90,
-    )
-
-    completed.feedback.rpe = 4
-
-    added = (
-        import_panel._store_imported_workout(
-            completed,
-            athlete,
-        )
-    )
-
-    import_panel._reconcile_training_plan(
-        athlete,
-        through_day=date(
-            2026,
-            8,
-            4,
-        ),
-    )
-
-    assert added is True
-
-    assert (
-        len(athlete.history)
-        == 1
-    )
-
-    assert (
-        athlete.training_plan.workouts[0].duration
-        == timedelta(minutes=60)
-    )
-
-    assert (
-        athlete.training_plan.workouts[1].duration
-        == timedelta(minutes=40)
-    )
-
-    assert (
-        athlete.training_plan.reconciled_through
-        == date(
-            2026,
-            8,
-            4,
-        )
-    )
-
-    assert (
-        athlete.training_plan
-        .reconciled_workout_ids
-        == (
-            "imported-overload",
-        )
-    )
-
-
-
 def test_repairs_imported_strava_title():
 
     uploaded_file = SimpleNamespace(
         name="activity.fit",
     )
 
-    title = import_panel._activity_title(
-        uploaded_file,
-        {
-            "activity.fit": (
-                "T75_RecuperaÃ§Ã£o"
-            ),
-        },
+    title = (
+        import_panel._activity_title(
+            uploaded_file,
+            {
+                "activity.fit": (
+                    "T75_RecuperaÃ§Ã£o"
+                ),
+            },
+        )
     )
 
     assert title == (

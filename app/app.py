@@ -29,6 +29,7 @@ from performancelab import (
 )
 from performancelab.application import (
     GenerateTrainingPlan,
+    ImportActivities,
     LoadActiveAthlete,
 )
 from performancelab.authentication import AuthenticationService
@@ -230,6 +231,30 @@ def regenerate_weekly_plan() -> None:
     st.session_state.persisted_notice = (
         "Training plan generated."
     )
+
+def import_completed_activities(
+    workouts,
+):
+    """
+    Import and persist parsed completed activities.
+    """
+
+    athlete = (
+        st.session_state.athlete
+    )
+
+    result = ImportActivities(
+        repository=athlete_repository
+    ).execute(
+        athlete.athlete_id,
+        workouts,
+    )
+
+    st.session_state.athlete = (
+        result.athlete
+    )
+
+    return result
 
 def show_login_screen(
     auth: AuthenticationService,
@@ -512,6 +537,9 @@ athlete = show_sidebar(
     athlete,
     current_user=current_user,
     on_logout=logout,
+    on_import_activities=(
+        import_completed_activities
+    ),
     on_generate_plan=regenerate_weekly_plan,
 )
 

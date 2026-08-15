@@ -2,7 +2,9 @@
 Tests for the reusable activity input component.
 """
 
-from types import SimpleNamespace
+from types import (
+    SimpleNamespace,
+)
 
 import app.components.activity_input as activity_input
 
@@ -43,10 +45,14 @@ def test_file_input_uses_key_prefix(
     def fake_import_panel(
         athlete,
         *,
+        on_import_activities,
         key_prefix,
     ):
 
         calls["athlete"] = athlete
+        calls["on_import_activities"] = (
+            on_import_activities
+        )
         calls["import_key_prefix"] = (
             key_prefix
         )
@@ -59,24 +65,42 @@ def test_file_input_uses_key_prefix(
 
     athlete = SimpleNamespace()
 
+    def on_import_activities(
+        workouts,
+    ):
+
+        return workouts
+
     result = (
         activity_input.show_activity_input(
             athlete,
+            on_import_activities=(
+                on_import_activities
+            ),
             key_prefix="activities_page",
         )
     )
 
     assert result is athlete
+
     assert calls["header"] == (
         "Add activity"
     )
+
     assert calls["segmented_key"] == (
         "activities_page_input_mode"
     )
+
     assert calls["import_key_prefix"] == (
         "activities_page"
     )
+
     assert calls["athlete"] is athlete
+
+    assert (
+        calls["on_import_activities"]
+        is on_import_activities
+    )
 
 
 def test_manual_input_uses_key_prefix(
@@ -122,12 +146,16 @@ def test_manual_input_uses_key_prefix(
 
     activity_input.show_activity_input(
         athlete,
+        on_import_activities=(
+            lambda workouts: workouts
+        ),
         key_prefix="manual_test",
     )
 
     assert calls["manual_key_prefix"] == (
         "manual_test"
     )
+
     assert calls["athlete"] is athlete
 
 
@@ -139,7 +167,9 @@ def test_can_hide_activity_input_header(
         "header_count": 0,
     }
 
-    def fake_header(value):
+    def fake_header(
+        value,
+    ):
 
         calls["header_count"] += 1
 
@@ -159,6 +189,9 @@ def test_can_hide_activity_input_header(
 
     activity_input.show_activity_input(
         athlete,
+        on_import_activities=(
+            lambda workouts: workouts
+        ),
         key_prefix="hidden_header",
         show_header=False,
     )

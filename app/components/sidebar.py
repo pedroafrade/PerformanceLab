@@ -583,6 +583,7 @@ def show_sidebar(
     *,
     current_user,
     on_logout,
+    on_import_activities,
     on_generate_plan=None,
 ):
     """
@@ -649,6 +650,9 @@ def show_sidebar(
 
                 athlete = show_activity_input(
                     athlete,
+                    on_import_activities=(
+                        on_import_activities
+                    ),
                     key_prefix="sidebar_activity",
                 )
 
