@@ -19,7 +19,10 @@ dependencies = [
     "matplotlib",
     "scipy",
     "gpxpy",
-    "google-genai>=2.3"
+    "google-genai>=2.3",
+    "SQLAlchemy>=2.0,<3",
+    "alembic>=1.16,<2",
+    "psycopg[binary]>=3.2,<4",
 ]
 
 [tool.setuptools]
