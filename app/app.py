@@ -32,12 +32,25 @@ from performancelab.application import (
     GenerateTrainingPlan,
     ImportActivities,
     LoadActiveAthlete,
+    ProvisionInvitedUser,
     UpdateWorkout,
 )
-from performancelab.authentication import AuthenticationService
+
 from performancelab.identity import User
+from performancelab.oidc_identity import (
+    external_identity_from_claims,
+)
+from performancelab.storage.json_alpha_invitation_repository import (
+    JsonAlphaInvitationRepository,
+)
+from performancelab.storage.json_athlete_access_repository import (
+    JsonAthleteAccessRepository,
+)
 from performancelab.storage.json_athlete_repository import (
     JsonAthleteRepository,
+)
+from performancelab.storage.json_external_identity_repository import (
+    JsonExternalIdentityRepository,
 )
 from performancelab.storage.json_user_repository import (
     JsonUserRepository,
@@ -59,8 +72,35 @@ st.set_page_config(
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
 
-ATHLETE_DATA_DIR = PROJECT_ROOT / "data" / "athletes"
-USER_DATA_DIR = PROJECT_ROOT / "data" / "users"
+ATHLETE_DATA_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "athletes"
+)
+
+USER_DATA_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "users"
+)
+
+EXTERNAL_IDENTITY_DATA_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "external_identities"
+)
+
+ALPHA_INVITATION_DATA_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "alpha_invitations"
+)
+
+ATHLETE_ACCESS_DATA_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "athlete_access"
+)
 
 athlete_repository = JsonAthleteRepository(
     ATHLETE_DATA_DIR
@@ -68,6 +108,23 @@ athlete_repository = JsonAthleteRepository(
 
 user_repository = JsonUserRepository(
     USER_DATA_DIR
+)
+external_identity_repository = (
+    JsonExternalIdentityRepository(
+        EXTERNAL_IDENTITY_DATA_DIR
+    )
+)
+
+alpha_invitation_repository = (
+    JsonAlphaInvitationRepository(
+        ALPHA_INVITATION_DATA_DIR
+    )
+)
+
+athlete_access_repository = (
+    JsonAthleteAccessRepository(
+        ATHLETE_ACCESS_DATA_DIR
+    )
 )
 
 # ======================================================
@@ -308,11 +365,9 @@ def delete_completed_workouts(
 
     return result
 
-def show_login_screen(
-    auth: AuthenticationService,
-) -> None:
+def show_login_screen() -> None:
     """
-    Display the PerformanceLab login screen.
+    Display the PerformanceLab OIDC login screen.
     """
 
     left, centre, right = st.columns(
@@ -331,70 +386,29 @@ def show_login_screen(
 
         st.write("")
 
-        with st.form(
-            "login_form",
-        ):
-
-            email = st.text_input(
-                "Email",
-                placeholder="name@example.com",
-            )
-
-            submitted = (
-                st.form_submit_button(
-                    "Sign in",
-                    use_container_width=True,
-                )
-            )
-
-        if not submitted:
-            return
-
-        normalized_email = (
-            email.strip().lower()
+        st.button(
+            "Sign in with Google",
+            type="primary",
+            use_container_width=True,
+            on_click=st.login,
         )
-
-        if not normalized_email:
-
-            st.error(
-                "Enter an email address."
-            )
-
-            return
-
-        try:
-
-            auth.login(
-                normalized_email
-            )
-
-        except KeyError:
-
-            st.error(
-                "No account exists with this email."
-            )
-
-            return
-
-        st.rerun()
 
 def logout() -> None:
     """
-    End the current user session.
+    End the current OIDC user session.
     """
-
-    auth: AuthenticationService = (
-        st.session_state.auth
-    )
-
-    auth.logout()
 
     st.session_state.pop(
         "athlete",
         None,
     )
 
-    st.rerun()
+    st.session_state.pop(
+        "current_user",
+        None,
+    )
+
+    st.logout()
 
 def show_accounts_page() -> None:
     """
@@ -440,15 +454,6 @@ def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
     """
-
-    # --------------------------------------------------
-    # Authentication
-    # --------------------------------------------------
-
-    if "auth" not in st.session_state:
-        st.session_state.auth = AuthenticationService(
-            user_repository
-        )
 
     # --------------------------------------------------
     # Development user
@@ -515,21 +520,95 @@ def initialize_session_state() -> None:
 
 initialize_session_state()
 
-auth: AuthenticationService = (
-    st.session_state.auth
+if not st.user.is_logged_in:
+
+    show_login_screen()
+
+    st.stop()
+
+
+if "current_user" not in st.session_state:
+
+    try:
+
+        external_identity = (
+            external_identity_from_claims(
+                st.user.to_dict()
+            )
+        )
+
+        provision_result = (
+            ProvisionInvitedUser(
+                user_repository=(
+                    user_repository
+                ),
+                identity_repository=(
+                    external_identity_repository
+                ),
+                invitation_repository=(
+                    alpha_invitation_repository
+                ),
+                access_repository=(
+                    athlete_access_repository
+                ),
+                athlete_repository=(
+                    athlete_repository
+                ),
+            )
+            .execute(
+                external_identity
+            )
+        )
+
+        st.session_state.current_user = (
+            provision_result.user
+        )
+
+    except PermissionError as error:
+
+        st.error(
+            str(error)
+        )
+
+        st.caption(
+            "Access to this private alpha "
+            "requires an invitation."
+        )
+
+        st.button(
+            "Sign out",
+            on_click=st.logout,
+        )
+
+        st.stop()
+
+    except (
+        TypeError,
+        ValueError,
+        KeyError,
+        RuntimeError,
+    ) as error:
+
+        st.error(
+            "Não foi possível validar "
+            "a identidade autenticada."
+        )
+
+        st.code(
+            str(error)
+        )
+
+        st.button(
+            "Sign out",
+            on_click=st.logout,
+        )
+
+        st.stop()
+
+
+current_user: User = (
+    st.session_state.current_user
 )
-
-if not auth.is_authenticated:
-    show_login_screen(auth)
-    st.stop()
-
-current_user = auth.current_user
-
-if current_user is None:
-    st.error(
-        "Não foi possível identificar o utilizador autenticado."
-    )
-    st.stop()
 
 if "athlete" not in st.session_state:
 

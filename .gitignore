@@ -31,3 +31,8 @@ data/users/
 
 # Local Streamlit secrets
 .streamlit/secrets.toml
+
+# Local private-alpha identity data
+data/external_identities/
+data/alpha_invitations/
+data/athlete_access/
