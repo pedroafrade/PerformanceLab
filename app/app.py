@@ -28,6 +28,7 @@ from performancelab import (
     create_workout,
 )
 from performancelab.application import (
+    GenerateTrainingPlan,
     LoadActiveAthlete,
 )
 from performancelab.authentication import AuthenticationService
@@ -39,7 +40,6 @@ from performancelab.storage.json_user_repository import (
     JsonUserRepository,
 )
 
-from performancelab.coaching import Coach
 from performancelab.training.config import AthleteAvailability
 
 
@@ -198,37 +198,37 @@ def create_demo_athlete() -> Athlete:
 # ======================================================
 # Session state
 # ======================================================
-
-def generate_weekly_plan(
-    athlete: Athlete,
-) -> None:
-    """
-    Replaces the athlete's current plan with a complete
-    training plan through the primary event.
-
-    The dashboard continues to present this plan through
-    seven-day windows.
-    """
-
-    athlete.training_plan = (
-        Coach().build_training_plan(
-            athlete=athlete,
-        )
-    )
     
 def regenerate_weekly_plan() -> None:
     """
-    Generates a new weekly plan for the current athlete.
+    Generate and persist a complete training plan.
     """
 
     athlete = st.session_state.athlete
 
-    generate_weekly_plan(
-        athlete,
+    try:
+
+        result = GenerateTrainingPlan(
+            repository=athlete_repository
+        ).execute(
+            athlete.athlete_id,
+            today=date.today(),
+        )
+
+    except Exception as error:
+
+        st.session_state.plan_error = (
+            str(error)
+        )
+
+        return
+
+    st.session_state.athlete = (
+        result.athlete
     )
 
-    st.session_state.notice = (
-        "Plano semanal gerado."
+    st.session_state.persisted_notice = (
+        "Training plan generated."
     )
 
 def show_login_screen(
@@ -417,6 +417,9 @@ def initialize_session_state() -> None:
     if "notice" not in st.session_state:
         st.session_state.notice = None
 
+    if "persisted_notice" not in st.session_state:
+        st.session_state.persisted_notice = None
+
     if "plan_error" not in st.session_state:
         st.session_state.plan_error = None
 
@@ -533,6 +536,14 @@ if st.session_state.notice:
     )
 
     st.session_state.notice = None
+
+if st.session_state.persisted_notice:
+
+    st.toast(
+        st.session_state.persisted_notice,
+    )
+
+    st.session_state.persisted_notice = None
 
 if page == "dashboard":
 
