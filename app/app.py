@@ -27,7 +27,9 @@ from performancelab import (
     Athlete,
     create_workout,
 )
-
+from performancelab.application import (
+    LoadActiveAthlete,
+)
 from performancelab.authentication import AuthenticationService
 from performancelab.identity import User
 from performancelab.storage.json_athlete_repository import (
@@ -39,9 +41,6 @@ from performancelab.storage.json_user_repository import (
 
 from performancelab.coaching import Coach
 from performancelab.training.config import AthleteAvailability
-from performancelab.training.planning import (
-    TrainingPlanReconciler,
-)
 
 
 # ======================================================
@@ -360,43 +359,6 @@ def show_accounts_page() -> None:
         hide_index=True,
     )
 
-def load_active_athlete(
-    current_user: User,
-) -> Athlete:
-    """
-    Load the athlete whose dashboard should be displayed.
-
-    Athlete users see their own profile.
-
-    Coach users initially see the first athlete in
-    alphabetical order.
-    """
-
-    if current_user.is_athlete:
-
-        if current_user.athlete_id is None:
-            raise ValueError(
-                "Athlete user has no athlete profile."
-            )
-
-        return athlete_repository.get(
-            current_user.athlete_id
-        )
-
-    athletes = athlete_repository.list()
-
-    if not athletes:
-        raise LookupError(
-            "No athlete profiles are available."
-        )
-
-    athletes = sorted(
-        athletes,
-        key=lambda athlete: athlete.name.lower(),
-    )
-
-    return athletes[0]
-
 def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
@@ -492,45 +454,25 @@ if current_user is None:
 if "athlete" not in st.session_state:
 
     try:
-        loaded_athlete = (
-            load_active_athlete(
+        load_result = (
+            LoadActiveAthlete(
+                repository=(
+                    athlete_repository
+                )
+            )
+            .execute(
                 current_user
             )
         )
 
-        previous_plan = (
-            loaded_athlete.training_plan
-        )
-
-        reconciled_plan = (
-            TrainingPlanReconciler()
-            .reconcile_closed_days(
-                plan=previous_plan,
-                history=(
-                    loaded_athlete.history
-                ),
-                training_state=(
-                    loaded_athlete
-                    .analytics
-                    .training_state
-                ),
-            )
-        )
-
-        loaded_athlete.training_plan = (
-            reconciled_plan
-        )
-
-        if reconciled_plan is not previous_plan:
-            athlete_repository.save(
-                loaded_athlete
-            )
-
         st.session_state.athlete = (
-            loaded_athlete
+            load_result.athlete
         )
 
-    except KeyError:
+    except (
+        FileNotFoundError,
+        KeyError,
+    ):
         st.error(
             "Não foi possível encontrar o perfil de atleta."
         )
