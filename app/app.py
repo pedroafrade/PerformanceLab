@@ -4,7 +4,9 @@ PerformanceLab
 Streamlit application.
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import (
+    date,
+)
 from pathlib import Path
 
 import streamlit as st
@@ -25,7 +27,6 @@ from components import (
 
 from performancelab import (
     Athlete,
-    create_workout,
 )
 from performancelab.application import (
     DeleteWorkouts,
@@ -55,8 +56,6 @@ from performancelab.storage.json_external_identity_repository import (
 from performancelab.storage.json_user_repository import (
     JsonUserRepository,
 )
-
-from performancelab.training.config import AthleteAvailability
 
 
 # ======================================================
@@ -126,134 +125,6 @@ athlete_access_repository = (
         ATHLETE_ACCESS_DATA_DIR
     )
 )
-
-# ======================================================
-# Demonstration athlete
-# ======================================================
-
-def create_demo_athlete() -> Athlete:
-
-    athlete = Athlete(
-        name="Pedro",
-        weight=70,
-        ftp=280,
-        max_hr=190,
-        resting_hr=50,
-    )
-
-    athlete.availability = AthleteAvailability.from_minutes(
-        monday=60,
-        wednesday=60,
-        saturday=120,
-    )
-
-    demo_workouts = [
-        create_workout(
-            sport="Running",
-            workout_date=date.today() - timedelta(days=13),
-            distance=8,
-            duration=timedelta(minutes=45),
-            elevation_gain=120,
-            rpe=5,
-            title="Easy Run",
-        ),
-        create_workout(
-            sport="Cycling",
-            workout_date=date.today() - timedelta(days=11),
-            distance=42,
-            duration=timedelta(hours=1, minutes=30),
-            elevation_gain=450,
-            rpe=6,
-            title="Endurance Ride",
-        ),
-        create_workout(
-            sport="Running",
-            workout_date=date.today() - timedelta(days=9),
-            distance=12,
-            duration=timedelta(hours=1, minutes=5),
-            elevation_gain=210,
-            rpe=7,
-            title="Tempo Run",
-        ),
-        create_workout(
-            sport="Swimming",
-            workout_date=date.today() - timedelta(days=7),
-            distance=2.5,
-            duration=timedelta(minutes=50),
-            elevation_gain=0,
-            rpe=5,
-            title="Pool Session",
-        ),
-        create_workout(
-            sport="Cycling",
-            workout_date=date.today() - timedelta(days=5),
-            distance=55,
-            duration=timedelta(hours=2),
-            elevation_gain=700,
-            rpe=7,
-            title="Long Ride",
-        ),
-        create_workout(
-            sport="Running",
-            workout_date=date.today() - timedelta(days=3),
-            distance=10,
-            duration=timedelta(minutes=52),
-            elevation_gain=160,
-            rpe=6,
-            title="Steady Run",
-        ),
-        create_workout(
-            sport="Running",
-            workout_date=date.today(),
-            distance=16,
-            duration=timedelta(hours=1, minutes=25),
-            elevation_gain=320,
-            rpe=8,
-            title="Long Run",
-        ),
-    ]
-
-    for workout in demo_workouts:
-        athlete.history.add(workout)
-
-    today = date.today()
-    monday = today - timedelta(days=today.weekday())
-
-    athlete.training_plan.schedule(
-    scheduled_at=datetime.combine(
-            monday,
-            time(hour=18),
-        ),
-        sport="Running",
-        title="Easy Run",
-        duration=timedelta(minutes=45),
-        description="Easy aerobic run",
-    )
-
-    athlete.training_plan.schedule(
-        scheduled_at=datetime.combine(
-            monday + timedelta(days=2),
-            time(hour=18),
-        ),
-        sport="Running",
-        title="Intervals",
-        duration=timedelta(minutes=60),
-        description="6 × 800 m",
-    )
-
-    athlete.training_plan.schedule(
-        scheduled_at=datetime.combine(
-            monday + timedelta(days=5),
-            time(hour=8),
-        ),
-        sport="Running",
-        title="Long Run",
-        duration=timedelta(minutes=90),
-        description="Long endurance run",
-    )
-
-    return athlete
-
 
 # ======================================================
 # Session state
@@ -414,34 +285,6 @@ def initialize_session_state() -> None:
     """
     Initialize the Streamlit application state.
     """
-
-    # --------------------------------------------------
-    # Development user
-    # --------------------------------------------------
-
-    if not user_repository.list():
-
-        existing_athletes = athlete_repository.list()
-
-        if existing_athletes:
-            demo_athlete = existing_athletes[0]
-
-        else:
-            demo_athlete = create_demo_athlete()
-
-            athlete_repository.save(
-                demo_athlete
-            )
-
-        athlete_user = User(
-            email="demo@performancelab.local",
-            role="athlete",
-            athlete_id=demo_athlete.athlete_id,
-        )
-
-        user_repository.save(
-            athlete_user
-        )
 
     # --------------------------------------------------
     # Interface state
