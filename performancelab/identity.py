@@ -167,6 +167,102 @@ class ExternalIdentity:
             self.subject,
         )
 
+@dataclass(
+    frozen=True
+)
+class ExternalIdentityLink:
+    """
+    Persistent link from an external identity to a user.
+
+    The external email and display name are deliberately
+    excluded because they are provider assertions that may
+    change. The stable authorization link uses issuer and
+    subject only.
+    """
+
+    issuer: str
+    subject: str
+    user_id: str
+
+    def __post_init__(
+        self,
+    ) -> None:
+        """
+        Normalize and validate the persistent link.
+        """
+
+        for field_name in (
+            "issuer",
+            "subject",
+            "user_id",
+        ):
+
+            value = getattr(
+                self,
+                field_name,
+            )
+
+            if not isinstance(
+                value,
+                str,
+            ):
+                raise TypeError(
+                    f"{field_name} must be a string."
+                )
+
+            normalized_value = (
+                value.strip()
+            )
+
+            if not normalized_value:
+                raise ValueError(
+                    f"{field_name} cannot be empty."
+                )
+
+            object.__setattr__(
+                self,
+                field_name,
+                normalized_value,
+            )
+
+    @classmethod
+    def from_identity(
+        cls,
+        identity: ExternalIdentity,
+        *,
+        user_id: str,
+    ):
+        """
+        Build a persistent link from a factual identity.
+        """
+
+        if not isinstance(
+            identity,
+            ExternalIdentity,
+        ):
+            raise TypeError(
+                "identity must be an ExternalIdentity."
+            )
+
+        return cls(
+            issuer=identity.issuer,
+            subject=identity.subject,
+            user_id=user_id,
+        )
+
+    @property
+    def provider_key(
+        self,
+    ) -> tuple[str, str]:
+        """
+        Return the stable external identity key.
+        """
+
+        return (
+            self.issuer,
+            self.subject,
+        )
+
 
 @dataclass
 class User:
