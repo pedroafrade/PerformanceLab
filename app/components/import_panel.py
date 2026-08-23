@@ -19,8 +19,8 @@ from performancelab.importers import (
     FITImporter,
     GPXImporter,
 )
-from performancelab.upload_decompression import (
-    decompress_fit_gzip,
+from performancelab.upload_validation import (
+    validate_activity_upload_content,
 )
 from performancelab.text import (
     repair_mojibake,
@@ -57,41 +57,30 @@ def _prepare_uploaded_file(
     uploaded_file,
 ):
     """
-    Prepare an uploaded activity for its importer.
+    Validate and prepare an uploaded activity for its importer.
 
     Strava FIT files may be compressed as .fit.gz.
     """
 
-    file_name = (
-        uploaded_file.name.lower()
+    validated_upload = (
+        validate_activity_upload_content(
+            uploaded_file.name,
+            uploaded_file.getvalue(),
+        )
     )
 
-    if file_name.endswith(
-        ".fit.gz"
-    ):
-
-        source = BytesIO(
-            decompress_fit_gzip(
-                uploaded_file.getvalue()
-            )
-        )
-
-        source.name = (
-            uploaded_file.name[:-3]
-        )
-
-        return source, "fit"
-
-    extension = (
-        file_name
-        .rsplit(
-            ".",
-            1,
-        )[-1]
+    source = BytesIO(
+        validated_upload.content
     )
 
-    return uploaded_file, extension
+    source.name = (
+        validated_upload.prepared_name
+    )
 
+    return (
+        source,
+        validated_upload.importer_format,
+    )
 
 def _normalized_file_name(
     value,
@@ -135,8 +124,16 @@ def _read_strava_titles(
         ):
             continue
 
+        validated_upload = (
+            validate_activity_upload_content(
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+            )
+        )
+
         content = (
-            uploaded_file.getvalue()
+            validated_upload
+            .content
             .decode(
                 "utf-8-sig"
             )

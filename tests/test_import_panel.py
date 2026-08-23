@@ -10,7 +10,33 @@ import app.components.import_panel as import_panel
 from performancelab import (
     Workout,
 )
+def minimal_fit_content():
+    """
+    Return a structurally valid empty FIT file for adapter tests.
+    """
 
+    header = bytearray(
+        12
+    )
+
+    header[0] = 12
+
+    header[
+        4:8
+    ] = (
+        0
+    ).to_bytes(
+        4,
+        byteorder="little",
+    )
+
+    header[
+        8:12
+    ] = b".FIT"
+
+    return bytes(
+        header
+    )
 
 def test_uses_athlete_profile_for_rpe(
     monkeypatch,
@@ -88,7 +114,8 @@ def test_parses_fit_without_changing_athlete(
     )
 
     uploaded_file = SimpleNamespace(
-        name="morning.fit"
+        name="morning.fit",
+        getvalue=minimal_fit_content,
     )
 
     athlete = SimpleNamespace(
@@ -280,10 +307,14 @@ def test_skips_strava_csv_as_activity(
 
 def test_prepares_compressed_fit_upload():
 
+    fit_content = (
+        minimal_fit_content()
+    )
+
     uploaded_file = SimpleNamespace(
         name="strava_activity.fit.gz",
         getvalue=lambda: compress(
-            b"FIT activity data"
+            fit_content
         ),
     )
 
@@ -300,7 +331,7 @@ def test_prepares_compressed_fit_upload():
     )
 
     assert source.read() == (
-        b"FIT activity data"
+        fit_content
     )
 
 
