@@ -19,6 +19,9 @@ from sqlalchemy.engine import (
 from performancelab.athlete import (
     Athlete,
 )
+from performancelab.storage.concurrency import (
+    ConcurrentAthleteUpdateError,
+)
 from performancelab.storage.json import (
     athlete_from_dict,
     athlete_to_dict,
@@ -29,13 +32,18 @@ from performancelab.storage.postgresql_schema import (
 )
 
 
+_REPOSITORY_VERSION_ATTRIBUTE = (
+    "_performancelab_repository_version"
+)
+
+
 class PostgreSQLAthleteRepository:
     """
     Store complete athlete aggregates as versioned snapshots.
 
-    The athletes table identifies the current version. The
-    athlete_snapshots table preserves each factual serialized
-    version.
+    Every loaded athlete carries the version from which it was
+    reconstructed. Saving succeeds only while that version is
+    still current in the database.
 
     The supplied connection controls the transaction.
     """
@@ -83,11 +91,68 @@ class PostgreSQLAthleteRepository:
         return normalized_athlete_id
 
     @staticmethod
-    def _athlete_from_payload(
-        payload,
+    def _mark_version(
+        athlete: Athlete,
+        version: int,
     ) -> Athlete:
         """
-        Rebuild an athlete from one stored snapshot.
+        Record the factual database version on a loaded athlete.
+
+        This internal value is not included in the athlete JSON
+        payload and is not shown in the user interface.
+        """
+
+        setattr(
+            athlete,
+            _REPOSITORY_VERSION_ATTRIBUTE,
+            version,
+        )
+
+        return athlete
+
+    @staticmethod
+    def _expected_version(
+        athlete: Athlete,
+    ) -> int | None:
+        """
+        Return the version from which an athlete was loaded.
+        """
+
+        version = getattr(
+            athlete,
+            _REPOSITORY_VERSION_ATTRIBUTE,
+            None,
+        )
+
+        if (
+            version is not None
+            and (
+                not isinstance(
+                    version,
+                    int,
+                )
+                or isinstance(
+                    version,
+                    bool,
+                )
+                or version < 1
+            )
+        ):
+            raise ValueError(
+                "Athlete repository version is invalid."
+            )
+
+        return version
+
+    @classmethod
+    def _athlete_from_payload(
+        cls,
+        payload,
+        *,
+        version: int,
+    ) -> Athlete:
+        """
+        Rebuild and version an athlete from a stored snapshot.
         """
 
         if not isinstance(
@@ -98,8 +163,13 @@ class PostgreSQLAthleteRepository:
                 "Athlete snapshot payload must be a dictionary."
             )
 
-        return athlete_from_dict(
+        athlete = athlete_from_dict(
             payload
+        )
+
+        return cls._mark_version(
+            athlete,
+            version,
         )
 
     def get(
@@ -118,7 +188,8 @@ class PostgreSQLAthleteRepository:
 
         row = self._connection.execute(
             select(
-                athlete_snapshots.c.payload
+                athletes.c.current_version,
+                athlete_snapshots.c.payload,
             ).select_from(
                 athletes.join(
                     athlete_snapshots,
@@ -142,7 +213,8 @@ class PostgreSQLAthleteRepository:
             )
 
         return self._athlete_from_payload(
-            row["payload"]
+            row["payload"],
+            version=row["current_version"],
         )
 
     def list(
@@ -156,7 +228,8 @@ class PostgreSQLAthleteRepository:
 
         rows = self._connection.execute(
             select(
-                athlete_snapshots.c.payload
+                athletes.c.current_version,
+                athlete_snapshots.c.payload,
             ).select_from(
                 athletes.join(
                     athlete_snapshots,
@@ -174,7 +247,10 @@ class PostgreSQLAthleteRepository:
 
         return [
             self._athlete_from_payload(
-                row["payload"]
+                row["payload"],
+                version=(
+                    row["current_version"]
+                ),
             )
             for row in rows
         ]
@@ -184,7 +260,7 @@ class PostgreSQLAthleteRepository:
         athlete: Athlete,
     ) -> None:
         """
-        Save a new immutable snapshot of an athlete.
+        Save an athlete if its loaded version is still current.
         """
 
         if not isinstance(
@@ -197,6 +273,12 @@ class PostgreSQLAthleteRepository:
 
         payload = athlete_to_dict(
             athlete
+        )
+
+        expected_version = (
+            self._expected_version(
+                athlete
+            )
         )
 
         current_version = (
@@ -228,10 +310,75 @@ class PostgreSQLAthleteRepository:
                 )
             )
 
-        else:
+            self._connection.execute(
+                insert(
+                    athlete_snapshots
+                ).values(
+                    athlete_id=(
+                        athlete.athlete_id
+                    ),
+                    version=new_version,
+                    payload=payload,
+                )
+            )
 
-            new_version = (
-                current_version + 1
+            self._mark_version(
+                athlete,
+                new_version,
+            )
+
+            return
+
+        if expected_version is None:
+
+            raise ConcurrentAthleteUpdateError(
+                athlete.athlete_id,
+                expected_version=None,
+                actual_version=(
+                    current_version
+                ),
+            )
+
+        new_version = (
+            expected_version + 1
+        )
+
+        result = self._connection.execute(
+            update(
+                athletes
+            ).where(
+                athletes.c.athlete_id
+                == athlete.athlete_id,
+                athletes.c.current_version
+                == expected_version,
+            ).values(
+                name=athlete.name,
+                current_version=new_version,
+                updated_at=func.now(),
+            )
+        )
+
+        if result.rowcount == 0:
+
+            actual_version = (
+                self._connection.execute(
+                    select(
+                        athletes.c.current_version
+                    ).where(
+                        athletes.c.athlete_id
+                        == athlete.athlete_id
+                    )
+                ).scalar_one()
+            )
+
+            raise ConcurrentAthleteUpdateError(
+                athlete.athlete_id,
+                expected_version=(
+                    expected_version
+                ),
+                actual_version=(
+                    actual_version
+                ),
             )
 
         self._connection.execute(
@@ -246,22 +393,10 @@ class PostgreSQLAthleteRepository:
             )
         )
 
-        if current_version is not None:
-
-            self._connection.execute(
-                update(
-                    athletes
-                ).where(
-                    athletes.c.athlete_id
-                    == athlete.athlete_id
-                ).values(
-                    name=athlete.name,
-                    current_version=(
-                        new_version
-                    ),
-                    updated_at=func.now(),
-                )
-            )
+        self._mark_version(
+            athlete,
+            new_version,
+        )
 
     def delete(
         self,

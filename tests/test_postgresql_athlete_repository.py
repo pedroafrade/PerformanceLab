@@ -22,6 +22,9 @@ from performancelab.athlete import (
 from performancelab.storage.athlete_repository import (
     AthleteRepository,
 )
+from performancelab.storage.concurrency import (
+    ConcurrentAthleteUpdateError,
+)
 from performancelab.storage.postgresql_athlete_repository import (
     PostgreSQLAthleteRepository,
 )
@@ -353,3 +356,179 @@ def test_rejects_non_athlete_value(
                 "name": "Not an athlete",
             }
         )
+
+
+def test_loaded_athlete_can_save_again(
+    repository,
+):
+
+    original = Athlete(
+        athlete_id="athlete-1",
+        name="Pedro",
+        weight=70,
+    )
+
+    repository.save(
+        original
+    )
+
+    loaded = repository.get(
+        "athlete-1"
+    )
+
+    loaded.weight = 69
+
+    repository.save(
+        loaded
+    )
+
+    assert (
+        repository.get(
+            "athlete-1"
+        ).weight
+        == 69
+    )
+
+
+def test_rejects_update_from_stale_athlete_copy(
+    connection,
+    repository,
+):
+
+    repository.save(
+        Athlete(
+            athlete_id="athlete-1",
+            name="Pedro",
+            weight=70,
+        )
+    )
+
+    first_copy = repository.get(
+        "athlete-1"
+    )
+    stale_copy = repository.get(
+        "athlete-1"
+    )
+
+    first_copy.weight = 69
+
+    repository.save(
+        first_copy
+    )
+
+    stale_copy.weight = 68
+
+    with pytest.raises(
+        ConcurrentAthleteUpdateError
+    ) as error:
+
+        repository.save(
+            stale_copy
+        )
+
+    assert (
+        error.value.athlete_id
+        == "athlete-1"
+    )
+    assert (
+        error.value.expected_version
+        == 1
+    )
+    assert (
+        error.value.actual_version
+        == 2
+    )
+
+    assert (
+        repository.get(
+            "athlete-1"
+        ).weight
+        == 69
+    )
+
+    versions = connection.execute(
+        select(
+            athlete_snapshots.c.version
+        ).where(
+            athlete_snapshots.c.athlete_id
+            == "athlete-1"
+        ).order_by(
+            athlete_snapshots.c.version
+        )
+    ).scalars().all()
+
+    assert versions == [
+        1,
+        2,
+    ]
+
+
+def test_rejects_detached_copy_of_existing_athlete(
+    repository,
+):
+
+    repository.save(
+        Athlete(
+            athlete_id="athlete-1",
+            name="Pedro",
+            weight=70,
+        )
+    )
+
+    detached_copy = Athlete(
+        athlete_id="athlete-1",
+        name="Pedro",
+        weight=68,
+    )
+
+    with pytest.raises(
+        ConcurrentAthleteUpdateError
+    ) as error:
+
+        repository.save(
+            detached_copy
+        )
+
+    assert (
+        error.value.expected_version
+        is None
+    )
+    assert (
+        error.value.actual_version
+        == 1
+    )
+
+    assert (
+        repository.get(
+            "athlete-1"
+        ).weight
+        == 70
+    )
+
+
+def test_listed_athlete_retains_version_for_save(
+    repository,
+):
+
+    repository.save(
+        Athlete(
+            athlete_id="athlete-1",
+            name="Pedro",
+            weight=70,
+        )
+    )
+
+    listed = repository.list()[0]
+
+    listed.weight = 69
+
+    repository.save(
+        listed
+    )
+
+    assert (
+        repository.get(
+            "athlete-1"
+        ).weight
+        == 69
+    )
