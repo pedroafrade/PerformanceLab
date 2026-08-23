@@ -130,7 +130,6 @@ users = Table(
     ),
     UniqueConstraint(
         "email",
-        name="email",
     ),
     CheckConstraint(
         "role IN ('athlete', 'coach')",
@@ -259,7 +258,6 @@ alpha_invitations = Table(
     ),
     UniqueConstraint(
         "email",
-        name="email",
     ),
     CheckConstraint(
         "role IN ('athlete', 'coach')",

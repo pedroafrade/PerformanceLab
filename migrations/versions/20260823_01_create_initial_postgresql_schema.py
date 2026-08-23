@@ -1,0 +1,497 @@
+"""
+Create the initial PerformanceLab PostgreSQL schema.
+
+Revision ID: 20260823_01
+Revises:
+Create Date: 2026-08-23
+"""
+
+from typing import (
+    Optional,
+    Sequence,
+    Union,
+)
+
+from alembic import (
+    op,
+)
+import sqlalchemy as sa
+
+from sqlalchemy.dialects import (
+    postgresql,
+)
+
+
+revision: str = "20260823_01"
+
+down_revision: Optional[
+    Union[
+        str,
+        Sequence[str],
+    ]
+] = None
+
+branch_labels: Optional[
+    Union[
+        str,
+        Sequence[str],
+    ]
+] = None
+
+depends_on: Optional[
+    Union[
+        str,
+        Sequence[str],
+    ]
+] = None
+
+
+def upgrade() -> None:
+    """
+    Create the initial PostgreSQL tables.
+    """
+
+    op.create_table(
+        "athletes",
+        sa.Column(
+            "athlete_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "name",
+            sa.String(
+                length=200
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "current_version",
+            sa.Integer(),
+            server_default=sa.text(
+                "1"
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "current_version >= 1",
+            name=(
+                "ck_athletes_"
+                "current_version_positive"
+            ),
+        ),
+        sa.PrimaryKeyConstraint(
+            "athlete_id",
+            name="pk_athletes",
+        ),
+    )
+
+    op.create_table(
+        "users",
+        sa.Column(
+            "user_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "email",
+            sa.String(
+                length=320
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "role",
+            sa.String(
+                length=20
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "athlete_id",
+            sa.String(
+                length=36
+            ),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "role IN ('athlete', 'coach')",
+            name="ck_users_role",
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "athlete_id",
+            ],
+            [
+                "athletes.athlete_id",
+            ],
+            name=(
+                "fk_users_athlete_id_"
+                "athletes"
+            ),
+            ondelete="SET NULL",
+        ),
+        sa.PrimaryKeyConstraint(
+            "user_id",
+            name="pk_users",
+        ),
+        sa.UniqueConstraint(
+            "email",
+            name="uq_users_email",
+        ),
+    )
+
+    op.create_table(
+        "external_identities",
+        sa.Column(
+            "issuer",
+            sa.String(
+                length=512
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "subject",
+            sa.String(
+                length=255
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "user_id",
+            ],
+            [
+                "users.user_id",
+            ],
+            name=(
+                "fk_external_identities_"
+                "user_id_users"
+            ),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint(
+            "issuer",
+            "subject",
+            name=(
+                "pk_external_identities"
+            ),
+        ),
+    )
+
+    op.create_table(
+        "user_athlete_access",
+        sa.Column(
+            "user_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "athlete_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "permission",
+            sa.String(
+                length=20
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            (
+                "permission IN "
+                "('owner', 'coach')"
+            ),
+            name=(
+                "ck_user_athlete_access_"
+                "permission"
+            ),
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "athlete_id",
+            ],
+            [
+                "athletes.athlete_id",
+            ],
+            name=(
+                "fk_user_athlete_access_"
+                "athlete_id_athletes"
+            ),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "user_id",
+            ],
+            [
+                "users.user_id",
+            ],
+            name=(
+                "fk_user_athlete_access_"
+                "user_id_users"
+            ),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint(
+            "user_id",
+            "athlete_id",
+            name=(
+                "pk_user_athlete_access"
+            ),
+        ),
+    )
+
+    op.create_table(
+        "alpha_invitations",
+        sa.Column(
+            "invitation_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "email",
+            sa.String(
+                length=320
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "role",
+            sa.String(
+                length=20
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "athlete_id",
+            sa.String(
+                length=36
+            ),
+            nullable=True,
+        ),
+        sa.Column(
+            "claimed_by_user_id",
+            sa.String(
+                length=36
+            ),
+            nullable=True,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            (
+                "role <> 'athlete' "
+                "OR athlete_id IS NOT NULL"
+            ),
+            name=(
+                "ck_alpha_invitations_"
+                "athlete_invitation_has_athlete"
+            ),
+        ),
+        sa.CheckConstraint(
+            "role IN ('athlete', 'coach')",
+            name=(
+                "ck_alpha_invitations_role"
+            ),
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "athlete_id",
+            ],
+            [
+                "athletes.athlete_id",
+            ],
+            name=(
+                "fk_alpha_invitations_"
+                "athlete_id_athletes"
+            ),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "claimed_by_user_id",
+            ],
+            [
+                "users.user_id",
+            ],
+            name=(
+                "fk_alpha_invitations_"
+                "claimed_by_user_id_users"
+            ),
+            ondelete="SET NULL",
+        ),
+        sa.PrimaryKeyConstraint(
+            "invitation_id",
+            name=(
+                "pk_alpha_invitations"
+            ),
+        ),
+        sa.UniqueConstraint(
+            "email",
+            name=(
+                "uq_alpha_invitations_email"
+            ),
+        ),
+    )
+
+    op.create_table(
+        "athlete_snapshots",
+        sa.Column(
+            "athlete_id",
+            sa.String(
+                length=36
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "version",
+            sa.Integer(),
+            nullable=False,
+        ),
+        sa.Column(
+            "payload",
+            postgresql.JSONB(
+                astext_type=sa.Text()
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(
+                timezone=True
+            ),
+            server_default=sa.text(
+                "now()"
+            ),
+            nullable=False,
+        ),
+        sa.CheckConstraint(
+            "version >= 1",
+            name=(
+                "ck_athlete_snapshots_"
+                "version_positive"
+            ),
+        ),
+        sa.ForeignKeyConstraint(
+            [
+                "athlete_id",
+            ],
+            [
+                "athletes.athlete_id",
+            ],
+            name=(
+                "fk_athlete_snapshots_"
+                "athlete_id_athletes"
+            ),
+            ondelete="CASCADE",
+        ),
+        sa.PrimaryKeyConstraint(
+            "athlete_id",
+            "version",
+            name=(
+                "pk_athlete_snapshots"
+            ),
+        ),
+    )
+
+
+def downgrade() -> None:
+    """
+    Remove the initial PostgreSQL tables.
+    """
+
+    op.drop_table(
+        "athlete_snapshots"
+    )
+    op.drop_table(
+        "alpha_invitations"
+    )
+    op.drop_table(
+        "user_athlete_access"
+    )
+    op.drop_table(
+        "external_identities"
+    )
+    op.drop_table(
+        "users"
+    )
+    op.drop_table(
+        "athletes"
+    )
