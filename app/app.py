@@ -4,6 +4,8 @@ PerformanceLab
 Streamlit application.
 """
 
+import os
+
 from datetime import (
     date,
 )
@@ -43,20 +45,11 @@ from performancelab.identity import User
 from performancelab.oidc_identity import (
     external_identity_from_claims,
 )
-from performancelab.storage.json_alpha_invitation_repository import (
-    JsonAlphaInvitationRepository,
+from performancelab.runtime_configuration import (
+    RuntimeConfiguration,
 )
-from performancelab.storage.json_athlete_access_repository import (
-    JsonAthleteAccessRepository,
-)
-from performancelab.storage.json_athlete_repository import (
-    JsonAthleteRepository,
-)
-from performancelab.storage.json_external_identity_repository import (
-    JsonExternalIdentityRepository,
-)
-from performancelab.storage.json_user_repository import (
-    JsonUserRepository,
+from performancelab.storage.repository_factory import (
+    build_repository_bundle,
 )
 
 
@@ -73,59 +66,58 @@ st.set_page_config(
 APP_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = APP_DIR.parent
 
-ATHLETE_DATA_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "athletes"
+runtime_values = dict(
+    os.environ
 )
 
-USER_DATA_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "users"
+for configuration_key in (
+    "PERFORMANCELAB_ENV",
+    "DATABASE_URL",
+):
+
+    if configuration_key in st.secrets:
+
+        runtime_values[
+            configuration_key
+        ] = st.secrets[
+            configuration_key
+        ]
+
+runtime_configuration = (
+    RuntimeConfiguration.from_mapping(
+        runtime_values
+    )
 )
 
-EXTERNAL_IDENTITY_DATA_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "external_identities"
+repository_bundle = (
+    build_repository_bundle(
+        runtime_configuration,
+        data_directory=(
+            PROJECT_ROOT
+            / "data"
+        ),
+    )
 )
 
-ALPHA_INVITATION_DATA_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "alpha_invitations"
+athlete_repository = (
+    repository_bundle
+    .athlete_repository
 )
-
-ATHLETE_ACCESS_DATA_DIR = (
-    PROJECT_ROOT
-    / "data"
-    / "athlete_access"
-)
-
-athlete_repository = JsonAthleteRepository(
-    ATHLETE_DATA_DIR
-)
-
-user_repository = JsonUserRepository(
-    USER_DATA_DIR
+user_repository = (
+    repository_bundle
+    .user_repository
 )
 external_identity_repository = (
-    JsonExternalIdentityRepository(
-        EXTERNAL_IDENTITY_DATA_DIR
-    )
+    repository_bundle
+    .external_identity_repository
 )
-
 alpha_invitation_repository = (
-    JsonAlphaInvitationRepository(
-        ALPHA_INVITATION_DATA_DIR
-    )
+    repository_bundle
+    .alpha_invitation_repository
 )
-
 athlete_access_repository = (
-    JsonAthleteAccessRepository(
-        ATHLETE_ACCESS_DATA_DIR
-    )
+    repository_bundle
+    .athlete_access_repository
 )
 athlete_authorization = (
     AthleteAuthorizationService(
