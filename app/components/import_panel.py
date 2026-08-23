@@ -7,9 +7,7 @@ Import Panel Component.
 from csv import (
     DictReader,
 )
-from gzip import (
-    decompress,
-)
+
 from io import (
     BytesIO,
     StringIO,
@@ -20,6 +18,9 @@ import streamlit as st
 from performancelab.importers import (
     FITImporter,
     GPXImporter,
+)
+from performancelab.upload_decompression import (
+    decompress_fit_gzip,
 )
 from performancelab.text import (
     repair_mojibake,
@@ -70,7 +71,7 @@ def _prepare_uploaded_file(
     ):
 
         source = BytesIO(
-            decompress(
+            decompress_fit_gzip(
                 uploaded_file.getvalue()
             )
         )
