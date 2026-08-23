@@ -347,6 +347,10 @@ if "current_user" not in st.session_state:
                 athlete_repository=(
                     athlete_repository
                 ),
+                transaction_factory=(
+                    repository_bundle
+                    .transaction
+                ),
             )
             .execute(
                 external_identity

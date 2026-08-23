@@ -3,11 +3,14 @@ PerformanceLab
 
 Repository selection by runtime environment.
 """
-
+from contextlib import (
+    contextmanager,
+)
 from dataclasses import (
     dataclass,
     field,
 )
+
 from pathlib import (
     Path,
 )
@@ -96,6 +99,34 @@ class RepositoryBundle:
             self.engine is not None
             and self.connection is not None
         )
+    @contextmanager
+    def transaction(
+        self,
+    ):
+        """
+        Group related repository operations.
+
+        JSON repositories preserve their current local
+        compensation behaviour. PostgreSQL operations share one
+        database transaction and are committed only when the
+        complete operation succeeds.
+        """
+
+        if self.connection is None:
+
+            yield self
+
+            return
+
+        if self.connection.in_transaction():
+
+            raise RuntimeError(
+                "A PostgreSQL transaction is already active."
+            )
+
+        with self.connection.begin():
+
+            yield self
 
     def close(
         self,

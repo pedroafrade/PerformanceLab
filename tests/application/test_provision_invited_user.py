@@ -359,3 +359,62 @@ def test_claimed_invitation_without_link_is_rejected(
         ].list()
         == []
     )
+
+
+
+def test_provisioning_uses_transaction_context(
+    tmp_path,
+):
+
+    repository_set = repositories(
+        tmp_path
+    )
+
+    prepare_invitation(
+        repository_set
+    )
+
+    calls = []
+
+    class TransactionContext:
+
+        def __enter__(
+            self,
+        ):
+
+            calls.append(
+                "enter"
+            )
+
+        def __exit__(
+            self,
+            error_type,
+            error,
+            traceback,
+        ):
+
+            calls.append(
+                "exit"
+            )
+
+            return False
+
+    def transaction_factory():
+
+        return TransactionContext()
+
+    result = ProvisionInvitedUser(
+        **repository_set,
+        transaction_factory=(
+            transaction_factory
+        ),
+    ).execute(
+        external_identity()
+    )
+
+    assert result.created is True
+
+    assert calls == [
+        "enter",
+        "exit",
+    ]

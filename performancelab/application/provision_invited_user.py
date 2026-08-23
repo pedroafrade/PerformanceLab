@@ -3,9 +3,17 @@ PerformanceLab
 
 Provision invited external user application use case.
 """
+from contextlib import (
+    nullcontext,
+)
 
 from dataclasses import (
     dataclass,
+)
+
+from typing import (
+    Callable,
+    ContextManager,
 )
 
 from performancelab.alpha_invitation import (
@@ -67,6 +75,10 @@ class ProvisionInvitedUser:
         invitation_repository: AlphaInvitationRepository,
         access_repository: AthleteAccessRepository,
         athlete_repository: AthleteRepository,
+        transaction_factory: Callable[
+            [],
+            ContextManager,
+        ] = nullcontext,
     ) -> None:
 
         self._user_repository = (
@@ -84,8 +96,32 @@ class ProvisionInvitedUser:
         self._athlete_repository = (
             athlete_repository
         )
+        if not callable(
+            transaction_factory
+        ):
+            raise TypeError(
+                "transaction_factory must be callable."
+            )
+
+        self._transaction_factory = (
+            transaction_factory
+        )
 
     def execute(
+        self,
+        identity: ExternalIdentity,
+    ) -> ProvisionInvitedUserResult:
+        """
+        Resolve or provision a user as one complete operation.
+        """
+
+        with self._transaction_factory():
+
+            return self._execute(
+                identity
+            )
+
+    def _execute(
         self,
         identity: ExternalIdentity,
     ) -> ProvisionInvitedUserResult:
