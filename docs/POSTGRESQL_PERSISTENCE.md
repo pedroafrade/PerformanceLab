@@ -114,6 +114,17 @@ adicionados nas fases correspondentes.
   transação;
 - conflitos concorrentes não podem resultar em substituição
   silenciosa.
+  
+## Fronteira obrigatória da alpha privada
+
+A aplicação local pode continuar a utilizar os repositórios JSON
+durante o desenvolvimento.
+
+A alpha privada deve ser iniciada com:
+
+```text
+PERFORMANCELAB_ENV=alpha
+DATABASE_URL=<ligação PostgreSQL guardada como segredo>
 
 ## Não decidido neste passo
 

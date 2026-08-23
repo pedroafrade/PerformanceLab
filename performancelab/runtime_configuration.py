@@ -114,6 +114,19 @@ class RuntimeConfiguration:
         else:
 
             if normalized_database_url is None:
+
+                if (
+                    normalized_environment
+                    == "alpha"
+                ):
+
+                    raise RuntimeError(
+                        "DATABASE_URL is required in "
+                        "the alpha environment. "
+                        "JSON persistence is forbidden "
+                        "and no local fallback will be used."
+                    )
+
                 raise RuntimeError(
                     "DATABASE_URL is required in "
                     f"the {normalized_environment} environment."
