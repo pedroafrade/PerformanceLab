@@ -30,7 +30,7 @@ def create_activity(
     workout_date: date,
     title: str,
     sport: str = "Running",
-    terrain: str | None = None,
+    sub_sport: str = "",
     distance: float | None = None,
     duration: timedelta | None = None,
     elevation_gain: float | None = None,
@@ -49,10 +49,9 @@ def create_activity(
     )
     workout.feedback.rpe = rpe
 
-    if terrain is not None:
-        workout.environment.terrain = (
-            terrain
-        )
+    workout.info.sub_sport = (
+        sub_sport
+    )
 
     return workout
 
@@ -628,30 +627,42 @@ def test_repairs_legacy_activity_title():
 
 @pytest.mark.parametrize(
     (
-        "terrain",
+        "sub_sport",
         "expected_sport",
     ),
     (
         (
-            "Trail",
+            "trail",
             "Trail Running",
         ),
         (
-            "Road",
+            "street",
             "Road Running",
         ),
         (
-            "Track",
+            "road",
+            "Road Running",
+        ),
+        (
+            "track_running",
             "Track Running",
         ),
         (
-            "Indoor",
+            "indoor_running",
             "Indoor Running",
+        ),
+        (
+            "treadmill",
+            "Indoor Running",
+        ),
+        (
+            "generic",
+            "Running",
         ),
     ),
 )
-def test_presents_factual_running_discipline(
-    terrain,
+def test_presents_factual_running_sub_sport(
+    sub_sport,
     expected_sport,
 ):
 
@@ -663,7 +674,7 @@ def test_presents_factual_running_discipline(
         ),
         title="Running activity",
         sport="Running",
-        terrain=terrain,
+        sub_sport=sub_sport,
         distance=21.0,
         elevation_gain=750.0,
     )
@@ -682,7 +693,7 @@ def test_presents_factual_running_discipline(
     )
 
 
-def test_keeps_running_when_terrain_is_missing():
+def test_keeps_running_when_sub_sport_is_missing():
 
     workout = create_activity(
         workout_date=date(
@@ -707,6 +718,35 @@ def test_keeps_running_when_terrain_is_missing():
     assert activity.sport == "Running"
 
 
+def test_does_not_use_terrain_as_running_sub_sport():
+
+    workout = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            24,
+        ),
+        title="Running activity",
+        sport="Running",
+        distance=21.0,
+        elevation_gain=750.0,
+    )
+
+    workout.environment.terrain = (
+        "Trail"
+    )
+
+    activity = ActivitiesPresenter(
+        History(
+            workouts=[
+                workout,
+            ]
+        )
+    ).build()[0]
+
+    assert activity.sport == "Running"
+
+
 def test_does_not_reclassify_non_running_sport():
 
     workout = create_activity(
@@ -717,7 +757,7 @@ def test_does_not_reclassify_non_running_sport():
         ),
         title="Trail ride",
         sport="Cycling",
-        terrain="Trail",
+        sub_sport="trail",
     )
 
     activity = ActivitiesPresenter(
@@ -731,7 +771,7 @@ def test_does_not_reclassify_non_running_sport():
     assert activity.sport == "Cycling"
 
 
-def test_filters_by_factual_running_discipline():
+def test_filters_by_factual_running_sub_sport():
 
     trail_run = create_activity(
         workout_date=date(
@@ -740,7 +780,7 @@ def test_filters_by_factual_running_discipline():
             24,
         ),
         title="Trail session",
-        terrain="Trail",
+        sub_sport="trail",
     )
 
     road_run = create_activity(
@@ -750,7 +790,7 @@ def test_filters_by_factual_running_discipline():
             23,
         ),
         title="Road session",
-        terrain="Road",
+        sub_sport="street",
     )
 
     result = ActivitiesPresenter(

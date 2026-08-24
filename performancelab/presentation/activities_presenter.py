@@ -89,9 +89,10 @@ class ActivitiesPresenter:
         """
         Returns a factual presentation label for the sport.
 
-        Running disciplines are distinguished only when the
-        workout contains an explicit terrain value. Missing
-        terrain remains generic Running.
+        Running disciplines are distinguished only through
+        the explicit workout sub_sport. Terrain, title,
+        elevation and distance are never used to infer the
+        discipline.
         """
 
         sport = str(
@@ -102,20 +103,24 @@ class ActivitiesPresenter:
         if sport.casefold() != "running":
             return sport
 
-        terrain = str(
-            workout.environment.terrain
+        sub_sport = str(
+            workout.info.sub_sport
             or ""
         ).strip().casefold()
 
         running_disciplines = {
             "trail": "Trail Running",
+            "street": "Road Running",
             "road": "Road Running",
+            "track_running": "Track Running",
             "track": "Track Running",
+            "indoor_running": "Indoor Running",
+            "treadmill": "Indoor Running",
             "indoor": "Indoor Running",
         }
 
         return running_disciplines.get(
-            terrain,
+            sub_sport,
             "Running",
         )
 
