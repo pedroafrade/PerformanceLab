@@ -106,6 +106,11 @@ def test_fit_workout_creation(monkeypatch):
 
     assert workout.sport == "Running"
 
+    assert (
+        workout.info.sub_sport
+        == "trail"
+    )
+
     assert workout.date == datetime(
         2026,
         7,
@@ -236,7 +241,12 @@ def test_fit_imports_environment(
     )
     assert (
         workout.environment.terrain
-        == "Trail"
+        == ""
+    )
+
+    assert (
+        workout.info.sub_sport
+        == "trail"
     )
 
 def test_fit_prefers_session_environment(
@@ -382,3 +392,114 @@ def test_fit_derives_running_cadence_from_total_strides(
     assert cadence is not None
     assert len(cadence) == 1
     assert cadence[0]["value"] == 162
+
+def test_fit_imports_street_running_sub_sport(
+    monkeypatch,
+):
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    messages["sessions"][0][
+        "sub_sport"
+    ] = "street"
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: messages,
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert workout.sport == "Running"
+
+    assert (
+        workout.info.sub_sport
+        == "street"
+    )
+
+    assert (
+        workout.environment.terrain
+        == ""
+    )
+
+def test_fit_without_sub_sport_keeps_it_empty(
+    monkeypatch,
+):
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    messages["sessions"][0].pop(
+        "sub_sport"
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: messages,
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert (
+        workout.info.sub_sport
+        == ""
+    )
+
+    assert (
+        workout.environment.terrain
+        == ""
+    )
+
+def test_fit_normalizes_sub_sport_name(
+    monkeypatch,
+):
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    messages["sessions"][0][
+        "sub_sport"
+    ] = "Indoor Running"
+
+    monkeypatch.setattr(
+        importer,
+        "_read_source",
+        lambda source: b"fake-fit",
+    )
+
+    monkeypatch.setattr(
+        importer,
+        "_read_messages",
+        lambda content: messages,
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert (
+        workout.info.sub_sport
+        == "indoor_running"
+    )

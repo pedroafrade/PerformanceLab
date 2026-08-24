@@ -77,6 +77,11 @@ class FITImporter(WorkoutImporter):
         workout.info.source = "fit"
         workout.info.title = self._title(session)
         workout.info.sport = self._sport(session)
+        workout.info.sub_sport = (
+            self._sub_sport(
+                session
+            )
+        )
         workout.info.date = self._start_date(
             records,
             session,
@@ -176,15 +181,6 @@ class FITImporter(WorkoutImporter):
         if humidity is not None:
             workout.environment.humidity = (
                 humidity
-            )
-
-        terrain = self._terrain(
-            session
-        )
-
-        if terrain:
-            workout.environment.terrain = (
-                terrain
             )
 
         return workout
@@ -347,9 +343,44 @@ class FITImporter(WorkoutImporter):
         return result
 
     @staticmethod
-    def _terrain(
+    def _sub_sport(
         session: dict,
     ) -> str:
+        """
+        Returns the factual FIT sub_sport value.
+
+        The value identifies a discipline within the main
+        sport. It is not treated as terrain or surface.
+        Missing and generic values remain explicit rather
+        than being inferred from the activity title.
+        """
+
+        value = session.get(
+            "sub_sport"
+        )
+
+        if value is None:
+            return ""
+
+        normalized = str(
+            value
+        ).strip().casefold()
+
+        if not normalized:
+            return ""
+
+        return (
+            normalized
+            .replace(
+                "-",
+                "_",
+            )
+            .replace(
+                " ",
+                "_",
+            )
+        )
+
         """
         Returns the terrain represented by FIT sub_sport.
 
