@@ -23,6 +23,7 @@ from performancelab.storage.postgresql_schema import (
     external_identities,
     metadata,
     training_coach_consents,
+    training_coach_usage,
     user_athlete_access,
     users,
 )
@@ -60,6 +61,7 @@ def test_defines_expected_postgresql_tables():
         "user_athlete_access",
         "alpha_invitations",
         "training_coach_consents",
+        "training_coach_usage",
         "athlete_snapshots",
     }
 
@@ -72,6 +74,7 @@ def test_defines_expected_postgresql_tables():
         user_athlete_access,
         alpha_invitations,
         training_coach_consents,
+        training_coach_usage,
         athlete_snapshots,
     )
 
@@ -239,6 +242,7 @@ def test_schema_contains_domain_value_constraints():
         user_athlete_access,
         alpha_invitations,
         training_coach_consents,
+        training_coach_usage,
         athlete_snapshots,
     )
 
@@ -282,4 +286,40 @@ def test_every_table_compiles_for_postgresql():
         "CREATE TABLE"
         in statement
         for statement in statements
+    )
+
+def test_training_coach_usage_contains_no_payload():
+
+    assert column_names(
+        training_coach_usage
+    ) == (
+        "usage_id",
+        "user_id",
+        "occurred_at",
+        "status",
+    )
+
+    assert primary_key_names(
+        training_coach_usage
+    ) == (
+        "usage_id",
+    )
+
+    user_foreign_key = next(
+        iter(
+            training_coach_usage
+            .c
+            .user_id
+            .foreign_keys
+        )
+    )
+
+    assert (
+        user_foreign_key.target_fullname
+        == "users.user_id"
+    )
+
+    assert (
+        user_foreign_key.ondelete
+        == "CASCADE"
     )
