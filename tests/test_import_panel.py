@@ -10,6 +10,13 @@ import app.components.import_panel as import_panel
 from performancelab import (
     Workout,
 )
+from performancelab.application import (
+    ImportedActivityOutcome,
+)
+from performancelab.upload_results import (
+    ActivityUploadBatchResult,
+)
+
 def minimal_fit_content():
     """
     Return a structurally valid empty FIT file for adapter tests.
@@ -152,7 +159,7 @@ def test_parses_fit_without_changing_athlete(
         is True
     )
 
-def test_imports_valid_files_through_callback(
+def test_reports_result_for_every_selected_file(
     monkeypatch,
 ):
 
@@ -166,8 +173,12 @@ def test_imports_valid_files_through_callback(
         name="failed.fit"
     )
 
-    first_workout = object()
-    second_workout = object()
+    first_workout = SimpleNamespace(
+        workout_id="workout-1"
+    )
+    second_workout = SimpleNamespace(
+        workout_id="workout-2"
+    )
 
     def fake_import(
         uploaded_file,
@@ -176,9 +187,11 @@ def test_imports_valid_files_through_callback(
     ):
 
         if uploaded_file is first_file:
+
             return first_workout
 
         if uploaded_file is second_file:
+
             return second_workout
 
         raise ValueError(
@@ -197,38 +210,71 @@ def test_imports_valid_files_through_callback(
         workouts,
     ):
 
-        calls["workouts"] = workouts
+        calls[
+            "workouts"
+        ] = workouts
 
         return SimpleNamespace(
-            added_count=1,
-            updated_count=1,
+            outcomes=(
+                ImportedActivityOutcome(
+                    workout_id=(
+                        "workout-1"
+                    ),
+                    status="imported",
+                ),
+                ImportedActivityOutcome(
+                    workout_id=(
+                        "workout-2"
+                    ),
+                    status="updated",
+                ),
+            )
         )
 
-    counts = (
+    result = (
         import_panel._import_uploaded_files(
-            [
+            (
                 first_file,
                 second_file,
                 failed_file,
-            ],
+            ),
             SimpleNamespace(),
             on_import_activities,
         )
     )
 
-    assert counts == (
-        1,
-        1,
-        1,
+    assert isinstance(
+        result,
+        ActivityUploadBatchResult,
     )
 
-    assert calls["workouts"] == (
+    assert [
+        file_result.file_name
+        for file_result in result.files
+    ] == [
+        "first.fit",
+        "second.fit",
+        "failed.fit",
+    ]
+
+    assert [
+        file_result.status
+        for file_result in result.files
+    ] == [
+        "imported",
+        "updated",
+        "invalid",
+    ]
+
+    assert calls[
+        "workouts"
+    ] == (
         first_workout,
         second_workout,
     )
 
 
-def test_no_valid_files_do_not_call_use_case(
+def test_invalid_file_does_not_call_use_case(
     monkeypatch,
 ):
 
@@ -257,29 +303,36 @@ def test_no_valid_files_do_not_call_use_case(
         workouts,
     ):
 
-        calls["count"] += 1
+        calls[
+            "count"
+        ] += 1
 
-    counts = (
+    result = (
         import_panel._import_uploaded_files(
-            [
+            (
                 failed_file,
-            ],
+            ),
             SimpleNamespace(),
             on_import_activities,
         )
     )
 
-    assert counts == (
-        0,
-        0,
-        1,
+    assert (
+        result.invalid_count
+        == 1
     )
-    assert calls["count"] == 0
+
+    assert (
+        result.files[0].status
+        == "invalid"
+    )
+
+    assert calls[
+        "count"
+    ] == 0
 
 
-def test_skips_strava_csv_as_activity(
-    monkeypatch,
-):
+def test_reports_strava_csv_as_ignored_metadata():
 
     csv_file = SimpleNamespace(
         name="activities.csv",
@@ -301,24 +354,33 @@ def test_skips_strava_csv_as_activity(
         workouts,
     ):
 
-        calls["count"] += 1
+        calls[
+            "count"
+        ] += 1
 
-    counts = (
+    result = (
         import_panel._import_uploaded_files(
-            [
+            (
                 csv_file,
-            ],
+            ),
             SimpleNamespace(),
             on_import_activities,
         )
     )
 
-    assert counts == (
-        0,
-        0,
-        0,
+    assert (
+        result.ignored_count
+        == 1
     )
-    assert calls["count"] == 0
+
+    assert (
+        result.files[0].status
+        == "ignored"
+    )
+
+    assert calls[
+        "count"
+    ] == 0
 
 
 def test_imports_compressed_fit_in_memory(
@@ -501,9 +563,16 @@ def test_successful_import_resets_uploader(
         import_panel,
         "_import_uploaded_files",
         lambda *args, **kwargs: (
-            1,
-            0,
-            0,
+            ActivityUploadBatchResult(
+                files=(
+                    import_panel
+                    .ActivityFileImportResult(
+                        file_name="activity.fit",
+                        status="imported",
+                        workout_id="workout-1",
+                    ),
+                )
+            )
         ),
     )
 
@@ -528,9 +597,11 @@ def test_successful_import_resets_uploader(
         ]
         == (
             "Import complete: "
-            "1 added, "
+            "1 imported, "
             "0 updated, "
-            "0 failed."
+            "0 duplicate, "
+            "0 ignored, "
+            "0 invalid."
         )
     )
 

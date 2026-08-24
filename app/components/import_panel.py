@@ -21,6 +21,10 @@ from performancelab.importers import (
 from performancelab.upload_processing import (
     open_activity_upload,
 )
+from performancelab.upload_results import (
+    ActivityFileImportResult,
+    ActivityUploadBatchResult,
+)
 from performancelab.upload_validation import (
     validate_activity_upload_content,
 )
@@ -265,28 +269,88 @@ def _import_uploaded_files(
     uploaded_files,
     athlete,
     on_import_activities,
-) -> tuple[int, int, int]:
+) -> ActivityUploadBatchResult:
     """
-    Parse files and send valid workouts to the use case.
+    Parse files and return one factual result per file.
 
-    Returns added, updated and failed counts.
+    Technical parser messages are deliberately excluded from
+    the result presented to the athlete.
     """
 
-    strava_titles = (
-        _read_strava_titles(
-            uploaded_files
-        )
+    selected_files = tuple(
+        uploaded_files
     )
 
-    workouts = []
-    failed_count = 0
+    file_results = [
+        None
+        for _ in selected_files
+    ]
 
-    for uploaded_file in uploaded_files:
+    strava_titles = {}
+
+    for index, uploaded_file in enumerate(
+        selected_files
+    ):
+
+        if (
+            uploaded_file.name.lower()
+            != "activities.csv"
+        ):
+
+            continue
+
+        try:
+
+            strava_titles.update(
+                _read_strava_titles(
+                    (
+                        uploaded_file,
+                    )
+                )
+            )
+
+        except Exception:
+
+            file_results[
+                index
+            ] = ActivityFileImportResult(
+                file_name=(
+                    uploaded_file.name
+                ),
+                status="invalid",
+                reason=(
+                    "The Strava activity index "
+                    "could not be read."
+                ),
+            )
+
+        else:
+
+            file_results[
+                index
+            ] = ActivityFileImportResult(
+                file_name=(
+                    uploaded_file.name
+                ),
+                status="ignored",
+                reason=(
+                    "Strava activity titles "
+                    "were used as metadata."
+                ),
+            )
+
+    valid_workouts = []
+    valid_file_indexes = []
+
+    for index, uploaded_file in enumerate(
+        selected_files
+    ):
 
         if (
             uploaded_file.name.lower()
             == "activities.csv"
         ):
+
             continue
 
         try:
@@ -301,31 +365,88 @@ def _import_uploaded_files(
 
         except Exception:
 
-            failed_count += 1
+            file_results[
+                index
+            ] = ActivityFileImportResult(
+                file_name=(
+                    uploaded_file.name
+                ),
+                status="invalid",
+                reason=(
+                    "The activity file could "
+                    "not be imported."
+                ),
+            )
+
             continue
 
-        workouts.append(
+        valid_workouts.append(
             workout
         )
 
-    if not workouts:
-
-        return (
-            0,
-            0,
-            failed_count,
+        valid_file_indexes.append(
+            index
         )
 
-    result = on_import_activities(
-        tuple(
-            workouts
-        )
-    )
+    if valid_workouts:
 
-    return (
-        result.added_count,
-        result.updated_count,
-        failed_count,
+        import_result = (
+            on_import_activities(
+                tuple(
+                    valid_workouts
+                )
+            )
+        )
+
+        if (
+            len(
+                import_result.outcomes
+            )
+            != len(
+                valid_workouts
+            )
+        ):
+
+            raise RuntimeError(
+                "Activity import result does not match "
+                "the submitted workouts."
+            )
+
+        for (
+            file_index,
+            outcome,
+        ) in zip(
+            valid_file_indexes,
+            import_result.outcomes,
+        ):
+
+            file_results[
+                file_index
+            ] = ActivityFileImportResult(
+                file_name=(
+                    selected_files[
+                        file_index
+                    ].name
+                ),
+                status=outcome.status,
+                workout_id=(
+                    outcome.workout_id
+                ),
+            )
+
+    if any(
+        result is None
+        for result in file_results
+    ):
+
+        raise RuntimeError(
+            "An activity upload result is missing."
+        )
+
+    return ActivityUploadBatchResult(
+        files=tuple(
+            file_results
+        )
     )
 
 
@@ -391,14 +512,12 @@ def show_import_panel(
 
     try:
 
-        (
-            added_count,
-            updated_count,
-            failed_count,
-        ) = _import_uploaded_files(
-            uploaded_files,
-            athlete,
-            on_import_activities,
+        batch_result = (
+            _import_uploaded_files(
+                uploaded_files,
+                athlete,
+                on_import_activities,
+            )
         )
 
     except Exception:
@@ -415,10 +534,7 @@ def show_import_panel(
         st.session_state[
             "persisted_notice"
         ] = (
-            f"Import complete: "
-            f"{added_count} added, "
-            f"{updated_count} updated, "
-            f"{failed_count} failed."
+            batch_result.notice
         )
 
     st.session_state[
