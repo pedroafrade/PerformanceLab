@@ -18,6 +18,10 @@ from performancelab.importers import (
     FITImporter,
     GPXImporter,
 )
+from performancelab.upload_logging import (
+    log_activity_upload_completed,
+    log_activity_upload_failed,
+)
 from performancelab.upload_processing import (
     open_activity_upload,
 )
@@ -522,6 +526,8 @@ def show_import_panel(
 
     except Exception:
 
+        log_activity_upload_failed()
+
         st.session_state[
             upload_error_key
         ] = (
@@ -530,6 +536,10 @@ def show_import_panel(
         )
 
     else:
+
+        log_activity_upload_completed(
+            batch_result
+        )
 
         st.session_state[
             "persisted_notice"
