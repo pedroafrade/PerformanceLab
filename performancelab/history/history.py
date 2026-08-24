@@ -24,6 +24,32 @@ MATCHING_DURATION_TOLERANCE = timedelta(
 
 MATCHING_DISTANCE_TOLERANCE_KM = 0.1
 
+@dataclass(
+    frozen=True
+)
+class WorkoutMergeResult:
+    """
+    Factual result of merging one completed workout.
+    """
+
+    workout: Workout
+    status: str
+
+    def __post_init__(
+        self,
+    ) -> None:
+
+        if self.status not in (
+            "imported",
+            "updated",
+            "duplicate",
+        ):
+
+            raise ValueError(
+                "Workout merge status must be "
+                "imported, updated or duplicate."
+            )
+
 @dataclass
 class History:
 
@@ -72,14 +98,12 @@ class History:
 
     # ======================================================
 
-    def merge(
+    def merge_with_result(
         self,
         workout: Workout,
-    ) -> tuple[Workout, bool]:
+    ) -> WorkoutMergeResult:
         """
-        Adds a new workout or enriches an existing matching workout.
-
-        Returns the stored workout and whether it was newly added.
+        Add, enrich or recognize a duplicate workout.
         """
 
         existing = self.find_matching(
@@ -88,9 +112,16 @@ class History:
 
         if existing is None:
 
-            self.add(workout)
+            self.add(
+                workout
+            )
 
-            return workout, True
+            return WorkoutMergeResult(
+                workout=workout,
+                status="imported",
+            )
+
+        changed = False
 
         if (
             self._is_placeholder_title(
@@ -105,16 +136,41 @@ class History:
                 workout.info.title
             )
 
+            changed = True
+
         if (
             workout.feedback.estimated_rpe
             is not None
+            and (
+                existing
+                .feedback
+                .estimated_rpe
+                != workout
+                .feedback
+                .estimated_rpe
+            )
         ):
 
             existing.feedback.estimated_rpe = (
                 workout.feedback.estimated_rpe
             )
 
+            changed = True
+
         for name, sensor in workout.sensors:
+
+            existing_sensor = (
+                existing.sensors.get(
+                    name
+                )
+            )
+
+            if not self._values_equal(
+                existing_sensor,
+                sensor,
+            ):
+
+                changed = True
 
             existing.sensors.add(
                 name,
@@ -123,7 +179,58 @@ class History:
 
         self._notify_change()
 
-        return existing, False
+        return WorkoutMergeResult(
+            workout=existing,
+            status=(
+                "updated"
+                if changed
+                else "duplicate"
+            ),
+        )
+
+    def merge(
+        self,
+        workout: Workout,
+    ) -> tuple[Workout, bool]:
+        """
+        Preserve the existing merge contract.
+
+        New callers that require a factual status should use
+        merge_with_result().
+        """
+
+        result = self.merge_with_result(
+            workout
+        )
+
+        return (
+            result.workout,
+            result.status
+            == "imported",
+        )
+
+    @staticmethod
+    def _values_equal(
+        first,
+        second,
+    ) -> bool:
+        """
+        Compare sensor values without assuming a specific type.
+        """
+
+        try:
+
+            return bool(
+                first
+                == second
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            return False
 
     # ======================================================
     @staticmethod

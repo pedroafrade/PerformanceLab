@@ -28,6 +28,31 @@ from performancelab.workout import (
     Workout,
 )
 
+@dataclass(
+    frozen=True
+)
+class ImportedActivityOutcome:
+    """
+    Factual result for one valid Workout supplied to the use case.
+    """
+
+    workout_id: str
+    status: str
+
+    def __post_init__(
+        self,
+    ) -> None:
+
+        if self.status not in (
+            "imported",
+            "updated",
+            "duplicate",
+        ):
+
+            raise ValueError(
+                "Activity import status must be "
+                "imported, updated or duplicate."
+            )
 
 @dataclass(
     frozen=True
@@ -40,6 +65,11 @@ class ImportActivitiesResult:
     athlete: Athlete
     added_count: int
     updated_count: int
+    duplicate_count: int
+    outcomes: tuple[
+        ImportedActivityOutcome,
+        ...,
+    ]
     reconciled_through: date | None
 
     @property
@@ -100,11 +130,19 @@ class ImportActivities:
                 athlete=athlete,
                 added_count=0,
                 updated_count=0,
+                duplicate_count=0,
+                outcomes=(),
                 reconciled_through=None,
             )
 
         added_count = 0
         updated_count = 0
+        duplicate_count = 0
+
+        outcomes: list[
+            ImportedActivityOutcome
+        ] = []
+
         imported_days: list[date] = []
 
         for workout in imported_workouts:
@@ -117,24 +155,59 @@ class ImportActivities:
                     "workouts must contain Workout objects."
                 )
 
-            _, added = athlete.history.merge(
-                workout
+            merge_result = (
+                athlete
+                .history
+                .merge_with_result(
+                    workout
+                )
             )
 
-            if added:
+            outcomes.append(
+                ImportedActivityOutcome(
+                    workout_id=(
+                        workout.workout_id
+                    ),
+                    status=(
+                        merge_result.status
+                    ),
+                )
+            )
+
+            if (
+                merge_result.status
+                == "imported"
+            ):
+
                 added_count += 1
 
-            else:
+            elif (
+                merge_result.status
+                == "updated"
+            ):
+
                 updated_count += 1
 
-            workout_day = self._workout_day(
-                workout
-            )
+            else:
 
-            if workout_day is not None:
-                imported_days.append(
-                    workout_day
+                duplicate_count += 1
+
+            if (
+                merge_result.status
+                != "duplicate"
+            ):
+
+                workout_day = (
+                    self._workout_day(
+                        workout
+                    )
                 )
+
+                if workout_day is not None:
+
+                    imported_days.append(
+                        workout_day
+                    )
 
         reconciled_through = (
             max(imported_days)
@@ -159,14 +232,25 @@ class ImportActivities:
                 )
             )
 
-        self._repository.save(
-            athlete
-        )
+        if (
+            added_count > 0
+            or updated_count > 0
+        ):
+
+            self._repository.save(
+                athlete
+            )
 
         return ImportActivitiesResult(
             athlete=athlete,
             added_count=added_count,
             updated_count=updated_count,
+            duplicate_count=(
+                duplicate_count
+            ),
+            outcomes=tuple(
+                outcomes
+            ),
             reconciled_through=(
                 reconciled_through
             ),

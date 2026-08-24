@@ -144,6 +144,8 @@ def test_empty_import_does_not_save():
     assert result.changed is False
     assert result.added_count == 0
     assert result.updated_count == 0
+    assert result.duplicate_count == 0
+    assert result.outcomes == ()
     assert (
         result.reconciled_through
         is None
@@ -193,6 +195,21 @@ def test_adds_activity_and_saves_once():
     assert result.changed is True
     assert result.added_count == 1
     assert result.updated_count == 0
+    assert result.duplicate_count == 0
+
+    assert len(
+        result.outcomes
+    ) == 1
+
+    assert (
+        result.outcomes[0].workout_id
+        == "activity-1"
+    )
+
+    assert (
+        result.outcomes[0].status
+        == "imported"
+    )
     assert len(stored.history) == 1
     assert repository.save_calls == 1
 
@@ -254,6 +271,12 @@ def test_matching_activity_counts_as_updated():
 
     assert result.added_count == 0
     assert result.updated_count == 1
+    assert result.duplicate_count == 0
+
+    assert (
+        result.outcomes[0].status
+        == "updated"
+    )
     assert len(stored.history) == 1
     assert (
         stored.history[0].info.title
@@ -438,3 +461,84 @@ def test_unknown_athlete_raises():
             "unknown-athlete",
             (),
         )
+
+def test_identical_activity_is_reported_as_duplicate():
+
+    existing = workout(
+        workout_id="existing",
+        day=datetime(
+            2026,
+            8,
+            10,
+            8,
+            0,
+        ),
+        title="Morning Run",
+    )
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.history.add(
+        existing
+    )
+
+    duplicate = workout(
+        workout_id="duplicate-import",
+        day=datetime(
+            2026,
+            8,
+            10,
+            8,
+            0,
+        ),
+        title="Morning Run",
+    )
+
+    repository = (
+        RecordingAthleteRepository(
+            (
+                athlete,
+            )
+        )
+    )
+
+    reconciler = FakeReconciler()
+
+    result = ImportActivities(
+        repository=repository,
+        reconciler=reconciler,
+    ).execute(
+        athlete.athlete_id,
+        (
+            duplicate,
+        ),
+    )
+
+    assert result.changed is False
+    assert result.added_count == 0
+    assert result.updated_count == 0
+    assert result.duplicate_count == 1
+
+    assert result.outcomes == (
+        result.outcomes[0],
+    )
+
+    assert (
+        result.outcomes[0].workout_id
+        == "duplicate-import"
+    )
+
+    assert (
+        result.outcomes[0].status
+        == "duplicate"
+    )
+
+    assert (
+        result.reconciled_through
+        is None
+    )
+
+    assert reconciler.call is None
+    assert repository.save_calls == 0

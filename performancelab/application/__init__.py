@@ -15,6 +15,7 @@ from .generate_training_plan import (
 from .import_activities import (
     ImportActivities,
     ImportActivitiesResult,
+    ImportedActivityOutcome,
 )
 from .load_active_athlete import (
     LoadActiveAthlete,
@@ -37,6 +38,7 @@ __all__ = [
     "GenerateTrainingPlanResult",
     "ImportActivities",
     "ImportActivitiesResult",
+    "ImportedActivityOutcome",
     "LoadActiveAthlete",
     "LoadActiveAthleteResult",
     "ProvisionInvitedUser",
