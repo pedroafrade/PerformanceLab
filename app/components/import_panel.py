@@ -337,11 +337,31 @@ def show_import_panel(
 ) -> None:
     """
     Display the activity file import panel.
+
+    Every completed or failed attempt advances the uploader key,
+    allowing Streamlit to release the previous upload objects.
     """
 
     uploader_version_key = (
         f"{key_prefix}_file_uploader_version"
     )
+
+    upload_error_key = (
+        f"{key_prefix}_file_uploader_error"
+    )
+
+    pending_error = (
+        st.session_state.pop(
+            upload_error_key,
+            None,
+        )
+    )
+
+    if pending_error:
+
+        st.error(
+            pending_error
+        )
 
     uploader_version = (
         st.session_state.get(
@@ -383,19 +403,23 @@ def show_import_panel(
 
     except Exception:
 
-        st.error(
+        st.session_state[
+            upload_error_key
+        ] = (
             "Import failed before the athlete "
             "could be updated."
         )
 
-        return
+    else:
 
-    st.session_state.persisted_notice = (
-        f"Import complete: "
-        f"{added_count} added, "
-        f"{updated_count} updated, "
-        f"{failed_count} failed."
-    )
+        st.session_state[
+            "persisted_notice"
+        ] = (
+            f"Import complete: "
+            f"{added_count} added, "
+            f"{updated_count} updated, "
+            f"{failed_count} failed."
+        )
 
     st.session_state[
         uploader_version_key

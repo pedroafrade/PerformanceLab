@@ -459,3 +459,225 @@ def test_repairs_imported_strava_title():
     assert title == (
         "T75_Recuperação"
     )
+
+def test_successful_import_resets_uploader(
+    monkeypatch,
+):
+
+    uploaded_file = SimpleNamespace(
+        name="activity.fit"
+    )
+
+    state = {}
+
+    calls = {
+        "rerun": 0,
+    }
+
+    fake_streamlit = SimpleNamespace(
+        session_state=state,
+        file_uploader=(
+            lambda *args, **kwargs: [
+                uploaded_file,
+            ]
+        ),
+        error=lambda message: None,
+        rerun=lambda: calls.__setitem__(
+            "rerun",
+            calls[
+                "rerun"
+            ]
+            + 1,
+        ),
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "st",
+        fake_streamlit,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_import_uploaded_files",
+        lambda *args, **kwargs: (
+            1,
+            0,
+            0,
+        ),
+    )
+
+    import_panel.show_import_panel(
+        SimpleNamespace(),
+        on_import_activities=(
+            lambda workouts: None
+        ),
+        key_prefix="test",
+    )
+
+    assert (
+        state[
+            "test_file_uploader_version"
+        ]
+        == 1
+    )
+
+    assert (
+        state[
+            "persisted_notice"
+        ]
+        == (
+            "Import complete: "
+            "1 added, "
+            "0 updated, "
+            "0 failed."
+        )
+    )
+
+    assert calls[
+        "rerun"
+    ] == 1
+
+
+def test_failed_import_resets_uploader(
+    monkeypatch,
+):
+
+    uploaded_file = SimpleNamespace(
+        name="invalid.fit"
+    )
+
+    state = {}
+
+    calls = {
+        "rerun": 0,
+    }
+
+    fake_streamlit = SimpleNamespace(
+        session_state=state,
+        file_uploader=(
+            lambda *args, **kwargs: [
+                uploaded_file,
+            ]
+        ),
+        error=lambda message: None,
+        rerun=lambda: calls.__setitem__(
+            "rerun",
+            calls[
+                "rerun"
+            ]
+            + 1,
+        ),
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "st",
+        fake_streamlit,
+    )
+
+    def fail_import(
+        *args,
+        **kwargs,
+    ):
+
+        raise ValueError(
+            "Invalid upload batch"
+        )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_import_uploaded_files",
+        fail_import,
+    )
+
+    import_panel.show_import_panel(
+        SimpleNamespace(),
+        on_import_activities=(
+            lambda workouts: None
+        ),
+        key_prefix="test",
+    )
+
+    assert (
+        state[
+            "test_file_uploader_version"
+        ]
+        == 1
+    )
+
+    assert (
+        state[
+            "test_file_uploader_error"
+        ]
+        == (
+            "Import failed before the athlete "
+            "could be updated."
+        )
+    )
+
+    assert (
+        "persisted_notice"
+        not in state
+    )
+
+    assert calls[
+        "rerun"
+    ] == 1
+
+
+def test_pending_import_error_is_shown_once(
+    monkeypatch,
+):
+
+    state = {
+        "test_file_uploader_version": 1,
+        "test_file_uploader_error": (
+            "Import failed before the athlete "
+            "could be updated."
+        ),
+    }
+
+    shown_errors = []
+
+    fake_streamlit = SimpleNamespace(
+        session_state=state,
+        file_uploader=(
+            lambda *args, **kwargs: None
+        ),
+        error=shown_errors.append,
+        rerun=lambda: None,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "st",
+        fake_streamlit,
+    )
+
+    import_panel.show_import_panel(
+        SimpleNamespace(),
+        on_import_activities=(
+            lambda workouts: None
+        ),
+        key_prefix="test",
+    )
+
+    assert shown_errors == [
+        (
+            "Import failed before the athlete "
+            "could be updated."
+        ),
+    ]
+
+    assert (
+        "test_file_uploader_error"
+        not in state
+    )
+
+    assert (
+        state[
+            "test_file_uploader_version"
+        ]
+        == 1
+    )
