@@ -36,12 +36,21 @@ from performancelab.application import (
     GenerateTrainingPlan,
     ImportActivities,
     LoadActiveAthlete,
+    GenerateActivityCoachInterpretation,
     ManageTrainingCoachConsent,
     ProvisionInvitedUser,
     UpdateWorkout,
 )
 from performancelab.authorization import (
     AthleteAuthorizationService,
+)
+from performancelab.coaching import (
+    ActivityCoachCoordinator,
+    ActivityCoachGenerationService,
+    ActivityCoachResolutionStatus,
+)
+from performancelab.integrations import (
+    GeminiActivityCoachProvider,
 )
 from performancelab.identity import User
 from performancelab.oidc_identity import (
@@ -75,6 +84,8 @@ runtime_values = dict(
 for configuration_key in (
     "PERFORMANCELAB_ENV",
     "DATABASE_URL",
+    "TRAINING_COACH_USER_DAILY_LIMIT",
+    "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
 ):
 
     if configuration_key in st.secrets:
@@ -125,6 +136,10 @@ training_coach_consent_repository = (
     repository_bundle
     .training_coach_consent_repository
 )
+training_coach_usage_repository = (
+    repository_bundle
+    .training_coach_usage_repository
+)
 athlete_authorization = (
     AthleteAuthorizationService(
         athlete_access_repository
@@ -135,6 +150,26 @@ training_coach_consent_manager = (
         repository=(
             training_coach_consent_repository
         )
+    )
+)
+training_coach_generator = (
+    GenerateActivityCoachInterpretation(
+        coordinator=(
+            ActivityCoachCoordinator(
+                generation_service=(
+                    ActivityCoachGenerationService(
+                        GeminiActivityCoachProvider()
+                    )
+                )
+            )
+        ),
+        usage_repository=(
+            training_coach_usage_repository
+        ),
+        usage_limits=(
+            runtime_configuration
+            .training_coach_usage_limits
+        ),
     )
 )
 
@@ -245,6 +280,59 @@ def delete_completed_workouts(
     st.session_state.athlete = (
         result.athlete
     )
+
+    return result
+
+def resolve_training_coach(
+    *,
+    athlete,
+    workout_id,
+    payload,
+    regenerate,
+):
+    """
+    Generate and persist a limited Training Coach result.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    if not (
+        training_coach_consent_manager
+        .is_permitted(
+            user_id=current_user.user_id
+        )
+    ):
+
+        raise PermissionError(
+            "Training Coach consent is required."
+        )
+
+    with repository_bundle.transaction():
+
+        result = (
+            training_coach_generator
+            .execute(
+                user_id=(
+                    current_user.user_id
+                ),
+                athlete=athlete,
+                workout_id=workout_id,
+                payload=payload,
+                regenerate=regenerate,
+            )
+        )
+
+        if (
+            result.status
+            is ActivityCoachResolutionStatus
+            .GENERATED
+        ):
+
+            athlete_repository.save(
+                athlete
+            )
 
     return result
 
@@ -652,6 +740,9 @@ elif page == "activities":
             ),
             on_allow_training_coach=(
                 allow_training_coach
+            ),
+            on_resolve_training_coach=(
+                resolve_training_coach
             ),
         )
     )

@@ -25,6 +25,7 @@ from app.components.activities_page import (
     _outcome_label,
     _period_start_date,
     _resolve_activity_coach,
+    _training_coach_limit_message,
     _total_duration,
     _vo2max_metric_label,
     _workout_for_activity,
@@ -985,6 +986,10 @@ def test_activities_supports_consent_request():
         "on_allow_training_coach"
         in signature.parameters
     )
+    assert (
+        "on_resolve_training_coach"
+        in signature.parameters
+    )
 
 def test_converts_training_coach_literal_line_breaks():
 
@@ -1019,4 +1024,31 @@ def test_preserves_training_coach_real_line_breaks():
             text
         )
         == text
+    )
+
+def test_explains_user_training_coach_limit():
+
+    assert (
+        _training_coach_limit_message(
+            "user_daily_limit"
+        )
+        == (
+            "You have reached your Training Coach "
+            "limit for today. You can generate "
+            "another interpretation tomorrow."
+        )
+    )
+
+
+def test_explains_global_training_coach_limit():
+
+    assert (
+        _training_coach_limit_message(
+            "global_daily_limit"
+        )
+        == (
+            "The Training Coach has reached its "
+            "overall limit for today. Please try "
+            "again tomorrow."
+        )
     )

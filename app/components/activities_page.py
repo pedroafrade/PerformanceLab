@@ -18,12 +18,7 @@ from performancelab import (
     synchronize_vo2max_observation_from_notes,
 )
 from performancelab.coaching import (
-    ActivityCoachCoordinator,
-    ActivityCoachGenerationService,
     ActivityCoachResolutionStatus,
-)
-from performancelab.integrations import (
-    GeminiActivityCoachProvider,
 )
 
 from performancelab.presentation import (
@@ -1403,6 +1398,26 @@ def _show_activity_coach_narrative(
         )
     )
 
+def _training_coach_limit_message(
+    error_code: str | None,
+) -> str:
+    """
+    Return a clear daily-limit message.
+    """
+
+    if error_code == "user_daily_limit":
+
+        return (
+            "You have reached your Training Coach "
+            "limit for today. You can generate "
+            "another interpretation tomorrow."
+        )
+
+    return (
+        "The Training Coach has reached its "
+        "overall limit for today. Please try "
+        "again tomorrow."
+    )
 
 def _resolve_activity_coach(
     *,
@@ -1411,9 +1426,10 @@ def _resolve_activity_coach(
     payload,
     regenerate: bool,
     consent_permitted: bool,
+    resolver=None,
 ):
     """
-    Routes generation through the provider-neutral service.
+    Route generation through the application use case.
     """
 
     if not consent_permitted:
@@ -1422,15 +1438,13 @@ def _resolve_activity_coach(
             "Training Coach consent is required."
         )
 
-    coordinator = ActivityCoachCoordinator(
-        generation_service=(
-            ActivityCoachGenerationService(
-                GeminiActivityCoachProvider()
-            )
-        )
-    )
+    if resolver is None:
 
-    return coordinator.resolve(
+        raise RuntimeError(
+            "Training Coach generation is not configured."
+        )
+
+    return resolver(
         athlete=athlete,
         workout_id=(
             activity.workout_id
@@ -1446,6 +1460,7 @@ def show_activities_page(
     on_delete_workouts=None,
     training_coach_permitted: bool = False,
     on_allow_training_coach=None,
+    on_resolve_training_coach=None,
 ) -> bool:
     """
     Displays a compact scrolling activity browser.
@@ -1969,6 +1984,9 @@ def show_activities_page(
                                     consent_permitted=(
                                         training_coach_permitted
                                     ),
+                                    resolver=(
+                                        on_resolve_training_coach
+                                    ),
                                 )
                             )
 
@@ -1980,8 +1998,6 @@ def show_activities_page(
                             is not None
                         ):
 
-                            athlete_changed = True
-
                             st.session_state[
                                 "activity_coach_refresh_requested"
                             ] = True
@@ -1989,6 +2005,23 @@ def show_activities_page(
                             _show_activity_coach_narrative(
                                 resolution
                                 .interpretation
+                                .narrative
+                            )
+
+                        elif (
+                            resolution.status
+                            is ActivityCoachResolutionStatus
+                            .LIMIT_REACHED
+                        ):
+
+                            st.warning(
+                                _training_coach_limit_message(
+                                    resolution.error_code
+                                )
+                            )
+
+                            _show_activity_coach_narrative(
+                                stored_interpretation
                                 .narrative
                             )
 
@@ -2060,6 +2093,9 @@ def show_activities_page(
                                     consent_permitted=(
                                         training_coach_permitted
                                     ),
+                                    resolver=(
+                                        on_resolve_training_coach
+                                    ),
                                 )
                             )
 
@@ -2071,8 +2107,6 @@ def show_activities_page(
                             is not None
                         ):
 
-                            athlete_changed = True
-
                             st.session_state[
                                 "activity_coach_refresh_requested"
                             ] = True
@@ -2081,6 +2115,18 @@ def show_activities_page(
                                 resolution
                                 .interpretation
                                 .narrative
+                            )
+
+                        elif (
+                            resolution.status
+                            is ActivityCoachResolutionStatus
+                            .LIMIT_REACHED
+                        ):
+
+                            st.warning(
+                                _training_coach_limit_message(
+                                    resolution.error_code
+                                )
                             )
 
                         elif (
