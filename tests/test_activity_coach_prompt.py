@@ -83,7 +83,7 @@ def test_builds_json_serializable_prompt_payload():
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
     assert ACTIVITY_COACH_PROMPT_VERSION == (
-        "activity-coach-v5"
+        "activity-coach-v6"
     )
 
     assert payload[
@@ -137,10 +137,9 @@ def test_minimizes_personal_activity_context():
         not in activity
     )
 
-    assert (
+    assert activity[
         "workout_date"
-        not in activity
-    )
+    ] == "2026-08-09"
 
     assert (
         "title"
@@ -236,6 +235,24 @@ def test_contract_contains_safety_rules():
         combined_rules
     )
     assert "existing plan" in (
+        combined_rules
+    )
+    assert "outside_plan" in (
+        combined_rules
+    )
+    assert "unplanned" in (
+        combined_rules
+    )
+    assert "physiological load" in (
+        combined_rules
+    )
+    assert "never apply a training phase" in (
+        combined_rules
+    )
+    assert "state_is_current is false" in (
+        combined_rules
+    )
+    assert "historical" in (
         combined_rules
     )
     assert "three to five short paragraphs" in (

@@ -369,21 +369,34 @@ class ActivityCoachPresenter:
             )
         )
 
-        phase = (
-            self.athlete
-            .training_plan
-            .phase_on(
-                activity_day
-            )
+        is_outside_plan = (
+            self.activity.outcome_status
+            == "outside_plan"
         )
+
+        phase = None
+
+        if not is_outside_plan:
+
+            phase = (
+                self.athlete
+                .training_plan
+                .phase_on(
+                    activity_day
+                )
+            )
 
         plan = ActivityCoachPlanData(
             phase=phase,
         )
 
-        event_entry = (
-            coach_context.next_event
-        )
+        event_entry = None
+
+        if not is_outside_plan:
+
+            event_entry = (
+                coach_context.phase_event
+            )
 
         event = getattr(
             event_entry,
@@ -450,7 +463,7 @@ class ActivityCoachPresenter:
                 ),
                 days_until_event=(
                     coach_context
-                    .days_until_event
+                    .days_until_phase_event
                 ),
             )
 

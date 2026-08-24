@@ -21,7 +21,7 @@ from .activity_coach_models import (
 
 
 ACTIVITY_COACH_PROMPT_VERSION = (
-    "activity-coach-v5"
+    "activity-coach-v6"
 )
 
 ACTIVITY_COACH_NARRATIVE_STRUCTURE = (
@@ -134,6 +134,37 @@ ACTIVITY_COACH_PROMPT_RULES = (
         "Relate the session to the target event only when "
         "event data are available and the comparison is "
         "meaningful."
+    ),
+    (
+        "Treat outcome_status outside_plan as a completed "
+        "activity outside the active training plan. Include "
+        "it in factual training history and physiological "
+        "load, but never describe it as part of a plan phase "
+        "or as preparation for an event."
+    ),
+    (
+        "Treat outcome_status unplanned as an unplanned "
+        "activity completed while the training plan was "
+        "active. Include its load and, when meaningful, "
+        "its effect on preparation for the plan's target "
+        "event."
+    ),
+    (
+        "Never apply a training phase or target event "
+        "retroactively to an activity whose outcome_status "
+        "is outside_plan."
+    ),
+    (
+        "Use workout_date to establish the chronology of "
+        "the activity and its relationship to the available "
+        "plan and event context."
+    ),
+    (
+        "When state_is_current is false, treat the selected "
+        "activity as historical. Do not give immediate "
+        "instructions such as resting for the next hours or "
+        "changing tomorrow's session. Express useful advice "
+        "as a lesson for future comparable sessions."
     ),
     (
         "Recommendations must respect the existing plan. "
@@ -362,7 +393,6 @@ def _minimized_assessment_data(
 
     for field_name in (
         "workout_id",
-        "workout_date",
         "title",
         "rpe",
         "load_difference",

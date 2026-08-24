@@ -593,3 +593,286 @@ def test_ignores_missing_recent_training_load():
         recent.previous_load
         is None
     )
+
+def test_outside_plan_activity_has_no_plan_or_event_context():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout()
+    workout.info.title = "Historical Run"
+    workout.info.sport = "Running"
+    workout.info.date = date(
+        2026,
+        7,
+        18,
+    )
+    workout.info.duration = timedelta(
+        hours=2
+    )
+    workout.feedback.rpe = 7.0
+
+    athlete.history.add(
+        workout
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime(
+            2026,
+            8,
+            15,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=60
+        ),
+        phase="Build",
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="III Trail Pé Firme",
+                date=date(
+                    2026,
+                    9,
+                    27,
+                ),
+                sport="Trail Running",
+                distance=23.0,
+                elevation_gain=950.0,
+                terrain="Trail",
+            ),
+            priority="A",
+        )
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            workout.workout_id
+        ),
+        workout_date=workout.date,
+        outcome_status="outside_plan",
+        planned_title=None,
+        planned_load=None,
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=workout,
+        athlete=athlete,
+    ).build().context
+
+    assert context.plan.phase is None
+    assert context.event.name is None
+    assert context.event.distance is None
+
+    assert (
+        context.recent_training.session_count
+        == 1
+    )
+    assert (
+        context.recent_training.total_load
+        > 0
+    )
+
+
+def test_unplanned_activity_keeps_plan_and_event_context():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout()
+    workout.info.title = "Unplanned Run"
+    workout.info.sport = "Running"
+    workout.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    workout.info.duration = timedelta(
+        minutes=75
+    )
+    workout.feedback.rpe = 6.0
+
+    athlete.history.add(
+        workout
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Easy Run",
+        duration=timedelta(
+            minutes=60
+        ),
+        phase="Peak",
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="III Trail Pé Firme",
+                date=date(
+                    2026,
+                    9,
+                    27,
+                ),
+                sport="Trail Running",
+                distance=23.0,
+                elevation_gain=950.0,
+                terrain="Trail",
+            ),
+            priority="A",
+        )
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            workout.workout_id
+        ),
+        workout_date=workout.date,
+        outcome_status="unplanned",
+        planned_title=None,
+        planned_load=None,
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=workout,
+        athlete=athlete,
+    ).build().context
+
+    assert context.plan.phase == "Peak"
+
+    assert (
+        context.event.name
+        == "III Trail Pé Firme"
+    )
+    assert context.event.distance == 23.0
+
+    assert (
+        context.recent_training.session_count
+        == 1
+    )
+    assert (
+        context.recent_training.total_load
+        > 0
+    )
+
+
+def test_uses_primary_event_instead_of_nearest_event():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    workout = create_workout()
+    workout.info.title = "Peak Run"
+    workout.info.sport = "Running"
+    workout.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    workout.info.duration = timedelta(
+        minutes=75
+    )
+    workout.feedback.rpe = 6.0
+
+    athlete.history.add(
+        workout
+    )
+
+    athlete.training_plan.schedule(
+        scheduled_at=datetime(
+            2026,
+            8,
+            9,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Peak Run",
+        duration=timedelta(
+            minutes=75
+        ),
+        phase="Peak",
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="Sealand",
+                date=date(
+                    2026,
+                    9,
+                    13,
+                ),
+                sport="Road Running",
+                distance=10.0,
+                elevation_gain=113.0,
+            ),
+            priority="A",
+        )
+    )
+
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="III Trail Pé Firme",
+                date=date(
+                    2026,
+                    9,
+                    27,
+                ),
+                sport="Trail Running",
+                distance=23.0,
+                elevation_gain=950.0,
+                terrain="Trail",
+            ),
+            priority="A",
+        )
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            workout.workout_id
+        ),
+        workout_date=workout.date,
+        outcome_status="unplanned",
+        planned_title=None,
+        planned_load=None,
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=workout,
+        athlete=athlete,
+    ).build().context
+
+    assert (
+        context.event.name
+        == "III Trail Pé Firme"
+    )
+    assert context.event.distance == 23.0
+    assert context.event.elevation_gain == 950.0
+
+    assert (
+        context.event.days_until_event
+        == 49
+    )
