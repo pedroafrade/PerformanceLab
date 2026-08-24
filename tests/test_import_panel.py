@@ -184,6 +184,7 @@ def test_reports_result_for_every_selected_file(
         uploaded_file,
         athlete,
         strava_titles=None,
+        strava_sub_sports=None,
     ):
 
         if uploaded_file is first_file:
@@ -500,6 +501,118 @@ def test_reads_strava_activity_titles():
         )
     }
 
+def test_reads_explicit_strava_trail_sub_sport():
+
+    csv_file = SimpleNamespace(
+        name="activities.csv",
+        getvalue=lambda: (
+            (
+                '"Activity Name",'
+                '"Activity Type",'
+                '"Filename"\n'
+                '"Hill Reps",'
+                '"Trail Run",'
+                '"activities\\activity.fit"\n'
+            ).encode(
+                "utf-8"
+            )
+        ),
+    )
+
+    sub_sports = (
+        import_panel
+        ._read_strava_sub_sports(
+            [
+                csv_file,
+            ]
+        )
+    )
+
+    assert sub_sports == {
+        "activity.fit": "trail",
+    }
+
+
+def test_does_not_assume_strava_run_is_road():
+
+    csv_file = SimpleNamespace(
+        name="activities.csv",
+        getvalue=lambda: (
+            (
+                '"Activity Name",'
+                '"Activity Type",'
+                '"Filename"\n'
+                '"Morning Run",'
+                '"Run",'
+                '"activities\\activity.fit"\n'
+            ).encode(
+                "utf-8"
+            )
+        ),
+    )
+
+    sub_sports = (
+        import_panel
+        ._read_strava_sub_sports(
+            [
+                csv_file,
+            ]
+        )
+    )
+
+    assert sub_sports == {}
+
+def test_applies_strava_trail_sub_sport(
+    monkeypatch,
+):
+
+    parsed_workout = Workout()
+
+    class FakeFITImporter:
+
+        def read(
+            self,
+            source,
+        ):
+
+            return parsed_workout
+
+    monkeypatch.setattr(
+        import_panel,
+        "FITImporter",
+        FakeFITImporter,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_estimate_imported_workout_rpe",
+        lambda workout, athlete: None,
+    )
+
+    uploaded_file = SimpleNamespace(
+        name="activity.fit",
+        getvalue=minimal_fit_content,
+    )
+
+    result = (
+        import_panel._import_uploaded_file(
+            uploaded_file,
+            SimpleNamespace(),
+            strava_titles={
+                "activity.fit": "Hill Reps",
+            },
+            strava_sub_sports={
+                "activity.fit": "trail",
+            },
+        )
+    )
+
+    assert result.info.title == "Hill Reps"
+
+    assert (
+        result.info.sub_sport
+        == "trail"
+    )
 
 def test_repairs_imported_strava_title():
 

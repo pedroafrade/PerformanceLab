@@ -179,6 +179,94 @@ def _read_strava_titles(
 
     return titles
 
+def _read_strava_sub_sports(
+    uploaded_files,
+) -> dict[str, str]:
+    """
+    Read explicit running disciplines from Strava's
+    activities.csv.
+    """
+
+    sub_sports = {}
+
+    for uploaded_file in uploaded_files:
+
+        if (
+            uploaded_file.name.lower()
+            != "activities.csv"
+        ):
+            continue
+
+        validated_upload = (
+            validate_activity_upload_content(
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+            )
+        )
+
+        content = (
+            validated_upload
+            .content
+            .decode(
+                "utf-8-sig"
+            )
+        )
+
+        rows = DictReader(
+            StringIO(
+                content
+            )
+        )
+
+        for row in rows:
+
+            file_name = next(
+                (
+                    candidate
+                    for candidate in (
+                        _normalized_file_name(
+                            value
+                        )
+                        for value
+                        in row.values()
+                    )
+                    if candidate.endswith(
+                        (
+                            ".fit",
+                            ".fit.gz",
+                            ".gpx",
+                            ".gpx.gz",
+                        )
+                    )
+                ),
+                "",
+            )
+
+            activity_type = str(
+                row.get(
+                    "Activity Type"
+                )
+                or row.get(
+                    "Tipo de atividade"
+                )
+                or ""
+            ).strip().casefold()
+
+            if (
+                file_name
+                and activity_type
+                in {
+                    "trail run",
+                    "corrida de trilho",
+                    "corrida em trilho",
+                }
+            ):
+
+                sub_sports[
+                    file_name
+                ] = "trail"
+
+    return sub_sports
 
 def _activity_title(
     uploaded_file,
@@ -230,6 +318,7 @@ def _import_uploaded_file(
     uploaded_file,
     athlete,
     strava_titles=None,
+    strava_sub_sports=None,
 ):
     """
     Parse one validated in-memory file into a Workout.
@@ -273,6 +362,27 @@ def _import_uploaded_file(
             )
         )
 
+        normalized_name = (
+            _normalized_file_name(
+                uploaded_file.name
+            )
+        )
+
+        strava_sub_sport = (
+            (
+                strava_sub_sports
+                or {}
+            ).get(
+                normalized_name
+            )
+        )
+
+        if strava_sub_sport:
+
+            workout.info.sub_sport = (
+                strava_sub_sport
+            )
+
         _estimate_imported_workout_rpe(
             workout,
             athlete,
@@ -303,6 +413,7 @@ def _import_uploaded_files(
     ]
 
     strava_titles = {}
+    strava_sub_sports = {}
 
     for index, uploaded_file in enumerate(
         selected_files
@@ -319,6 +430,14 @@ def _import_uploaded_files(
 
             strava_titles.update(
                 _read_strava_titles(
+                    (
+                        uploaded_file,
+                    )
+                )
+            )
+
+            strava_sub_sports.update(
+                _read_strava_sub_sports(
                     (
                         uploaded_file,
                     )
@@ -376,6 +495,7 @@ def _import_uploaded_files(
                     uploaded_file,
                     athlete,
                     strava_titles,
+                    strava_sub_sports,
                 )
             )
 
