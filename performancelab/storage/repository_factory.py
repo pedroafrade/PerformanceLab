@@ -41,6 +41,9 @@ from performancelab.storage.json_athlete_repository import (
 from performancelab.storage.json_external_identity_repository import (
     JsonExternalIdentityRepository,
 )
+from performancelab.storage.json_training_coach_consent_repository import (
+    JsonTrainingCoachConsentRepository,
+)
 from performancelab.storage.json_user_repository import (
     JsonUserRepository,
 )
@@ -55,6 +58,9 @@ from performancelab.storage.postgresql_athlete_repository import (
 )
 from performancelab.storage.postgresql_external_identity_repository import (
     PostgreSQLExternalIdentityRepository,
+)
+from performancelab.storage.postgresql_training_coach_consent_repository import (
+    PostgreSQLTrainingCoachConsentRepository,
 )
 from performancelab.storage.postgresql_user_repository import (
     PostgreSQLUserRepository,
@@ -77,6 +83,7 @@ class RepositoryBundle:
     external_identity_repository: object
     alpha_invitation_repository: object
     athlete_access_repository: object
+    training_coach_consent_repository: object
 
     engine: Engine | None = field(
         default=None,
@@ -201,6 +208,12 @@ def build_repository_bundle(
                     / "athlete_access"
                 )
             ),
+            training_coach_consent_repository=(
+                JsonTrainingCoachConsentRepository(
+                    data_directory
+                    / "training_coach_consents"
+                )
+            ),
         )
 
     if not configuration.uses_postgresql:
@@ -246,6 +259,11 @@ def build_repository_bundle(
         ),
         athlete_access_repository=(
             PostgreSQLAthleteAccessRepository(
+                connection
+            )
+        ),
+        training_coach_consent_repository=(
+            PostgreSQLTrainingCoachConsentRepository(
                 connection
             )
         ),
