@@ -10,6 +10,8 @@ from datetime import (
 )
 import pytest
 
+import inspect
+
 from app.components.activities_page import (
     _activity_coach_material,
     _activity_date_label,
@@ -965,3 +967,19 @@ def test_activity_coach_requires_consent():
             regenerate=False,
             consent_permitted=False,
         )
+
+def test_activities_supports_consent_request():
+
+    signature = inspect.signature(
+        show_activities_page
+    )
+
+    assert (
+        "training_coach_permitted"
+        in signature.parameters
+    )
+
+    assert (
+        "on_allow_training_coach"
+        in signature.parameters
+    )

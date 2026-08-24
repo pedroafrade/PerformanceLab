@@ -37,6 +37,9 @@ from performancelab.presentation import (
 from .activity_analysis import (
     show_activity_analysis,
 )
+from .training_coach_consent import (
+    show_training_coach_consent_dialog,
+)
 from .workout_editor import (
     show_workout_editor,
 )
@@ -1406,6 +1409,7 @@ def show_activities_page(
     on_update_workout=None,
     on_delete_workouts=None,
     training_coach_permitted: bool = False,
+    on_allow_training_coach=None,
 ) -> bool:
     """
     Displays a compact scrolling activity browser.
@@ -1878,12 +1882,32 @@ def show_activities_page(
                             f"{selected_activity.workout_id}"
                         ),
                         use_container_width=True,
-                        disabled=(
-                            not training_coach_permitted
-                        ),
                     )
 
-                    if not regenerate:
+                    if (
+                        regenerate
+                        and not training_coach_permitted
+                    ):
+
+                        if (
+                            on_allow_training_coach
+                            is not None
+                        ):
+
+                            show_training_coach_consent_dialog(
+                                on_allow=(
+                                    on_allow_training_coach
+                                )
+                            )
+
+                        else:
+
+                            st.warning(
+                                "Training Coach permission "
+                                "cannot be changed right now."
+                            )
+
+                    elif not regenerate:
 
                         _show_activity_coach_narrative(
                             stored_interpretation
@@ -1952,12 +1976,32 @@ def show_activities_page(
                         ),
                         type="primary",
                         use_container_width=True,
-                        disabled=(
-                            not training_coach_permitted
-                        ),
                     )
 
-                    if generate:
+                    if (
+                        generate
+                        and not training_coach_permitted
+                    ):
+
+                        if (
+                            on_allow_training_coach
+                            is not None
+                        ):
+
+                            show_training_coach_consent_dialog(
+                                on_allow=(
+                                    on_allow_training_coach
+                                )
+                            )
+
+                        else:
+
+                            st.warning(
+                                "Training Coach permission "
+                                "cannot be changed right now."
+                            )
+
+                    elif generate:
 
                         with st.spinner(
                             "Generating interpretation..."

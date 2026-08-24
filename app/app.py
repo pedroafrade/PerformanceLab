@@ -650,6 +650,9 @@ elif page == "activities":
                     )
                 )
             ),
+            on_allow_training_coach=(
+                allow_training_coach
+            ),
         )
     )
 
