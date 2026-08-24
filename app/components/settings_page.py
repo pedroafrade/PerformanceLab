@@ -9,6 +9,9 @@ import streamlit as st
 from .athlete_panel import (
     show_athlete_panel,
 )
+from .training_coach_consent import (
+    show_training_coach_consent_settings,
+)
 
 def _settings_page_header() -> None:
     """
@@ -70,6 +73,10 @@ def _settings_page_header() -> None:
 
 def show_settings_page(
     athlete,
+    *,
+    training_coach_permitted: bool = False,
+    on_allow_training_coach=None,
+    on_withdraw_training_coach=None,
 ):
     """
     Displays athlete settings while reusing the
@@ -82,6 +89,20 @@ def show_settings_page(
         "Changes to physiological values, heart-rate "
         "zones and availability can influence future "
         "training plans and recommendations."
+    )
+
+    st.divider()
+
+    show_training_coach_consent_settings(
+        permitted=(
+            training_coach_permitted
+        ),
+        on_allow=(
+            on_allow_training_coach
+        ),
+        on_withdraw=(
+            on_withdraw_training_coach
+        ),
     )
 
     st.divider()

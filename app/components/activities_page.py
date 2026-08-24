@@ -1406,7 +1406,6 @@ def show_activities_page(
     on_update_workout=None,
     on_delete_workouts=None,
     training_coach_permitted: bool = False,
-    on_allow_training_coach=None,
 ) -> bool:
     """
     Displays a compact scrolling activity browser.
@@ -1823,7 +1822,10 @@ def show_activities_page(
                         )
                     )
 
-                if not training_coach_permitted:
+                if (
+                    stored_interpretation
+                    is None
+                ):
 
                     disclosure = (
                         build_activity_coach_disclosure()
@@ -1856,21 +1858,13 @@ def show_activities_page(
                     st.caption(
                         disclosure.limitation
                     )
-                    st.button(
-                        "Allow Training Coach",
-                        key=(
-                            "allow_training_coach_"
-                            f"{selected_activity.workout_id}"
-                        ),
-                        type="primary",
-                        use_container_width=True,
-                        on_click=(
-                            on_allow_training_coach
-                        ),
-                        disabled=(
-                            on_allow_training_coach
-                            is None
-                        ),
+                if not training_coach_permitted:
+
+                    st.caption(
+                        (
+                            "Training Coach is disabled. "
+                            "You can enable it in Settings."
+                        )
                     )
                 if (
                     stored_interpretation

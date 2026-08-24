@@ -24,6 +24,7 @@ from components import (
     show_settings_page,
     show_sidebar,
     show_today_page,
+    show_training_coach_consent_dialog,
     show_workout_editor,
 )
 
@@ -266,6 +267,29 @@ def allow_training_coach() -> None:
         "Training Coach enabled."
     )
 
+def withdraw_training_coach() -> None:
+    """
+    Withdraw consent for the authenticated user.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    with repository_bundle.transaction():
+
+        training_coach_consent_manager.withdraw(
+            user_id=current_user.user_id
+        )
+
+    st.session_state[
+        "training_coach_prompt_dismissed"
+    ] = True
+
+    st.session_state.persisted_notice = (
+        "Training Coach permission withdrawn."
+    )
+
 def show_login_screen() -> None:
     """
     Display the PerformanceLab OIDC login screen.
@@ -306,6 +330,11 @@ def logout() -> None:
 
     st.session_state.pop(
         "current_user",
+        None,
+    )
+
+    st.session_state.pop(
+        "training_coach_prompt_dismissed",
         None,
     )
 
@@ -504,6 +533,25 @@ if "athlete" not in st.session_state:
 
 athlete: Athlete = st.session_state.athlete
 
+training_coach_permitted = (
+    training_coach_consent_manager
+    .is_permitted(
+        user_id=current_user.user_id
+    )
+)
+
+if (
+    not training_coach_permitted
+    and not st.session_state.get(
+        "training_coach_prompt_dismissed",
+        False,
+    )
+):
+
+    show_training_coach_consent_dialog(
+        on_allow=allow_training_coach
+    )
+
 should_save_athlete = (
     st.session_state.notice
     is not None
@@ -602,9 +650,6 @@ elif page == "activities":
                     )
                 )
             ),
-            on_allow_training_coach=(
-                allow_training_coach
-            ),
         )
     )
 
@@ -631,7 +676,16 @@ elif page == "development":
 elif page == "settings":
 
     athlete = show_settings_page(
-        athlete
+        athlete,
+        training_coach_permitted=(
+            training_coach_permitted
+        ),
+        on_allow_training_coach=(
+            allow_training_coach
+        ),
+        on_withdraw_training_coach=(
+            withdraw_training_coach
+        ),
     )
 
 else:

@@ -34,3 +34,24 @@ def test_athlete_panel_supports_hidden_heading():
         parameter.kind
         is inspect.Parameter.KEYWORD_ONLY
     )
+
+def test_settings_supports_training_coach_consent():
+
+    signature = inspect.signature(
+        show_settings_page
+    )
+
+    assert (
+        "training_coach_permitted"
+        in signature.parameters
+    )
+
+    assert (
+        "on_allow_training_coach"
+        in signature.parameters
+    )
+
+    assert (
+        "on_withdraw_training_coach"
+        in signature.parameters
+    )

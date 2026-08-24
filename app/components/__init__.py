@@ -49,6 +49,10 @@ from .storage_panel import (
 from .today_page import (
     show_today_page,
 )
+from .training_coach_consent import (
+    show_training_coach_consent_dialog,
+    show_training_coach_consent_settings,
+)
 from .training_page import (
     show_training_page,
 )
@@ -80,6 +84,8 @@ __all__ = [
     "show_settings_page",
     "show_sidebar",
     "show_storage_panel",
+    "show_training_coach_consent_dialog",
+    "show_training_coach_consent_settings",
     "show_today_page",
     "show_training_page",
     "show_workout_details",
