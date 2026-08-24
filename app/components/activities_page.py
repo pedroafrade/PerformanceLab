@@ -1315,6 +1315,28 @@ def _activity_coach_material(
         stored_matches_current_context,
     )
 
+def _activity_coach_display_text(
+    value: str,
+) -> str:
+    """
+    Converts escaped line breaks into real line breaks
+    when presenting saved Training Coach text.
+    """
+
+    return (
+        value
+        .replace(
+            "\\r\\n",
+            "\n",
+        )
+        .replace(
+            "\\n",
+            "\n",
+        )
+        .strip()
+    )
+
+
 def _show_activity_coach_narrative(
     narrative,
 ) -> None:
@@ -1323,14 +1345,19 @@ def _show_activity_coach_narrative(
     """
 
     st.markdown(
-        narrative.prudent_interpretation
+        _activity_coach_display_text(
+            narrative.prudent_interpretation
+        )
     )
 
     st.markdown(
         "**Next training**"
     )
-    st.write(
-        narrative.recommendations
+
+    st.markdown(
+        _activity_coach_display_text(
+            narrative.recommendations
+        )
     )
 
     with st.expander(
@@ -1341,22 +1368,31 @@ def _show_activity_coach_narrative(
         st.markdown(
             "**Measured facts**"
         )
-        st.write(
-            narrative.measured_facts
+
+        st.markdown(
+            _activity_coach_display_text(
+                narrative.measured_facts
+            )
         )
 
         st.markdown(
             "**Deterministic signals**"
         )
-        st.write(
-            narrative.deterministic_signals
+
+        st.markdown(
+            _activity_coach_display_text(
+                narrative.deterministic_signals
+            )
         )
 
         st.markdown(
             "**Data limitations**"
         )
-        st.write(
-            narrative.data_limitations
+
+        st.markdown(
+            _activity_coach_display_text(
+                narrative.data_limitations
+            )
         )
 
     st.caption(

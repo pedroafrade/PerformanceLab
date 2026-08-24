@@ -13,6 +13,7 @@ import pytest
 import inspect
 
 from app.components.activities_page import (
+    _activity_coach_display_text,
     _activity_coach_material,
     _activity_date_label,
     _activity_rows,
@@ -983,4 +984,39 @@ def test_activities_supports_consent_request():
     assert (
         "on_allow_training_coach"
         in signature.parameters
+    )
+
+def test_converts_training_coach_literal_line_breaks():
+
+    text = (
+        "First paragraph."
+        "\\n\\n"
+        "Second paragraph."
+    )
+
+    assert (
+        _activity_coach_display_text(
+            text
+        )
+        == (
+            "First paragraph."
+            "\n\n"
+            "Second paragraph."
+        )
+    )
+
+
+def test_preserves_training_coach_real_line_breaks():
+
+    text = (
+        "First paragraph."
+        "\n\n"
+        "Second paragraph."
+    )
+
+    assert (
+        _activity_coach_display_text(
+            text
+        )
+        == text
     )
