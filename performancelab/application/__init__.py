@@ -8,6 +8,9 @@ from .delete_workouts import (
     DeleteWorkouts,
     DeleteWorkoutsResult,
 )
+from .generate_activity_coach_interpretation import (
+    GenerateActivityCoachInterpretation,
+)
 from .generate_training_plan import (
     GenerateTrainingPlan,
     GenerateTrainingPlanResult,
@@ -37,6 +40,7 @@ from .provision_invited_user import (
 __all__ = [
     "DeleteWorkouts",
     "DeleteWorkoutsResult",
+    "GenerateActivityCoachInterpretation",
     "GenerateTrainingPlan",
     "GenerateTrainingPlanResult",
     "ImportActivities",
