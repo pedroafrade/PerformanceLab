@@ -41,3 +41,9 @@ data/athlete_access/
 .env
 .env.*
 !.env.example
+
+# Local application data
+data/
+
+# Local continuity handout
+docs/HANDOUT_260814.md
