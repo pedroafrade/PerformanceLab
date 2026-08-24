@@ -661,6 +661,13 @@ elif page == "activities":
         athlete_repository.save(
             athlete
         )
+
+    if st.session_state.pop(
+        "activity_coach_refresh_requested",
+        False,
+    ):
+
+        st.rerun()
 elif page == "athlete":
 
     athlete = show_athlete_panel(

@@ -1946,6 +1946,10 @@ def show_activities_page(
 
                             athlete_changed = True
 
+                            st.session_state[
+                                "activity_coach_refresh_requested"
+                            ] = True
+
                             _show_activity_coach_narrative(
                                 resolution
                                 .interpretation
@@ -2032,6 +2036,10 @@ def show_activities_page(
                         ):
 
                             athlete_changed = True
+
+                            st.session_state[
+                                "activity_coach_refresh_requested"
+                            ] = True
 
                             _show_activity_coach_narrative(
                                 resolution
