@@ -21,6 +21,44 @@ _VO2MAX_PATTERN = re.compile(
 )
 
 
+def _observation_sort_key(
+    observation,
+) -> tuple[
+    int,
+    int,
+    int,
+    int,
+    int,
+]:
+    """
+    Builds a comparable chronological key for date and
+    datetime observations.
+    """
+
+    observed_at = (
+        observation.observed_at
+    )
+
+    if isinstance(
+        observed_at,
+        datetime,
+    ):
+        return (
+            observed_at.toordinal(),
+            observed_at.hour,
+            observed_at.minute,
+            observed_at.second,
+            observed_at.microsecond,
+        )
+
+    return (
+        observed_at.toordinal(),
+        0,
+        0,
+        0,
+        0,
+    )
+
 @dataclass(frozen=True)
 class VO2MaxObservation:
     """
@@ -115,8 +153,8 @@ class VO2MaxObservationBook:
             tuple(
                 sorted(
                     self._observations,
-                    key=lambda observation: (
-                        observation.observed_at
+                    key=(
+                        _observation_sort_key
                     ),
                 )
             )
