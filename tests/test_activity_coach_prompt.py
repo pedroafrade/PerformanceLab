@@ -83,7 +83,7 @@ def test_builds_json_serializable_prompt_payload():
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
     assert ACTIVITY_COACH_PROMPT_VERSION == (
-        "activity-coach-v4"
+        "activity-coach-v5"
     )
 
     assert payload[
@@ -96,8 +96,7 @@ def test_builds_json_serializable_prompt_payload():
         "notes"
     ] == "Felt tired on the final climb."
 
-
-def test_declares_available_and_missing_data():
+def test_omits_duplicated_data_inventories():
 
     payload = (
         build_activity_coach_prompt_payload(
@@ -106,20 +105,92 @@ def test_declares_available_and_missing_data():
     )
 
     assert (
-        "assessment.context.feedback.notes"
-        in payload["available_data"]
+        "available_data"
+        not in payload
     )
 
     assert (
-        "assessment.context.feedback.sleep_quality"
-        in payload["missing_data"]
+        "missing_data"
+        not in payload
+    )
+
+def test_minimizes_personal_activity_context():
+
+    assessment = create_assessment()
+
+    payload = (
+        build_activity_coach_prompt_payload(
+            assessment
+        )
+    )
+
+    activity = payload[
+        "assessment"
+    ][
+        "context"
+    ][
+        "activity"
+    ]
+
+    assert (
+        "workout_id"
+        not in activity
     )
 
     assert (
-        "assessment.context.event.distance"
-        in payload["missing_data"]
+        "workout_date"
+        not in activity
     )
 
+    assert (
+        "title"
+        not in activity
+    )
+
+    assert (
+        "rpe"
+        not in activity
+    )
+
+    assert (
+        "load_difference"
+        not in activity
+    )
+
+    feedback = payload[
+        "assessment"
+    ][
+        "context"
+    ][
+        "feedback"
+    ]
+
+    assert feedback[
+        "rpe"
+    ] == 7.0
+
+    assert feedback[
+        "notes"
+    ] == (
+        "Felt tired on the final climb."
+    )
+
+    assert (
+        "sleep_quality"
+        not in feedback
+    )
+
+    serialized = json.dumps(
+        payload
+    )
+
+    assert (
+        assessment
+        .context
+        .activity
+        .workout_id
+        not in serialized
+    )
 
 def test_contract_contains_safety_rules():
 

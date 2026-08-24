@@ -819,17 +819,18 @@ def test_builds_coach_payload_without_generation():
 
     assert payload[
         "contract_version"
-    ] == "activity-coach-v4"
+    ] == "activity-coach-v5"
 
-    assert payload[
-        "assessment"
-    ][
-        "context"
-    ][
-        "activity"
-    ][
+    assert (
         "title"
-    ] == "Hill Run"
+        not in payload[
+            "assessment"
+        ][
+            "context"
+        ][
+            "activity"
+        ]
+    )
     
     assert payload[
         "assessment"

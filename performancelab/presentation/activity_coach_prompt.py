@@ -21,7 +21,7 @@ from .activity_coach_models import (
 
 
 ACTIVITY_COACH_PROMPT_VERSION = (
-    "activity-coach-v4"
+    "activity-coach-v5"
 )
 
 ACTIVITY_COACH_NARRATIVE_STRUCTURE = (
@@ -283,72 +283,132 @@ def _serializable_value(
     return value
 
 
-def _data_paths(
+def _without_missing_values(
     value,
-    *,
-    prefix: str,
-    missing: bool,
-) -> tuple[str, ...]:
+):
     """
-    Lists available or missing leaf fields deterministically.
+    Remove unavailable values and empty structures.
     """
-
-    paths: list[str] = []
 
     if isinstance(
         value,
         dict,
     ):
-        for key, item in value.items():
-            child_prefix = (
-                f"{prefix}.{key}"
-                if prefix
-                else str(key)
-            )
 
-            paths.extend(
-                _data_paths(
-                    item,
-                    prefix=child_prefix,
-                    missing=missing,
+        cleaned = {}
+
+        for key, item in value.items():
+
+            cleaned_item = (
+                _without_missing_values(
+                    item
                 )
             )
 
-        return tuple(
-            paths
+            if cleaned_item is not None:
+
+                cleaned[
+                    key
+                ] = cleaned_item
+
+        return (
+            cleaned
+            if cleaned
+            else None
         )
 
     if isinstance(
         value,
         list,
     ):
-        for index, item in enumerate(
-            value
-        ):
-            paths.extend(
-                _data_paths(
-                    item,
-                    prefix=(
-                        f"{prefix}[{index}]"
-                    ),
-                    missing=missing,
+
+        cleaned = [
+            cleaned_item
+            for item in value
+            if (
+                cleaned_item
+                := _without_missing_values(
+                    item
                 )
             )
+            is not None
+        ]
 
-        return tuple(
-            paths
+        return (
+            cleaned
+            if cleaned
+            else None
         )
 
-    if (
-        value is None
-    ) is missing:
-        paths.append(
-            prefix
-        )
+    return value
 
-    return tuple(
-        paths
+
+def _minimized_assessment_data(
+    assessment_data,
+) -> dict[str, object]:
+    """
+    Remove identifiers, free labels and duplicated values.
+    """
+
+    context = assessment_data.get(
+        "context",
+        {},
     )
+
+    activity = context.get(
+        "activity",
+        {},
+    )
+
+    for field_name in (
+        "workout_id",
+        "workout_date",
+        "title",
+        "rpe",
+        "load_difference",
+    ):
+
+        activity.pop(
+            field_name,
+            None,
+        )
+
+    recent_training = context.get(
+        "recent_training",
+        {},
+    )
+
+    recent_training.pop(
+        "previous_title",
+        None,
+    )
+
+    event = context.get(
+        "event",
+        {},
+    )
+
+    event.pop(
+        "name",
+        None,
+    )
+
+    minimized = (
+        _without_missing_values(
+            assessment_data
+        )
+    )
+
+    if not isinstance(
+        minimized,
+        dict,
+    ):
+
+        raise ValueError(
+            "Activity Coach assessment cannot be empty."
+        )
+
+    return minimized
 
 
 def build_activity_coach_prompt_payload(
@@ -361,8 +421,12 @@ def build_activity_coach_prompt_payload(
     a language model or generate coaching text.
     """
 
-    assessment_data = _serializable_value(
-        assessment
+    assessment_data = (
+        _minimized_assessment_data(
+            _serializable_value(
+                assessment
+            )
+        )
     )
 
     return {
@@ -379,18 +443,4 @@ def build_activity_coach_prompt_payload(
             ACTIVITY_COACH_OUTPUT_SECTIONS
         ),
         "assessment": assessment_data,
-        "available_data": list(
-            _data_paths(
-                assessment_data,
-                prefix="assessment",
-                missing=False,
-            )
-        ),
-        "missing_data": list(
-            _data_paths(
-                assessment_data,
-                prefix="assessment",
-                missing=True,
-            )
-        ),
     }
