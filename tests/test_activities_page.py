@@ -806,6 +806,7 @@ def test_builds_coach_payload_without_generation():
     (
         payload,
         stored,
+        stored_matches_current_context,
     ) = _activity_coach_material(
         activity=activity,
         workout=workout,
@@ -839,6 +840,10 @@ def test_builds_coach_payload_without_generation():
     )
     
     assert stored is None
+    assert (
+        stored_matches_current_context
+        is False
+    )
     assert len(
         athlete.activity_coach_interpretations
     ) == 0

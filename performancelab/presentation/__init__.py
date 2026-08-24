@@ -23,6 +23,10 @@ from .activity_coach_models import (
 from .activity_coach_presenter import (
     ActivityCoachPresenter,
 )
+from .activity_coach_disclosure import (
+    ActivityCoachDisclosureData,
+    build_activity_coach_disclosure,
+)
 from .activity_coach_prompt import (
     ACTIVITY_COACH_OUTPUT_SECTIONS,
     ACTIVITY_COACH_PROMPT_RULES,
@@ -139,7 +143,8 @@ __all__ = [
     "ActivityCoachContextData",
     "ActivityCoachRecentTrainingData",
     "ActivityCoachSensorData",
-    "ActivityCoachPresenter",
+    "ActivityCoachDisclosureData",
+    "build_activity_coach_disclosure",
     "ActivityCoachEventData",
     "ActivityCoachPhysiologyData",
     "ActivityCoachPlanData",

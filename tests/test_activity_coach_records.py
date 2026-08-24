@@ -40,6 +40,7 @@ def create_interpretation(
     *,
     context_hash="context-a",
     recommendations="Recover prudently.",
+    generated_at=None,
 ):
 
     return ActivityCoachInterpretation(
@@ -48,12 +49,16 @@ def create_interpretation(
             "activity-coach-v1"
         ),
         context_hash=context_hash,
-        generated_at=datetime(
-            2026,
-            8,
-            11,
-            14,
-            0,
+        generated_at=(
+            generated_at
+            if generated_at is not None
+            else datetime(
+                2026,
+                8,
+                11,
+                14,
+                0,
+            )
         ),
         narrative=create_narrative(
             recommendations=(
@@ -61,7 +66,6 @@ def create_interpretation(
             )
         ),
     )
-
 
 def test_context_hash_is_deterministic():
 
@@ -183,3 +187,63 @@ def test_keeps_different_context_versions():
     )
 
     assert len(book) == 2
+
+
+
+def test_finds_latest_interpretation_for_workout():
+
+    older = create_interpretation(
+        context_hash="context-old",
+        generated_at=datetime(
+            2026,
+            8,
+            10,
+            12,
+            0,
+        ),
+    )
+
+    newer = create_interpretation(
+        context_hash="context-new",
+        generated_at=datetime(
+            2026,
+            8,
+            12,
+            12,
+            0,
+        ),
+    )
+
+    book = (
+        ActivityCoachInterpretationBook(
+            records=(
+                older,
+                newer,
+            )
+        )
+    )
+
+    assert (
+        book.latest_for_workout(
+            workout_id="workout-1"
+        )
+        == newer
+    )
+
+
+def test_latest_interpretation_returns_none_for_unknown_workout():
+
+    book = (
+        ActivityCoachInterpretationBook(
+            records=(
+                create_interpretation(),
+            )
+        )
+    )
+
+    assert (
+        book.latest_for_workout(
+            workout_id="unknown-workout"
+        )
+        is None
+    )

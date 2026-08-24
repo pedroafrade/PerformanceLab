@@ -514,3 +514,82 @@ def test_uses_none_for_unrecorded_feedback():
     assert feedback.stress is None
     assert feedback.muscle_soreness is None
     assert feedback.notes is None
+
+
+
+def test_ignores_missing_recent_training_load():
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    previous = Workout()
+    previous.info.title = (
+        "Activity without RPE"
+    )
+    previous.info.sport = "Running"
+    previous.info.date = date(
+        2026,
+        8,
+        6,
+    )
+    previous.info.duration = timedelta(
+        minutes=30
+    )
+
+    current = Workout()
+    current.info.title = (
+        "Current activity"
+    )
+    current.info.sport = "Running"
+    current.info.date = date(
+        2026,
+        8,
+        9,
+    )
+    current.info.duration = timedelta(
+        minutes=45
+    )
+
+    athlete.history.add(
+        previous
+    )
+    athlete.history.add(
+        current
+    )
+
+    activity = replace(
+        create_activity(),
+        workout_id=str(
+            current.workout_id
+        ),
+    )
+
+    context = ActivityCoachPresenter(
+        activity=activity,
+        workout=current,
+        athlete=athlete,
+    ).build().context
+
+    recent = (
+        context.recent_training
+    )
+
+    assert recent.session_count == 2
+
+    assert (
+        recent.total_duration_minutes
+        == pytest.approx(75.0)
+    )
+
+    assert recent.total_load == 0.0
+
+    assert (
+        recent.previous_title
+        == "Activity without RPE"
+    )
+
+    assert (
+        recent.previous_load
+        is None
+    )

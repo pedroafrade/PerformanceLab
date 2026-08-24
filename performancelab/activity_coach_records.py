@@ -14,7 +14,10 @@ from collections.abc import (
     Mapping,
 )
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 from typing import (
     TYPE_CHECKING,
 )
@@ -140,6 +143,56 @@ class ActivityCoachInterpretationBook:
                 if record.identity == identity
             ),
             None,
+        )
+    def latest_for_workout(
+        self,
+        *,
+        workout_id: str,
+    ) -> ActivityCoachInterpretation | None:
+        """
+        Return the latest saved interpretation for a workout.
+
+        This fallback preserves a previous interpretation when
+        the current factual context no longer has the same hash.
+        """
+
+        candidates = tuple(
+            record
+            for record in self._records
+            if (
+                record.workout_id
+                == workout_id
+            )
+        )
+
+        if not candidates:
+
+            return None
+
+        def generated_timestamp(
+            record,
+        ) -> float:
+
+            generated_at = (
+                record.generated_at
+            )
+
+            if (
+                generated_at.tzinfo
+                is None
+            ):
+
+                generated_at = (
+                    generated_at.replace(
+                        tzinfo=timezone.utc
+                    )
+                )
+
+            return generated_at.timestamp()
+
+        return max(
+            candidates,
+            key=generated_timestamp,
         )
 
     def add(

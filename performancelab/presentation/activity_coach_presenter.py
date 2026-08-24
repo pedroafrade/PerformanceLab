@@ -207,14 +207,26 @@ class ActivityCoachPresenter:
             if workout.duration is not None
         )
 
-        total_load = sum(
-            float(
+        total_load = 0.0
+
+        for recent_workout in (
+            recent_workouts
+        ):
+
+            recent_workout_load = (
                 workout_load(
-                    workout
+                    recent_workout
                 )
             )
-            for workout in recent_workouts
-        )
+
+            if (
+                recent_workout_load
+                is not None
+            ):
+
+                total_load += float(
+                    recent_workout_load
+                )
 
         previous_candidates = [
             workout
@@ -267,10 +279,21 @@ class ActivityCoachPresenter:
                 - previous_day
             ).days
 
-            previous_load = float(
+            previous_workout_load = (
                 workout_load(
                     previous_workout
                 )
+            )
+
+            previous_load = (
+                float(
+                    previous_workout_load
+                )
+                if (
+                    previous_workout_load
+                    is not None
+                )
+                else None
             )
 
         return ActivityCoachRecentTrainingData(

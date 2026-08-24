@@ -30,6 +30,7 @@ from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
     ActivityCoachPresenter,
+    build_activity_coach_disclosure,
     build_activity_coach_prompt_payload,
     sensor_summary,
 )
@@ -1242,8 +1243,11 @@ def _activity_coach_material(
     athlete,
 ):
     """
-    Builds the current payload and resolves a compatible
-    stored interpretation without generating new text.
+    Build the current payload and find a saved interpretation.
+
+    An exact context match is preferred. If the context changed,
+    the latest saved interpretation remains available but is
+    explicitly marked as belonging to an earlier context.
     """
 
     assessment = (
@@ -1286,11 +1290,27 @@ def _activity_coach_material(
         )
     )
 
+    stored_matches_current_context = (
+        stored is not None
+    )
+
+    if stored is None:
+
+        stored = (
+            athlete
+            .activity_coach_interpretations
+            .latest_for_workout(
+                workout_id=(
+                    activity.workout_id
+                )
+            )
+        )
+
     return (
         payload,
         stored,
+        stored_matches_current_context,
     )
-
 
 def _show_activity_coach_narrative(
     narrative,
@@ -1767,6 +1787,7 @@ def show_activities_page(
                 (
                     coach_payload,
                     stored_interpretation,
+                    stored_matches_current_context,
                 ) = _activity_coach_material(
                     activity=(
                         selected_activity
@@ -1776,6 +1797,59 @@ def show_activities_page(
                     ),
                     athlete=athlete,
                 )
+                if (
+                    stored_interpretation
+                    is not None
+                    and not (
+                        stored_matches_current_context
+                    )
+                ):
+
+                    st.caption(
+                        (
+                            "This saved interpretation was "
+                            "generated from an earlier version "
+                            "of the activity context. Regenerate "
+                            "it to include the current information."
+                        )
+                    )
+
+                if (
+                    stored_interpretation
+                    is None
+                ):
+
+                    disclosure = (
+                        build_activity_coach_disclosure()
+                    )
+
+                    st.markdown(
+                        f"**{disclosure.heading}**"
+                    )
+
+                    st.caption(
+                        disclosure.purpose
+                    )
+
+                    st.caption(
+                        (
+                            "Data sent: "
+                            f"{disclosure.data_summary}."
+                        )
+                    )
+
+                    st.caption(
+                        (
+                            "The original activity file is "
+                            "not sent. The generated "
+                            "interpretation is saved with "
+                            "the activity."
+                        )
+                    )
+
+                    st.caption(
+                        disclosure.limitation
+                    )
 
                 if (
                     stored_interpretation
