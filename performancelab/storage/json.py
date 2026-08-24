@@ -285,6 +285,10 @@ def _workout_to_dict(workout):
 
             "sport": workout.info.sport,
 
+            "sub_sport": (
+                workout.info.sub_sport
+            ),
+
             "title": workout.info.title,
 
             "description": (
@@ -382,6 +386,14 @@ def _workout_from_dict(data):
     )
 
     workout.info.sport = info.get("sport")
+
+    workout.info.sub_sport = str(
+        info.get(
+            "sub_sport",
+            "",
+        )
+        or ""
+    )
 
     workout.info.title = info.get(
         "title",
@@ -1168,7 +1180,7 @@ def athlete_to_dict(athlete):
 
         "format": "PerformanceLab",
 
-        "version": 11,
+        "version": 12,
 
         "athlete": {
 

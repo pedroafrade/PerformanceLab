@@ -18,6 +18,8 @@ class WorkoutInfo:
 
     sport: str | None = None
 
+    sub_sport: str = ""
+
     title: str = ""
 
     description: str = ""

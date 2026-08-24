@@ -130,6 +130,7 @@ def create_athlete():
     )
 
     workout.info.sport = "Running"
+    workout.info.sub_sport = "street"
     workout.info.title = "Morning Run"
     workout.info.description = "Easy session"
     workout.info.source = "manual"
@@ -235,7 +236,7 @@ def test_athlete_to_dict():
 
     assert data["format"] == "PerformanceLab"
 
-    assert data["version"] == 11
+    assert data["version"] == 12
 
     assert "id" in data["athlete"]
 
@@ -244,6 +245,12 @@ def test_athlete_to_dict():
     assert data["athlete"]["name"] == "Pedro"
 
     assert len(data["workouts"]) == 1
+
+    assert data["workouts"][0][
+        "info"
+    ][
+        "sub_sport"
+    ] == "street"
 
     assert (
         data["workouts"][0]["id"]
@@ -371,6 +378,11 @@ def test_athlete_round_trip():
     )
 
     assert workout.sport == "Running"
+
+    assert (
+        workout.info.sub_sport
+        == "street"
+    )
 
     assert workout.distance == 10
 
@@ -974,7 +986,7 @@ def test_training_plan_reconciliation_date_round_trip():
 
     assert (
         data["version"]
-        == 11
+        == 12
     )
 
     assert (
@@ -1130,7 +1142,7 @@ def test_training_plan_adaptation_round_trip():
         athlete
     )
 
-    assert data["version"] == 11
+    assert data["version"] == 12
 
     assert data["training_plan"][
         "adaptations"
@@ -1238,7 +1250,7 @@ def test_activity_coach_interpretation_round_trip():
         athlete
     )
 
-    assert data["version"] == 11
+    assert data["version"] == 12
     assert data[
         "activity_coach_interpretations"
     ][0][
@@ -1330,7 +1342,7 @@ def test_vo2max_observations_round_trip():
         athlete
     )
 
-    assert data["version"] == 11
+    assert data["version"] == 12
     assert data[
         "vo2max_observations"
     ] == [
@@ -1390,3 +1402,25 @@ def test_loads_legacy_data_without_vo2max_observations():
     assert len(
         loaded.vo2max_observations
     ) == 0
+
+def test_legacy_workout_without_sub_sport_loads_empty():
+
+    data = athlete_to_dict(
+        create_athlete()
+    )
+
+    data["workouts"][0][
+        "info"
+    ].pop(
+        "sub_sport"
+    )
+
+    loaded = athlete_from_dict(
+        data
+    )
+
+    assert (
+        loaded.history[0]
+        .info.sub_sport
+        == ""
+    )
