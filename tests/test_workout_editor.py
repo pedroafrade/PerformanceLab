@@ -266,6 +266,7 @@ def create_fake_workout():
     info = SimpleNamespace(
         title="Easy Run",
         sport="Running",
+        sub_sport="street",
         date=date(
             2026,
             1,
@@ -308,6 +309,7 @@ def test_save_routes_update_through_callback(
         },
         input_values={
             "Title": "Tempo Run",
+            "Running type": "trail",
             "Date": date(
                 2026,
                 1,
@@ -362,6 +364,10 @@ def test_save_routes_update_through_callback(
     assert (
         calls["update"].title
         == "Tempo Run"
+    )
+    assert (
+        calls["update"].sub_sport
+        == "trail"
     )
     assert (
         calls["update"].distance

@@ -63,6 +63,7 @@ def workout(
 
     activity.info.title = "Easy Run"
     activity.info.sport = "Running"
+    activity.info.sub_sport = "street"
     activity.info.date = (
         workout_date
         or date(
@@ -88,6 +89,7 @@ def update_data(
     values = {
         "title": "Tempo Run",
         "sport": "Running",
+        "sub_sport": "trail",
         "workout_date": date(
             2026,
             8,
@@ -148,7 +150,10 @@ def test_updates_workout_and_saves_once():
     assert repository.save_calls == 1
     assert updated.info.title == "Tempo Run"
     assert updated.info.sport == "Running"
-
+    assert (
+        updated.info.sub_sport
+        == "trail"
+    )
     assert updated.info.date == date(
         2026,
         8,
@@ -199,6 +204,7 @@ def test_identical_update_does_not_save():
         WorkoutUpdate(
             title="Easy Run",
             sport="Running",
+            sub_sport="street",
             workout_date=date(
                 2026,
                 8,

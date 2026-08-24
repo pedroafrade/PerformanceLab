@@ -310,6 +310,68 @@ def _show_workout_edit_fields(
         key=f"{key_prefix}_sport",
     )
 
+    stored_sub_sport = str(
+        selected_workout
+        .info
+        .sub_sport
+        or ""
+    ).strip().casefold()
+
+    sub_sport = stored_sub_sport
+
+    if sport == "Running":
+
+        sub_sport_options = [
+            "",
+            "street",
+            "trail",
+            "track_running",
+            "indoor_running",
+            "treadmill",
+        ]
+
+        if (
+            stored_sub_sport
+            and stored_sub_sport
+            not in sub_sport_options
+        ):
+            sub_sport_options.append(
+                stored_sub_sport
+            )
+
+        sub_sport_labels = {
+            "": "Unknown",
+            "street": "Road running",
+            "trail": "Trail running",
+            "track_running": "Track running",
+            "indoor_running": "Indoor running",
+            "treadmill": "Treadmill",
+        }
+
+        sub_sport = st.selectbox(
+            "Running type",
+            sub_sport_options,
+            index=(
+                sub_sport_options.index(
+                    stored_sub_sport
+                )
+            ),
+            format_func=(
+                lambda value: (
+                    sub_sport_labels.get(
+                        value,
+                        value.replace(
+                            "_",
+                            " ",
+                        ).title(),
+                    )
+                )
+            ),
+            key=(
+                f"{key_prefix}_sub_sport"
+            ),
+        )
+
     workout_date = st.date_input(
         "Date",
         value=selected_workout.date,
@@ -462,6 +524,7 @@ def _show_workout_edit_fields(
             update = WorkoutUpdate(
                 title=title,
                 sport=sport,
+                sub_sport=sub_sport,
                 workout_date=(
                     _updated_workout_date(
                         selected_workout,

@@ -34,6 +34,7 @@ class WorkoutUpdate:
 
     title: str
     sport: str
+    sub_sport: str
     workout_date: date | datetime
     distance: float | None
     duration: timedelta
@@ -102,6 +103,7 @@ class UpdateWorkout:
         requested_values = (
             update.title.strip(),
             update.sport.strip(),
+            update.sub_sport.strip(),
             update.workout_date,
             update.distance,
             update.duration,
@@ -123,20 +125,23 @@ class UpdateWorkout:
         workout.info.sport = (
             requested_values[1]
         )
-        workout.info.date = (
+        workout.info.sub_sport = (
             requested_values[2]
         )
-        workout.info.distance = (
+        workout.info.date = (
             requested_values[3]
         )
-        workout.info.duration = (
+        workout.info.distance = (
             requested_values[4]
         )
-        workout.info.elevation_gain = (
+        workout.info.duration = (
             requested_values[5]
         )
-        workout.feedback.rpe = (
+        workout.info.elevation_gain = (
             requested_values[6]
+        )
+        workout.feedback.rpe = (
+            requested_values[7]
         )
 
         athlete.history._sort()
@@ -213,6 +218,14 @@ class UpdateWorkout:
             )
 
         if not isinstance(
+            update.sub_sport,
+            str,
+        ):
+            raise TypeError(
+                "sub_sport must be a string."
+            )
+
+        if not isinstance(
             update.workout_date,
             date,
         ):
@@ -282,6 +295,7 @@ class UpdateWorkout:
     ) -> tuple[
         str,
         str,
+        str,
         date | datetime | None,
         float | None,
         timedelta | None,
@@ -299,6 +313,10 @@ class UpdateWorkout:
             ).strip(),
             str(
                 workout.info.sport
+                or ""
+            ).strip(),
+            str(
+                workout.info.sub_sport
                 or ""
             ).strip(),
             workout.info.date,
