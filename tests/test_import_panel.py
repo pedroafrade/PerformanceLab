@@ -92,12 +92,23 @@ def test_parses_fit_without_changing_athlete(
         workout_id="parsed-workout"
     )
 
+    calls = {}
+
     class FakeFITImporter:
 
         def read(
             self,
             source,
         ):
+
+            calls[
+                "source"
+            ] = source
+
+            assert (
+                source.closed
+                is False
+            )
 
             return parsed_workout
 
@@ -134,7 +145,12 @@ def test_parses_fit_without_changing_athlete(
         parsed_workout.info.title
         == "morning"
     )
-
+    assert (
+        calls[
+            "source"
+        ].closed
+        is True
+    )
 
 def test_imports_valid_files_through_callback(
     monkeypatch,
@@ -305,10 +321,53 @@ def test_skips_strava_csv_as_activity(
     assert calls["count"] == 0
 
 
-def test_prepares_compressed_fit_upload():
+def test_imports_compressed_fit_in_memory(
+    monkeypatch,
+):
 
     fit_content = (
         minimal_fit_content()
+    )
+
+    parsed_workout = Workout(
+        workout_id=(
+            "compressed-workout"
+        )
+    )
+
+    calls = {}
+
+    class FakeFITImporter:
+
+        def read(
+            self,
+            source,
+        ):
+
+            calls[
+                "source"
+            ] = source
+
+            calls[
+                "name"
+            ] = source.name
+
+            calls[
+                "content"
+            ] = source.read()
+
+            return parsed_workout
+
+    monkeypatch.setattr(
+        import_panel,
+        "FITImporter",
+        FakeFITImporter,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "_estimate_imported_workout_rpe",
+        lambda workout, athlete: None,
     )
 
     uploaded_file = SimpleNamespace(
@@ -318,20 +377,34 @@ def test_prepares_compressed_fit_upload():
         ),
     )
 
-    source, extension = (
-        import_panel._prepare_uploaded_file(
-            uploaded_file
+    result = (
+        import_panel._import_uploaded_file(
+            uploaded_file,
+            SimpleNamespace(),
         )
     )
 
-    assert extension == "fit"
+    assert result is parsed_workout
 
-    assert source.name == (
-        "strava_activity.fit"
+    assert (
+        calls[
+            "name"
+        ]
+        == "strava_activity.fit"
     )
 
-    assert source.read() == (
-        fit_content
+    assert (
+        calls[
+            "content"
+        ]
+        == fit_content
+    )
+
+    assert (
+        calls[
+            "source"
+        ].closed
+        is True
     )
 
 

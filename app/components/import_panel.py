@@ -9,7 +9,6 @@ from csv import (
 )
 
 from io import (
-    BytesIO,
     StringIO,
 )
 
@@ -18,6 +17,9 @@ import streamlit as st
 from performancelab.importers import (
     FITImporter,
     GPXImporter,
+)
+from performancelab.upload_processing import (
+    open_activity_upload,
 )
 from performancelab.upload_validation import (
     validate_activity_upload_content,
@@ -50,36 +52,6 @@ def _estimate_imported_workout_rpe(
             "resting_hr",
             None,
         ),
-    )
-
-
-def _prepare_uploaded_file(
-    uploaded_file,
-):
-    """
-    Validate and prepare an uploaded activity for its importer.
-
-    Strava FIT files may be compressed as .fit.gz.
-    """
-
-    validated_upload = (
-        validate_activity_upload_content(
-            uploaded_file.name,
-            uploaded_file.getvalue(),
-        )
-    )
-
-    source = BytesIO(
-        validated_upload.content
-    )
-
-    source.name = (
-        validated_upload.prepared_name
-    )
-
-    return (
-        source,
-        validated_upload.importer_format,
     )
 
 def _normalized_file_name(
@@ -240,34 +212,37 @@ def _import_uploaded_file(
     strava_titles=None,
 ):
     """
-    Parse one uploaded file into a Workout.
+    Parse one validated in-memory file into a Workout.
 
-    This adapter does not change or persist the athlete.
+    The temporary in-memory stream is closed immediately after
+    the importer finishes, including when parsing fails.
     """
 
-    source, extension = (
-        _prepare_uploaded_file(
-            uploaded_file
+    with open_activity_upload(
+        uploaded_file.name,
+        uploaded_file.getvalue(),
+    ) as (
+        source,
+        extension,
+    ):
+
+        if extension == "gpx":
+
+            importer = GPXImporter()
+
+        elif extension == "fit":
+
+            importer = FITImporter()
+
+        else:
+
+            raise ValueError(
+                "Unsupported file format."
+            )
+
+        workout = importer.read(
+            source
         )
-    )
-
-    if extension == "gpx":
-
-        importer = GPXImporter()
-
-    elif extension == "fit":
-
-        importer = FITImporter()
-
-    else:
-
-        raise ValueError(
-            "Unsupported file format."
-        )
-
-    workout = importer.read(
-        source
-    )
 
     if extension == "fit":
 
