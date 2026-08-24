@@ -21,7 +21,7 @@ from .activity_coach_models import (
 
 
 ACTIVITY_COACH_PROMPT_VERSION = (
-    "activity-coach-v6"
+    "activity-coach-v7"
 )
 
 ACTIVITY_COACH_NARRATIVE_STRUCTURE = (
@@ -62,6 +62,23 @@ ACTIVITY_COACH_PROMPT_RULES = (
     (
         "Use only information explicitly present "
         "in the payload."
+    ),
+    (
+        "Treat sport as the main recorded sport, "
+        "sub_sport as the explicitly recorded discipline, "
+        "and terrain as a separate environmental fact."
+    ),
+    (
+        "Never infer sub_sport from the activity title, "
+        "distance, elevation, route, or terrain. When "
+        "sub_sport is missing, treat the running discipline "
+        "as unknown."
+    ),
+    (
+        "When comparing a running activity with an event, "
+        "use sub_sport when available to distinguish road "
+        "running from trail running. Do not treat terrain "
+        "as a substitute for sub_sport."
     ),
     (
         "Separate measured facts, deterministic "
@@ -394,6 +411,7 @@ def _minimized_assessment_data(
     for field_name in (
         "workout_id",
         "title",
+        "sport",
         "rpe",
         "load_difference",
     ):

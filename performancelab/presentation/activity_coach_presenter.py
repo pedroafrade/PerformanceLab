@@ -534,6 +534,16 @@ class ActivityCoachPresenter:
             self.workout.environment
         )
 
+        sport = str(
+            self.workout.sport
+            or ""
+        ).strip()
+
+        sub_sport = str(
+            self.workout.info.sub_sport
+            or ""
+        ).strip().casefold()
+
         terrain = str(
             environment.terrain
             or ""
@@ -555,6 +565,16 @@ class ActivityCoachPresenter:
             ),
             cadence=self._sensor_data(
                 "cadence"
+            ),
+            sport=(
+                sport
+                if sport
+                else None
+            ),
+            sub_sport=(
+                sub_sport
+                if sub_sport
+                else None
             ),
             temperature=(
                 float(

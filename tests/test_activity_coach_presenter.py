@@ -52,6 +52,9 @@ def create_activity():
 def create_workout():
     workout = Workout()
 
+    workout.info.sport = "Running"
+    workout.info.sub_sport = "trail"
+
     workout.sensors.add(
         "heart_rate",
         [
@@ -123,6 +126,9 @@ def test_builds_activity_coach_context():
         pytest.approx(141.0)
     )
     assert context.cadence.maximum == 144.0
+
+    assert context.sport == "Running"
+    assert context.sub_sport == "trail"
 
     assert context.temperature == 20.0
     assert context.humidity == 89.0

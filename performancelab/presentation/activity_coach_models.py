@@ -117,6 +117,9 @@ class ActivityCoachContextData:
     power: ActivityCoachSensorData
     cadence: ActivityCoachSensorData
 
+    sport: str | None = None
+    sub_sport: str | None = None
+
     temperature: float | None = None
     humidity: float | None = None
     terrain: str | None = None

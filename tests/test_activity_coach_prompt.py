@@ -19,7 +19,9 @@ from datetime import (
 
 def create_assessment():
     workout = Workout()
-
+    workout.info.sport = "Running"
+    workout.info.sub_sport = "trail"
+    workout.environment.terrain = "Mixed"
     workout.feedback.rpe = 7.0
     workout.feedback.notes = (
         "Felt tired on the final climb."
@@ -83,7 +85,7 @@ def test_builds_json_serializable_prompt_payload():
     ] == ACTIVITY_COACH_PROMPT_VERSION
 
     assert ACTIVITY_COACH_PROMPT_VERSION == (
-        "activity-coach-v6"
+        "activity-coach-v7"
     )
 
     assert payload[
@@ -190,6 +192,28 @@ def test_minimizes_personal_activity_context():
         .workout_id
         not in serialized
     )
+    assert (
+        "sport"
+        not in activity
+    )
+
+    context = payload[
+        "assessment"
+    ][
+        "context"
+    ]
+
+    assert context[
+        "sport"
+    ] == "Running"
+
+    assert context[
+        "sub_sport"
+    ] == "trail"
+
+    assert context[
+        "terrain"
+    ] == "Mixed"
 
 def test_contract_contains_safety_rules():
 
@@ -308,6 +332,21 @@ def test_contract_contains_safety_rules():
         "recommendations",
         "data_limitations",
     ]
+    assert "explicitly recorded discipline" in (
+        combined_rules
+    )
+
+    assert "never infer sub_sport" in (
+        combined_rules
+    )
+
+    assert "road running from trail running" in (
+        combined_rules
+    )
+
+    assert "separate environmental fact" in (
+        combined_rules
+    )
 
 def test_exports_activity_coach_feedback_data():
 
