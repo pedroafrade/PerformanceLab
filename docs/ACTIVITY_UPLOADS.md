@@ -11,7 +11,7 @@ Supported inputs:
 - FIT.GZ;
 - GPX;
 - Strava `activities.csv`, used only as metadata for activity
-  titles.
+  titles and explicitly recorded running disciplines.
 
 ## Private alpha limits
 
@@ -52,6 +52,34 @@ Hosting and network infrastructure may hold request data transiently
 while transmitting or processing an upload. That temporary
 infrastructure handling is separate from PerformanceLab application
 storage and must be covered by the hosting provider's privacy terms.
+
+## Running discipline provenance
+
+PerformanceLab stores the main sport and running discipline as
+separate factual fields.
+
+For example:
+
+- `sport` may contain `Running`;
+- `sub_sport` may contain `trail`;
+- `terrain` describes the available environmental or surface
+  information and is not a running discipline.
+
+The running discipline may come from:
+
+- the standard FIT `sub_sport` field, when present;
+- an explicit `Trail Run` activity type in the associated Strava
+  `activities.csv`;
+- a manual correction made by the athlete in the activity editor.
+
+PerformanceLab does not classify an activity as trail or road from
+its title, distance, elevation gain, route or terrain.
+
+A generic Strava `Run` value remains `Running`. It is not
+automatically classified as road running.
+
+When the FIT file does not contain `sub_sport`, the athlete can use
+the activity editor to select the factual running discipline.
 
 ## Import results
 
