@@ -1371,10 +1371,17 @@ def _resolve_activity_coach(
     activity,
     payload,
     regenerate: bool,
+    consent_permitted: bool,
 ):
     """
     Routes generation through the provider-neutral service.
     """
+
+    if not consent_permitted:
+
+        raise PermissionError(
+            "Training Coach consent is required."
+        )
 
     coordinator = ActivityCoachCoordinator(
         generation_service=(
@@ -1398,6 +1405,8 @@ def show_activities_page(
     *,
     on_update_workout=None,
     on_delete_workouts=None,
+    training_coach_permitted: bool = False,
+    on_allow_training_coach=None,
 ) -> bool:
     """
     Displays a compact scrolling activity browser.
@@ -1814,10 +1823,7 @@ def show_activities_page(
                         )
                     )
 
-                if (
-                    stored_interpretation
-                    is None
-                ):
+                if not training_coach_permitted:
 
                     disclosure = (
                         build_activity_coach_disclosure()
@@ -1850,7 +1856,22 @@ def show_activities_page(
                     st.caption(
                         disclosure.limitation
                     )
-
+                    st.button(
+                        "Allow Training Coach",
+                        key=(
+                            "allow_training_coach_"
+                            f"{selected_activity.workout_id}"
+                        ),
+                        type="primary",
+                        use_container_width=True,
+                        on_click=(
+                            on_allow_training_coach
+                        ),
+                        disabled=(
+                            on_allow_training_coach
+                            is None
+                        ),
+                    )
                 if (
                     stored_interpretation
                     is not None
@@ -1863,6 +1884,9 @@ def show_activities_page(
                             f"{selected_activity.workout_id}"
                         ),
                         use_container_width=True,
+                        disabled=(
+                            not training_coach_permitted
+                        ),
                     )
 
                     if not regenerate:
@@ -1888,6 +1912,9 @@ def show_activities_page(
                                         coach_payload
                                     ),
                                     regenerate=True,
+                                    consent_permitted=(
+                                        training_coach_permitted
+                                    ),
                                 )
                             )
 
@@ -1931,6 +1958,9 @@ def show_activities_page(
                         ),
                         type="primary",
                         use_container_width=True,
+                        disabled=(
+                            not training_coach_permitted
+                        ),
                     )
 
                     if generate:
@@ -1949,6 +1979,9 @@ def show_activities_page(
                                         coach_payload
                                     ),
                                     regenerate=False,
+                                    consent_permitted=(
+                                        training_coach_permitted
+                                    ),
                                 )
                             )
 

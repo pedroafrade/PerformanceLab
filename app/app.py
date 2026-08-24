@@ -35,6 +35,7 @@ from performancelab.application import (
     GenerateTrainingPlan,
     ImportActivities,
     LoadActiveAthlete,
+    ManageTrainingCoachConsent,
     ProvisionInvitedUser,
     UpdateWorkout,
 )
@@ -119,9 +120,20 @@ athlete_access_repository = (
     repository_bundle
     .athlete_access_repository
 )
+training_coach_consent_repository = (
+    repository_bundle
+    .training_coach_consent_repository
+)
 athlete_authorization = (
     AthleteAuthorizationService(
         athlete_access_repository
+    )
+)
+training_coach_consent_manager = (
+    ManageTrainingCoachConsent(
+        repository=(
+            training_coach_consent_repository
+        )
     )
 )
 
@@ -234,6 +246,25 @@ def delete_completed_workouts(
     )
 
     return result
+
+def allow_training_coach() -> None:
+    """
+    Persist consent for the authenticated user.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    with repository_bundle.transaction():
+
+        training_coach_consent_manager.grant(
+            user_id=current_user.user_id
+        )
+
+    st.session_state.persisted_notice = (
+        "Training Coach enabled."
+    )
 
 def show_login_screen() -> None:
     """
@@ -562,6 +593,17 @@ elif page == "activities":
             ),
             on_delete_workouts=(
                 delete_completed_workouts
+            ),
+            training_coach_permitted=(
+                training_coach_consent_manager
+                .is_permitted(
+                    user_id=(
+                        current_user.user_id
+                    )
+                )
+            ),
+            on_allow_training_coach=(
+                allow_training_coach
             ),
         )
     )

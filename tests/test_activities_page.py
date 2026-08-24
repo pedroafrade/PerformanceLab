@@ -8,6 +8,7 @@ from datetime import (
     timedelta,
     timezone,
 )
+import pytest
 
 from app.components.activities_page import (
     _activity_coach_material,
@@ -20,6 +21,7 @@ from app.components.activities_page import (
     _outcome_filter_value,
     _outcome_label,
     _period_start_date,
+    _resolve_activity_coach,
     _total_duration,
     _vo2max_metric_label,
     _workout_for_activity,
@@ -927,3 +929,39 @@ def test_formats_missing_activity_vo2max():
         )
         == "—"
     )
+
+def test_activity_coach_requires_consent():
+
+    with pytest.raises(
+        PermissionError,
+        match="consent is required",
+    ):
+
+        _resolve_activity_coach(
+            athlete=Athlete(
+                name="Pedro"
+            ),
+            activity=create_activity(
+                workout_id="workout-1",
+                workout_date=date(
+                    2026,
+                    8,
+                    24,
+                ),
+                title="Easy Run",
+                sport="Running",
+                distance=10,
+                duration=timedelta(
+                    hours=1
+                ),
+                elevation_gain=100,
+                rpe=5,
+            ),
+            payload={
+                "contract_version": (
+                    "activity-coach-v4"
+                ),
+            },
+            regenerate=False,
+            consent_permitted=False,
+        )
