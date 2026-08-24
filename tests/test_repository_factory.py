@@ -24,6 +24,9 @@ from performancelab.storage.json_external_identity_repository import (
 from performancelab.storage.json_training_coach_consent_repository import (
     JsonTrainingCoachConsentRepository,
 )
+from performancelab.storage.json_training_coach_usage_repository import (
+    JsonTrainingCoachUsageRepository,
+)
 from performancelab.storage.json_user_repository import (
     JsonUserRepository,
 )
@@ -41,6 +44,9 @@ from performancelab.storage.postgresql_external_identity_repository import (
 )
 from performancelab.storage.postgresql_training_coach_consent_repository import (
     PostgreSQLTrainingCoachConsentRepository,
+)
+from performancelab.storage.postgresql_training_coach_usage_repository import (
+    PostgreSQLTrainingCoachUsageRepository,
 )
 from performancelab.storage.postgresql_user_repository import (
     PostgreSQLUserRepository,
@@ -84,6 +90,10 @@ def test_local_environment_selects_json_repositories(
     assert isinstance(
         bundle.training_coach_consent_repository,
         JsonTrainingCoachConsentRepository,
+    )
+    assert isinstance(
+        bundle.training_coach_usage_repository,
+        JsonTrainingCoachUsageRepository,
     )
 
     assert bundle.uses_postgresql is False
@@ -141,6 +151,13 @@ def test_local_environment_uses_expected_directories(
         ._directory
         == tmp_path
         / "training_coach_consents"
+    )
+    assert (
+        bundle
+        .training_coach_usage_repository
+        ._directory
+        == tmp_path
+        / "training_coach_usage"
     )
 
 
@@ -234,6 +251,10 @@ def test_alpha_environment_selects_postgresql_repositories():
         assert isinstance(
             bundle.training_coach_consent_repository,
             PostgreSQLTrainingCoachConsentRepository,
+        )
+        assert isinstance(
+            bundle.training_coach_usage_repository,
+            PostgreSQLTrainingCoachUsageRepository,
         )
 
         assert bundle.uses_postgresql is True
