@@ -82,6 +82,43 @@ class ActivitiesPresenter:
 
         return value
 
+    @staticmethod
+    def _presented_sport(
+        workout,
+    ) -> str:
+        """
+        Returns a factual presentation label for the sport.
+
+        Running disciplines are distinguished only when the
+        workout contains an explicit terrain value. Missing
+        terrain remains generic Running.
+        """
+
+        sport = str(
+            workout.sport
+            or "Other"
+        ).strip()
+
+        if sport.casefold() != "running":
+            return sport
+
+        terrain = str(
+            workout.environment.terrain
+            or ""
+        ).strip().casefold()
+
+        running_disciplines = {
+            "trail": "Trail Running",
+            "road": "Road Running",
+            "track": "Track Running",
+            "indoor": "Indoor Running",
+        }
+
+        return running_disciplines.get(
+            terrain,
+            "Running",
+        )
+
     def _outcomes_by_workout_id(
         self,
     ) -> dict[str, object]:
@@ -196,9 +233,11 @@ class ActivitiesPresenter:
                 workout.workout_id
             ),
             workout_date=workout.date,
-            sport=str(
-                workout.sport
-                or "Other"
+            sport=(
+                ActivitiesPresenter
+                ._presented_sport(
+                    workout
+                )
             ),
             title=repair_mojibake(
                 str(

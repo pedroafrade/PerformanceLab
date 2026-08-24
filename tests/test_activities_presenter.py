@@ -30,6 +30,7 @@ def create_activity(
     workout_date: date,
     title: str,
     sport: str = "Running",
+    terrain: str | None = None,
     distance: float | None = None,
     duration: timedelta | None = None,
     elevation_gain: float | None = None,
@@ -47,6 +48,11 @@ def create_activity(
         elevation_gain
     )
     workout.feedback.rpe = rpe
+
+    if terrain is not None:
+        workout.environment.terrain = (
+            terrain
+        )
 
     return workout
 
@@ -618,4 +624,151 @@ def test_repairs_legacy_activity_title():
 
     assert result[0].title == (
         "T75_Recuperação"
+    )
+
+@pytest.mark.parametrize(
+    (
+        "terrain",
+        "expected_sport",
+    ),
+    (
+        (
+            "Trail",
+            "Trail Running",
+        ),
+        (
+            "Road",
+            "Road Running",
+        ),
+        (
+            "Track",
+            "Track Running",
+        ),
+        (
+            "Indoor",
+            "Indoor Running",
+        ),
+    ),
+)
+def test_presents_factual_running_discipline(
+    terrain,
+    expected_sport,
+):
+
+    workout = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            24,
+        ),
+        title="Running activity",
+        sport="Running",
+        terrain=terrain,
+        distance=21.0,
+        elevation_gain=750.0,
+    )
+
+    activity = ActivitiesPresenter(
+        History(
+            workouts=[
+                workout,
+            ]
+        )
+    ).build()[0]
+
+    assert (
+        activity.sport
+        == expected_sport
+    )
+
+
+def test_keeps_running_when_terrain_is_missing():
+
+    workout = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            24,
+        ),
+        title="Running activity",
+        sport="Running",
+        distance=21.0,
+        elevation_gain=750.0,
+    )
+
+    activity = ActivitiesPresenter(
+        History(
+            workouts=[
+                workout,
+            ]
+        )
+    ).build()[0]
+
+    assert activity.sport == "Running"
+
+
+def test_does_not_reclassify_non_running_sport():
+
+    workout = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            24,
+        ),
+        title="Trail ride",
+        sport="Cycling",
+        terrain="Trail",
+    )
+
+    activity = ActivitiesPresenter(
+        History(
+            workouts=[
+                workout,
+            ]
+        )
+    ).build()[0]
+
+    assert activity.sport == "Cycling"
+
+
+def test_filters_by_factual_running_discipline():
+
+    trail_run = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            24,
+        ),
+        title="Trail session",
+        terrain="Trail",
+    )
+
+    road_run = create_activity(
+        workout_date=date(
+            2026,
+            8,
+            23,
+        ),
+        title="Road session",
+        terrain="Road",
+    )
+
+    result = ActivitiesPresenter(
+        History(
+            workouts=[
+                trail_run,
+                road_run,
+            ]
+        )
+    ).build(
+        filters=ActivityFilters(
+            sport="Trail Running"
+        )
+    )
+
+    assert tuple(
+        activity.title
+        for activity in result
+    ) == (
+        "Trail session",
     )
