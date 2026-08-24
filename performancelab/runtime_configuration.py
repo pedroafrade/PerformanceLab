@@ -21,7 +21,9 @@ from sqlalchemy.engine import (
 from sqlalchemy.exc import (
     ArgumentError,
 )
-
+from performancelab.training_coach_usage_limits import (
+    TrainingCoachUsageLimits,
+)
 
 RuntimeEnvironment = Literal[
     "local",
@@ -47,6 +49,8 @@ class RuntimeConfiguration:
         default=None,
         repr=False,
     )
+    training_coach_user_daily_limit: int = 5
+    training_coach_global_daily_limit: int = 50
 
     def __post_init__(
         self,
@@ -149,6 +153,87 @@ class RuntimeConfiguration:
             "database_url",
             normalized_database_url,
         )
+        usage_limits = (
+            TrainingCoachUsageLimits(
+                user_daily_limit=(
+                    self
+                    .training_coach_user_daily_limit
+                ),
+                global_daily_limit=(
+                    self
+                    .training_coach_global_daily_limit
+                ),
+            )
+        )
+
+        object.__setattr__(
+            self,
+            (
+                "training_coach_"
+                "user_daily_limit"
+            ),
+            usage_limits.user_daily_limit,
+        )
+
+        object.__setattr__(
+            self,
+            (
+                "training_coach_"
+                "global_daily_limit"
+            ),
+            usage_limits.global_daily_limit,
+        )
+
+    @staticmethod
+    def _integer_setting(
+        value,
+        *,
+        field_name: str,
+    ) -> int:
+        """
+        Convert an environment setting into an integer.
+        """
+
+        if isinstance(
+            value,
+            bool,
+        ):
+
+            raise TypeError(
+                f"{field_name} must be an integer."
+            )
+
+        if isinstance(
+            value,
+            int,
+        ):
+
+            return value
+
+        if not isinstance(
+            value,
+            str,
+        ):
+
+            raise TypeError(
+                f"{field_name} must be an integer."
+            )
+
+        normalized_value = (
+            value.strip()
+        )
+
+        try:
+
+            return int(
+                normalized_value
+            )
+
+        except ValueError as error:
+
+            raise ValueError(
+                f"{field_name} must be an integer."
+            ) from error
 
     @classmethod
     def from_mapping(
@@ -166,6 +251,7 @@ class RuntimeConfiguration:
             values,
             Mapping,
         ):
+
             raise TypeError(
                 "Configuration values must be a mapping."
             )
@@ -179,9 +265,66 @@ class RuntimeConfiguration:
             "DATABASE_URL"
         )
 
+        user_daily_limit = (
+            cls._integer_setting(
+                values.get(
+                    (
+                        "TRAINING_COACH_"
+                        "USER_DAILY_LIMIT"
+                    ),
+                    5,
+                ),
+                field_name=(
+                    "TRAINING_COACH_"
+                    "USER_DAILY_LIMIT"
+                ),
+            )
+        )
+
+        global_daily_limit = (
+            cls._integer_setting(
+                values.get(
+                    (
+                        "TRAINING_COACH_"
+                        "GLOBAL_DAILY_LIMIT"
+                    ),
+                    50,
+                ),
+                field_name=(
+                    "TRAINING_COACH_"
+                    "GLOBAL_DAILY_LIMIT"
+                ),
+            )
+        )
+
         return cls(
             environment=environment,
             database_url=database_url,
+            training_coach_user_daily_limit=(
+                user_daily_limit
+            ),
+            training_coach_global_daily_limit=(
+                global_daily_limit
+            ),
+        )
+
+    @property
+    def training_coach_usage_limits(
+        self,
+    ) -> TrainingCoachUsageLimits:
+        """
+        Return the validated Training Coach limits.
+        """
+
+        return TrainingCoachUsageLimits(
+            user_daily_limit=(
+                self
+                .training_coach_user_daily_limit
+            ),
+            global_daily_limit=(
+                self
+                .training_coach_global_daily_limit
+            ),
         )
 
     @property

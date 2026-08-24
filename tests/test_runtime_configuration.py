@@ -198,3 +198,97 @@ def test_rejects_invalid_configuration_collection():
         RuntimeConfiguration.from_mapping(
             None
         )
+
+def test_defaults_training_coach_limits():
+
+    configuration = RuntimeConfiguration(
+        environment="local"
+    )
+
+    assert (
+        configuration
+        .training_coach_user_daily_limit
+        == 5
+    )
+
+    assert (
+        configuration
+        .training_coach_global_daily_limit
+        == 50
+    )
+
+
+def test_reads_training_coach_limits_from_mapping():
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                (
+                    "TRAINING_COACH_"
+                    "USER_DAILY_LIMIT"
+                ): "3",
+                (
+                    "TRAINING_COACH_"
+                    "GLOBAL_DAILY_LIMIT"
+                ): "20",
+            }
+        )
+    )
+
+    assert (
+        configuration
+        .training_coach_user_daily_limit
+        == 3
+    )
+
+    assert (
+        configuration
+        .training_coach_global_daily_limit
+        == 20
+    )
+
+    assert (
+        configuration
+        .training_coach_usage_limits
+        .user_daily_limit
+        == 3
+    )
+
+
+def test_rejects_non_integer_training_coach_limit():
+
+    with pytest.raises(
+        ValueError,
+        match="must be an integer",
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                (
+                    "TRAINING_COACH_"
+                    "USER_DAILY_LIMIT"
+                ): "five",
+            }
+        )
+
+
+def test_rejects_user_limit_above_global_limit():
+
+    with pytest.raises(
+        ValueError,
+        match="cannot exceed",
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                (
+                    "TRAINING_COACH_"
+                    "USER_DAILY_LIMIT"
+                ): "20",
+                (
+                    "TRAINING_COACH_"
+                    "GLOBAL_DAILY_LIMIT"
+                ): "10",
+            }
+        )
