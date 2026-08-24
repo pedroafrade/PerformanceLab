@@ -538,6 +538,7 @@ def test_successful_import_resets_uploader(
 
     fake_streamlit = SimpleNamespace(
         session_state=state,
+        caption=lambda message: None,
         file_uploader=(
             lambda *args, **kwargs: [
                 uploaded_file,
@@ -628,6 +629,7 @@ def test_failed_import_resets_uploader(
 
     fake_streamlit = SimpleNamespace(
         session_state=state,
+        caption=lambda message: None,
         file_uploader=(
             lambda *args, **kwargs: [
                 uploaded_file,
@@ -717,6 +719,7 @@ def test_pending_import_error_is_shown_once(
 
     fake_streamlit = SimpleNamespace(
         session_state=state,
+        caption=lambda message: None,
         file_uploader=(
             lambda *args, **kwargs: None
         ),
@@ -756,3 +759,45 @@ def test_pending_import_error_is_shown_once(
         ]
         == 1
     )
+
+
+
+def test_discloses_activity_file_retention_policy(
+    monkeypatch,
+):
+
+    shown_captions = []
+
+    fake_streamlit = SimpleNamespace(
+        session_state={},
+        caption=shown_captions.append,
+        file_uploader=(
+            lambda *args, **kwargs: None
+        ),
+        error=lambda message: None,
+        rerun=lambda: None,
+    )
+
+    monkeypatch.setattr(
+        import_panel,
+        "st",
+        fake_streamlit,
+    )
+
+    import_panel.show_import_panel(
+        SimpleNamespace(),
+        on_import_activities=(
+            lambda workouts: None
+        ),
+        key_prefix="disclosure",
+    )
+
+    assert shown_captions == [
+        (
+            "FIT, FIT.GZ, GPX or Strava "
+            "activities.csv · up to 20 files, "
+            "20 MB each. Files are processed "
+            "in memory and the originals are "
+            "not retained."
+        ),
+    ]

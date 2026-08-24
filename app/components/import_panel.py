@@ -44,6 +44,13 @@ from performancelab.workout import (
     estimate_workout_rpe,
 )
 
+ACTIVITY_UPLOAD_DISCLOSURE = (
+    "FIT, FIT.GZ, GPX or Strava activities.csv · "
+    "up to 20 files, 20 MB each. "
+    "Files are processed in memory and the originals "
+    "are not retained."
+)
+
 
 def _estimate_imported_workout_rpe(
     workout,
@@ -498,6 +505,9 @@ def show_import_panel(
             uploader_version_key,
             0,
         )
+    )
+    st.caption(
+        ACTIVITY_UPLOAD_DISCLOSURE
     )
 
     uploaded_files = st.file_uploader(
