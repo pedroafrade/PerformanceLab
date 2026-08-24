@@ -577,7 +577,9 @@ def test_successful_import_resets_uploader(
     )
 
     import_panel.show_import_panel(
-        SimpleNamespace(),
+        SimpleNamespace(
+            athlete_id="athlete-success"
+        ),
         on_import_activities=(
             lambda workouts: None
         ),
@@ -663,7 +665,9 @@ def test_failed_import_resets_uploader(
     )
 
     import_panel.show_import_panel(
-        SimpleNamespace(),
+        SimpleNamespace(
+            athlete_id="athlete-failure"
+        ),
         on_import_activities=(
             lambda workouts: None
         ),

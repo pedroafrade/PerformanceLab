@@ -18,6 +18,11 @@ from performancelab.importers import (
     FITImporter,
     GPXImporter,
 )
+from performancelab.upload_guard import (
+    ActivityUploadInProgressError,
+    ActivityUploadTooSoonError,
+    DEFAULT_ACTIVITY_UPLOAD_GUARD,
+)
 from performancelab.upload_logging import (
     log_activity_upload_completed,
     log_activity_upload_failed,
@@ -516,12 +521,39 @@ def show_import_panel(
 
     try:
 
-        batch_result = (
-            _import_uploaded_files(
-                uploaded_files,
-                athlete,
-                on_import_activities,
+        with (
+            DEFAULT_ACTIVITY_UPLOAD_GUARD
+            .protect(
+                athlete.athlete_id
             )
+        ):
+
+            batch_result = (
+                _import_uploaded_files(
+                    uploaded_files,
+                    athlete,
+                    on_import_activities,
+                )
+            )
+
+    except ActivityUploadInProgressError:
+
+        st.session_state[
+            upload_error_key
+        ] = (
+            "An activity import is already "
+            "in progress. Please wait for it "
+            "to finish."
+        )
+
+    except ActivityUploadTooSoonError:
+
+        st.session_state[
+            upload_error_key
+        ] = (
+            "Activity imports were repeated "
+            "too quickly. Please wait a moment "
+            "and try again."
         )
 
     except Exception:
