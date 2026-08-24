@@ -22,6 +22,7 @@ from performancelab.storage.postgresql_schema import (
     athletes,
     external_identities,
     metadata,
+    training_coach_consents,
     user_athlete_access,
     users,
 )
@@ -58,6 +59,7 @@ def test_defines_expected_postgresql_tables():
         "external_identities",
         "user_athlete_access",
         "alpha_invitations",
+        "training_coach_consents",
         "athlete_snapshots",
     }
 
@@ -69,6 +71,7 @@ def test_defines_expected_postgresql_tables():
         external_identities,
         user_athlete_access,
         alpha_invitations,
+        training_coach_consents,
         athlete_snapshots,
     )
 
@@ -235,6 +238,7 @@ def test_schema_contains_domain_value_constraints():
         users,
         user_athlete_access,
         alpha_invitations,
+        training_coach_consents,
         athlete_snapshots,
     )
 

@@ -272,6 +272,52 @@ alpha_invitations = Table(
     ),
 )
 
+training_coach_consents = Table(
+    "training_coach_consents",
+    metadata,
+    Column(
+        "consent_id",
+        String(36),
+        primary_key=True,
+    ),
+    Column(
+        "user_id",
+        String(36),
+        ForeignKey(
+            "users.user_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    ),
+    Column(
+        "purpose",
+        String(50),
+        nullable=False,
+    ),
+    Column(
+        "policy_version",
+        String(100),
+        nullable=False,
+    ),
+    Column(
+        "granted_at",
+        DateTime(
+            timezone=True
+        ),
+        nullable=False,
+    ),
+    Column(
+        "withdrawn_at",
+        DateTime(
+            timezone=True
+        ),
+        nullable=True,
+    ),
+    CheckConstraint(
+        "purpose = 'training-coach'",
+        name="purpose",
+    ),
+)
 
 athlete_snapshots = Table(
     "athlete_snapshots",
@@ -316,5 +362,6 @@ POSTGRESQL_TABLES = (
     external_identities,
     user_athlete_access,
     alpha_invitations,
+    training_coach_consents,
     athlete_snapshots,
 )

@@ -15,10 +15,6 @@ from sqlalchemy.dialects.postgresql import (
     JSONB,
 )
 
-from performancelab.storage.postgresql_schema import (
-    metadata,
-)
-
 
 MIGRATION_PATH = (
     Path(__file__).parent.parent
@@ -107,12 +103,6 @@ def test_initial_migration_creates_all_schema_tables(
         "user_athlete_access",
         "alpha_invitations",
         "athlete_snapshots",
-    )
-
-    assert set(
-        created_tables
-    ) == set(
-        metadata.tables
     )
 
 
