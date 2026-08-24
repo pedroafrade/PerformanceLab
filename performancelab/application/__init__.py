@@ -21,6 +21,9 @@ from .load_active_athlete import (
     LoadActiveAthlete,
     LoadActiveAthleteResult,
 )
+from .manage_training_coach_consent import (
+    ManageTrainingCoachConsent,
+)
 from .update_workout import (
     UpdateWorkout,
     UpdateWorkoutResult,
@@ -41,6 +44,7 @@ __all__ = [
     "ImportedActivityOutcome",
     "LoadActiveAthlete",
     "LoadActiveAthleteResult",
+    "ManageTrainingCoachConsent",
     "ProvisionInvitedUser",
     "ProvisionInvitedUserResult",
     "UpdateWorkout",
