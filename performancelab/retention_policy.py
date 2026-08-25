@@ -4,6 +4,9 @@ PerformanceLab
 Explicit retention periods for the private alpha.
 """
 
+from collections.abc import (
+    Mapping,
+)
 from dataclasses import (
     dataclass,
 )
@@ -54,6 +57,85 @@ def _retention_days(
 
     return value
 
+RETENTION_SETTING_NAMES = {
+    "inactive_account_days": (
+        "RETENTION_INACTIVE_ACCOUNT_DAYS"
+    ),
+    "inactivity_notice_days": (
+        "RETENTION_INACTIVITY_NOTICE_DAYS"
+    ),
+    "training_coach_usage_days": (
+        "RETENTION_TRAINING_COACH_USAGE_DAYS"
+    ),
+    "consent_evidence_days": (
+        "RETENTION_CONSENT_EVIDENCE_DAYS"
+    ),
+    "unused_invitation_days": (
+        "RETENTION_UNUSED_INVITATION_DAYS"
+    ),
+    "expired_invitation_days": (
+        "RETENTION_EXPIRED_INVITATION_DAYS"
+    ),
+    "application_log_days": (
+        "RETENTION_APPLICATION_LOG_DAYS"
+    ),
+    "error_alert_days": (
+        "RETENTION_ERROR_ALERT_DAYS"
+    ),
+    "backup_days": (
+        "RETENTION_BACKUP_DAYS"
+    ),
+    "support_request_days": (
+        "RETENTION_SUPPORT_REQUEST_DAYS"
+    ),
+    "post_alpha_days": (
+        "RETENTION_POST_ALPHA_DAYS"
+    ),
+}
+
+
+def _mapping_integer(
+    value,
+    *,
+    setting_name: str,
+) -> int:
+    """
+    Convert one environment-style value to an integer.
+    """
+
+    if (
+        isinstance(
+            value,
+            int,
+        )
+        and not isinstance(
+            value,
+            bool,
+        )
+    ):
+
+        return value
+
+    if not isinstance(
+        value,
+        str,
+    ):
+
+        raise TypeError(
+            f"{setting_name} must be an integer."
+        )
+
+    try:
+
+        return int(
+            value.strip()
+        )
+
+    except ValueError as error:
+
+        raise ValueError(
+            f"{setting_name} must be an integer."
+        ) from error
 
 @dataclass(
     frozen=True
@@ -131,6 +213,84 @@ class AlphaRetentionPolicy:
                 "inactivity_notice_days must be shorter "
                 "than inactive_account_days."
             )
+
+    @classmethod
+    def from_mapping(
+        cls,
+        values: Mapping[
+            str,
+            object,
+        ],
+    ):
+        """
+        Build a policy from explicit environment settings.
+        """
+
+        if not isinstance(
+            values,
+            Mapping,
+        ):
+
+            raise TypeError(
+                "Retention settings must be a mapping."
+            )
+
+        missing_settings = tuple(
+            setting_name
+            for setting_name
+            in RETENTION_SETTING_NAMES.values()
+            if (
+                setting_name not in values
+                or values[
+                    setting_name
+                ] is None
+                or (
+                    isinstance(
+                        values[
+                            setting_name
+                        ],
+                        str,
+                    )
+                    and not (
+                        values[
+                            setting_name
+                        ].strip()
+                    )
+                )
+            )
+        )
+
+        if missing_settings:
+
+            raise RuntimeError(
+                "Missing private alpha retention "
+                "settings: "
+                + ", ".join(
+                    missing_settings
+                )
+                + "."
+            )
+
+        return cls(
+            **{
+                field_name: _mapping_integer(
+                    values[
+                        setting_name
+                    ],
+                    setting_name=(
+                        setting_name
+                    ),
+                )
+                for (
+                    field_name,
+                    setting_name,
+                )
+                in (
+                    RETENTION_SETTING_NAMES
+                    .items()
+                )
+            }
+        )
 
     def as_dict(
         self,

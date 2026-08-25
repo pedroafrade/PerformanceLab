@@ -133,3 +133,103 @@ def test_notice_period_must_be_shorter_than_inactivity_period():
             inactive_account_days=30,
             inactivity_notice_days=30,
         )
+
+def retention_mapping(
+    **changes,
+):
+
+    values = {
+        "RETENTION_INACTIVE_ACCOUNT_DAYS": "90",
+        "RETENTION_INACTIVITY_NOTICE_DAYS": "14",
+        "RETENTION_TRAINING_COACH_USAGE_DAYS": "30",
+        "RETENTION_CONSENT_EVIDENCE_DAYS": "0",
+        "RETENTION_UNUSED_INVITATION_DAYS": "14",
+        "RETENTION_EXPIRED_INVITATION_DAYS": "7",
+        "RETENTION_APPLICATION_LOG_DAYS": "14",
+        "RETENTION_ERROR_ALERT_DAYS": "30",
+        "RETENTION_BACKUP_DAYS": "14",
+        "RETENTION_SUPPORT_REQUEST_DAYS": "30",
+        "RETENTION_POST_ALPHA_DAYS": "30",
+    }
+
+    values.update(
+        changes
+    )
+
+    return values
+
+
+def test_builds_retention_policy_from_mapping():
+
+    policy = (
+        AlphaRetentionPolicy
+        .from_mapping(
+            retention_mapping()
+        )
+    )
+
+    assert (
+        policy.inactive_account_days
+        == 90
+    )
+
+    assert (
+        policy.consent_evidence_days
+        == 0
+    )
+
+    assert (
+        policy.backup_days
+        == 14
+    )
+
+
+def test_mapping_requires_every_retention_setting():
+
+    values = retention_mapping()
+
+    del values[
+        "RETENTION_BACKUP_DAYS"
+    ]
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "RETENTION_BACKUP_DAYS"
+        ),
+    ):
+
+        AlphaRetentionPolicy.from_mapping(
+            values
+        )
+
+
+def test_mapping_rejects_non_integer_setting():
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "RETENTION_APPLICATION_LOG_DAYS "
+            "must be an integer"
+        ),
+    ):
+
+        AlphaRetentionPolicy.from_mapping(
+            retention_mapping(
+                RETENTION_APPLICATION_LOG_DAYS=(
+                    "two weeks"
+                ),
+            )
+        )
+
+
+def test_mapping_rejects_invalid_collection():
+
+    with pytest.raises(
+        TypeError,
+        match="must be a mapping",
+    ):
+
+        AlphaRetentionPolicy.from_mapping(
+            None
+        )
