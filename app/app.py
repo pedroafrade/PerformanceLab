@@ -63,6 +63,7 @@ from performancelab.oidc_identity import (
     external_identity_from_claims,
 )
 from performancelab.runtime_configuration import (
+    RUNTIME_CONFIGURATION_SETTING_NAMES,
     RuntimeConfiguration,
 )
 from performancelab.storage.repository_factory import (
@@ -88,11 +89,7 @@ runtime_values = dict(
 )
 
 for configuration_key in (
-    "PERFORMANCELAB_ENV",
-    "DATABASE_URL",
-    "TRAINING_COACH_ENABLED",
-    "TRAINING_COACH_USER_DAILY_LIMIT",
-    "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
+    RUNTIME_CONFIGURATION_SETTING_NAMES
 ):
 
     if configuration_key in st.secrets:

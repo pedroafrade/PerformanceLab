@@ -23,6 +23,7 @@ from sqlalchemy.exc import (
 )
 from performancelab.retention_policy import (
     AlphaRetentionPolicy,
+    RETENTION_SETTING_NAMES,
 )
 from performancelab.training_coach_usage_limits import (
     TrainingCoachUsageLimits,
@@ -34,6 +35,14 @@ RuntimeEnvironment = Literal[
     "alpha",
 ]
 
+RUNTIME_CONFIGURATION_SETTING_NAMES = (
+    "PERFORMANCELAB_ENV",
+    "DATABASE_URL",
+    "TRAINING_COACH_ENABLED",
+    "TRAINING_COACH_USER_DAILY_LIMIT",
+    "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
+    *RETENTION_SETTING_NAMES.values(),
+)
 
 @dataclass(
     frozen=True

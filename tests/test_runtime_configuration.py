@@ -9,6 +9,7 @@ from performancelab.retention_policy import (
 )
 
 from performancelab.runtime_configuration import (
+    RUNTIME_CONFIGURATION_SETTING_NAMES,
     RuntimeConfiguration,
 )
 
@@ -521,3 +522,18 @@ def test_local_environment_does_not_require_retention_policy():
         configuration.retention_policy
         is None
     )
+
+def test_runtime_configuration_exposes_retention_settings():
+
+    expected_settings = {
+        "PERFORMANCELAB_ENV",
+        "DATABASE_URL",
+        "TRAINING_COACH_ENABLED",
+        "TRAINING_COACH_USER_DAILY_LIMIT",
+        "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
+        *alpha_retention_values().keys(),
+    }
+
+    assert set(
+        RUNTIME_CONFIGURATION_SETTING_NAMES
+    ) == expected_settings
