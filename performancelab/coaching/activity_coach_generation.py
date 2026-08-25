@@ -56,8 +56,42 @@ class ActivityCoachProviderUnavailable(
     RuntimeError
 ):
     """
-    Raised when a configured provider cannot be used.
+    Raised when a provider request cannot be completed.
+
+    The stable error code may be presented to application
+    layers. The original provider exception remains private.
     """
+
+    _ALLOWED_ERROR_CODES = {
+        "provider_configuration",
+        "provider_authentication",
+        "provider_quota",
+        "provider_request",
+        "provider_safety",
+        "provider_unavailable",
+    }
+
+    def __init__(
+        self,
+        error_code: str = (
+            "provider_unavailable"
+        ),
+    ) -> None:
+
+        if (
+            error_code
+            not in self._ALLOWED_ERROR_CODES
+        ):
+
+            raise ValueError(
+                "Unsupported provider error code."
+            )
+
+        self.error_code = error_code
+
+        super().__init__(
+            error_code
+        )
 
 
 class ActivityCoachTextProvider(
@@ -133,14 +167,32 @@ class ActivityCoachGenerationService:
                 )
             )
 
-        except ActivityCoachProviderUnavailable:
+        except (
+            ActivityCoachProviderUnavailable
+        ) as error:
+
+            unavailable_codes = {
+                "provider_configuration",
+                "provider_authentication",
+                "provider_quota",
+                "provider_unavailable",
+            }
+
             return ActivityCoachGenerationResult(
                 status=(
                     ActivityCoachGenerationStatus
                     .UNAVAILABLE
+                    if (
+                        error.error_code
+                        in unavailable_codes
+                    )
+                    else (
+                        ActivityCoachGenerationStatus
+                        .FAILED
+                    )
                 ),
                 error_code=(
-                    "provider_unavailable"
+                    error.error_code
                 ),
             )
 

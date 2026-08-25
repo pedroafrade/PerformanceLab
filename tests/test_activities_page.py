@@ -25,6 +25,7 @@ from app.components.activities_page import (
     _outcome_label,
     _period_start_date,
     _resolve_activity_coach,
+    _training_coach_error_message,
     _training_coach_limit_message,
     _total_duration,
     _vo2max_metric_label,
@@ -1050,5 +1051,49 @@ def test_explains_global_training_coach_limit():
             "The Training Coach has reached its "
             "overall limit for today. Please try "
             "again tomorrow."
+        )
+    )
+
+@pytest.mark.parametrize(
+    (
+        "error_code",
+        "expected_text",
+    ),
+    (
+        (
+            "provider_configuration",
+            "not configured",
+        ),
+        (
+            "provider_authentication",
+            "could not authenticate",
+        ),
+        (
+            "provider_quota",
+            "provider quota",
+        ),
+        (
+            "provider_request",
+            "could not process",
+        ),
+        (
+            "provider_safety",
+            "did not accept",
+        ),
+        (
+            "provider_unavailable",
+            "temporarily unavailable",
+        ),
+    ),
+)
+def test_explains_training_coach_provider_errors(
+    error_code,
+    expected_text,
+):
+
+    assert (
+        expected_text
+        in _training_coach_error_message(
+            error_code
         )
     )

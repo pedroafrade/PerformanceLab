@@ -32,6 +32,20 @@ class FakeActivityCoachProvider:
                 ActivityCoachProviderUnavailable()
             )
 
+        if self.failure == "quota":
+            raise (
+                ActivityCoachProviderUnavailable(
+                    "provider_quota"
+                )
+            )
+
+        if self.failure == "request":
+            raise (
+                ActivityCoachProviderUnavailable(
+                    "provider_request"
+                )
+            )
+
         if self.failure == "failed":
             raise RuntimeError(
                 "Unexpected provider failure"
@@ -202,3 +216,52 @@ def test_generation_result_is_immutable():
         raise AssertionError(
             "Generation result must be immutable"
         )
+
+def test_preserves_provider_quota_classification():
+
+    result = (
+        ActivityCoachGenerationService(
+            FakeActivityCoachProvider(
+                failure="quota"
+            )
+        )
+        .generate(
+            {}
+        )
+    )
+
+    assert (
+        result.status
+        is ActivityCoachGenerationStatus
+        .UNAVAILABLE
+    )
+
+    assert (
+        result.error_code
+        == "provider_quota"
+    )
+
+
+def test_classifies_invalid_provider_request_as_failed():
+
+    result = (
+        ActivityCoachGenerationService(
+            FakeActivityCoachProvider(
+                failure="request"
+            )
+        )
+        .generate(
+            {}
+        )
+    )
+
+    assert (
+        result.status
+        is ActivityCoachGenerationStatus
+        .FAILED
+    )
+
+    assert (
+        result.error_code
+        == "provider_request"
+    )

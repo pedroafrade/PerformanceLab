@@ -49,6 +49,101 @@ _ACTIVITY_COACH_RESPONSE_SCHEMA = {
     ],
 }
 
+def _gemini_error_code(
+    error,
+) -> str:
+    """
+    Convert provider-specific failures into stable,
+    non-sensitive application error codes.
+    """
+
+    status_code = getattr(
+        error,
+        "status_code",
+        None,
+    )
+
+    if status_code is None:
+
+        status_code = getattr(
+            error,
+            "code",
+            None,
+        )
+
+    if callable(
+        status_code
+    ):
+
+        try:
+
+            status_code = (
+                status_code()
+            )
+
+        except Exception:
+
+            status_code = None
+
+    try:
+
+        numeric_status = int(
+            status_code
+        )
+
+    except (
+        TypeError,
+        ValueError,
+    ):
+
+        numeric_status = None
+
+    message = str(
+        error
+    ).casefold()
+
+    if (
+        numeric_status
+        in {
+            401,
+            403,
+        }
+        or "unauthenticated" in message
+        or "authentication" in message
+        or "permission denied" in message
+        or "api key not valid" in message
+    ):
+
+        return (
+            "provider_authentication"
+        )
+
+    if (
+        numeric_status == 429
+        or "quota" in message
+        or "resource exhausted" in message
+        or "rate limit" in message
+    ):
+
+        return "provider_quota"
+
+    if (
+        "safety" in message
+        or "blocked" in message
+        or "prohibited" in message
+    ):
+
+        return "provider_safety"
+
+    if (
+        numeric_status == 400
+        or "invalid argument" in message
+        or "bad request" in message
+    ):
+
+        return "provider_request"
+
+    return "provider_unavailable"
 
 class GeminiActivityCoachProvider:
     """
@@ -95,7 +190,9 @@ class GeminiActivityCoachProvider:
 
         except Exception as error:
             raise (
-                ActivityCoachProviderUnavailable()
+                ActivityCoachProviderUnavailable(
+                    "provider_configuration"
+                )
             ) from error
 
         return self._client
@@ -155,7 +252,11 @@ class GeminiActivityCoachProvider:
 
         except Exception as error:
             raise (
-                ActivityCoachProviderUnavailable()
+                ActivityCoachProviderUnavailable(
+                    _gemini_error_code(
+                        error
+                    )
+                )
             ) from error
 
         response_text = getattr(
@@ -165,6 +266,27 @@ class GeminiActivityCoachProvider:
         )
 
         if not response_text:
+
+            prompt_feedback = getattr(
+                response,
+                "prompt_feedback",
+                None,
+            )
+
+            block_reason = getattr(
+                prompt_feedback,
+                "block_reason",
+                None,
+            )
+
+            if block_reason:
+
+                raise (
+                    ActivityCoachProviderUnavailable(
+                        "provider_safety"
+                    )
+                )
+
             raise ValueError(
                 "Gemini returned no coach response"
             )

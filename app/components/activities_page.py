@@ -1398,6 +1398,49 @@ def _show_activity_coach_narrative(
         )
     )
 
+def _training_coach_error_message(
+    error_code: str | None,
+) -> str:
+    """
+    Return a safe explanation without exposing provider
+    exceptions or credentials.
+    """
+
+    messages = {
+        "provider_configuration": (
+            "The Training Coach is not configured "
+            "in this environment."
+        ),
+        "provider_authentication": (
+            "The Training Coach could not authenticate "
+            "with its provider. Please try again later."
+        ),
+        "provider_quota": (
+            "The Training Coach provider quota is "
+            "currently unavailable. Please try again later."
+        ),
+        "provider_request": (
+            "The Training Coach could not process this "
+            "request. No interpretation was saved."
+        ),
+        "provider_safety": (
+            "The Training Coach provider did not accept "
+            "this request. No interpretation was saved."
+        ),
+        "provider_unavailable": (
+            "The Training Coach provider is temporarily "
+            "unavailable. Please try again later."
+        ),
+    }
+
+    return messages.get(
+        error_code,
+        (
+            "The interpretation could not be generated. "
+            "No result was saved."
+        ),
+    )
+
 def _training_coach_limit_message(
     error_code: str | None,
 ) -> str:
@@ -2045,10 +2088,9 @@ def show_activities_page(
                         else:
 
                             st.warning(
-                                "The new interpretation "
-                                "could not be generated. "
-                                "The saved interpretation "
-                                "was preserved."
+                                _training_coach_error_message(
+                                    resolution.error_code
+                                )
                             )
 
                             _show_activity_coach_narrative(
@@ -2160,24 +2202,18 @@ def show_activities_page(
 
                         elif (
                             resolution.status
-                            is ActivityCoachResolutionStatus
-                            .UNAVAILABLE
+                            in {
+                                ActivityCoachResolutionStatus
+                                .UNAVAILABLE,
+                                ActivityCoachResolutionStatus
+                                .FAILED,
+                            }
                         ):
 
                             st.warning(
-                                "The Training Coach is "
-                                "not available. Confirm that "
-                                "GEMINI_API_KEY is configured "
-                                "and that the provider quota "
-                                "is available."
-                            )
-
-                        else:
-
-                            st.error(
-                                "The interpretation could "
-                                "not be generated. No result "
-                                "was saved."
+                                _training_coach_error_message(
+                                    resolution.error_code
+                                )
                             )
         # ==============================================
         # Additional athlete information

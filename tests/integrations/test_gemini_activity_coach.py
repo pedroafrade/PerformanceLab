@@ -12,6 +12,24 @@ from performancelab.integrations import (
     GeminiActivityCoachProvider,
 )
 
+class FakeGeminiApiError(
+    RuntimeError
+):
+
+    def __init__(
+        self,
+        message,
+        *,
+        status_code,
+    ) -> None:
+
+        super().__init__(
+            message
+        )
+
+        self.status_code = (
+            status_code
+        )
 
 class FakeGeminiResponse:
 
@@ -260,3 +278,66 @@ def test_rejects_invalid_json_response():
         provider.generate(
             {}
         )
+
+@pytest.mark.parametrize(
+    (
+        "status_code",
+        "message",
+        "expected_code",
+    ),
+    (
+        (
+            401,
+            "Unauthenticated",
+            "provider_authentication",
+        ),
+        (
+            429,
+            "Resource exhausted",
+            "provider_quota",
+        ),
+        (
+            400,
+            "Invalid argument",
+            "provider_request",
+        ),
+        (
+            503,
+            "Service unavailable",
+            "provider_unavailable",
+        ),
+    ),
+)
+def test_classifies_gemini_api_failures(
+    status_code,
+    message,
+    expected_code,
+):
+
+    models = FakeGeminiModels(
+        error=FakeGeminiApiError(
+            message,
+            status_code=status_code,
+        )
+    )
+
+    provider = (
+        GeminiActivityCoachProvider(
+            client=FakeGeminiClient(
+                models
+            )
+        )
+    )
+
+    with pytest.raises(
+        ActivityCoachProviderUnavailable
+    ) as raised:
+
+        provider.generate(
+            {}
+        )
+
+    assert (
+        raised.value.error_code
+        == expected_code
+    )
