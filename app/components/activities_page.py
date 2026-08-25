@@ -2011,6 +2011,23 @@ def show_activities_page(
                         elif (
                             resolution.status
                             is ActivityCoachResolutionStatus
+                            .IN_PROGRESS
+                        ):
+
+                            st.warning(
+                                "An interpretation for this "
+                                "activity is already being "
+                                "generated. Please wait."
+                            )
+
+                            _show_activity_coach_narrative(
+                                stored_interpretation
+                                .narrative
+                            )
+
+                        elif (
+                            resolution.status
+                            is ActivityCoachResolutionStatus
                             .LIMIT_REACHED
                         ):
 
@@ -2115,6 +2132,18 @@ def show_activities_page(
                                 resolution
                                 .interpretation
                                 .narrative
+                            )
+
+                        elif (
+                            resolution.status
+                            is ActivityCoachResolutionStatus
+                            .IN_PROGRESS
+                        ):
+
+                            st.warning(
+                                "An interpretation for this "
+                                "activity is already being "
+                                "generated. Please wait."
                             )
 
                         elif (

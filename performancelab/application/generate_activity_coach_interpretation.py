@@ -12,7 +12,9 @@ from datetime import (
     datetime,
     timezone,
 )
-
+from threading import (
+    Lock,
+)
 from performancelab.coaching import (
     ActivityCoachCoordinator,
     ActivityCoachResolutionResult,
@@ -95,6 +97,17 @@ class GenerateActivityCoachInterpretation:
         )
         self._usage_limits = usage_limits
         self._clock = clock
+
+        self._active_requests: set[
+            tuple[
+                str,
+                str,
+            ]
+        ] = set()
+
+        self._active_requests_lock = (
+            Lock()
+        )
 
     @staticmethod
     def _normalized_user_id(
@@ -204,15 +217,57 @@ class GenerateActivityCoachInterpretation:
                 error_code=decision.reason,
             )
 
-        resolution = (
-            self._coordinator
-            .resolve(
-                athlete=athlete,
-                workout_id=workout_id,
-                payload=payload,
-                regenerate=regenerate,
-            )
+        request_key = (
+            normalized_user_id,
+            str(
+                workout_id
+            ).strip(),
         )
+
+        with self._active_requests_lock:
+
+            if (
+                request_key
+                in self._active_requests
+            ):
+
+                return (
+                    ActivityCoachResolutionResult(
+                        status=(
+                            ActivityCoachResolutionStatus
+                            .IN_PROGRESS
+                        ),
+                        error_code=(
+                            "generation_in_progress"
+                        ),
+                    )
+                )
+
+            self._active_requests.add(
+                request_key
+            )
+
+        try:
+
+            resolution = (
+                self._coordinator
+                .resolve(
+                    athlete=athlete,
+                    workout_id=workout_id,
+                    payload=payload,
+                    regenerate=regenerate,
+                )
+            )
+
+        finally:
+
+            with (
+                self._active_requests_lock
+            ):
+
+                self._active_requests.discard(
+                    request_key
+                )
 
         usage_status = (
             TrainingCoachUsageStatus

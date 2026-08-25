@@ -36,6 +36,7 @@ class ActivityCoachResolutionStatus(Enum):
     UNAVAILABLE = "unavailable"
     FAILED = "failed"
     LIMIT_REACHED = "limit_reached"
+    IN_PROGRESS = "in_progress"
 
 
 @dataclass(frozen=True)

@@ -265,3 +265,90 @@ def test_failed_generation_does_not_consume_limit():
         is ActivityCoachResolutionStatus
         .GENERATED
     )
+
+def test_blocks_duplicate_request_while_generation_is_active():
+
+    provider = Provider()
+
+    repository = (
+        InMemoryTrainingCoachUsageRepository()
+    )
+
+    use_case = create_use_case(
+        provider=provider,
+        repository=repository,
+    )
+
+    nested_results = []
+
+    original_generate = (
+        provider.generate
+    )
+
+    def generate_with_duplicate(
+        generation_payload,
+    ):
+
+        nested_results.append(
+            use_case.execute(
+                user_id="user-1",
+                athlete=Athlete(
+                    name="Pedro"
+                ),
+                workout_id="workout-1",
+                payload=payload(),
+            )
+        )
+
+        return original_generate(
+            generation_payload
+        )
+
+    provider.generate = (
+        generate_with_duplicate
+    )
+
+    outer_result = use_case.execute(
+        user_id="user-1",
+        athlete=Athlete(
+            name="Pedro"
+        ),
+        workout_id="workout-1",
+        payload=payload(),
+    )
+
+    assert (
+        outer_result.status
+        is ActivityCoachResolutionStatus
+        .GENERATED
+    )
+
+    assert len(
+        nested_results
+    ) == 1
+
+    assert (
+        nested_results[0].status
+        is ActivityCoachResolutionStatus
+        .IN_PROGRESS
+    )
+
+    assert (
+        nested_results[0].error_code
+        == "generation_in_progress"
+    )
+
+    assert provider.call_count == 1
+
+    counts = (
+        repository
+        .counts_for_utc_day(
+            user_id="user-1",
+            utc_day=(
+                fixed_time().date()
+            ),
+        )
+    )
+
+    assert counts.user_count == 1
+    assert counts.global_count == 1
