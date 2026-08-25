@@ -47,3 +47,14 @@ jobs:
 
       - name: Run tests
         run: pytest -q
+
+  container:
+    name: Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build --tag performancelab-alpha:ci .

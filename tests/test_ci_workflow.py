@@ -78,3 +78,17 @@ def test_ci_uses_read_only_repository_permission():
 
     assert "permissions:" in text
     assert "contents: read" in text
+
+def test_ci_builds_container_without_publishing():
+
+    text = workflow_text()
+
+    assert "container:" in text
+    assert "name: Docker image" in text
+    assert (
+        "docker build --tag "
+        "performancelab-alpha:ci ."
+        in text
+    )
+    assert "docker push" not in text
+    assert "gcloud" not in text
