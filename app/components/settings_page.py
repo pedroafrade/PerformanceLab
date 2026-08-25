@@ -14,10 +14,37 @@ from .training_coach_consent import (
 )
 
 
+PARTICIPANT_DELETION_PHRASE = (
+    "DELETE MY DATA"
+)
+
+
+def participant_deletion_confirmed(
+    confirmation_text: str,
+    *,
+    acknowledged: bool,
+) -> bool:
+    """
+    Require both an acknowledgement and an exact phrase.
+    """
+
+    if not isinstance(
+        confirmation_text,
+        str,
+    ):
+
+        return False
+
+    return (
+        acknowledged
+        and confirmation_text.strip()
+        == PARTICIPANT_DELETION_PHRASE
+    )
+
+
 def _settings_page_header() -> None:
     """
-    Displays the standard page header used throughout
-    the main application pages.
+    Display the standard settings page header.
     """
 
     st.markdown(
@@ -79,6 +106,8 @@ def show_settings_page(
     on_allow_training_coach=None,
     on_withdraw_training_coach=None,
     participant_export_json: str | None = None,
+    on_delete_participant_data=None,
+    participant_deletion_error: str | None = None,
 ):
     """
     Display athlete settings and participant data controls.
@@ -137,6 +166,67 @@ def show_settings_page(
 
         st.warning(
             "Your data export is temporarily unavailable."
+        )
+
+    st.divider()
+
+    st.subheader(
+        "Delete account and data"
+    )
+
+    st.warning(
+        "This permanently deletes your account, athlete "
+        "profile, activities, routes, plans, interpretations, "
+        "consents and active operational records. This action "
+        "cannot be undone."
+    )
+
+    if participant_deletion_error:
+
+        st.error(
+            participant_deletion_error
+        )
+
+    with st.expander(
+        "Permanent deletion",
+        expanded=False,
+    ):
+
+        acknowledged = st.checkbox(
+            "I understand that my active PerformanceLab "
+            "account and athlete data will be permanently "
+            "deleted.",
+            key=(
+                "participant_deletion_acknowledged"
+            ),
+        )
+
+        confirmation_text = st.text_input(
+            "Type DELETE MY DATA to confirm",
+            key=(
+                "participant_deletion_confirmation"
+            ),
+        )
+
+        deletion_confirmed = (
+            participant_deletion_confirmed(
+                confirmation_text,
+                acknowledged=acknowledged,
+            )
+        )
+
+        st.button(
+            "Permanently delete my data",
+            type="primary",
+            disabled=(
+                not deletion_confirmed
+                or on_delete_participant_data
+                is None
+            ),
+            on_click=(
+                on_delete_participant_data
+            ),
+            use_container_width=True,
         )
 
     st.divider()

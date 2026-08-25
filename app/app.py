@@ -35,6 +35,7 @@ from performancelab import (
     Athlete,
 )
 from performancelab.application import (
+    DeleteParticipantData,
     DeleteWorkouts,
     ExportParticipantData,
     GenerateTrainingPlan,
@@ -401,6 +402,75 @@ def export_participant_data() -> str:
 
     return result.to_json()
 
+def delete_participant_account() -> None:
+    """
+    Permanently delete the authenticated participant data.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    try:
+
+        DeleteParticipantData(
+            athlete_repository=(
+                athlete_repository
+            ),
+            user_repository=(
+                user_repository
+            ),
+            external_identity_repository=(
+                external_identity_repository
+            ),
+            invitation_repository=(
+                alpha_invitation_repository
+            ),
+            athlete_access_repository=(
+                athlete_access_repository
+            ),
+            alpha_participation_consent_repository=(
+                alpha_participation_consent_repository
+            ),
+            training_coach_consent_repository=(
+                training_coach_consent_repository
+            ),
+            training_coach_usage_repository=(
+                training_coach_usage_repository
+            ),
+            authorization=(
+                athlete_authorization
+            ),
+            transaction_factory=(
+                repository_bundle.transaction
+            ),
+        ).execute(
+            current_user
+        )
+
+    except (
+        TypeError,
+        ValueError,
+        PermissionError,
+        FileNotFoundError,
+        KeyError,
+        RuntimeError,
+    ):
+
+        st.session_state[
+            "participant_deletion_error"
+        ] = (
+            "Your account and data could not be deleted. "
+            "No successful deletion was confirmed. "
+            "Please contact support."
+        )
+
+        return
+
+    st.session_state.clear()
+
+    st.logout()
+
 def accept_alpha_participation() -> None:
     """
     Accept the current private alpha notice.
@@ -529,6 +599,15 @@ def initialize_session_state() -> None:
 
     if "plan_error" not in st.session_state:
         st.session_state.plan_error = None
+
+    if (
+        "participant_deletion_error"
+        not in st.session_state
+    ):
+
+        st.session_state[
+            "participant_deletion_error"
+        ] = None
 
     if "confirm_delete" not in st.session_state:
         st.session_state.confirm_delete = False
@@ -909,6 +988,14 @@ elif page == "settings":
         ),
         participant_export_json=(
             participant_export_json
+        ),
+        on_delete_participant_data=(
+            delete_participant_account
+        ),
+        participant_deletion_error=(
+            st.session_state.get(
+                "participant_deletion_error"
+            )
         ),
     )
 
