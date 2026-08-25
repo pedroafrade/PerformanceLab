@@ -9,6 +9,7 @@ from datetime import (
 )
 
 from sqlalchemy import (
+    delete,
     insert,
     select,
     update,
@@ -281,6 +282,39 @@ class PostgreSQLAlphaParticipationConsentRepository:
                 )
             )
         )
+
+    def delete(
+        self,
+        consent_id: str,
+    ) -> None:
+        """
+        Delete one private alpha consent record.
+        """
+
+        normalized_consent_id = (
+            self._normalized_text(
+                consent_id,
+                field_name="consent_id",
+            )
+        )
+
+        result = self._connection.execute(
+            delete(
+                alpha_participation_consents
+            ).where(
+                alpha_participation_consents
+                .c
+                .consent_id
+                == normalized_consent_id
+            )
+        )
+
+        if result.rowcount != 1:
+
+            raise KeyError(
+                "Private alpha consent not found: "
+                f"{normalized_consent_id}"
+            )
 
     def list_for_user(
         self,

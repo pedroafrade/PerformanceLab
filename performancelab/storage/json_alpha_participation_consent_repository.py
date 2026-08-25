@@ -294,6 +294,27 @@ class JsonAlphaParticipationConsentRepository:
             path
         )
 
+    def delete(
+        self,
+        consent_id: str,
+    ) -> None:
+        """
+        Delete one private alpha consent record.
+        """
+
+        path = self._path_for(
+            consent_id
+        )
+
+        if not path.exists():
+
+            raise KeyError(
+                "Private alpha consent not found: "
+                f"{consent_id}"
+            )
+
+        path.unlink()
+
     def list_for_user(
         self,
         user_id: str,

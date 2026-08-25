@@ -13,6 +13,7 @@ from datetime import (
 )
 
 from sqlalchemy import (
+    delete,
     func,
     insert,
     select,
@@ -241,6 +242,51 @@ class PostgreSQLTrainingCoachUsageRepository:
                 ),
             )
         )
+
+    def delete(
+        self,
+        usage_id: str,
+    ) -> None:
+        """
+        Delete one Training Coach usage event.
+        """
+
+        if not isinstance(
+            usage_id,
+            str,
+        ):
+
+            raise TypeError(
+                "usage_id must be a string."
+            )
+
+        normalized_usage_id = (
+            usage_id.strip()
+        )
+
+        if not normalized_usage_id:
+
+            raise ValueError(
+                "usage_id cannot be empty."
+            )
+
+        result = self._connection.execute(
+            delete(
+                training_coach_usage
+            ).where(
+                training_coach_usage
+                .c
+                .usage_id
+                == normalized_usage_id
+            )
+        )
+
+        if result.rowcount != 1:
+
+            raise KeyError(
+                "Training Coach usage event not found: "
+                f"{normalized_usage_id}"
+            )
 
     def list_for_user(
         self,

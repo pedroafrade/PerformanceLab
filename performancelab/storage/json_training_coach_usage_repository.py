@@ -323,6 +323,27 @@ class JsonTrainingCoachUsageRepository:
             )
         )
 
+    def delete(
+        self,
+        usage_id: str,
+    ) -> None:
+        """
+        Delete one Training Coach usage event.
+        """
+
+        path = self._path_for(
+            usage_id
+        )
+
+        if not path.exists():
+
+            raise KeyError(
+                "Training Coach usage event not found: "
+                f"{usage_id}"
+            )
+
+        path.unlink()
+
     def list_for_user(
         self,
         user_id: str,

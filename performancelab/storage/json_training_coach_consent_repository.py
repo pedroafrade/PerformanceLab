@@ -292,6 +292,27 @@ class JsonTrainingCoachConsentRepository:
             path
         )
 
+    def delete(
+        self,
+        consent_id: str,
+    ) -> None:
+        """
+        Delete one Training Coach consent record.
+        """
+
+        path = self._path_for(
+            consent_id
+        )
+
+        if not path.exists():
+
+            raise KeyError(
+                "Training Coach consent not found: "
+                f"{consent_id}"
+            )
+
+        path.unlink()
+
     def list_for_user(
         self,
         user_id: str,

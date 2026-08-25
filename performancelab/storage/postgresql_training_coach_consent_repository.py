@@ -9,6 +9,7 @@ from datetime import (
 )
 
 from sqlalchemy import (
+    delete,
     insert,
     select,
     update,
@@ -289,6 +290,39 @@ class PostgreSQLTrainingCoachConsentRepository:
                 )
             )
         )
+
+    def delete(
+        self,
+        consent_id: str,
+    ) -> None:
+        """
+        Delete one Training Coach consent record.
+        """
+
+        normalized_consent_id = (
+            self._normalized_text(
+                consent_id,
+                field_name="consent_id",
+            )
+        )
+
+        result = self._connection.execute(
+            delete(
+                training_coach_consents
+            ).where(
+                training_coach_consents
+                .c
+                .consent_id
+                == normalized_consent_id
+            )
+        )
+
+        if result.rowcount != 1:
+
+            raise KeyError(
+                "Training Coach consent not found: "
+                f"{normalized_consent_id}"
+            )
 
     def list_for_user(
         self,
