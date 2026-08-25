@@ -58,3 +58,25 @@ jobs:
 
       - name: Build container image
         run: docker build --tag performancelab-alpha:ci .
+
+      - name: Start container
+        run: |
+          docker run \
+            --detach \
+            --name performancelab-alpha-ci \
+            --publish 8080:8080 \
+            --env PERFORMANCELAB_ENV=local \
+            performancelab-alpha:ci
+
+      - name: Verify Streamlit health
+        run: |
+          curl \
+            --fail \
+            --retry 15 \
+            --retry-delay 2 \
+            --retry-connrefused \
+            http://127.0.0.1:8080/_stcore/health
+
+      - name: Stop container
+        if: always()
+        run: docker rm --force performancelab-alpha-ci

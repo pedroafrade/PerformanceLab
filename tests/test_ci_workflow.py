@@ -92,3 +92,28 @@ def test_ci_builds_container_without_publishing():
     )
     assert "docker push" not in text
     assert "gcloud" not in text
+
+def test_ci_verifies_container_health():
+
+    text = workflow_text()
+
+    assert (
+        "--name performancelab-alpha-ci"
+        in text
+    )
+    assert (
+        "--env PERFORMANCELAB_ENV=local"
+        in text
+    )
+    assert (
+        "http://127.0.0.1:8080/"
+        "_stcore/health"
+        in text
+    )
+    assert "--retry-connrefused" in text
+    assert "if: always()" in text
+    assert (
+        "docker rm --force "
+        "performancelab-alpha-ci"
+        in text
+    )
