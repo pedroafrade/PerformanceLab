@@ -162,7 +162,7 @@ Estado confirmado:
 - não existe logging estruturado nem monitorização externa;
 - não existe health check;
 - não existe procedimento testado de backup, recuperação ou rollback;
-- `app/app_backup.py`, `.coverage` e `PLANO_DE_TREINO.txt` permanecem versionados;
+- os antigos artefactos versionados foram removidos e o `.gitignore` protege dados, segredos, coberturas, backups e exportações locais;
 - `.gitignore` ignora `data/athletes/` e `data/users/`, mas não define ainda uma política completa para secrets e artefactos locais.
 
 Conclusão:
@@ -485,6 +485,46 @@ Tornar a alpha reproduzível, observável e recuperável.
 - existe rollback documentado e ensaiado;
 - nenhum dado de demonstração é criado no ambiente alpha.
 
+### Estado atual da fase G
+
+Dos 13 itens originais da fase G:
+
+- **10 estão tecnicamente concluídos**;
+- **1 está implementado, mas aguarda ativação externa**;
+- **2 aguardam o ambiente Google Cloud SQL**.
+
+Concluído:
+
+- [x] `pyproject.toml` é a fonte única das dependências;
+- [x] dependências de runtime incluídas;
+- [x] versões suportadas e política de atualização definidas;
+- [x] GitHub Actions criado;
+- [x] fluxos críticos com dois utilizadores testados;
+- [x] logging estruturado sem dados sensíveis;
+- [x] verificação de saúde da aplicação e PostgreSQL;
+- [x] deployment, migrações, rollback e incidentes documentados;
+- [x] artefactos antigos removidos;
+- [x] `.gitignore` reforçado.
+
+Implementado, com ativação externa pendente:
+
+- [ ] alertas do Better Stack — o código está concluído, mas a conta,
+  região, retenção e alerta real ainda têm de ser confirmados.
+
+Adiado até estarmos próximos do deployment:
+
+- [ ] backups automáticos no Google Cloud SQL;
+- [ ] restauro real numa base de dados separada.
+
+O adiamento evita iniciar prematuramente os 90 dias e consumir os
+300 USD de crédito da avaliação Google Cloud.
+
+A fase G não está concluída e os convites permanecem bloqueados até:
+
+- o Better Stack estar ativo e testado;
+- existir um backup automático confirmado;
+- existir um restauro real concluído com sucesso;
+- o rollback operacional ser ensaiado no ambiente alpha.
 ## 13. Fase H — Deployment e convite
 
 ### Objetivo
