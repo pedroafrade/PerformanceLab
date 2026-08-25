@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68,<81"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,22 +7,30 @@ name = "performancelab"
 version = "0.1.0"
 description = "Performance analysis toolkit for endurance athletes."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.15"
 
 authors = [
     {name = "Pedro Frade"}
 ]
 
 dependencies = [
-    "numpy",
-    "pandas",
-    "matplotlib",
-    "scipy",
-    "gpxpy",
-    "google-genai>=2.3",
+    "numpy>=2.0,<3",
+    "pandas>=2.2,<3",
+    "matplotlib>=3.9,<4",
+    "scipy>=1.14,<2",
+    "gpxpy>=1.6,<2",
+    "streamlit[auth]>=1.42,<2",
+    "fitdecode>=0.11,<1",
+    "plotly>=5.24,<7",
+    "google-genai>=2.3,<3",
     "SQLAlchemy>=2.0,<3",
     "alembic>=1.16,<2",
     "psycopg[binary]>=3.2,<4",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3,<10",
 ]
 
 [tool.setuptools]
