@@ -32,6 +32,9 @@ from performancelab.runtime_configuration import (
 from performancelab.storage.json_alpha_invitation_repository import (
     JsonAlphaInvitationRepository,
 )
+from performancelab.storage.json_alpha_participation_consent_repository import (
+    JsonAlphaParticipationConsentRepository,
+)
 from performancelab.storage.json_athlete_access_repository import (
     JsonAthleteAccessRepository,
 )
@@ -52,6 +55,9 @@ from performancelab.storage.json_user_repository import (
 )
 from performancelab.storage.postgresql_alpha_invitation_repository import (
     PostgreSQLAlphaInvitationRepository,
+)
+from performancelab.storage.postgresql_alpha_participation_consent_repository import (
+    PostgreSQLAlphaParticipationConsentRepository,
 )
 from performancelab.storage.postgresql_athlete_access_repository import (
     PostgreSQLAthleteAccessRepository,
@@ -88,6 +94,7 @@ class RepositoryBundle:
     user_repository: object
     external_identity_repository: object
     alpha_invitation_repository: object
+    alpha_participation_consent_repository: object
     athlete_access_repository: object
     training_coach_consent_repository: object
     training_coach_usage_repository: object
@@ -209,6 +216,12 @@ def build_repository_bundle(
                     / "alpha_invitations"
                 )
             ),
+            alpha_participation_consent_repository=(
+                JsonAlphaParticipationConsentRepository(
+                    data_directory
+                    / "alpha_participation_consents"
+                )
+            ),
             athlete_access_repository=(
                 JsonAthleteAccessRepository(
                     data_directory
@@ -267,6 +280,11 @@ def build_repository_bundle(
         ),
         alpha_invitation_repository=(
             PostgreSQLAlphaInvitationRepository(
+                connection
+            )
+        ),
+        alpha_participation_consent_repository=(
+            PostgreSQLAlphaParticipationConsentRepository(
                 connection
             )
         ),

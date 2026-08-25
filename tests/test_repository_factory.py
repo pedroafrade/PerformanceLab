@@ -12,6 +12,9 @@ from performancelab.runtime_configuration import (
 from performancelab.storage.json_alpha_invitation_repository import (
     JsonAlphaInvitationRepository,
 )
+from performancelab.storage.json_alpha_participation_consent_repository import (
+    JsonAlphaParticipationConsentRepository,
+)
 from performancelab.storage.json_athlete_access_repository import (
     JsonAthleteAccessRepository,
 )
@@ -32,6 +35,9 @@ from performancelab.storage.json_user_repository import (
 )
 from performancelab.storage.postgresql_alpha_invitation_repository import (
     PostgreSQLAlphaInvitationRepository,
+)
+from performancelab.storage.postgresql_alpha_participation_consent_repository import (
+    PostgreSQLAlphaParticipationConsentRepository,
 )
 from performancelab.storage.postgresql_athlete_access_repository import (
     PostgreSQLAthleteAccessRepository,
@@ -82,6 +88,11 @@ def test_local_environment_selects_json_repositories(
     assert isinstance(
         bundle.alpha_invitation_repository,
         JsonAlphaInvitationRepository,
+    )
+    assert isinstance(
+        bundle
+        .alpha_participation_consent_repository,
+        JsonAlphaParticipationConsentRepository,
     )
     assert isinstance(
         bundle.athlete_access_repository,
@@ -136,6 +147,14 @@ def test_local_environment_uses_expected_directories(
         ._directory
         == tmp_path
         / "alpha_invitations"
+    )
+
+    assert (
+        bundle
+        .alpha_participation_consent_repository
+        ._directory
+        == tmp_path
+        / "alpha_participation_consents"
     )
 
     assert (
@@ -243,6 +262,11 @@ def test_alpha_environment_selects_postgresql_repositories():
         assert isinstance(
             bundle.alpha_invitation_repository,
             PostgreSQLAlphaInvitationRepository,
+        )
+        assert isinstance(
+            bundle
+            .alpha_participation_consent_repository,
+            PostgreSQLAlphaParticipationConsentRepository,
         )
         assert isinstance(
             bundle.athlete_access_repository,

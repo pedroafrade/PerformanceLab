@@ -15,6 +15,7 @@ import streamlit as st
 
 from components import (
     show_activities_page,
+    show_alpha_participation_consent_dialog,
     show_athlete_panel,
     show_calendar_page,
     show_dashboard,
@@ -37,6 +38,7 @@ from performancelab.application import (
     ImportActivities,
     LoadActiveAthlete,
     GenerateActivityCoachInterpretation,
+    ManageAlphaParticipationConsent,
     ManageTrainingCoachConsent,
     ProvisionInvitedUser,
     UpdateWorkout,
@@ -129,6 +131,10 @@ alpha_invitation_repository = (
     repository_bundle
     .alpha_invitation_repository
 )
+alpha_participation_consent_repository = (
+    repository_bundle
+    .alpha_participation_consent_repository
+)
 athlete_access_repository = (
     repository_bundle
     .athlete_access_repository
@@ -144,6 +150,13 @@ training_coach_usage_repository = (
 athlete_authorization = (
     AthleteAuthorizationService(
         athlete_access_repository
+    )
+)
+alpha_participation_consent_manager = (
+    ManageAlphaParticipationConsent(
+        repository=(
+            alpha_participation_consent_repository
+        )
     )
 )
 training_coach_consent_manager = (
@@ -344,6 +357,25 @@ def resolve_training_coach(
             )
 
     return result
+
+def accept_alpha_participation() -> None:
+    """
+    Accept the current private alpha notice.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    with repository_bundle.transaction():
+
+        alpha_participation_consent_manager.accept(
+            user_id=current_user.user_id
+        )
+
+    st.session_state.persisted_notice = (
+        "Private alpha participation accepted."
+    )
 
 def allow_training_coach() -> None:
     """
@@ -563,6 +595,25 @@ if "current_user" not in st.session_state:
 current_user: User = (
     st.session_state.current_user
 )
+
+alpha_participation_permitted = (
+    alpha_participation_consent_manager
+    .is_permitted(
+        user_id=current_user.user_id
+    )
+)
+
+if not alpha_participation_permitted:
+
+    show_alpha_participation_consent_dialog(
+        on_accept=(
+            accept_alpha_participation
+        ),
+        on_logout=logout,
+    )
+
+    st.stop()
+
 
 if "athlete" not in st.session_state:
 
