@@ -1,12 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
-
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-.ipynb_checkpoints/
+# Test and coverage output
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
-*.egg-info/
+# Virtual environments
+.venv/
+venv/
+env/
 
 # Packaging
 *.egg-info/
@@ -16,34 +24,57 @@ build/
 # Jupyter
 .ipynb_checkpoints/
 
-# VS Code
+# Editors
 .vscode/
+.idea/
 
-# macOS
+# Operating systems
 .DS_Store
+Thumbs.db
 
 # Colab
 sample_data/
 
-# Local athlete data
-data/athletes/
-data/users/
-
-# Local Streamlit secrets
-.streamlit/secrets.toml
-
-# Local private-alpha identity data
-data/external_identities/
-data/alpha_invitations/
-data/athlete_access/
+# Local application and athlete data
+data/
 
 # Local environment variables
 .env
 .env.*
 !.env.example
 
-# Local application data
-data/
+# Streamlit secrets
+.streamlit/secrets.toml
 
-# Local continuity handout
-docs/HANDOUT_260814.md
+# Credentials and private keys
+*.pem
+*.key
+credentials*.json
+service-account*.json
+
+# Logs
+*.log
+logs/
+
+# Database backups
+backups/
+*.backup
+*.dump
+*.bak
+*_backup.sql
+
+# Local exports
+exports/
+PLANO_DE_TREINO.txt
+
+# Generated repository listings
+project_tree.txt
+
+# Temporary files and patches
+*.tmp
+*.temp
+*.patch
+patches/
+
+# Local continuity handouts
+docs/HANDOUT_*.md
