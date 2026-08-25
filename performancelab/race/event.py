@@ -8,7 +8,10 @@ Represents a sporting event.
 
 from dataclasses import dataclass, field
 from uuid import uuid4
-from datetime import date, timedelta
+from datetime import (
+    date as CalendarDate,
+    timedelta,
+)
 
 ELEVATION_METRES_PER_EFFORT_KILOMETRE = 100.0
 
@@ -26,7 +29,7 @@ class Event:
 
     country: str = ""
 
-    date: date | None = None
+    date: CalendarDate | None = None
 
     sport: str = ""
 
@@ -205,7 +208,7 @@ class Event:
 
             return False
 
-        return self.date >= date.today()
+        return self.date >= CalendarDate.today()
 
     # ======================================================
 
@@ -216,7 +219,7 @@ class Event:
 
             return False
 
-        return self.date < date.today()
+        return self.date < CalendarDate.today()
 
     # ======================================================
 
@@ -227,7 +230,7 @@ class Event:
 
             return None
 
-        return (self.date - date.today()).days
+        return (self.date - CalendarDate.today()).days
 
     # ======================================================
 
