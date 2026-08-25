@@ -21,6 +21,9 @@ from sqlalchemy.engine import (
 from sqlalchemy.exc import (
     ArgumentError,
 )
+from performancelab.retention_policy import (
+    AlphaRetentionPolicy,
+)
 from performancelab.training_coach_usage_limits import (
     TrainingCoachUsageLimits,
 )
@@ -49,6 +52,11 @@ class RuntimeConfiguration:
         default=None,
         repr=False,
     )
+
+    retention_policy: (
+        AlphaRetentionPolicy
+        | None
+    ) = None
     training_coach_enabled: bool = True
     training_coach_user_daily_limit: int = 5
     training_coach_global_daily_limit: int = 50
@@ -141,6 +149,32 @@ class RuntimeConfiguration:
                 self._postgresql_url(
                     normalized_database_url
                 )
+            )
+
+        if (
+            self.retention_policy
+            is not None
+            and not isinstance(
+                self.retention_policy,
+                AlphaRetentionPolicy,
+            )
+        ):
+
+            raise TypeError(
+                "retention_policy must be an "
+                "AlphaRetentionPolicy or None."
+            )
+
+        if (
+            normalized_environment
+            == "alpha"
+            and self.retention_policy
+            is None
+        ):
+
+            raise RuntimeError(
+                "A complete retention policy is required "
+                "in the alpha environment."
             )
 
         object.__setattr__(
@@ -333,6 +367,35 @@ class RuntimeConfiguration:
             "DATABASE_URL"
         )
 
+        normalized_environment = (
+            environment.strip().lower()
+            if isinstance(
+                environment,
+                str,
+            )
+            else environment
+        )
+
+        retention_policy = (
+            AlphaRetentionPolicy
+            .from_mapping(
+                values
+            )
+            if (
+                normalized_environment
+                == "alpha"
+                and database_url is not None
+                and (
+                    not isinstance(
+                        database_url,
+                        str,
+                    )
+                    or database_url.strip()
+                )
+            )
+            else None
+        )
+
         training_coach_enabled = (
             cls._boolean_setting(
                 values.get(
@@ -380,6 +443,9 @@ class RuntimeConfiguration:
         return cls(
             environment=environment,
             database_url=database_url,
+            retention_policy=(
+                retention_policy
+            ),
             training_coach_enabled=(
                 training_coach_enabled
             ),

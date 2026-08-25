@@ -4,10 +4,44 @@ Tests for explicit runtime environment configuration.
 
 import pytest
 
+from performancelab.retention_policy import (
+    AlphaRetentionPolicy,
+)
+
 from performancelab.runtime_configuration import (
     RuntimeConfiguration,
 )
 
+def alpha_retention_values() -> dict[
+    str,
+    str,
+]:
+
+    return {
+        "RETENTION_INACTIVE_ACCOUNT_DAYS": "90",
+        "RETENTION_INACTIVITY_NOTICE_DAYS": "14",
+        "RETENTION_TRAINING_COACH_USAGE_DAYS": "30",
+        "RETENTION_CONSENT_EVIDENCE_DAYS": "0",
+        "RETENTION_UNUSED_INVITATION_DAYS": "14",
+        "RETENTION_EXPIRED_INVITATION_DAYS": "7",
+        "RETENTION_APPLICATION_LOG_DAYS": "14",
+        "RETENTION_ERROR_ALERT_DAYS": "30",
+        "RETENTION_BACKUP_DAYS": "14",
+        "RETENTION_SUPPORT_REQUEST_DAYS": "30",
+        "RETENTION_POST_ALPHA_DAYS": "30",
+    }
+
+
+def alpha_retention_policy() -> (
+    AlphaRetentionPolicy
+):
+
+    return (
+        AlphaRetentionPolicy
+        .from_mapping(
+            alpha_retention_values()
+        )
+    )
 
 def test_defaults_to_local_json_environment():
 
@@ -44,6 +78,9 @@ def test_normalizes_environment_name():
             "postgresql+psycopg://"
             "user:secret@db.example.com/"
             "performancelab"
+        ),
+        retention_policy=(
+            alpha_retention_policy()
         ),
     )
 
@@ -97,6 +134,9 @@ def test_normalizes_generic_postgresql_url_to_psycopg():
             "postgresql://"
             "user:secret@db.example.com/"
             "performancelab"
+        ),
+        retention_policy=(
+            alpha_retention_policy()
         ),
     )
 
@@ -171,6 +211,9 @@ def test_database_password_is_hidden_from_repr():
             "postgresql+psycopg://"
             "user:super-secret-password"
             "@db.example.com/performancelab"
+        ),
+        retention_policy=(
+            alpha_retention_policy()
         ),
     )
 
@@ -390,3 +433,91 @@ def test_rejects_invalid_training_coach_setting():
                 ),
             }
         )
+
+def test_alpha_environment_requires_retention_policy():
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "complete retention policy is required"
+        ),
+    ):
+
+        RuntimeConfiguration(
+            environment="alpha",
+            database_url=(
+                "postgresql+psycopg://"
+                "user:secret@db.example.com/"
+                "performancelab"
+            ),
+        )
+
+
+def test_alpha_mapping_requires_retention_settings():
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "Missing private alpha retention settings"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                "PERFORMANCELAB_ENV": "alpha",
+                "DATABASE_URL": (
+                    "postgresql+psycopg://"
+                    "user:secret@db.example.com/"
+                    "performancelab"
+                ),
+            }
+        )
+
+
+def test_alpha_mapping_builds_retention_policy():
+
+    values = {
+        "PERFORMANCELAB_ENV": "alpha",
+        "DATABASE_URL": (
+            "postgresql+psycopg://"
+            "user:secret@db.example.com/"
+            "performancelab"
+        ),
+        **alpha_retention_values(),
+    }
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            values
+        )
+    )
+
+    assert isinstance(
+        configuration.retention_policy,
+        AlphaRetentionPolicy,
+    )
+
+    assert (
+        configuration
+        .retention_policy
+        .backup_days
+        == 14
+    )
+
+
+def test_local_environment_does_not_require_retention_policy():
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                "PERFORMANCELAB_ENV": "local",
+            }
+        )
+    )
+
+    assert (
+        configuration.retention_policy
+        is None
+    )
