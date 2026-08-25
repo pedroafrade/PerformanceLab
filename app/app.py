@@ -15,6 +15,10 @@ from pathlib import Path
 
 import streamlit as st
 
+from streamlit.errors import (
+    StreamlitSecretNotFoundError,
+)
+
 from components import (
     show_activities_page,
     show_alpha_participation_consent_dialog,
@@ -113,15 +117,28 @@ runtime_values = dict(
     os.environ
 )
 
+try:
+
+    streamlit_secrets = dict(
+        st.secrets
+    )
+
+except StreamlitSecretNotFoundError:
+
+    streamlit_secrets = {}
+
 for configuration_key in (
     RUNTIME_CONFIGURATION_SETTING_NAMES
 ):
 
-    if configuration_key in st.secrets:
+    if (
+        configuration_key
+        in streamlit_secrets
+    ):
 
         runtime_values[
             configuration_key
-        ] = st.secrets[
+        ] = streamlit_secrets[
             configuration_key
         ]
 

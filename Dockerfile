@@ -4,6 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PORT=8080
+ENV HOME=/home/performancelab
 
 WORKDIR /app
 
@@ -14,8 +15,13 @@ RUN addgroup \
     && adduser \
         --system \
         --uid 10001 \
+        --home /home/performancelab \
         --ingroup performancelab \
-        performancelab
+        performancelab \
+    && mkdir -p /home/performancelab \
+    && chown -R \
+        performancelab:performancelab \
+        /home/performancelab
 
 COPY pyproject.toml README.md ./
 COPY performancelab ./performancelab

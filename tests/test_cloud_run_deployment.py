@@ -29,6 +29,11 @@ DOCUMENTATION_PATH = (
     / "GOOGLE_CLOUD_RUN.md"
 )
 
+APP_PATH = (
+    PROJECT_ROOT
+    / "app"
+    / "app.py"
+)
 
 def dockerfile_text():
 
@@ -38,6 +43,13 @@ def dockerfile_text():
         ).split()
     )
 
+def app_source_text():
+
+    return " ".join(
+        APP_PATH.read_text(
+            encoding="utf-8"
+        ).split()
+    )
 
 def dockerignore_entries():
 
@@ -159,3 +171,32 @@ def test_documentation_preserves_google_limits():
     assert "Dia 60" in text
     assert "Dia 85" in text
     assert "Dia 90" in text
+
+def test_container_has_writable_home():
+
+    text = dockerfile_text()
+
+    assert (
+        "ENV HOME=/home/performancelab"
+        in text
+    )
+    assert (
+        "--home /home/performancelab"
+        in text
+    )
+    assert "/nonexistent" not in text
+
+
+def test_container_can_use_environment_without_secrets_file():
+
+    text = app_source_text()
+
+    assert (
+        "except StreamlitSecretNotFoundError"
+        in text
+    )
+    assert "streamlit_secrets = {}" in text
+    assert (
+        "configuration_key in streamlit_secrets"
+        in text
+    )
