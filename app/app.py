@@ -62,6 +62,11 @@ from performancelab.identity import User
 from performancelab.oidc_identity import (
     external_identity_from_claims,
 )
+from performancelab.operational_logging import (
+    configure_operational_logging,
+    new_correlation_id,
+    set_correlation_id,
+)
 from performancelab.runtime_configuration import (
     RUNTIME_CONFIGURATION_SETTING_NAMES,
     RuntimeConfiguration,
@@ -79,6 +84,17 @@ st.set_page_config(
     page_title="PerformanceLab",
     page_icon="📈",
     layout="wide",
+)
+configure_operational_logging()
+
+if "correlation_id" not in st.session_state:
+
+    st.session_state.correlation_id = (
+        new_correlation_id()
+    )
+
+set_correlation_id(
+    st.session_state.correlation_id
 )
 
 APP_DIR = Path(__file__).resolve().parent
