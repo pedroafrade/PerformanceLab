@@ -32,6 +32,7 @@ class DeleteWorkoutsResult:
 
     athlete: Athlete
     removed_workout_ids: tuple[str, ...]
+    removed_interpretation_count: int = 0
 
     @property
     def removed_count(
@@ -125,6 +126,14 @@ class DeleteWorkouts:
                 "Workout deletion was incomplete."
             )
 
+        removed_interpretation_count = (
+            athlete
+            .activity_coach_interpretations
+            .remove_for_workouts(
+                normalized_ids
+            )
+        )
+
         self._repository.save(
             athlete
         )
@@ -133,6 +142,9 @@ class DeleteWorkouts:
             athlete=athlete,
             removed_workout_ids=(
                 normalized_ids
+            ),
+            removed_interpretation_count=(
+                removed_interpretation_count
             ),
         )
 

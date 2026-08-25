@@ -1,5 +1,6 @@
 from datetime import (
     date,
+    datetime,
     timedelta,
 )
 
@@ -10,6 +11,12 @@ from performancelab.application import (
 )
 from performancelab.athlete import (
     Athlete,
+)
+from performancelab.activity_coach_records import (
+    ActivityCoachInterpretation,
+)
+from performancelab.coaching import (
+    ActivityCoachNarrative,
 )
 from performancelab.storage.in_memory_athlete_repository import (
     InMemoryAthleteRepository,
@@ -109,7 +116,43 @@ def athlete_with_workouts():
             ),
         )
     )
-
+    athlete.activity_coach_interpretations.add(
+        ActivityCoachInterpretation(
+            workout_id="workout-2",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-2",
+            generated_at=datetime(
+                2026,
+                8,
+                12,
+                14,
+                0,
+            ),
+            narrative=(
+                ActivityCoachNarrative(
+                    measured_facts="Facts.",
+                    deterministic_signals=(
+                        "Signals."
+                    ),
+                    prudent_interpretation=(
+                        "Interpretation."
+                    ),
+                    recommendations=(
+                        "Recommendation."
+                    ),
+                    data_limitations=(
+                        "Limitations."
+                    ),
+                    provider="google-gemini",
+                    model=(
+                        "gemini-3.5-flash"
+                    ),
+                )
+            ),
+        )
+    )
     return athlete
 
 
@@ -145,7 +188,16 @@ def test_deletes_one_workout_and_saves_once():
 
     assert result.changed is True
     assert result.removed_count == 1
+    assert (
+        result
+        .removed_interpretation_count
+        == 1
+    )
 
+    assert len(
+        stored
+        .activity_coach_interpretations
+    ) == 0
     assert (
         result.removed_workout_ids
         == (

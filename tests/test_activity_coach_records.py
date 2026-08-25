@@ -169,7 +169,7 @@ def test_replaces_same_interpretation_identity():
     )
 
 
-def test_keeps_different_context_versions():
+def test_replaces_older_context_for_same_workout():
 
     book = (
         ActivityCoachInterpretationBook()
@@ -180,14 +180,41 @@ def test_keeps_different_context_versions():
             context_hash="context-a"
         )
     )
-    book.add(
-        create_interpretation(
-            context_hash="context-b"
-        )
+
+    newer = create_interpretation(
+        context_hash="context-b",
+        recommendations=(
+            "Use the current context."
+        ),
     )
 
-    assert len(book) == 2
+    book.add(
+        newer
+    )
 
+    assert len(book) == 1
+
+    assert (
+        book.find(
+            workout_id="workout-1",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-a",
+        )
+        is None
+    )
+
+    assert (
+        book.find(
+            workout_id="workout-1",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-b",
+        )
+        == newer
+    )
 
 
 def test_finds_latest_interpretation_for_workout():
@@ -246,4 +273,120 @@ def test_latest_interpretation_returns_none_for_unknown_workout():
             workout_id="unknown-workout"
         )
         is None
+    )
+
+
+
+def test_prunes_legacy_context_versions_on_load():
+
+    older = create_interpretation(
+        context_hash="context-old",
+        generated_at=datetime(
+            2026,
+            8,
+            10,
+            12,
+            0,
+        ),
+    )
+
+    newer = create_interpretation(
+        context_hash="context-new",
+        generated_at=datetime(
+            2026,
+            8,
+            12,
+            12,
+            0,
+        ),
+    )
+
+    book = (
+        ActivityCoachInterpretationBook(
+            records=(
+                newer,
+                older,
+            )
+        )
+    )
+
+    assert len(book) == 1
+
+    assert (
+        book.latest_for_workout(
+            workout_id="workout-1"
+        )
+        == newer
+    )
+
+
+def test_removes_interpretation_for_workout():
+
+    book = (
+        ActivityCoachInterpretationBook(
+            records=(
+                create_interpretation(),
+            )
+        )
+    )
+
+    removed_count = (
+        book.remove_for_workouts(
+            (
+                "workout-1",
+            )
+        )
+    )
+
+    assert removed_count == 1
+    assert len(book) == 0
+
+
+def test_keeps_unrelated_interpretation():
+
+    first = create_interpretation()
+
+    second = (
+        ActivityCoachInterpretation(
+            workout_id="workout-2",
+            contract_version=(
+                "activity-coach-v1"
+            ),
+            context_hash="context-2",
+            generated_at=datetime(
+                2026,
+                8,
+                12,
+                14,
+                0,
+            ),
+            narrative=create_narrative(),
+        )
+    )
+
+    book = (
+        ActivityCoachInterpretationBook(
+            records=(
+                first,
+                second,
+            )
+        )
+    )
+
+    removed_count = (
+        book.remove_for_workouts(
+            (
+                "workout-1",
+            )
+        )
+    )
+
+    assert removed_count == 1
+    assert len(book) == 1
+
+    assert (
+        book.latest_for_workout(
+            workout_id="workout-2"
+        )
+        == second
     )

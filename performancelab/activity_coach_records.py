@@ -98,9 +98,21 @@ class ActivityCoachInterpretationBook:
         ] = (),
     ) -> None:
 
-        self._records = list(
-            records
+        self._records = []
+
+        ordered_records = sorted(
+            records,
+            key=(
+                self
+                ._generated_timestamp
+            ),
         )
+
+        for record in ordered_records:
+
+            self.add(
+                record
+            )
 
     def __iter__(
         self,
@@ -144,6 +156,32 @@ class ActivityCoachInterpretationBook:
             ),
             None,
         )
+
+    @staticmethod
+    def _generated_timestamp(
+        record,
+    ) -> float:
+        """
+        Return a comparable generation timestamp.
+        """
+
+        generated_at = (
+            record.generated_at
+        )
+
+        if (
+            generated_at.tzinfo
+            is None
+        ):
+
+            generated_at = (
+                generated_at.replace(
+                    tzinfo=timezone.utc
+                )
+            )
+
+        return generated_at.timestamp()
+
     def latest_for_workout(
         self,
         *,
@@ -169,30 +207,12 @@ class ActivityCoachInterpretationBook:
 
             return None
 
-        def generated_timestamp(
-            record,
-        ) -> float:
-
-            generated_at = (
-                record.generated_at
-            )
-
-            if (
-                generated_at.tzinfo
-                is None
-            ):
-
-                generated_at = (
-                    generated_at.replace(
-                        tzinfo=timezone.utc
-                    )
-                )
-
-            return generated_at.timestamp()
-
         return max(
             candidates,
-            key=generated_timestamp,
+            key=(
+                self
+                ._generated_timestamp
+            ),
         )
 
     def add(
@@ -200,18 +220,54 @@ class ActivityCoachInterpretationBook:
         record: ActivityCoachInterpretation,
     ) -> None:
         """
-        Adds or replaces the same interpretation identity.
+        Keep only the latest interpretation for a workout.
         """
 
         self._records = [
             existing
             for existing in self._records
             if (
-                existing.identity
-                != record.identity
+                existing.workout_id
+                != record.workout_id
             )
         ]
 
         self._records.append(
             record
+        )
+
+
+    def remove_for_workouts(
+        self,
+        workout_ids,
+    ) -> int:
+        """
+        Remove interpretations belonging to workouts.
+
+        Returns the number of removed records.
+        """
+
+        normalized_ids = {
+            workout_id
+            for workout_id in workout_ids
+        }
+
+        previous_count = len(
+            self._records
+        )
+
+        self._records = [
+            record
+            for record in self._records
+            if (
+                record.workout_id
+                not in normalized_ids
+            )
+        ]
+
+        return (
+            previous_count
+            - len(
+                self._records
+            )
         )

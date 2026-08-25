@@ -175,7 +175,7 @@ def test_reuses_matching_stored_interpretation():
     assert provider.call_count == 1
 
 
-def test_changed_context_generates_new_version():
+def test_changed_context_replaces_saved_version():
 
     athlete = Athlete(
         name="Pedro"
@@ -185,7 +185,7 @@ def test_changed_context_generates_new_version():
         provider
     )
 
-    coordinator.resolve(
+    first_result = coordinator.resolve(
         athlete=athlete,
         workout_id="workout-1",
         payload=create_payload(
@@ -202,14 +202,36 @@ def test_changed_context_generates_new_version():
     )
 
     assert (
+        first_result.status
+        is ActivityCoachResolutionStatus
+        .GENERATED
+    )
+
+    assert (
         result.status
         is ActivityCoachResolutionStatus
         .GENERATED
     )
+
     assert provider.call_count == 2
+
     assert len(
         athlete.activity_coach_interpretations
-    ) == 2
+    ) == 1
+
+    assert (
+        athlete
+        .activity_coach_interpretations
+        .latest_for_workout(
+            workout_id="workout-1"
+        )
+        == result.interpretation
+    )
+
+    assert (
+        result.interpretation
+        != first_result.interpretation
+    )
 
 
 def test_regenerates_only_when_explicitly_requested():
