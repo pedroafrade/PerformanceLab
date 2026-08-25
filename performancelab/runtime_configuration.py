@@ -22,6 +22,7 @@ from sqlalchemy.exc import (
     ArgumentError,
 )
 from performancelab.retention_policy import (
+    APPROVED_ALPHA_RETENTION_POLICY,
     AlphaRetentionPolicy,
     RETENTION_SETTING_NAMES,
 )
@@ -184,6 +185,19 @@ class RuntimeConfiguration:
             raise RuntimeError(
                 "A complete retention policy is required "
                 "in the alpha environment."
+            )
+
+        if (
+            normalized_environment
+            == "alpha"
+            and self.retention_policy
+            != APPROVED_ALPHA_RETENTION_POLICY
+        ):
+
+            raise RuntimeError(
+                "The configured retention policy does "
+                "not match the approved private alpha "
+                "retention periods."
             )
 
         object.__setattr__(

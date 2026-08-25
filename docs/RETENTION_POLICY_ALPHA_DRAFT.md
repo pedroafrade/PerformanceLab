@@ -2,9 +2,9 @@
 
 **Versão do rascunho:** `retention-alpha-v1`  
 **Data do rascunho:** 25 de agosto de 2026  
-**Estado:** RASCUNHO — NÃO ATIVAR NA ALPHA
+**Estado:** RASCUNHO — PRAZOS APROVADOS, REVISÃO JURÍDICA PENDENTE
 
-> Esta política ainda não está concluída. Os campos `[POR DEFINIR]` exigem uma decisão explícita antes do primeiro convite externo.
+> Os prazos operacionais foram aprovados para a alpha privada. O documento permanece em rascunho até à revisão jurídica e à conclusão dos mecanismos operacionais da fase G.
 
 ## 1. Objetivo
 
@@ -56,11 +56,11 @@ A conservação termina quando:
 
 Prazo de inatividade antes de contacto ou eliminação:
 
-`[POR DEFINIR — PRAZO PARA CONTAS INATIVAS]` — configuração: `RETENTION_INACTIVE_ACCOUNT_DAYS`
+**90 dias** — configuração: `RETENTION_INACTIVE_ACCOUNT_DAYS=90`
 
 Procedimento antes da eliminação por inatividade:
 
-`[POR DEFINIR — AVISO E OPORTUNIDADE DE REATIVAÇÃO]` — antecedência: `RETENTION_INACTIVITY_NOTICE_DAYS`
+O participante será avisado por email com **14 dias de antecedência**. A eliminação por inatividade será cancelada se o participante voltar a utilizar a conta ou pedir a sua manutenção durante esse período — configuração: `RETENTION_INACTIVITY_NOTICE_DAYS=14`.
 
 ## 4. Eliminação pedida pelo participante
 
@@ -128,7 +128,7 @@ Não incluem o prompt completo, o payload fisiológico ou a interpretação gera
 
 Prazo de conservação:
 
-`[POR DEFINIR — RETENÇÃO DOS METADADOS DO TRAINING COACH]` — configuração: `RETENTION_TRAINING_COACH_USAGE_DAYS`
+**30 dias após cada pedido** — configuração: `RETENTION_TRAINING_COACH_USAGE_DAYS=30`
 
 Finalidade durante esse prazo:
 
@@ -161,7 +161,7 @@ Caso seja necessária conservação posterior para demonstrar o consentimento ou
 
 Retenção posterior à eliminação da conta:
 
-`[POR DEFINIR — RETENÇÃO DE PROVA DE CONSENTIMENTO]` — configuração: `RETENTION_CONSENT_EVIDENCE_DAYS`
+**0 dias após a eliminação integral da conta.** O registo de consentimento é eliminado juntamente com os restantes dados ativos — configuração: `RETENTION_CONSENT_EVIDENCE_DAYS=0`
 
 ## 9. Convites
 
@@ -177,8 +177,8 @@ Os convites associados ao participante ou ao atleta são eliminados durante a el
 
 Para convites não utilizados, expirados ou revogados:
 
-- prazo de validade do convite: `[POR DEFINIR — VALIDADE DO CONVITE]` — configuração: `RETENTION_UNUSED_INVITATION_DAYS`
-- prazo adicional antes da eliminação: `[POR DEFINIR — RETENÇÃO DE CONVITES EXPIRADOS]` — configuração: `RETENTION_EXPIRED_INVITATION_DAYS`
+- prazo de validade de um convite não utilizado: **14 dias após a criação** — configuração: `RETENTION_UNUSED_INVITATION_DAYS=14`
+- conservação após expiração ou revogação: **7 dias** — configuração: `RETENTION_EXPIRED_INVITATION_DAYS=7`
 
 ## 10. Logs de aplicação e segurança
 
@@ -207,7 +207,7 @@ Antes de ativar logs na alpha deverão ser definidos:
 
 Prazo de conservação:
 
-`[POR DEFINIR — RETENÇÃO DOS LOGS]` — configuração: `RETENTION_APPLICATION_LOG_DAYS`
+**14 dias após a criação de cada registo** — configuração: `RETENTION_APPLICATION_LOG_DAYS=14`
 
 ## 11. Erros e alertas
 
@@ -223,7 +223,7 @@ Antes da ativação deverão ser definidos:
 
 Prazo de conservação:
 
-`[POR DEFINIR — RETENÇÃO DE ERROS E ALERTAS]` — configuração: `RETENTION_ERROR_ALERT_DAYS`
+**30 dias após a ocorrência** — configuração: `RETENTION_ERROR_ALERT_DAYS=30`
 
 ## 12. Backups
 
@@ -243,7 +243,7 @@ Antes do primeiro convite deverão ser definidos:
 
 Prazo de conservação dos backups:
 
-`[POR DEFINIR — RETENÇÃO DOS BACKUPS]` — configuração: `RETENTION_BACKUP_DAYS`
+**14 dias após a criação de cada backup** — configuração: `RETENTION_BACKUP_DAYS=14`
 
 Os dados eliminados da base ativa poderão permanecer temporariamente num backup até à expiração normal desse backup.
 
@@ -278,7 +278,7 @@ Antes do primeiro convite deverão ser definidos:
 
 Prazo de conservação:
 
-`[POR DEFINIR — RETENÇÃO DE PEDIDOS E SUPORTE]` — configuração: `RETENTION_SUPPORT_REQUEST_DAYS`
+**90 dias após o encerramento do pedido** — configuração: `RETENTION_SUPPORT_REQUEST_DAYS=90`
 
 ## 15. Fim da alpha privada
 
@@ -291,7 +291,7 @@ Antes de terminar a alpha deverá ser decidido se:
 
 Prazo após o encerramento da alpha:
 
-`[POR DEFINIR — PRAZO APÓS O FIM DA ALPHA]` — configuração: `RETENTION_POST_ALPHA_DAYS`
+**30 dias após a data oficial de encerramento da alpha** — configuração: `RETENTION_POST_ALPHA_DAYS=30`
 
 ## 16. Execução e verificação
 
@@ -307,20 +307,18 @@ A política final deverá identificar, para cada categoria:
 
 As rotinas automáticas de limpeza, logs, backups e restauro pertencem à implementação operacional da fase G.
 
-## 17. Decisões obrigatórias pendentes
+## 17. Estado das decisões
 
-A política não pode ser ativada enquanto não forem definidos:
-
-- [ ] prazo para contas inativas;
-- [ ] aviso antes da eliminação por inatividade;
-- [ ] retenção dos metadados do Training Coach;
-- [ ] eventual retenção mínima de prova de consentimento;
-- [ ] validade dos convites;
-- [ ] retenção de convites expirados;
-- [ ] retenção dos logs;
-- [ ] retenção de erros e alertas;
-- [ ] retenção dos backups;
-- [ ] retenção de pedidos de suporte e direitos;
-- [ ] prazo após o fim da alpha;
-- [ ] procedimento que impede o restauro de dados eliminados;
-- [ ] revisão jurídica dos prazos.
+- [x] prazo para contas inativas: 90 dias;
+- [x] aviso antes da eliminação por inatividade: 14 dias;
+- [x] retenção dos metadados do Training Coach: 30 dias;
+- [x] retenção posterior da prova de consentimento: 0 dias;
+- [x] validade dos convites: 14 dias;
+- [x] retenção de convites expirados: 7 dias;
+- [x] retenção dos logs: 14 dias;
+- [x] retenção de erros e alertas: 30 dias;
+- [x] retenção dos backups: 14 dias;
+- [x] retenção de pedidos de suporte e direitos: 90 dias;
+- [x] prazo após o fim da alpha: 30 dias;
+- [ ] implementar e testar o procedimento que impede o restauro de dados eliminados;
+- [ ] concluir a revisão jurídica.

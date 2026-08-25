@@ -166,7 +166,6 @@ def test_policy_keeps_external_decisions_pending():
         "[POR DEFINIR — REGIÃO DA BASE DE DADOS]",
         "[POR DEFINIR — LOCALIZAÇÃO DOS BACKUPS]",
         "[POR DEFINIR — TRANSFERÊNCIAS E GARANTIAS]",
-        "[POR DEFINIR — PRAZOS DE CONSERVAÇÃO]",
         "[POR DEFINIR — PRAZO DE RESPOSTA]",
     )
 
@@ -203,3 +202,19 @@ def test_privacy_policy_references_retention_schedule():
         "impede o arranque do ambiente alpha"
         in text
     )
+
+def test_privacy_policy_contains_approved_retention_periods():
+
+    text = policy_text()
+
+    approved_periods = (
+        "contas inativas: 90 dias",
+        "metadados do Training Coach: 30 dias",
+        "backups: 14 dias",
+        "pedidos de suporte e direitos: 90 dias",
+        "dados após o fim da alpha: 30 dias",
+    )
+
+    for period in approved_periods:
+
+        assert period in text

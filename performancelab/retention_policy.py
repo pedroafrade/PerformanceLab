@@ -337,3 +337,19 @@ class AlphaRetentionPolicy:
                 self.post_alpha_days
             ),
         }
+
+APPROVED_ALPHA_RETENTION_POLICY = (
+    AlphaRetentionPolicy(
+        inactive_account_days=90,
+        inactivity_notice_days=14,
+        training_coach_usage_days=30,
+        consent_evidence_days=0,
+        unused_invitation_days=14,
+        expired_invitation_days=7,
+        application_log_days=14,
+        error_alert_days=30,
+        backup_days=14,
+        support_request_days=90,
+        post_alpha_days=30,
+    )
+)

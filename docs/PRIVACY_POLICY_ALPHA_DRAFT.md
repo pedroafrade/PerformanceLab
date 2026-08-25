@@ -176,7 +176,18 @@ Continuam por definir prazos ou critérios concretos para:
 - backups e respetivas cópias;
 - pedidos de suporte e de exercício de direitos.
 
-**Estado:** `[POR DEFINIR — PRAZOS DE CONSERVAÇÃO]`
+Os prazos operacionais aprovados para a alpha são:
+
+- contas inativas: 90 dias, com aviso 14 dias antes da eliminação;
+- metadados do Training Coach: 30 dias;
+- prova de consentimento após eliminação integral: 0 dias;
+- convites não utilizados: 14 dias;
+- convites expirados ou revogados: mais 7 dias;
+- logs da aplicação: 14 dias;
+- erros e alertas: 30 dias;
+- backups: 14 dias;
+- pedidos de suporte e direitos: 90 dias após encerramento;
+- dados após o fim da alpha: 30 dias.
 
 As categorias, decisões pendentes e nomes das configurações técnicas estão detalhados em `docs/RETENTION_POLICY_ALPHA_DRAFT.md`. A aplicação impede o arranque do ambiente alpha quando a configuração de retenção está incompleta.
 
@@ -289,7 +300,7 @@ Este documento não pode ser publicado enquanto não estiverem concluídos:
 - [ ] regiões de tratamento e armazenamento;
 - [ ] localização e retenção dos backups;
 - [ ] transferências internacionais e garantias;
-- [ ] prazos de conservação;
+- [x] prazos operacionais de conservação definidos;
 - [ ] processo de acesso, correção, exportação e eliminação;
 - [ ] procedimento e prazo de resposta aos participantes;
 - [ ] processo de incidentes;

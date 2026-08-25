@@ -5,6 +5,7 @@ Tests for explicit private alpha retention periods.
 import pytest
 
 from performancelab.retention_policy import (
+    APPROVED_ALPHA_RETENTION_POLICY,
     AlphaRetentionPolicy,
 )
 
@@ -148,7 +149,7 @@ def retention_mapping(
         "RETENTION_APPLICATION_LOG_DAYS": "14",
         "RETENTION_ERROR_ALERT_DAYS": "30",
         "RETENTION_BACKUP_DAYS": "14",
-        "RETENTION_SUPPORT_REQUEST_DAYS": "30",
+        "RETENTION_SUPPORT_REQUEST_DAYS": "90",
         "RETENTION_POST_ALPHA_DAYS": "30",
     }
 
@@ -233,3 +234,22 @@ def test_mapping_rejects_invalid_collection():
         AlphaRetentionPolicy.from_mapping(
             None
         )
+
+def test_approved_alpha_retention_policy():
+
+    assert (
+        APPROVED_ALPHA_RETENTION_POLICY
+        .as_dict()
+    ) == {
+        "inactive_account_days": 90,
+        "inactivity_notice_days": 14,
+        "training_coach_usage_days": 30,
+        "consent_evidence_days": 0,
+        "unused_invitation_days": 14,
+        "expired_invitation_days": 7,
+        "application_log_days": 14,
+        "error_alert_days": 30,
+        "backup_days": 14,
+        "support_request_days": 90,
+        "post_alpha_days": 30,
+    }

@@ -77,7 +77,7 @@ def alpha_retention_policy() -> (
         application_log_days=14,
         error_alert_days=30,
         backup_days=14,
-        support_request_days=30,
+        support_request_days=90,
         post_alpha_days=30,
     )
 

@@ -28,7 +28,7 @@ def alpha_retention_values() -> dict[
         "RETENTION_APPLICATION_LOG_DAYS": "14",
         "RETENTION_ERROR_ALERT_DAYS": "30",
         "RETENTION_BACKUP_DAYS": "14",
-        "RETENTION_SUPPORT_REQUEST_DAYS": "30",
+        "RETENTION_SUPPORT_REQUEST_DAYS": "90",
         "RETENTION_POST_ALPHA_DAYS": "30",
     }
 
@@ -537,3 +537,30 @@ def test_runtime_configuration_exposes_retention_settings():
     assert set(
         RUNTIME_CONFIGURATION_SETTING_NAMES
     ) == expected_settings
+
+def test_alpha_rejects_unapproved_retention_periods():
+
+    values = {
+        "PERFORMANCELAB_ENV": "alpha",
+        "DATABASE_URL": (
+            "postgresql+psycopg://"
+            "user:secret@db.example.com/"
+            "performancelab"
+        ),
+        **alpha_retention_values(),
+    }
+
+    values[
+        "RETENTION_BACKUP_DAYS"
+    ] = "30"
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "does not match the approved"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            values
+        )

@@ -21,18 +21,19 @@ def policy_text() -> str:
     )
 
 
-def test_retention_policy_is_explicitly_a_draft():
+def test_retention_policy_is_pending_legal_review():
 
     text = policy_text()
 
     assert (
-        "RASCUNHO — NÃO ATIVAR NA ALPHA"
+        "RASCUNHO — PRAZOS APROVADOS, "
+        "REVISÃO JURÍDICA PENDENTE"
         in text
     )
 
     assert (
         "[POR DEFINIR"
-        in text
+        not in text
     )
 
 
@@ -77,24 +78,6 @@ def test_retention_policy_records_confirmed_rules():
         assert rule in text
 
 
-def test_retention_policy_does_not_invent_pending_periods():
-
-    text = policy_text()
-
-    pending_periods = (
-        "[POR DEFINIR — PRAZO PARA CONTAS INATIVAS]",
-        "[POR DEFINIR — RETENÇÃO DOS METADADOS DO TRAINING COACH]",
-        "[POR DEFINIR — VALIDADE DO CONVITE]",
-        "[POR DEFINIR — RETENÇÃO DOS LOGS]",
-        "[POR DEFINIR — RETENÇÃO DOS BACKUPS]",
-        "[POR DEFINIR — RETENÇÃO DE PEDIDOS E SUPORTE]",
-        "[POR DEFINIR — PRAZO APÓS O FIM DA ALPHA]",
-    )
-
-    for period in pending_periods:
-
-        assert period in text
-
 
 def test_retention_policy_addresses_deleted_data_in_backups():
 
@@ -133,3 +116,25 @@ def test_retention_decisions_map_to_configuration():
     for configuration_name in configuration_names:
 
         assert configuration_name in text
+
+def test_retention_policy_contains_approved_periods():
+
+    text = policy_text()
+
+    approved_settings = (
+        "RETENTION_INACTIVE_ACCOUNT_DAYS=90",
+        "RETENTION_INACTIVITY_NOTICE_DAYS=14",
+        "RETENTION_TRAINING_COACH_USAGE_DAYS=30",
+        "RETENTION_CONSENT_EVIDENCE_DAYS=0",
+        "RETENTION_UNUSED_INVITATION_DAYS=14",
+        "RETENTION_EXPIRED_INVITATION_DAYS=7",
+        "RETENTION_APPLICATION_LOG_DAYS=14",
+        "RETENTION_ERROR_ALERT_DAYS=30",
+        "RETENTION_BACKUP_DAYS=14",
+        "RETENTION_SUPPORT_REQUEST_DAYS=90",
+        "RETENTION_POST_ALPHA_DAYS=30",
+    )
+
+    for setting in approved_settings:
+
+        assert setting in text
