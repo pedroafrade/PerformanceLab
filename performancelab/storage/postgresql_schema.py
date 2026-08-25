@@ -384,6 +384,44 @@ training_coach_usage = Table(
     ),
 )
 
+alpha_participation_consents = Table(
+    "alpha_participation_consents",
+    metadata,
+    Column(
+        "consent_id",
+        String(36),
+        primary_key=True,
+    ),
+    Column(
+        "user_id",
+        String(36),
+        ForeignKey(
+            "users.user_id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+    ),
+    Column(
+        "notice_version",
+        String(100),
+        nullable=False,
+    ),
+    Column(
+        "accepted_at",
+        DateTime(
+            timezone=True
+        ),
+        nullable=False,
+    ),
+    Column(
+        "withdrawn_at",
+        DateTime(
+            timezone=True
+        ),
+        nullable=True,
+    ),
+)
+
 athlete_snapshots = Table(
     "athlete_snapshots",
     metadata,
@@ -429,5 +467,6 @@ POSTGRESQL_TABLES = (
     alpha_invitations,
     training_coach_consents,
     training_coach_usage,
+    alpha_participation_consents,
     athlete_snapshots,
 )

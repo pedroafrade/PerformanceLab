@@ -18,6 +18,7 @@ from sqlalchemy.schema import (
 from performancelab.storage.postgresql_schema import (
     POSTGRESQL_TABLES,
     alpha_invitations,
+    alpha_participation_consents,
     athlete_snapshots,
     athletes,
     external_identities,
@@ -62,6 +63,7 @@ def test_defines_expected_postgresql_tables():
         "alpha_invitations",
         "training_coach_consents",
         "training_coach_usage",
+        "alpha_participation_consents",
         "athlete_snapshots",
     }
 
@@ -75,6 +77,7 @@ def test_defines_expected_postgresql_tables():
         alpha_invitations,
         training_coach_consents,
         training_coach_usage,
+        alpha_participation_consents,
         athlete_snapshots,
     )
 
@@ -328,4 +331,51 @@ def test_training_coach_usage_contains_no_payload():
     assert (
         user_foreign_key.ondelete
         == "CASCADE"
+    )
+
+
+
+def test_alpha_participation_consent_schema():
+
+    assert column_names(
+        alpha_participation_consents
+    ) == (
+        "consent_id",
+        "user_id",
+        "notice_version",
+        "accepted_at",
+        "withdrawn_at",
+    )
+
+    assert primary_key_names(
+        alpha_participation_consents
+    ) == (
+        "consent_id",
+    )
+
+    user_foreign_key = next(
+        iter(
+            alpha_participation_consents
+            .c
+            .user_id
+            .foreign_keys
+        )
+    )
+
+    assert (
+        user_foreign_key.target_fullname
+        == "users.user_id"
+    )
+
+    assert (
+        user_foreign_key.ondelete
+        == "CASCADE"
+    )
+
+    assert (
+        alpha_participation_consents
+        .c
+        .withdrawn_at
+        .nullable
+        is True
     )
