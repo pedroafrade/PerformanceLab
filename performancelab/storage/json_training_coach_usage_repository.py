@@ -323,6 +323,32 @@ class JsonTrainingCoachUsageRepository:
             )
         )
 
+    def list_for_user(
+        self,
+        user_id: str,
+    ) -> tuple[
+        TrainingCoachUsageEvent,
+        ...,
+    ]:
+        """
+        Return only usage events belonging to one user.
+        """
+
+        normalized_user_id = (
+            self._normalized_user_id(
+                user_id
+            )
+        )
+
+        return tuple(
+            event
+            for event in self.list()
+            if (
+                event.user_id
+                == normalized_user_id
+            )
+        )
+
     def counts_for_utc_day(
         self,
         *,

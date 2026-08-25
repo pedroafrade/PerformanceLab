@@ -242,6 +242,54 @@ class PostgreSQLTrainingCoachUsageRepository:
             )
         )
 
+    def list_for_user(
+        self,
+        user_id: str,
+    ) -> tuple[
+        TrainingCoachUsageEvent,
+        ...,
+    ]:
+        """
+        Return only usage events belonging to one user.
+        """
+
+        normalized_user_id = (
+            self._normalized_user_id(
+                user_id
+            )
+        )
+
+        rows = (
+            self._connection.execute(
+                select(
+                    training_coach_usage
+                )
+                .where(
+                    training_coach_usage
+                    .c
+                    .user_id
+                    == normalized_user_id
+                )
+                .order_by(
+                    training_coach_usage
+                    .c
+                    .occurred_at,
+                    training_coach_usage
+                    .c
+                    .usage_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+        return tuple(
+            self._event_from_row(
+                row
+            )
+            for row in rows
+        )
+
     def counts_for_utc_day(
         self,
         *,

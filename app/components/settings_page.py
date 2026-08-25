@@ -13,6 +13,7 @@ from .training_coach_consent import (
     show_training_coach_consent_settings,
 )
 
+
 def _settings_page_header() -> None:
     """
     Displays the standard page header used throughout
@@ -62,14 +63,14 @@ def _settings_page_header() -> None:
                 Settings
             </div>
             <div class="settings-page-subtitle">
-                Manage the personal, physiological,
-                nutrition and availability information
-                used by PerformanceLab.
+                Manage your profile, Training Coach
+                permission and private alpha data.
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
 
 def show_settings_page(
     athlete,
@@ -77,10 +78,10 @@ def show_settings_page(
     training_coach_permitted: bool = False,
     on_allow_training_coach=None,
     on_withdraw_training_coach=None,
+    participant_export_json: str | None = None,
 ):
     """
-    Displays athlete settings while reusing the
-    existing validated athlete editor.
+    Display athlete settings and participant data controls.
     """
 
     _settings_page_header()
@@ -104,6 +105,39 @@ def show_settings_page(
             on_withdraw_training_coach
         ),
     )
+
+    st.divider()
+
+    st.subheader(
+        "Your data"
+    )
+
+    st.caption(
+        "Download a readable JSON export containing "
+        "your account, consent records, Training Coach "
+        "usage metadata and complete athlete profile."
+    )
+
+    if (
+        participant_export_json
+        is not None
+    ):
+
+        st.download_button(
+            "Download my data",
+            data=participant_export_json,
+            file_name=(
+                "performancelab-data-export.json"
+            ),
+            mime="application/json",
+            use_container_width=True,
+        )
+
+    else:
+
+        st.warning(
+            "Your data export is temporarily unavailable."
+        )
 
     st.divider()
 

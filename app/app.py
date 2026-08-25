@@ -8,6 +8,8 @@ import os
 
 from datetime import (
     date,
+    datetime,
+    timezone,
 )
 from pathlib import Path
 
@@ -34,6 +36,7 @@ from performancelab import (
 )
 from performancelab.application import (
     DeleteWorkouts,
+    ExportParticipantData,
     GenerateTrainingPlan,
     ImportActivities,
     LoadActiveAthlete,
@@ -357,6 +360,46 @@ def resolve_training_coach(
             )
 
     return result
+
+def export_participant_data() -> str:
+    """
+    Build a complete export for the authenticated participant.
+    """
+
+    current_user = (
+        st.session_state.current_user
+    )
+
+    result = ExportParticipantData(
+        athlete_repository=(
+            athlete_repository
+        ),
+        external_identity_repository=(
+            external_identity_repository
+        ),
+        athlete_access_repository=(
+            athlete_access_repository
+        ),
+        alpha_participation_consent_repository=(
+            alpha_participation_consent_repository
+        ),
+        training_coach_consent_repository=(
+            training_coach_consent_repository
+        ),
+        training_coach_usage_repository=(
+            training_coach_usage_repository
+        ),
+        authorization=(
+            athlete_authorization
+        ),
+    ).execute(
+        current_user,
+        generated_at=datetime.now(
+            timezone.utc
+        ),
+    )
+
+    return result.to_json()
 
 def accept_alpha_participation() -> None:
     """
@@ -836,6 +879,23 @@ elif page == "development":
     )
 elif page == "settings":
 
+    try:
+
+        participant_export_json = (
+            export_participant_data()
+        )
+
+    except (
+        TypeError,
+        ValueError,
+        PermissionError,
+        FileNotFoundError,
+        KeyError,
+        RuntimeError,
+    ):
+
+        participant_export_json = None
+
     athlete = show_settings_page(
         athlete,
         training_coach_permitted=(
@@ -846,6 +906,9 @@ elif page == "settings":
         ),
         on_withdraw_training_coach=(
             withdraw_training_coach
+        ),
+        participant_export_json=(
+            participant_export_json
         ),
     )
 
