@@ -178,6 +178,8 @@ Continuam por definir prazos ou critérios concretos para:
 
 **Estado:** `[POR DEFINIR — PRAZOS DE CONSERVAÇÃO]`
 
+As categorias, decisões pendentes e nomes das configurações técnicas estão detalhados em `docs/RETENTION_POLICY_ALPHA_DRAFT.md`. A aplicação impede o arranque do ambiente alpha quando a configuração de retenção está incompleta.
+
 ## 10. Decisões automatizadas
 
 O PerformanceLab utiliza regras e cálculos automáticos para produzir indicadores, planos, recomendações e adaptações de treino.

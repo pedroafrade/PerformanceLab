@@ -189,3 +189,17 @@ def test_policy_does_not_claim_to_be_final():
         "revisão jurídica final"
         in text
     )
+
+def test_privacy_policy_references_retention_schedule():
+
+    text = policy_text()
+
+    assert (
+        "docs/RETENTION_POLICY_ALPHA_DRAFT.md"
+        in text
+    )
+
+    assert (
+        "impede o arranque do ambiente alpha"
+        in text
+    )
