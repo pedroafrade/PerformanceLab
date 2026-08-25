@@ -243,3 +243,21 @@ def test_documentation_defines_secure_secret_delivery():
         "não inicia o período experimental de 90 dias"
         in text
     )
+
+def test_secret_file_path_is_a_closed_code_block():
+
+    source = DOCUMENTATION_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "```text\n"
+        "/app/.streamlit/secrets.toml\n"
+        "```"
+        in source
+    )
+    assert (
+        "### 4.3. Regras de segurança"
+        in source
+    )
+    assert "- `DATABASE_URL` real;" in source

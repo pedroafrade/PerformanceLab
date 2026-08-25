@@ -71,40 +71,43 @@ no Google Secret Manager e montado no contentor em:
 
 ```text
 /app/.streamlit/secrets.toml
-O ficheiro montado deverá conter a secção [auth], incluindo:
+```
 
-endereço de retorno público da aplicação;
-segredo do cookie;
-identificador do cliente Google;
-segredo do cliente Google;
-endereço de metadados OIDC da Google.
+O ficheiro montado deverá conter a secção `[auth]`, incluindo:
+
+- endereço de retorno público da aplicação;
+- segredo do cookie;
+- identificador do cliente Google;
+- segredo do cliente Google;
+- endereço de metadados OIDC da Google.
 
 O endereço de retorno só poderá ser preenchido depois de existir um
 endereço interno confirmado para o serviço Cloud Run.
 
 O exemplo versionado
-.streamlit/secrets.toml.example contém apenas valores fictícios.
-O ficheiro real .streamlit/secrets.toml permanece ignorado pelo Git.
+`.streamlit/secrets.toml.example` contém apenas valores fictícios.
+O ficheiro real `.streamlit/secrets.toml` permanece ignorado pelo Git.
 
-4.3. Regras de segurança
+### 4.3. Regras de segurança
 
 Nunca serão incluídos na imagem ou no repositório:
 
-DATABASE_URL real;
-passwords;
-tokens ou segredos OIDC;
-chave do Gemini;
-DSN real do Better Stack;
-certificados;
-dados dos atletas;
-backups;
-exportações.
+- `DATABASE_URL` real;
+- passwords;
+- tokens ou segredos OIDC;
+- chave do Gemini;
+- DSN real do Better Stack;
+- certificados;
+- dados dos atletas;
+- backups;
+- exportações.
 
 Os valores secretos não devem ser escritos nos comandos guardados,
 documentação, logs, testes ou histórico do PowerShell.
 
 Esta preparação não cria segredos no Google Cloud, não ativa serviços
 e não inicia o período experimental de 90 dias.
+
 
 ## 5. Acesso privado
 
