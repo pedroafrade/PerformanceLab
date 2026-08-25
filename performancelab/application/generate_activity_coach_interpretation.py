@@ -15,6 +15,9 @@ from datetime import (
 from threading import (
     Lock,
 )
+from time import (
+    perf_counter,
+)
 from typing import (
     ClassVar,
 )
@@ -43,6 +46,14 @@ def current_utc_time() -> datetime:
     return datetime.now(
         timezone.utc
     )
+
+
+def monotonic_time() -> float:
+    """
+    Return a monotonic value for measuring duration.
+    """
+
+    return perf_counter()
 
 
 class GenerateActivityCoachInterpretation:
@@ -80,6 +91,11 @@ class GenerateActivityCoachInterpretation:
             [],
             datetime,
         ] = current_utc_time,
+        timer: Callable[
+            [],
+            float,
+        ] = monotonic_time,
+
     ) -> None:
 
         if not isinstance(
@@ -109,6 +125,13 @@ class GenerateActivityCoachInterpretation:
             raise TypeError(
                 "clock must be callable."
             )
+        if not callable(
+            timer
+        ):
+
+            raise TypeError(
+                "timer must be callable."
+            )
 
         self._coordinator = coordinator
         self._usage_repository = (
@@ -116,6 +139,7 @@ class GenerateActivityCoachInterpretation:
         )
         self._usage_limits = usage_limits
         self._clock = clock
+        self._timer = timer
 
 
     @staticmethod
@@ -170,6 +194,57 @@ class GenerateActivityCoachInterpretation:
 
         return value.astimezone(
             timezone.utc
+        )
+
+    def _configured_provider_metadata(
+        self,
+    ) -> tuple[
+        str | None,
+        str | None,
+    ]:
+        """
+        Return the configured provider identity without
+        exposing provider errors or request contents.
+        """
+
+        provider = (
+            self._coordinator
+            .generation_service
+            .provider
+        )
+
+        if provider is None:
+
+            return (
+                None,
+                None,
+            )
+
+        provider_name = getattr(
+            provider,
+            "provider_name",
+            None,
+        )
+
+        model_name = getattr(
+            provider,
+            "model_name",
+            None,
+        )
+
+        return (
+            provider_name
+            if isinstance(
+                provider_name,
+                str,
+            )
+            else None,
+            model_name
+            if isinstance(
+                model_name,
+                str,
+            )
+            else None,
         )
 
     def execute(
@@ -256,6 +331,8 @@ class GenerateActivityCoachInterpretation:
                 request_key
             )
 
+        started_at = self._timer()
+
         try:
 
             resolution = (
@@ -269,6 +346,8 @@ class GenerateActivityCoachInterpretation:
             )
 
         finally:
+
+            finished_at = self._timer()
 
             with (
                 self._active_requests_lock
@@ -292,6 +371,78 @@ class GenerateActivityCoachInterpretation:
             )
         )
 
+        (
+            provider_name,
+            model_name,
+        ) = (
+            self
+            ._configured_provider_metadata()
+        )
+
+        if (
+            resolution.interpretation
+            is not None
+        ):
+
+            provider_name = (
+                resolution
+                .interpretation
+                .narrative
+                .provider
+            )
+
+            model_name = (
+                resolution
+                .interpretation
+                .narrative
+                .model
+            )
+
+        elapsed_seconds = max(
+            float(
+                finished_at
+            )
+            - float(
+                started_at
+            ),
+            0.0,
+        )
+
+        latency_ms = int(
+            round(
+                elapsed_seconds
+                * 1000
+            )
+        )
+
+        generated_count = (
+            1
+            if (
+                usage_status
+                is TrainingCoachUsageStatus
+                .GENERATED
+            )
+            else 0
+        )
+
+        remaining_user_requests = max(
+            (
+                decision
+                .remaining_user_requests
+                - generated_count
+            ),
+            0,
+        )
+
+        remaining_global_requests = max(
+            (
+                decision
+                .remaining_global_requests
+                - generated_count
+            ),
+            0,
+        )
+
         self._usage_repository.save(
             TrainingCoachUsageEvent(
                 user_id=(
@@ -299,6 +450,18 @@ class GenerateActivityCoachInterpretation:
                 ),
                 occurred_at=occurred_at,
                 status=usage_status,
+                provider=provider_name,
+                model=model_name,
+                error_code=(
+                    resolution.error_code
+                ),
+                latency_ms=latency_ms,
+                remaining_user_requests=(
+                    remaining_user_requests
+                ),
+                remaining_global_requests=(
+                    remaining_global_requests
+                ),
             )
         )
 

@@ -70,6 +70,32 @@ class Provider:
         )
 
 
+
+class RecordingUsageRepository(
+    InMemoryTrainingCoachUsageRepository
+):
+
+    def __init__(
+        self,
+    ):
+
+        super().__init__()
+
+        self.saved_events = []
+
+    def save(
+        self,
+        event,
+    ):
+
+        super().save(
+            event
+        )
+
+        self.saved_events.append(
+            event
+        )
+
 def fixed_time():
 
     return datetime(
@@ -97,6 +123,7 @@ def create_use_case(
     repository,
     user_limit=2,
     global_limit=10,
+    timer=None,
 ):
 
     coordinator = ActivityCoachCoordinator(
@@ -107,6 +134,14 @@ def create_use_case(
         ),
         now=fixed_time,
     )
+
+    timer_arguments = {}
+
+    if timer is not None:
+
+        timer_arguments[
+            "timer"
+        ] = timer
 
     return GenerateActivityCoachInterpretation(
         coordinator=coordinator,
@@ -122,6 +157,7 @@ def create_use_case(
             )
         ),
         clock=fixed_time,
+        **timer_arguments,
     )
 
 
@@ -361,3 +397,133 @@ def test_blocks_duplicate_request_across_use_case_instances():
 
     assert counts.user_count == 1
     assert counts.global_count == 1
+
+
+
+def test_records_successful_operational_metadata():
+
+    provider = Provider()
+
+    repository = (
+        RecordingUsageRepository()
+    )
+
+    timer_values = iter(
+        (
+            100.0,
+            101.25,
+        )
+    )
+
+    result = create_use_case(
+        provider=provider,
+        repository=repository,
+        user_limit=5,
+        global_limit=50,
+        timer=lambda: next(
+            timer_values
+        ),
+    ).execute(
+        user_id="user-1",
+        athlete=Athlete(
+            name="Pedro"
+        ),
+        workout_id="workout-1",
+        payload=payload(),
+    )
+
+    assert (
+        result.status
+        is ActivityCoachResolutionStatus
+        .GENERATED
+    )
+
+    assert len(
+        repository.saved_events
+    ) == 1
+
+    event = (
+        repository.saved_events[0]
+    )
+
+    assert event.provider == "fake"
+    assert event.model == "fake-model"
+    assert event.error_code is None
+    assert event.latency_ms == 1250
+
+    assert (
+        event.remaining_user_requests
+        == 4
+    )
+    assert (
+        event.remaining_global_requests
+        == 49
+    )
+
+
+def test_records_failed_operational_metadata():
+
+    provider = Provider(
+        unavailable=True
+    )
+
+    repository = (
+        RecordingUsageRepository()
+    )
+
+    timer_values = iter(
+        (
+            200.0,
+            200.4,
+        )
+    )
+
+    result = create_use_case(
+        provider=provider,
+        repository=repository,
+        user_limit=5,
+        global_limit=50,
+        timer=lambda: next(
+            timer_values
+        ),
+    ).execute(
+        user_id="user-1",
+        athlete=Athlete(
+            name="Pedro"
+        ),
+        workout_id="workout-1",
+        payload=payload(),
+    )
+
+    assert (
+        result.status
+        is ActivityCoachResolutionStatus
+        .UNAVAILABLE
+    )
+
+    assert len(
+        repository.saved_events
+    ) == 1
+
+    event = (
+        repository.saved_events[0]
+    )
+
+    assert event.provider == "fake"
+    assert event.model == "fake-model"
+
+    assert (
+        event.error_code
+        == "provider_unavailable"
+    )
+
+    assert event.latency_ms == 400
+
+    assert (
+        event.remaining_user_requests
+        == 5
+    )
+    assert (
+        event.remaining_global_requests
+        == 50
+    )
