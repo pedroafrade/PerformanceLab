@@ -18,18 +18,36 @@ O objetivo não é impor um calendário rígido nem apresentar dezenas de métri
 
 ## Estado do projeto
 
-O PerformanceLab está em **desenvolvimento ativo, antes da primeira UI pública**.
+O PerformanceLab está em **desenvolvimento ativo e em preparação
+para uma alpha privada**.
 
-O núcleo de análise e planeamento já é funcional, mas a aplicação atual deve ser executada localmente. Usa:
+A aplicação possui atualmente:
 
 - Streamlit para a interface;
-- ficheiros JSON locais para persistência;
-- autenticação de desenvolvimento por email;
-- contas de demonstração criadas automaticamente.
+- JSON exclusivamente para desenvolvimento local;
+- PostgreSQL obrigatório nos ambientes de teste e alpha;
+- autenticação externa por OIDC;
+- convites individuais;
+- autorização e isolamento por utilizador e atleta;
+- uploads validados e processados temporariamente;
+- consentimentos, exportação e eliminação de dados;
+- limites e consentimento separado para o Training Coach;
+- CI, logging estruturado, alertas seguros e verificação de saúde.
 
-Esta versão ainda **não deve ser exposta diretamente à Internet**. Autenticação segura, persistência transacional, proteção de uploads, privacidade operacional e autorização por atleta fazem parte do trabalho necessário antes da publicação.
+Esta versão ainda não deve ser aberta a participantes reais.
 
-Consulta o [roadmap até à UI pública](docs/ROADMAP_PUBLIC_UI.md) para o estado e a sequência de evolução.
+Continuam pendentes, entre outros:
+
+- revisão jurídica externa;
+- alojamento privado da aplicação;
+- ativação e verificação do Better Stack;
+- Google Cloud SQL;
+- backups automáticos;
+- restauro real testado;
+- deployment e testes internos no ambiente alpha.
+
+Consulta o [roadmap até à UI pública](docs/ROADMAP_PUBLIC_UI.md)
+para o estado e a sequência de evolução.
 
 ---
 
@@ -198,12 +216,13 @@ Mais informação:
 
 ## Requisitos
 
-- Python 3.11 ou superior;
+- Python 3.11, 3.12, 3.13 ou 3.14;
 - Git;
 - PowerShell, terminal macOS ou shell Linux;
 - ambiente virtual recomendado.
 
-As dependências da aplicação estão em `requirements.txt`. A metadata do pacote está em `pyproject.toml`.
+O ficheiro `pyproject.toml` é a fonte única das dependências da
+aplicação e dos testes.
 
 ---
 
@@ -218,11 +237,12 @@ cd PerformanceLab
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-py -m pip install --upgrade pip
-py -m pip install -r requirements.txt
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
 ```
 
-Se a política do PowerShell impedir a ativação do ambiente, executa primeiro, apenas para a sessão atual:
+Se a política do PowerShell impedir a ativação do ambiente, executa
+primeiro, apenas para a sessão atual:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -239,33 +259,36 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -e ".[test]"
 ```
 
 ---
 
 ## Executar a aplicação
 
+O ambiente local utiliza os repositórios JSON e não deve ser usado
+como deployment da alpha.
+
 No Windows PowerShell:
 
 ```powershell
-py -m streamlit run app\app.py
+$env:PERFORMANCELAB_ENV = "local"
+python -m streamlit run app\app.py
 ```
 
 No macOS ou Linux:
 
 ```bash
+export PERFORMANCELAB_ENV=local
 python -m streamlit run app/app.py
 ```
 
-Na primeira execução sem dados locais, a aplicação cria um atleta e duas contas de desenvolvimento:
+O ambiente alpha utiliza autenticação OIDC, convites, autorização e
+PostgreSQL. Recusa o arranque quando a configuração obrigatória está
+incompleta.
 
-| Papel | Email |
-|---|---|
-| Atleta | `demo@performancelab.local` |
-| Treinador | `coach@performancelab.local` |
-
-O login atual pede apenas o email. É uma conveniência de desenvolvimento e não um mecanismo seguro de autenticação.
+Segredos e valores reais de configuração nunca devem ser escritos
+no repositório.
 
 ---
 
@@ -289,19 +312,30 @@ Não publiques ficheiros reais da pasta `data/` num commit.
 
 ## Testes
 
-Instala o pytest no ambiente de desenvolvimento:
+As dependências de teste são instaladas juntamente com o projeto:
 
 ```powershell
-py -m pip install pytest
+python -m pip install -e ".[test]"
 ```
 
-Executa todos os testes:
+Executar um ficheiro específico:
 
 ```powershell
-py -m pytest
+pytest -q tests/test_application_health.py
 ```
 
-Os testes cobrem domínio, fisiologia, coaching, planeamento, reconciliação, adaptação, persistência, importação e apresentação.
+Executar todos os testes:
+
+```powershell
+pytest -q
+```
+
+O GitHub Actions executa automaticamente os testes com Python 3.11
+e Python 3.14.
+
+Os testes cobrem domínio, fisiologia, coaching, planeamento,
+reconciliação, autorização, persistência, importação, privacidade e
+operação.
 
 ---
 
@@ -309,25 +343,16 @@ Os testes cobrem domínio, fisiologia, coaching, planeamento, reconciliação, a
 
 ```text
 PerformanceLab/
+├── .github/workflows/      # Integração contínua
 ├── app/                    # Aplicação e componentes Streamlit
-├── performancelab/         # Pacote reutilizável e domínio
-│   ├── analysis/           # Métricas e perfis derivados
-│   ├── coaching/           # Contexto, estratégias e geração
-│   ├── history/            # Histórico de atividades
-│   ├── importers/          # FIT e GPX
-│   ├── physiology/         # Funções fisiológicas
-│   ├── presentation/       # Dados preparados para a UI
-│   ├── race/               # Provas e participações
-│   ├── storage/            # Repositórios e serialização JSON
-│   ├── training/           # Configuração, carga e planeamento
-│   └── workout/            # Atividades realizadas
+├── migrations/             # Migrações Alembic para PostgreSQL
+├── performancelab/         # Domínio, aplicação e infraestrutura
+├── scripts/                # Ferramentas operacionais explícitas
 ├── tests/                  # Testes automatizados
-├── docs/                   # Documentação conceptual e roadmap
-├── pyproject.toml          # Metadata do pacote
-└── requirements.txt        # Dependências da aplicação
-```
-
----
+├── docs/                   # Documentação e procedimentos
+├── alembic.ini             # Configuração das migrações
+├── pyproject.toml          # Pacote e dependências
+└── README.md               # Guia principal do repositório
 
 ## Documentação
 
@@ -352,11 +377,21 @@ Documentos e roadmaps antigos serão arquivados para evitar conflito com a refer
 
 ## Limitações importantes
 
-O PerformanceLab ainda não oferece:
+O PerformanceLab ainda não está pronto para participantes reais
+porque continuam pendentes:
 
-- autenticação adequada a produção;
-- base de dados transacional;
-- isolamento público validado entre utilizadores;
+- revisão jurídica externa;
+- contacto definitivo de privacidade e suporte;
+- alojamento privado da aplicação;
+- ativação do PostgreSQL gerido;
+- backups automáticos;
+- restauro real testado;
+- ativação e verificação dos alertas;
+- testes internos no deployment;
+- testes essenciais em desktop, Android e iOS.
+
+O PerformanceLab também ainda não oferece:
+
 - sincronização automática com plataformas externas;
 - correspondência completa de sessões duplas;
 - adaptação distribuída por várias semanas;
@@ -365,7 +400,10 @@ O PerformanceLab ainda não oferece:
 - aplicação móvel nativa;
 - aconselhamento médico.
 
-Métricas de carga, recuperação ou risco não devem ser interpretadas isoladamente. Dor, doença, lesão ou sintomas exigem avaliação adequada e não devem ser resolvidos apenas por adaptação automática do plano.
+Métricas de carga, recuperação ou risco não devem ser interpretadas
+isoladamente. Dor, doença, lesão ou sintomas exigem avaliação
+adequada e não devem ser resolvidos apenas por adaptação automática
+do plano.
 
 ---
 
