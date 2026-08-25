@@ -221,3 +221,25 @@ def test_documentation_records_local_container_verification():
         "não inicia o período experimental de 90 dias"
         in text
     )
+
+def test_documentation_defines_secure_secret_delivery():
+
+    text = documentation_text()
+
+    assert "Google Secret Manager" in text
+    assert (
+        "/app/.streamlit/secrets.toml"
+        in text
+    )
+    assert (
+        "Variáveis de ambiente protegidas"
+        in text
+    )
+    assert (
+        ".streamlit/secrets.toml.example"
+        in text
+    )
+    assert (
+        "não inicia o período experimental de 90 dias"
+        in text
+    )
