@@ -111,6 +111,7 @@ def test_ci_verifies_container_health():
         in text
     )
     assert "--retry-connrefused" in text
+    assert "--retry-all-errors" in text
     assert "if: always()" in text
     assert (
         "docker rm --force "
