@@ -266,23 +266,29 @@ def test_failed_generation_does_not_consume_limit():
         .GENERATED
     )
 
-def test_blocks_duplicate_request_while_generation_is_active():
+def test_blocks_duplicate_request_across_use_case_instances():
 
-    provider = Provider()
+    first_provider = Provider()
+    second_provider = Provider()
 
     repository = (
         InMemoryTrainingCoachUsageRepository()
     )
 
-    use_case = create_use_case(
-        provider=provider,
+    first_use_case = create_use_case(
+        provider=first_provider,
+        repository=repository,
+    )
+
+    second_use_case = create_use_case(
+        provider=second_provider,
         repository=repository,
     )
 
     nested_results = []
 
     original_generate = (
-        provider.generate
+        first_provider.generate
     )
 
     def generate_with_duplicate(
@@ -290,7 +296,7 @@ def test_blocks_duplicate_request_while_generation_is_active():
     ):
 
         nested_results.append(
-            use_case.execute(
+            second_use_case.execute(
                 user_id="user-1",
                 athlete=Athlete(
                     name="Pedro"
@@ -304,17 +310,19 @@ def test_blocks_duplicate_request_while_generation_is_active():
             generation_payload
         )
 
-    provider.generate = (
+    first_provider.generate = (
         generate_with_duplicate
     )
 
-    outer_result = use_case.execute(
-        user_id="user-1",
-        athlete=Athlete(
-            name="Pedro"
-        ),
-        workout_id="workout-1",
-        payload=payload(),
+    outer_result = (
+        first_use_case.execute(
+            user_id="user-1",
+            athlete=Athlete(
+                name="Pedro"
+            ),
+            workout_id="workout-1",
+            payload=payload(),
+        )
     )
 
     assert (
@@ -338,7 +346,8 @@ def test_blocks_duplicate_request_while_generation_is_active():
         == "generation_in_progress"
     )
 
-    assert provider.call_count == 1
+    assert first_provider.call_count == 1
+    assert second_provider.call_count == 0
 
     counts = (
         repository

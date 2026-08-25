@@ -15,6 +15,9 @@ from datetime import (
 from threading import (
     Lock,
 )
+from typing import (
+    ClassVar,
+)
 from performancelab.coaching import (
     ActivityCoachCoordinator,
     ActivityCoachResolutionResult,
@@ -45,7 +48,23 @@ def current_utc_time() -> datetime:
 class GenerateActivityCoachInterpretation:
     """
     Check limits, generate an interpretation and record usage.
+
+    Active requests are shared by every use-case instance in
+    the current application process.
     """
+
+    _active_requests: ClassVar[
+        set[
+            tuple[
+                str,
+                str,
+            ]
+        ]
+    ] = set()
+
+    _active_requests_lock: ClassVar[
+        Lock
+    ] = Lock()
 
     def __init__(
         self,
@@ -98,16 +117,6 @@ class GenerateActivityCoachInterpretation:
         self._usage_limits = usage_limits
         self._clock = clock
 
-        self._active_requests: set[
-            tuple[
-                str,
-                str,
-            ]
-        ] = set()
-
-        self._active_requests_lock = (
-            Lock()
-        )
 
     @staticmethod
     def _normalized_user_id(
