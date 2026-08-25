@@ -348,6 +348,36 @@ training_coach_usage = Table(
         String(20),
         nullable=False,
     ),
+    Column(
+        "provider",
+        String(100),
+        nullable=True,
+    ),
+    Column(
+        "model",
+        String(200),
+        nullable=True,
+    ),
+    Column(
+        "error_code",
+        String(100),
+        nullable=True,
+    ),
+    Column(
+        "latency_ms",
+        Integer,
+        nullable=True,
+    ),
+    Column(
+        "remaining_user_requests",
+        Integer,
+        nullable=True,
+    ),
+    Column(
+        "remaining_global_requests",
+        Integer,
+        nullable=True,
+    ),
     CheckConstraint(
         "status IN ('generated', 'failed')",
         name="status",

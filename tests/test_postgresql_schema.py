@@ -297,6 +297,12 @@ def test_training_coach_usage_contains_no_payload():
         "user_id",
         "occurred_at",
         "status",
+        "provider",
+        "model",
+        "error_code",
+        "latency_ms",
+        "remaining_user_requests",
+        "remaining_global_requests",
     )
 
     assert primary_key_names(

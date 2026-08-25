@@ -13,6 +13,7 @@ import pytest
 from sqlalchemy import (
     create_engine,
     insert,
+    select,
 )
 
 from performancelab.storage.postgresql_schema import (
@@ -301,3 +302,77 @@ def test_does_not_count_previous_day(
 
     assert counts.user_count == 0
     assert counts.global_count == 0
+
+
+
+def test_saves_operational_metadata(
+    connection,
+):
+
+    repository = (
+        PostgreSQLTrainingCoachUsageRepository(
+            connection
+        )
+    )
+
+    event = TrainingCoachUsageEvent(
+        usage_id="usage-metadata",
+        user_id="user-1",
+        occurred_at=datetime(
+            2026,
+            8,
+            24,
+            12,
+            0,
+            tzinfo=timezone.utc,
+        ),
+        status=(
+            TrainingCoachUsageStatus
+            .FAILED
+        ),
+        provider="google-gemini",
+        model="gemini-3.5-flash",
+        error_code="quota",
+        latency_ms=750,
+        remaining_user_requests=3,
+        remaining_global_requests=42,
+    )
+
+    repository.save(
+        event
+    )
+
+    row = connection.execute(
+        select(
+            training_coach_usage
+        ).where(
+            training_coach_usage
+            .c
+            .usage_id
+            == "usage-metadata"
+        )
+    ).mappings().one()
+
+    assert (
+        row["provider"]
+        == "google-gemini"
+    )
+    assert (
+        row["model"]
+        == "gemini-3.5-flash"
+    )
+    assert row["error_code"] == "quota"
+    assert row["latency_ms"] == 750
+
+    assert (
+        row["remaining_user_requests"]
+        == 3
+    )
+    assert (
+        row["remaining_global_requests"]
+        == 42
+    )
+
+    repository.save(
+        event
+    )

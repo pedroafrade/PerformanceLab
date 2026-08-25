@@ -143,6 +143,28 @@ class PostgreSQLTrainingCoachUsageRepository:
                     ]
                 )
             ),
+            provider=row[
+                "provider"
+            ],
+            model=row[
+                "model"
+            ],
+            error_code=row[
+                "error_code"
+            ],
+            latency_ms=row[
+                "latency_ms"
+            ],
+            remaining_user_requests=(
+                row[
+                    "remaining_user_requests"
+                ]
+            ),
+            remaining_global_requests=(
+                row[
+                    "remaining_global_requests"
+                ]
+            ),
         )
 
     def save(
@@ -201,6 +223,22 @@ class PostgreSQLTrainingCoachUsageRepository:
                     )
                 ),
                 status=event.status.value,
+                provider=event.provider,
+                model=event.model,
+                error_code=(
+                    event.error_code
+                ),
+                latency_ms=(
+                    event.latency_ms
+                ),
+                remaining_user_requests=(
+                    event
+                    .remaining_user_requests
+                ),
+                remaining_global_requests=(
+                    event
+                    .remaining_global_requests
+                ),
             )
         )
 
