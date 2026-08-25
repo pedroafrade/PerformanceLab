@@ -61,6 +61,62 @@ def _validated_text(
     return normalized_value
 
 
+def _validated_optional_text(
+    value,
+    *,
+    field_name: str,
+) -> str | None:
+    """
+    Normalize optional non-empty text.
+    """
+
+    if value is None:
+
+        return None
+
+    return _validated_text(
+        value,
+        field_name=field_name,
+    )
+
+
+def _validated_optional_count(
+    value,
+    *,
+    field_name: str,
+) -> int | None:
+    """
+    Require an optional non-negative integer.
+    """
+
+    if value is None:
+
+        return None
+
+    if (
+        not isinstance(
+            value,
+            int,
+        )
+        or isinstance(
+            value,
+            bool,
+        )
+    ):
+
+        raise TypeError(
+            f"{field_name} must be an integer."
+        )
+
+    if value < 0:
+
+        raise ValueError(
+            f"{field_name} cannot be negative."
+        )
+
+    return value
+
+
 def _validated_timestamp(
     value,
 ) -> datetime:
@@ -103,6 +159,13 @@ class TrainingCoachUsageEvent:
     user_id: str
     occurred_at: datetime
     status: TrainingCoachUsageStatus
+
+    provider: str | None = None
+    model: str | None = None
+    error_code: str | None = None
+    latency_ms: int | None = None
+    remaining_user_requests: int | None = None
+    remaining_global_requests: int | None = None
 
     usage_id: str = field(
         default_factory=lambda: str(
@@ -149,6 +212,64 @@ class TrainingCoachUsageEvent:
                 "status must be a "
                 "TrainingCoachUsageStatus."
             )
+
+        object.__setattr__(
+            self,
+            "provider",
+            _validated_optional_text(
+                self.provider,
+                field_name="provider",
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "model",
+            _validated_optional_text(
+                self.model,
+                field_name="model",
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "error_code",
+            _validated_optional_text(
+                self.error_code,
+                field_name="error_code",
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "latency_ms",
+            _validated_optional_count(
+                self.latency_ms,
+                field_name="latency_ms",
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "remaining_user_requests",
+            _validated_optional_count(
+                self.remaining_user_requests,
+                field_name=(
+                    "remaining_user_requests"
+                ),
+            ),
+        )
+
+        object.__setattr__(
+            self,
+            "remaining_global_requests",
+            _validated_optional_count(
+                self.remaining_global_requests,
+                field_name=(
+                    "remaining_global_requests"
+                ),
+            ),
+        )
 
     @property
     def counts_toward_limit(
