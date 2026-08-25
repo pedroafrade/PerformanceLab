@@ -50,6 +50,9 @@ from performancelab.application import (
 from performancelab.authorization import (
     AthleteAuthorizationService,
 )
+from performancelab.better_stack_reporting import (
+    build_exception_reporter,
+)
 from performancelab.coaching import (
     ActivityCoachCoordinator,
     ActivityCoachGenerationService,
@@ -122,6 +125,15 @@ for configuration_key in (
 runtime_configuration = (
     RuntimeConfiguration.from_mapping(
         runtime_values
+    )
+)
+
+exception_reporter = (
+    build_exception_reporter(
+        runtime_values,
+        environment=(
+            runtime_configuration.environment
+        ),
     )
 )
 
@@ -242,6 +254,7 @@ def regenerate_weekly_plan() -> None:
             operation=(
                 "generate_training_plan"
             ),
+            reporter=exception_reporter,
         )
 
         st.session_state.plan_error = (
@@ -823,6 +836,7 @@ if "athlete" not in st.session_state:
             operation=(
                 "load_active_athlete"
             ),
+            reporter=exception_reporter,
         )
 
         st.error(

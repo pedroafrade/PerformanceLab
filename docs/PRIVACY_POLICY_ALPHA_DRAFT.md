@@ -120,6 +120,18 @@ O ficheiro original da atividade não é enviado ao Gemini.
 
 O modelo configurado atualmente pela aplicação é `gemini-3.5-flash`. Esta identificação deve ser confirmada novamente antes da publicação, porque a configuração poderá mudar.
 
+### Better Stack — alertas operacionais
+
+O Better Stack foi selecionado para receber alertas operacionais de exceções no ambiente alpha.
+
+A aplicação correspondente deverá ser criada numa região da União Europeia e configurada com retenção de 30 dias.
+
+São enviados apenas o nome interno da operação, o tipo da exceção, um identificador de correlação aleatório, o ambiente e a versão da aplicação.
+
+Não são enviados a mensagem original da exceção, traceback, breadcrumbs, email, nome ou identificador do participante, dados de atividade, dados fisiológicos, pedidos HTTP, variáveis de ambiente, tracing, profiling ou session replay.
+
+A ativação e a confirmação factual da região, retenção e condições aplicáveis continuam pendentes antes do primeiro convite.
+
 ### PostgreSQL e alojamento
 
 No ambiente alpha, o PerformanceLab exige uma base de dados PostgreSQL. A aplicação não pode utilizar os repositórios JSON locais como alternativa nesse ambiente.

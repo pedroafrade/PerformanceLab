@@ -547,6 +547,7 @@ def test_runtime_configuration_exposes_retention_settings():
         "PERFORMANCELAB_ENV",
         "DATABASE_URL",
         "PRIVACY_CONTACT_EMAIL",
+        "BETTER_STACK_ERROR_DSN",
         "TRAINING_COACH_ENABLED",
         "TRAINING_COACH_USER_DAILY_LIMIT",
         "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
