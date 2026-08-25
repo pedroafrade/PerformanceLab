@@ -176,6 +176,7 @@ Neste momento:
 - [x] execução sem privilégios administrativos;
 - [x] verificação técnica do Streamlit preparada;
 - [x] imagem construída e testada localmente;
+- [x] construção e verificação de saúde automáticas na CI;
 - [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;
@@ -206,5 +207,22 @@ O teste local não valida ainda:
 - backups ou restauro;
 - alertas externos;
 - funcionamento com duas contas internas convidadas.
+
+### Verificação automática do contentor
+
+Em cada push para a `main` e em cada pull request, a CI:
+
+- constrói a imagem a partir do `Dockerfile`;
+- inicia um contentor temporário sem segredos;
+- aguarda pelo arranque do Streamlit;
+- confirma o endpoint `/_stcore/health`;
+- remove sempre o contentor temporário.
+
+A imagem usada nesta verificação não é publicada num registo e não é
+enviada para o Google Cloud.
+
+Esta verificação prova que o contentor pode ser construído e iniciado.
+Não substitui a futura validação da autenticação, PostgreSQL, segredos,
+backups e alertas no ambiente alpha.
 
 Os convites permanecem bloqueados.

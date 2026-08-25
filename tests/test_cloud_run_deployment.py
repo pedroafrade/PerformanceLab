@@ -261,3 +261,26 @@ def test_secret_file_path_is_a_closed_code_block():
         in source
     )
     assert "- `DATABASE_URL` real;" in source
+
+def test_documentation_records_automated_container_check():
+
+    text = documentation_text()
+
+    assert (
+        "construção e verificação de saúde "
+        "automáticas na CI"
+        in text
+    )
+    assert (
+        "confirma o endpoint "
+        "`/_stcore/health`"
+        in text
+    )
+    assert (
+        "não é publicada num registo"
+        in text
+    )
+    assert (
+        "não é enviada para o Google Cloud"
+        in text
+    )
