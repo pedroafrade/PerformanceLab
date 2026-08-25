@@ -292,3 +292,101 @@ def test_rejects_user_limit_above_global_limit():
                 ): "10",
             }
         )
+
+
+
+def test_training_coach_is_enabled_by_default():
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {}
+        )
+    )
+
+    assert (
+        configuration
+        .training_coach_enabled
+        is True
+    )
+
+
+@pytest.mark.parametrize(
+    "configured_value",
+    (
+        "false",
+        "0",
+        "no",
+        "off",
+    ),
+)
+def test_can_disable_training_coach(
+    configured_value,
+):
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                "TRAINING_COACH_ENABLED": (
+                    configured_value
+                ),
+            }
+        )
+    )
+
+    assert (
+        configuration
+        .training_coach_enabled
+        is False
+    )
+
+
+@pytest.mark.parametrize(
+    "configured_value",
+    (
+        "true",
+        "1",
+        "yes",
+        "on",
+    ),
+)
+def test_can_enable_training_coach(
+    configured_value,
+):
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                "TRAINING_COACH_ENABLED": (
+                    configured_value
+                ),
+            }
+        )
+    )
+
+    assert (
+        configuration
+        .training_coach_enabled
+        is True
+    )
+
+
+def test_rejects_invalid_training_coach_setting():
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "TRAINING_COACH_ENABLED "
+            "must be true or false"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                "TRAINING_COACH_ENABLED": (
+                    "sometimes"
+                ),
+            }
+        )

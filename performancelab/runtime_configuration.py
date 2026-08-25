@@ -49,6 +49,7 @@ class RuntimeConfiguration:
         default=None,
         repr=False,
     )
+    training_coach_enabled: bool = True
     training_coach_user_daily_limit: int = 5
     training_coach_global_daily_limit: int = 50
 
@@ -153,6 +154,20 @@ class RuntimeConfiguration:
             "database_url",
             normalized_database_url,
         )
+        training_coach_enabled = (
+            self._boolean_setting(
+                self.training_coach_enabled,
+                field_name=(
+                    "TRAINING_COACH_ENABLED"
+                ),
+            )
+        )
+
+        object.__setattr__(
+            self,
+            "training_coach_enabled",
+            training_coach_enabled,
+        )
         usage_limits = (
             TrainingCoachUsageLimits(
                 user_daily_limit=(
@@ -182,6 +197,59 @@ class RuntimeConfiguration:
                 "global_daily_limit"
             ),
             usage_limits.global_daily_limit,
+        )
+    @staticmethod
+    def _boolean_setting(
+        value,
+        *,
+        field_name: str,
+    ) -> bool:
+        """
+        Convert an environment setting into a boolean.
+        """
+
+        if isinstance(
+            value,
+            bool,
+        ):
+
+            return value
+
+        if not isinstance(
+            value,
+            str,
+        ):
+
+            raise TypeError(
+                f"{field_name} must be "
+                "true or false."
+            )
+
+        normalized_value = (
+            value.strip().lower()
+        )
+
+        if normalized_value in (
+            "true",
+            "1",
+            "yes",
+            "on",
+        ):
+
+            return True
+
+        if normalized_value in (
+            "false",
+            "0",
+            "no",
+            "off",
+        ):
+
+            return False
+
+        raise ValueError(
+            f"{field_name} must be "
+            "true or false."
         )
 
     @staticmethod
@@ -265,6 +333,18 @@ class RuntimeConfiguration:
             "DATABASE_URL"
         )
 
+        training_coach_enabled = (
+            cls._boolean_setting(
+                values.get(
+                    "TRAINING_COACH_ENABLED",
+                    True,
+                ),
+                field_name=(
+                    "TRAINING_COACH_ENABLED"
+                ),
+            )
+        )
+
         user_daily_limit = (
             cls._integer_setting(
                 values.get(
@@ -300,6 +380,9 @@ class RuntimeConfiguration:
         return cls(
             environment=environment,
             database_url=database_url,
+            training_coach_enabled=(
+                training_coach_enabled
+            ),
             training_coach_user_daily_limit=(
                 user_daily_limit
             ),

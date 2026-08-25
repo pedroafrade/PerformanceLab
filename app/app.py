@@ -84,6 +84,7 @@ runtime_values = dict(
 for configuration_key in (
     "PERFORMANCELAB_ENV",
     "DATABASE_URL",
+    "TRAINING_COACH_ENABLED",
     "TRAINING_COACH_USER_DAILY_LIMIT",
     "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
 ):
@@ -152,13 +153,21 @@ training_coach_consent_manager = (
         )
     )
 )
+training_coach_provider = (
+    GeminiActivityCoachProvider()
+    if (
+        runtime_configuration
+        .training_coach_enabled
+    )
+    else None
+)
 training_coach_generator = (
     GenerateActivityCoachInterpretation(
         coordinator=(
             ActivityCoachCoordinator(
                 generation_service=(
                     ActivityCoachGenerationService(
-                        GeminiActivityCoachProvider()
+                        training_coach_provider
                     )
                 )
             )
