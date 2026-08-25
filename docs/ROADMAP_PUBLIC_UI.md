@@ -439,6 +439,21 @@ Dar ao participante informação e controlo adequados sobre os seus dados.
 
 Cada participante sabe o que é guardado e consegue obter ou eliminar os seus dados através de um processo testado.
 
+### Estado atual da fase F
+
+A fase F possui 8 de 9 passos concluídos.
+
+O passo 9.2, correspondente à revisão jurídica externa dos textos e procedimentos da alpha privada, fica temporariamente pendente.
+
+Esta decisão permite avançar com o trabalho técnico da fase G, mas não elimina o bloqueador jurídico. Antes do primeiro convite a participantes reais será obrigatório:
+
+- obter uma revisão jurídica externa;
+- registar o responsável pela revisão, a data e o resultado;
+- aplicar as correções exigidas;
+- confirmar a versão final da política de privacidade, retenção, consentimentos e procedimentos de exercício de direitos.
+
+Enquanto estas condições não forem cumpridas, os documentos jurídicos permanecem rascunhos e a fase F não deve ser considerada integralmente concluída.
+
 ## 12. Fase G — Qualidade, segurança e operação
 
 ### Objetivo
