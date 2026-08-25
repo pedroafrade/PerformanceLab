@@ -61,6 +61,9 @@ from performancelab.coaching import (
 from performancelab.exception_reporting import (
     capture_exception,
 )
+from performancelab.health import (
+    check_application_health,
+)
 from performancelab.integrations import (
     GeminiActivityCoachProvider,
 )
@@ -146,6 +149,31 @@ repository_bundle = (
         ),
     )
 )
+
+application_health = (
+    check_application_health(
+        runtime_configuration,
+        repository_bundle,
+    )
+)
+
+if not application_health.ready:
+
+    capture_exception(
+        RuntimeError(
+            "Application health check failed."
+        ),
+        operation=(
+            "application_health_check"
+        ),
+        reporter=exception_reporter,
+    )
+
+    st.error(
+        "The application is temporarily unavailable."
+    )
+
+    st.stop()
 
 athlete_repository = (
     repository_bundle
