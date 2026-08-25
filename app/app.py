@@ -55,6 +55,9 @@ from performancelab.coaching import (
     ActivityCoachGenerationService,
     ActivityCoachResolutionStatus,
 )
+from performancelab.exception_reporting import (
+    capture_exception,
+)
 from performancelab.integrations import (
     GeminiActivityCoachProvider,
 )
@@ -234,8 +237,15 @@ def regenerate_weekly_plan() -> None:
 
     except Exception as error:
 
+        capture_exception(
+            error,
+            operation=(
+                "generate_training_plan"
+            ),
+        )
+
         st.session_state.plan_error = (
-            str(error)
+            "Training plan generation failed."
         )
 
         return
@@ -807,11 +817,18 @@ if "athlete" not in st.session_state:
         st.stop()
 
     except Exception as error:
+
+        capture_exception(
+            error,
+            operation=(
+                "load_active_athlete"
+            ),
+        )
+
         st.error(
             "Não foi possível carregar o perfil de atleta."
         )
 
-        st.exception(error)
         st.stop()
 
 athlete: Athlete = st.session_state.athlete
