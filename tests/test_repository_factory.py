@@ -5,7 +5,9 @@ Tests for repository selection by runtime environment.
 from sqlalchemy import (
     create_engine,
 )
-
+from performancelab.retention_policy import (
+    AlphaRetentionPolicy,
+)
 from performancelab.runtime_configuration import (
     RuntimeConfiguration,
 )
@@ -61,6 +63,23 @@ from performancelab.storage.repository_factory import (
     build_repository_bundle,
 )
 
+def alpha_retention_policy() -> (
+    AlphaRetentionPolicy
+):
+
+    return AlphaRetentionPolicy(
+        inactive_account_days=90,
+        inactivity_notice_days=14,
+        training_coach_usage_days=30,
+        consent_evidence_days=0,
+        unused_invitation_days=14,
+        expired_invitation_days=7,
+        application_log_days=14,
+        error_alert_days=30,
+        backup_days=14,
+        support_request_days=30,
+        post_alpha_days=30,
+    )
 
 def test_local_environment_selects_json_repositories(
     tmp_path,
@@ -241,6 +260,9 @@ def test_alpha_environment_selects_postgresql_repositories():
                 "user:secret@db.example.com/"
                 "performancelab"
             ),
+            retention_policy=(
+                alpha_retention_policy()
+            ),
         ),
         engine_factory=engine_factory,
     )
@@ -356,6 +378,9 @@ def test_close_releases_postgresql_connection():
                 "postgresql+psycopg://"
                 "user:secret@db.example.com/"
                 "performancelab"
+            ),
+            retention_policy=(
+                alpha_retention_policy()
             ),
         ),
         engine_factory=engine_factory,

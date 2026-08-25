@@ -38,7 +38,19 @@ JSON_REPOSITORY_TYPES = (
     JsonAlphaInvitationRepository,
     JsonAthleteAccessRepository,
 )
-
+ALPHA_RETENTION_SETTINGS = {
+    "RETENTION_INACTIVE_ACCOUNT_DAYS": "90",
+    "RETENTION_INACTIVITY_NOTICE_DAYS": "14",
+    "RETENTION_TRAINING_COACH_USAGE_DAYS": "30",
+    "RETENTION_CONSENT_EVIDENCE_DAYS": "0",
+    "RETENTION_UNUSED_INVITATION_DAYS": "14",
+    "RETENTION_EXPIRED_INVITATION_DAYS": "7",
+    "RETENTION_APPLICATION_LOG_DAYS": "14",
+    "RETENTION_ERROR_ALERT_DAYS": "30",
+    "RETENTION_BACKUP_DAYS": "14",
+    "RETENTION_SUPPORT_REQUEST_DAYS": "30",
+    "RETENTION_POST_ALPHA_DAYS": "30",
+}
 
 def test_alpha_without_database_cannot_fall_back_to_json():
 
@@ -92,6 +104,7 @@ def test_alpha_builds_no_local_json_repositories(
                     "user:secret@db.example.com/"
                     "performancelab"
                 ),
+                **ALPHA_RETENTION_SETTINGS,
             }
         )
     )
