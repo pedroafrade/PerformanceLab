@@ -986,6 +986,10 @@ elif page == "settings":
         participant_export_json=(
             participant_export_json
         ),
+        privacy_contact_email=(
+            runtime_configuration
+            .privacy_contact_email
+        ),
         on_delete_participant_data=(
             delete_participant_account
         ),

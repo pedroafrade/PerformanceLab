@@ -41,6 +41,31 @@ def participant_deletion_confirmed(
         == PARTICIPANT_DELETION_PHRASE
     )
 
+def privacy_contact_mailto(
+    email: str,
+) -> str:
+    """
+    Return a mail link for a validated privacy contact.
+    """
+
+    if (
+        not isinstance(
+            email,
+            str,
+        )
+        or not email.strip()
+        or "@"
+        not in email
+    ):
+
+        raise ValueError(
+            "A valid privacy contact email is required."
+        )
+
+    return (
+        "mailto:"
+        + email.strip().lower()
+    )
 
 def _settings_page_header() -> None:
     """
@@ -106,6 +131,7 @@ def show_settings_page(
     on_allow_training_coach=None,
     on_withdraw_training_coach=None,
     participant_export_json: str | None = None,
+    privacy_contact_email: str | None = None,
     on_delete_participant_data=None,
     participant_deletion_error: str | None = None,
 ):
@@ -166,6 +192,39 @@ def show_settings_page(
 
         st.warning(
             "Your data export is temporarily unavailable."
+        )
+
+    st.divider()
+
+    st.subheader(
+        "Your privacy rights"
+    )
+
+    st.caption(
+        "You can request access, correction, export, "
+        "deletion, restriction, objection or withdrawal "
+        "of consent. We will respond without undue delay "
+        "and no later than one month after receiving a "
+        "verified request."
+    )
+
+    if privacy_contact_email:
+
+        contact_url = privacy_contact_mailto(
+            privacy_contact_email
+        )
+
+        st.markdown(
+            "Privacy contact: "
+            f"[{privacy_contact_email}]"
+            f"({contact_url})"
+        )
+
+    else:
+
+        st.warning(
+            "The privacy contact is not configured "
+            "in this local environment."
         )
 
     st.divider()

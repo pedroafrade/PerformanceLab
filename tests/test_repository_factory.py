@@ -255,6 +255,9 @@ def test_alpha_environment_selects_postgresql_repositories():
     bundle = build_repository_bundle(
         RuntimeConfiguration(
             environment="alpha",
+            privacy_contact_email=(
+                "privacy@example.com"
+            ),
             database_url=(
                 "postgresql+psycopg://"
                 "user:secret@db.example.com/"
@@ -374,6 +377,9 @@ def test_close_releases_postgresql_connection():
     bundle = build_repository_bundle(
         RuntimeConfiguration(
             environment="alpha",
+            privacy_contact_email=(
+                "privacy@example.com"
+            ),
             database_url=(
                 "postgresql+psycopg://"
                 "user:secret@db.example.com/"

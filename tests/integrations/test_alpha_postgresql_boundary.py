@@ -99,6 +99,9 @@ def test_alpha_builds_no_local_json_repositories(
                 "PERFORMANCELAB_ENV": (
                     "alpha"
                 ),
+                "PRIVACY_CONTACT_EMAIL": (
+                    "privacy@example.com"
+                ),
                 "DATABASE_URL": (
                     "postgresql+psycopg://"
                     "user:secret@db.example.com/"

@@ -75,6 +75,9 @@ def test_normalizes_environment_name():
 
     configuration = RuntimeConfiguration(
         environment=" ALPHA ",
+        privacy_contact_email=(
+            "privacy@example.com"
+        ),
         database_url=(
             "postgresql+psycopg://"
             "user:secret@db.example.com/"
@@ -131,6 +134,9 @@ def test_normalizes_generic_postgresql_url_to_psycopg():
 
     configuration = RuntimeConfiguration(
         environment="alpha",
+        privacy_contact_email=(
+            "privacy@example.com"
+        ),
         database_url=(
             "postgresql://"
             "user:secret@db.example.com/"
@@ -208,6 +214,9 @@ def test_database_password_is_hidden_from_repr():
 
     configuration = RuntimeConfiguration(
         environment="alpha",
+        privacy_contact_email=(
+            "privacy@example.com"
+        ),
         database_url=(
             "postgresql+psycopg://"
             "user:super-secret-password"
@@ -446,6 +455,9 @@ def test_alpha_environment_requires_retention_policy():
 
         RuntimeConfiguration(
             environment="alpha",
+            privacy_contact_email=(
+                "privacy@example.com"
+            ),
             database_url=(
                 "postgresql+psycopg://"
                 "user:secret@db.example.com/"
@@ -466,6 +478,9 @@ def test_alpha_mapping_requires_retention_settings():
         RuntimeConfiguration.from_mapping(
             {
                 "PERFORMANCELAB_ENV": "alpha",
+                "PRIVACY_CONTACT_EMAIL": (
+                    "privacy@example.com"
+                ),
                 "DATABASE_URL": (
                     "postgresql+psycopg://"
                     "user:secret@db.example.com/"
@@ -479,6 +494,9 @@ def test_alpha_mapping_builds_retention_policy():
 
     values = {
         "PERFORMANCELAB_ENV": "alpha",
+        "PRIVACY_CONTACT_EMAIL": (
+            "privacy@example.com"
+        ),
         "DATABASE_URL": (
             "postgresql+psycopg://"
             "user:secret@db.example.com/"
@@ -528,6 +546,7 @@ def test_runtime_configuration_exposes_retention_settings():
     expected_settings = {
         "PERFORMANCELAB_ENV",
         "DATABASE_URL",
+        "PRIVACY_CONTACT_EMAIL",
         "TRAINING_COACH_ENABLED",
         "TRAINING_COACH_USER_DAILY_LIMIT",
         "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
@@ -542,6 +561,9 @@ def test_alpha_rejects_unapproved_retention_periods():
 
     values = {
         "PERFORMANCELAB_ENV": "alpha",
+        "PRIVACY_CONTACT_EMAIL": (
+            "privacy@example.com"
+        ),
         "DATABASE_URL": (
             "postgresql+psycopg://"
             "user:secret@db.example.com/"
@@ -563,4 +585,63 @@ def test_alpha_rejects_unapproved_retention_periods():
 
         RuntimeConfiguration.from_mapping(
             values
+        )
+
+def test_alpha_requires_privacy_contact_email():
+
+    values = {
+        "PERFORMANCELAB_ENV": "alpha",
+        "DATABASE_URL": (
+            "postgresql+psycopg://"
+            "user:secret@db.example.com/"
+            "performancelab"
+        ),
+        **alpha_retention_values(),
+    }
+
+    with pytest.raises(
+        RuntimeError,
+        match=(
+            "PRIVACY_CONTACT_EMAIL is required"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            values
+        )
+
+
+def test_normalizes_privacy_contact_email():
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                "PRIVACY_CONTACT_EMAIL": (
+                    " Privacy@Example.COM "
+                ),
+            }
+        )
+    )
+
+    assert (
+        configuration
+        .privacy_contact_email
+        == "privacy@example.com"
+    )
+
+
+def test_rejects_invalid_privacy_contact_email():
+
+    with pytest.raises(
+        ValueError,
+        match="valid email address",
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                "PRIVACY_CONTACT_EMAIL": (
+                    "not-an-email"
+                ),
+            }
         )

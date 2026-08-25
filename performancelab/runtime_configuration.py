@@ -39,6 +39,7 @@ RuntimeEnvironment = Literal[
 RUNTIME_CONFIGURATION_SETTING_NAMES = (
     "PERFORMANCELAB_ENV",
     "DATABASE_URL",
+    "PRIVACY_CONTACT_EMAIL",
     "TRAINING_COACH_ENABLED",
     "TRAINING_COACH_USER_DAILY_LIMIT",
     "TRAINING_COACH_GLOBAL_DAILY_LIMIT",
@@ -62,6 +63,8 @@ class RuntimeConfiguration:
         default=None,
         repr=False,
     )
+
+    privacy_contact_email: str | None = None
 
     retention_policy: (
         AlphaRetentionPolicy
@@ -160,6 +163,70 @@ class RuntimeConfiguration:
                     normalized_database_url
                 )
             )
+        if (
+            self.privacy_contact_email
+            is not None
+            and not isinstance(
+                self.privacy_contact_email,
+                str,
+            )
+        ):
+
+            raise TypeError(
+                "PRIVACY_CONTACT_EMAIL must be "
+                "a string or None."
+            )
+
+        normalized_privacy_contact = (
+            self.privacy_contact_email
+            .strip()
+            .lower()
+            if isinstance(
+                self.privacy_contact_email,
+                str,
+            )
+            and (
+                self.privacy_contact_email
+                .strip()
+            )
+            else None
+        )
+
+        if (
+            normalized_privacy_contact
+            is not None
+            and (
+                "@"
+                not in normalized_privacy_contact
+                or normalized_privacy_contact
+                .startswith("@")
+                or normalized_privacy_contact
+                .endswith("@")
+            )
+        ):
+
+            raise ValueError(
+                "PRIVACY_CONTACT_EMAIL must be "
+                "a valid email address."
+            )
+
+        if (
+            normalized_environment
+            == "alpha"
+            and normalized_privacy_contact
+            is None
+        ):
+
+            raise RuntimeError(
+                "PRIVACY_CONTACT_EMAIL is required "
+                "in the alpha environment."
+            )
+
+        object.__setattr__(
+            self,
+            "privacy_contact_email",
+            normalized_privacy_contact,
+        )
 
         if (
             self.retention_policy
@@ -389,6 +456,11 @@ class RuntimeConfiguration:
         database_url = values.get(
             "DATABASE_URL"
         )
+        privacy_contact_email = (
+            values.get(
+                "PRIVACY_CONTACT_EMAIL"
+            )
+        )
 
         normalized_environment = (
             environment.strip().lower()
@@ -466,6 +538,9 @@ class RuntimeConfiguration:
         return cls(
             environment=environment,
             database_url=database_url,
+            privacy_contact_email=(
+                privacy_contact_email
+            ),
             retention_policy=(
                 retention_policy
             ),
