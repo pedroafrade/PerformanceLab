@@ -200,3 +200,24 @@ def test_container_can_use_environment_without_secrets_file():
         "configuration_key in streamlit_secrets"
         in text
     )
+
+def test_documentation_records_local_container_verification():
+
+    text = documentation_text()
+
+    assert (
+        "imagem construída e testada localmente"
+        in text
+    )
+    assert (
+        "um email sem convite é recusado"
+        in text
+    )
+    assert (
+        "não constitui um deployment no Google Cloud"
+        in text
+    )
+    assert (
+        "não inicia o período experimental de 90 dias"
+        in text
+    )

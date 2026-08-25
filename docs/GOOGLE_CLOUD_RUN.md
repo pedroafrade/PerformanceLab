@@ -125,11 +125,36 @@ Neste momento:
 - [x] instalação baseada em `pyproject.toml`;
 - [x] execução sem privilégios administrativos;
 - [x] verificação técnica do Streamlit preparada;
-- [ ] imagem construída e testada;
+- [x] imagem construída e testada localmente;
 - [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;
 - [ ] aplicação ligada ao Cloud SQL;
 - [ ] deployment interno validado.
+
+### Verificação local do contentor
+
+A imagem foi construída e executada localmente com Docker Desktop.
+
+Foi confirmado que:
+
+- o processo Streamlit inicia na porta `8080`;
+- a verificação de saúde do contentor responde;
+- a aplicação funciona sem incluir segredos na imagem;
+- o ficheiro local `secrets.toml` pode ser montado apenas durante a execução;
+- a autenticação Google identifica o utilizador;
+- um email sem convite é recusado antes de carregar dados de atleta.
+
+Esta verificação não constitui um deployment no Google Cloud e não
+inicia o período experimental de 90 dias.
+
+O teste local não valida ainda:
+
+- ligação ao Google Cloud SQL;
+- segredos fornecidos pelo Google Secret Manager;
+- acesso privado ao serviço Cloud Run;
+- backups ou restauro;
+- alertas externos;
+- funcionamento com duas contas internas convidadas.
 
 Os convites permanecem bloqueados.
