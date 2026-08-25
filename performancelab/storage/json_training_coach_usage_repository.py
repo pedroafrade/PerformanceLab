@@ -152,9 +152,14 @@ class JsonTrainingCoachUsageRepository:
                 file
             )
 
-        if data.get(
+        version = data.get(
             "version"
-        ) != 1:
+        )
+
+        if version not in (
+            1,
+            2,
+        ):
 
             raise ValueError(
                 "Unsupported Training Coach "
@@ -180,6 +185,28 @@ class JsonTrainingCoachUsageRepository:
                     data[
                         "status"
                     ]
+                )
+            ),
+            provider=data.get(
+                "provider"
+            ),
+            model=data.get(
+                "model"
+            ),
+            error_code=data.get(
+                "error_code"
+            ),
+            latency_ms=data.get(
+                "latency_ms"
+            ),
+            remaining_user_requests=(
+                data.get(
+                    "remaining_user_requests"
+                )
+            ),
+            remaining_global_requests=(
+                data.get(
+                    "remaining_global_requests"
                 )
             ),
         )
@@ -221,7 +248,7 @@ class JsonTrainingCoachUsageRepository:
             )
 
         data = {
-            "version": 1,
+            "version": 2,
             "usage_id": event.usage_id,
             "user_id": event.user_id,
             "occurred_at": (
@@ -229,6 +256,22 @@ class JsonTrainingCoachUsageRepository:
                 .isoformat()
             ),
             "status": event.status.value,
+            "provider": event.provider,
+            "model": event.model,
+            "error_code": (
+                event.error_code
+            ),
+            "latency_ms": (
+                event.latency_ms
+            ),
+            "remaining_user_requests": (
+                event
+                .remaining_user_requests
+            ),
+            "remaining_global_requests": (
+                event
+                .remaining_global_requests
+            ),
         }
 
         temporary_path = (
