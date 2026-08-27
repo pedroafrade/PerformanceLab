@@ -456,3 +456,24 @@ def test_documentation_records_oidc_preflight():
         "Google são reais"
         in text
     )
+
+def test_oidc_documentation_is_not_duplicated():
+
+    source = DOCUMENTATION_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        source.count(
+            "### 8.3. Verificação "
+            "da configuração OIDC"
+        )
+        == 1
+    )
+    assert (
+        "```text\n"
+        "/app/.streamlit/secrets.toml\n"
+        "```"
+        in source
+    )
+

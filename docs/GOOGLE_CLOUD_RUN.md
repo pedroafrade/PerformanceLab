@@ -232,13 +232,6 @@ No ambiente alpha, o segundo preflight valida o ficheiro montado em:
 
 ```text
 /app/.streamlit/secrets.toml
-
-### 8.3. Verificação da configuração OIDC
-
-No ambiente alpha, o segundo preflight valida o ficheiro montado em:
-
-```text
-/app/.streamlit/secrets.toml
 ```
 
 Antes de iniciar o Streamlit, confirma a existência da secção `[auth]`
