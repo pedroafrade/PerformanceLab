@@ -299,6 +299,7 @@ Neste momento:
 - [x] preflight alpha integrado e recusa automática validada na CI;
 - [x] configuração OIDC estruturalmente validada antes do arranque;
 - [x] ligação PostgreSQL obrigatória antes do arranque alpha;
+- [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;
 - [ ] aplicação ligada ao Cloud SQL;

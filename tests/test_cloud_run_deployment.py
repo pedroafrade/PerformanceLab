@@ -522,3 +522,28 @@ def test_documentation_records_database_preflight():
         in text
     )
 
+def test_documentation_preserves_pending_cloud_run_service():
+
+    source = DOCUMENTATION_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "- [ ] serviço Cloud Run criado;"
+        in source
+    )
+    assert (
+        "- [x] ligação PostgreSQL obrigatória "
+        "antes do arranque alpha;"
+        in source
+    )
+    assert (
+        source.index(
+            "- [x] ligação PostgreSQL obrigatória "
+            "antes do arranque alpha;"
+        )
+        < source.index(
+            "- [ ] serviço Cloud Run criado;"
+        )
+    )
+
