@@ -312,3 +312,24 @@ def test_documentation_explains_alpha_preflight():
         "o arranque do ambiente alpha"
         in text
     )
+
+def test_alpha_preflight_documentation_has_closed_code_blocks():
+
+    source = DOCUMENTATION_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "```powershell\n"
+        "python scripts/check_alpha_configuration.py\n"
+        "```"
+        in source
+    )
+    assert (
+        "```text\n"
+        "Alpha runtime configuration is structurally valid.\n"
+        "```"
+        in source
+    )
+    assert "- ambiente definido como `alpha`;" in source
+    assert "- ligação real ao PostgreSQL;" in source

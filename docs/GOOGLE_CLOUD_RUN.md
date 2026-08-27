@@ -172,31 +172,34 @@ antes de iniciar a aplicação, deverá ser executado:
 
 ```powershell
 python scripts/check_alpha_configuration.py
+```
 
 O resultado esperado é:
 
+```text
 Alpha runtime configuration is structurally valid.
+```
 
 O comando confirma:
 
-ambiente definido como alpha;
-existência e formato do DATABASE_URL;
-contacto de privacidade;
-valores obrigatórios da política de retenção;
-coerência dos limites configurados.
+- ambiente definido como `alpha`;
+- existência e formato do `DATABASE_URL`;
+- contacto de privacidade;
+- valores obrigatórios da política de retenção;
+- coerência dos limites configurados.
 
 O comando não apresenta os valores configurados e não deve imprimir
 passwords, endereços da base de dados ou outros segredos.
 
 Esta verificação é apenas estrutural. Não confirma:
 
-ligação real ao PostgreSQL;
-aplicação das migrações;
-conteúdo do ficheiro OIDC secrets.toml;
-funcionamento do login Google;
-Better Stack;
-backups ou restauro;
-disponibilidade pública da aplicação.
+- ligação real ao PostgreSQL;
+- aplicação das migrações;
+- conteúdo do ficheiro OIDC `secrets.toml`;
+- funcionamento do login Google;
+- Better Stack;
+- backups ou restauro;
+- disponibilidade pública da aplicação.
 
 Uma falha deste comando bloqueia o arranque do ambiente alpha.
 
