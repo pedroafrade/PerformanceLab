@@ -388,3 +388,29 @@ def test_documentation_records_automatic_alpha_gate():
         in text
     )
 
+def test_container_includes_authentication_preflight():
+
+    text = dockerfile_text()
+
+    assert (
+        "COPY scripts/"
+        "check_alpha_auth_configuration.py "
+        "./scripts/"
+        "check_alpha_auth_configuration.py"
+        in text
+    )
+
+
+def test_alpha_runs_runtime_and_auth_preflights_in_order():
+
+    text = dockerfile_text()
+
+    expected_sequence = (
+        "python scripts/"
+        "check_alpha_configuration.py || exit 1; "
+        "python scripts/"
+        "check_alpha_auth_configuration.py || exit 1; "
+        "fi; exec python -m streamlit"
+    )
+
+    assert expected_sequence in text

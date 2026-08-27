@@ -32,6 +32,7 @@ RUN python -m pip install --upgrade pip \
 COPY app ./app
 COPY migrations ./migrations
 COPY scripts/check_alpha_configuration.py ./scripts/check_alpha_configuration.py
+COPY scripts/check_alpha_auth_configuration.py ./scripts/check_alpha_auth_configuration.py
 COPY alembic.ini ./
 
 RUN chown -R performancelab:performancelab /app
@@ -48,4 +49,4 @@ HEALTHCHECK \
     CMD python -c \
     "import os, urllib.request; urllib.request.urlopen(f'http://127.0.0.1:{os.environ.get(\"PORT\", \"8080\")}/_stcore/health', timeout=3)"
 
-CMD ["sh", "-c", "if [ \"${PERFORMANCELAB_ENV:-local}\" = \"alpha\" ]; then python scripts/check_alpha_configuration.py || exit 1; fi; exec python -m streamlit run app/app.py --server.address=0.0.0.0 --server.port=${PORT:-8080} --server.headless=true"]
+CMD ["sh", "-c", "if [ \"${PERFORMANCELAB_ENV:-local}\" = \"alpha\" ]; then python scripts/check_alpha_configuration.py || exit 1; python scripts/check_alpha_auth_configuration.py || exit 1; fi; exec python -m streamlit run app/app.py --server.address=0.0.0.0 --server.port=${PORT:-8080} --server.headless=true"]
