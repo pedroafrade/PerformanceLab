@@ -605,3 +605,15 @@ def test_container_records_source_and_revision():
         in text
     )
 
+def test_container_defines_stable_non_root_identity():
+
+    text = dockerfile_text()
+
+    assert "--gid 10001" in text
+    assert "--uid 10001" in text
+    assert "USER performancelab" in text
+
+    assert (
+        text.index("USER performancelab")
+        < text.index("CMD [")
+    )

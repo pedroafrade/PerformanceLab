@@ -238,3 +238,28 @@ def test_ci_verifies_container_image_revision():
         in text
     )
 
+def test_ci_verifies_non_root_container_execution():
+
+    text = workflow_text()
+
+    assert "Verify non-root execution" in text
+    assert (
+        "--format '{{ .Config.User }}'"
+        in text
+    )
+    assert "--entrypoint id" in text
+    assert (
+        'if [ "${configured_user}" '
+        '!= "performancelab" ]'
+        in text
+    )
+    assert (
+        'if [ "${runtime_uid}" != "10001" ]'
+        in text
+    )
+    assert (
+        "Container process does not use the "
+        "expected non-root UID."
+        in text
+    )
+

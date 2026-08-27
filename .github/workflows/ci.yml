@@ -77,6 +77,34 @@ jobs:
             exit 1
           fi
 
+      - name: Verify non-root execution
+        run: |
+          configured_user="$(
+            docker image inspect \
+              --format '{{ .Config.User }}' \
+              performancelab-alpha:ci
+          )"
+
+          runtime_uid="$(
+            docker run \
+              --rm \
+              --entrypoint id \
+              performancelab-alpha:ci \
+              -u
+          )"
+
+          if [ "${configured_user}" != "performancelab" ]
+          then
+            echo "Container image has an unexpected configured user." >&2
+            exit 1
+          fi
+
+          if [ "${runtime_uid}" != "10001" ]
+          then
+            echo "Container process does not use the expected non-root UID." >&2
+            exit 1
+          fi
+
       - name: Start container
         run: |
           docker run \
