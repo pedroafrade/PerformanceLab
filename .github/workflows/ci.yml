@@ -142,6 +142,26 @@ jobs:
             "Alpha authentication configuration is incomplete or invalid." \
             "${auth_log}"
 
+      - name: Validate mounted authentication example
+        run: |
+          auth_success_log="${RUNNER_TEMP}/alpha-auth-success.log"
+
+          docker run \
+            --rm \
+            --mount \
+            "type=bind,source=${GITHUB_WORKSPACE}/.streamlit/secrets.toml.example,target=/app/.streamlit/secrets.toml,readonly" \
+            --entrypoint python \
+            performancelab-alpha:ci \
+            scripts/check_alpha_auth_configuration.py \
+            > "${auth_success_log}" \
+            2>&1
+
+          grep \
+            --fixed-strings \
+            --quiet \
+            "Alpha authentication configuration is structurally valid." \
+            "${auth_success_log}"
+
       - name: Stop container
         if: always()
         run: docker rm --force performancelab-alpha-ci

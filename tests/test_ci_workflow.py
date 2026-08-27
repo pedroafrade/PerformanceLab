@@ -170,3 +170,27 @@ def test_ci_rejects_missing_alpha_authentication():
         in text
     )
     assert "alpha-auth-preflight.log" in text
+
+def test_ci_validates_mounted_authentication_example():
+
+    text = workflow_text()
+
+    assert (
+        "Validate mounted authentication example"
+        in text
+    )
+    assert (
+        ".streamlit/secrets.toml.example"
+        in text
+    )
+    assert (
+        "target=/app/.streamlit/secrets.toml"
+        in text
+    )
+    assert "readonly" in text
+    assert "--entrypoint python" in text
+    assert (
+        "Alpha authentication configuration "
+        "is structurally valid."
+        in text
+    )
