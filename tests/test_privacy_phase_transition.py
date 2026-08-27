@@ -4,31 +4,41 @@ PerformanceLab
 Privacy phase transition documentation tests.
 """
 
-from pathlib import Path
+from pathlib import (
+    Path,
+)
 
 
 ROADMAP_PATH = (
     Path(__file__).parents[1]
     / "docs"
-    / "ROADMAP_PUBLIC_UI.md"
+    / "ROADMAP_PUBLIC_UI_260825.md"
 )
 
 
 def roadmap_text() -> str:
 
-    return ROADMAP_PATH.read_text(
+    source = ROADMAP_PATH.read_text(
         encoding="utf-8",
     )
 
+    return " ".join(
+        source.split()
+    )
 
 def test_legal_review_remains_explicitly_pending():
 
     text = roadmap_text()
 
-    assert "8 de 9 passos concluídos" in text
-    assert "passo 9.2" in text
-    assert "temporariamente pendente" in text
-    assert "revisão jurídica externa" in text
+    assert (
+        "| F — Privacidade e controlo | "
+        "**8/9** | revisão jurídica pendente |"
+        in text
+    )
+    assert (
+        "revisão jurídica externa pendente"
+        in text
+    )
 
 
 def test_legal_review_blocks_real_participant_invitations():
@@ -36,24 +46,25 @@ def test_legal_review_blocks_real_participant_invitations():
     text = roadmap_text()
 
     assert (
-        "Antes do primeiro convite "
-        "a participantes reais"
+        "impede a publicação final dos textos"
         in text
     )
-
     assert (
-        "a fase F não deve ser considerada "
-        "integralmente concluída"
+        "qualquer convite a participantes reais"
+        in text
+    )
+    assert (
+        "Os convites permanecem bloqueados"
         in text
     )
 
 
-def test_phase_g_can_start_while_review_is_pending():
+def test_technical_work_can_continue_during_review():
 
     text = roadmap_text()
 
     assert (
-        "avançar com o trabalho técnico "
-        "da fase G"
+        "não impede a continuação do trabalho "
+        "técnico das fases G e H"
         in text
     )

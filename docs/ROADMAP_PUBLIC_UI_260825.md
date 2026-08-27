@@ -1,8 +1,8 @@
 # PerformanceLab — Roadmap até à alpha privada
 
-**Atualizado:** 25 de agosto de 2026
+**Atualizado:** 27 de agosto de 2026
 
-**Fonte auditada:** branch `main`, commit `01926be1652badca4e20a8578e7257c3c8327cce` (`Draft private alpha privacy policy`)
+**Fonte auditada:** branch `main`, commit `4f54b7dc02fe17523f07c16e31a87f8efeb2937b` (`Verify unavailable database rejection in CI`)
 
 **Objetivo:** disponibilizar uma alpha privada a 3–5 participantes convidados, todos com 18 anos ou mais.
 
@@ -27,9 +27,9 @@
 | C — Persistência PostgreSQL | 9/9 | concluída |
 | D — Uploads e dados externos | 9/9 | concluída |
 | E — Training Coach controlado | 9/9 | concluída |
-| F — Privacidade e controlo | **2/9** | em curso |
-| G — Qualidade, segurança e operação | 0/13 | por iniciar |
-| H — Deployment e convite | 0/1 ciclo | por iniciar |
+| F — Privacidade e controlo | **8/9** | revisão jurídica pendente |
+| G — Qualidade, segurança e operação | **10/13** | ativação externa e Cloud SQL pendentes |
+| H — Deployment e convite | **9/15** | preparação técnica em curso |
 
 ## 3. Fases concluídas
 
@@ -122,34 +122,70 @@ O ambiente é reproduzível, observável e recuperável; uma falha pode ser diag
 
 ## 6. Fase H — Deployment e convite
 
-### Estratégia
+### Estratégia confirmada
 
+- Google Cloud Run para executar a imagem versionada;
+- Google Cloud SQL PostgreSQL para persistência;
+- Google Secret Manager para configuração protegida e OIDC;
 - aplicação privada;
 - deployment derivado de commit confirmado da `main`;
-- PostgreSQL gerido com backups;
-- secrets apenas no alojamento;
 - sem indexação pública;
-- conta interna de administração separada;
-- 3–5 participantes convidados por email;
-- entrada gradual e suspensão imediata dos convites perante problema crítico.
+- conta interna separada das contas dos atletas;
+- 3–5 participantes convidados gradualmente;
+- região da União Europeia para Cloud Run e Cloud SQL;
+- suspensão imediata dos convites perante um problema crítico.
 
 ### Checklist antes do primeiro convite
 
-- [ ] pytest completo e CI sem erros;
-- [ ] OIDC e convites funcionais;
-- [ ] isolamento testado com dois utilizadores;
-- [ ] PostgreSQL obrigatório;
-- [ ] migrações e rollback testados;
+- [x] pytest completo e CI sem erros;
+- [ ] OIDC e convites funcionais no Cloud Run — implementação e teste
+  local concluídos, validação externa pendente;
+- [x] isolamento testado com dois utilizadores;
+- [x] PostgreSQL obrigatório;
+- [x] migrações e rollback testados;
 - [ ] backup e restauro confirmados;
-- [ ] uploads limitados e temporários;
-- [ ] Gemini limitado, opcional e explicado;
-- [ ] política de privacidade e consentimento publicados;
-- [ ] exportação e eliminação testadas;
-- [ ] logs e alertas ativos;
-- [ ] dados de demonstração desativados;
+- [x] uploads limitados e temporários;
+- [x] Gemini limitado, opcional e explicado;
+- [ ] política de privacidade e consentimento publicados — implementação
+  concluída, revisão jurídica externa pendente;
+- [x] exportação e eliminação testadas;
+- [ ] logs e alertas ativos — logging concluído, Better Stack externo
+  pendente;
+- [x] dados de demonstração desativados;
 - [ ] contacto de suporte visível;
-- [ ] procedimento de incidente disponível;
+- [x] procedimento de incidente disponível;
 - [ ] testes essenciais em desktop, Android e iOS.
+
+### Estado atual
+
+Estado confirmado na `main` em 27 de agosto de 2026, após o commit
+`4f54b7d` (`Verify unavailable database rejection in CI`).
+
+Dos 15 requisitos anteriores:
+
+- **9 estão tecnicamente concluídos**;
+- **3 estão implementados, mas aguardam validação externa**;
+- **3 permanecem pendentes**.
+
+Aguardam validação externa:
+
+- OIDC e convites no endereço real do Cloud Run;
+- publicação dos textos após revisão jurídica externa;
+- ativação, retenção e alerta real do Better Stack.
+
+Permanecem pendentes:
+
+- backup automático e restauro real no Google Cloud SQL;
+- contacto de suporte visível na aplicação;
+- testes essenciais em desktop, Android e iOS.
+
+A revisão jurídica externa pendente não impede a continuação do trabalho
+técnico das fases G e H, mas impede a publicação final dos textos e
+qualquer convite a participantes reais.
+
+Os convites permanecem bloqueados. A preparação atual não cria recursos
+Google Cloud, não inicia custos e não inicia o período experimental de
+90 dias.
 
 ### Entrada gradual
 
