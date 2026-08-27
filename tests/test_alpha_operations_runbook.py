@@ -133,3 +133,55 @@ def test_runbook_preserves_pending_blockers():
     for item in pending_items:
 
         assert f"- [ ] {item}" in text
+
+def test_runbook_records_confirmed_google_cloud_services():
+
+    text = runbook_text()
+
+    assert "Google Cloud Run" in text
+    assert "Google Cloud SQL PostgreSQL" in text
+    assert "Google Secret Manager" in text
+    assert "região da União Europeia" in text
+    assert (
+        "fornecedor de alojamento da aplicação "
+        "ainda está por confirmar"
+        not in text
+    )
+
+
+def test_runbook_requires_all_alpha_preflights():
+
+    text = runbook_text()
+
+    preflights = (
+        "check_alpha_configuration.py",
+        "check_alpha_auth_configuration.py",
+        "check_alpha_database.py",
+        "check_alpha_migrations.py",
+    )
+
+    for preflight in preflights:
+
+        assert preflight in text
+
+    assert (
+        "Alpha database migrations are current."
+        in text
+    )
+    assert (
+        "Não se deve contornar o preflight"
+        in text
+    )
+
+
+def test_runbook_preserves_cloud_activation_boundary():
+
+    text = runbook_text()
+
+    assert "não ativa a Google Cloud" in text
+    assert "não cria custos" in text
+    assert (
+        "não inicia o período experimental"
+        in text
+    )
+

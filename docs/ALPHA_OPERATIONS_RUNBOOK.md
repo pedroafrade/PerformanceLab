@@ -127,6 +127,27 @@ Depois da migração:
 alembic current
 ```
 
+Antes de permitir o arranque da aplicação, devem ser executados os
+preflights incluídos na imagem:
+
+```powershell
+python scripts/check_alpha_configuration.py
+python scripts/check_alpha_auth_configuration.py
+python scripts/check_alpha_database.py
+python scripts/check_alpha_migrations.py
+```
+O último comando deve terminar com:
+
+```
+Alpha database migrations are current.
+```
+
+Se indicar que as migrações não estão atuais, o deployment deve
+permanecer bloqueado. Não se deve contornar o preflight nem iniciar
+manualmente o Streamlit.
+
+Nota: no editor, confirma que os blocos `powershell` e `text` ficam fechados por uma linha com três acentos graves.
+
 É ainda obrigatório:
 
 - executar a verificação de saúde;
@@ -138,23 +159,38 @@ alembic current
 
 ## 7. Deployment
 
-O fornecedor de alojamento da aplicação ainda está por confirmar.
+O alojamento confirmado para a alpha privada utiliza:
 
-Quando for escolhido, o processo deverá:
+- Google Cloud Run para a aplicação;
+- Google Cloud SQL PostgreSQL para a persistência;
+- Google Secret Manager para variáveis protegidas e configuração OIDC;
+- uma região da União Europeia para a aplicação e a base de dados.
 
-1. publicar apenas um commit confirmado da `main`;
-2. instalar através de `pyproject.toml`;
-3. configurar os segredos fora do repositório;
-4. aplicar as migrações antes de aceitar utilização;
-5. arrancar com `PERFORMANCELAB_ENV=alpha`;
-6. recusar o arranque sem PostgreSQL;
-7. executar a verificação de saúde;
-8. confirmar os alertas do Better Stack;
-9. testar com duas contas internas;
-10. só depois permitir convites graduais.
+O processo de deployment deverá:
 
-O deployment não pode criar automaticamente atletas ou contas de
-demonstração.
+1. publicar apenas uma imagem derivada de um commit confirmado da `main`;
+2. identificar a imagem com uma referência imutável;
+3. configurar os segredos fora da imagem e do repositório;
+4. montar o ficheiro OIDC em `/app/.streamlit/secrets.toml`;
+5. confirmar que existe um backup recuperável antes das migrações;
+6. aplicar as migrações como uma operação controlada;
+7. executar os quatro preflights;
+8. arrancar com `PERFORMANCELAB_ENV=alpha`;
+9. executar a verificação de saúde;
+10. confirmar os alertas do Better Stack;
+11. testar com duas contas internas e dados descartáveis;
+12. só depois permitir convites graduais.
+
+O deployment não pode:
+
+- criar automaticamente atletas ou contas de demonstração;
+- aplicar migrações durante o arranque normal do Streamlit;
+- iniciar se algum preflight falhar;
+- apresentar segredos nos comandos, logs ou mensagens de erro.
+
+A criação e execução destes recursos permanece pendente. Esta
+documentação não ativa a Google Cloud, não cria custos e não inicia o
+período experimental.
 
 ## 8. Rollback da aplicação
 
