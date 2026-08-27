@@ -400,21 +400,6 @@ def test_container_includes_authentication_preflight():
         in text
     )
 
-
-def test_alpha_runs_runtime_and_auth_preflights_in_order():
-
-    text = dockerfile_text()
-
-    expected_sequence = (
-        "python scripts/"
-        "check_alpha_configuration.py || exit 1; "
-        "python scripts/"
-        "check_alpha_auth_configuration.py || exit 1; "
-        "fi; exec python -m streamlit"
-    )
-
-    assert expected_sequence in text
-
 def test_container_prepares_authentication_mount_point():
 
     text = dockerfile_text()
@@ -476,4 +461,31 @@ def test_oidc_documentation_is_not_duplicated():
         "```"
         in source
     )
+
+def test_container_includes_database_preflight():
+
+    text = dockerfile_text()
+
+    assert (
+        "COPY scripts/check_alpha_database.py "
+        "./scripts/check_alpha_database.py"
+        in text
+    )
+
+
+def test_alpha_runs_all_preflights_before_streamlit():
+
+    text = dockerfile_text()
+
+    expected_sequence = (
+        "python scripts/"
+        "check_alpha_configuration.py || exit 1; "
+        "python scripts/"
+        "check_alpha_auth_configuration.py || exit 1; "
+        "python scripts/"
+        "check_alpha_database.py || exit 1; "
+        "fi; exec python -m streamlit"
+    )
+
+    assert expected_sequence in text
 
