@@ -284,3 +284,31 @@ def test_documentation_records_automated_container_check():
         "não é enviada para o Google Cloud"
         in text
     )
+
+def test_documentation_explains_alpha_preflight():
+
+    text = documentation_text()
+
+    assert (
+        "python scripts/"
+        "check_alpha_configuration.py"
+        in text
+    )
+    assert (
+        "Alpha runtime configuration "
+        "is structurally valid."
+        in text
+    )
+    assert (
+        "não deve imprimir passwords"
+        in text
+    )
+    assert (
+        "Esta verificação é apenas estrutural"
+        in text
+    )
+    assert (
+        "Uma falha deste comando bloqueia "
+        "o arranque do ambiente alpha"
+        in text
+    )
