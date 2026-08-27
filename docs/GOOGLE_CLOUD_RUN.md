@@ -226,6 +226,44 @@ A CI confirma separadamente que:
 Esta prova utiliza apenas uma configuração alpha deliberadamente
 incompleta. Não contém segredos reais e não testa a ligação ao Cloud SQL.
 
+### 8.3. Verificação da configuração OIDC
+
+No ambiente alpha, o segundo preflight valida o ficheiro montado em:
+
+```text
+/app/.streamlit/secrets.toml
+
+### 8.3. Verificação da configuração OIDC
+
+No ambiente alpha, o segundo preflight valida o ficheiro montado em:
+
+```text
+/app/.streamlit/secrets.toml
+```
+
+Antes de iniciar o Streamlit, confirma a existência da secção `[auth]`
+e de todos os campos obrigatórios:
+
+- `redirect_uri`;
+- `cookie_secret`;
+- `client_id`;
+- `client_secret`;
+- `server_metadata_url`.
+
+A validação não apresenta os valores destes campos. Se o ficheiro não
+existir, não for TOML válido ou estiver incompleto, o contentor termina
+antes de iniciar o Streamlit.
+
+A CI verifica os dois resultados:
+
+- ausência do ficheiro OIDC bloqueia o arranque alpha;
+- o exemplo fictício pode ser montado como readonly e é aceite
+  estruturalmente pelo preflight dentro da imagem.
+
+Esta validação não confirma que as credenciais Google são reais, que o
+endereço de retorno está registado ou que o login funciona no serviço
+Cloud Run.
+
 ## 9. Estado atual
 
 Neste momento:
@@ -239,6 +277,7 @@ Neste momento:
 - [x] imagem construída e testada localmente;
 - [x] construção e verificação de saúde automáticas na CI;
 - [x] preflight alpha integrado e recusa automática validada na CI;
+- [x] configuração OIDC estruturalmente validada antes do arranque;
 - [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;

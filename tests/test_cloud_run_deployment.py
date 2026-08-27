@@ -428,3 +428,31 @@ def test_container_prepares_authentication_mount_point():
         "performancelab:performancelab /app"
         in text
     )
+
+def test_documentation_records_oidc_preflight():
+
+    text = documentation_text()
+
+    assert (
+        "Verificação da configuração OIDC"
+        in text
+    )
+    assert (
+        "/app/.streamlit/secrets.toml"
+        in text
+    )
+    assert (
+        "configuração OIDC estruturalmente "
+        "validada antes do arranque"
+        in text
+    )
+    assert (
+        "o contentor termina antes de "
+        "iniciar o Streamlit"
+        in text
+    )
+    assert (
+        "não confirma que as credenciais "
+        "Google são reais"
+        in text
+    )
