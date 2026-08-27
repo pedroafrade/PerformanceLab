@@ -128,6 +128,31 @@ jobs:
               done
             '
 
+      - name: Verify image excludes alpha configuration
+        run: |
+          image_environment="$(
+            docker image inspect \
+              --format '{{ range .Config.Env }}{{ println . }}{{ end }}' \
+              performancelab-alpha:ci
+          )"
+
+          for forbidden_name in \
+            PERFORMANCELAB_ENV \
+            DATABASE_URL \
+            PRIVACY_CONTACT_EMAIL \
+            GEMINI_API_KEY \
+            BETTER_STACK_ERROR_DSN
+          do
+            if printf '%s\n' "${image_environment}" \
+              | grep \
+                  --quiet \
+                  "^${forbidden_name}="
+            then
+              echo "Alpha configuration found in container image: ${forbidden_name}" >&2
+              exit 1
+            fi
+          done
+
       - name: Start container
         run: |
           docker run \

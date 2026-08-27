@@ -622,3 +622,19 @@ def test_container_defines_stable_non_root_identity():
         text.index("USER performancelab")
         < text.index("CMD [")
     )
+
+def test_container_does_not_define_alpha_configuration():
+
+    text = dockerfile_text()
+
+    forbidden_definitions = (
+        "ENV PERFORMANCELAB_ENV=",
+        "ENV DATABASE_URL=",
+        "ENV PRIVACY_CONTACT_EMAIL=",
+        "ENV GEMINI_API_KEY=",
+        "ENV BETTER_STACK_ERROR_DSN=",
+    )
+
+    for definition in forbidden_definitions:
+
+        assert definition not in text

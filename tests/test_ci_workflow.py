@@ -295,3 +295,41 @@ def test_ci_verifies_image_excludes_sensitive_paths():
         in text
     )
 
+def test_ci_verifies_image_excludes_alpha_configuration():
+
+    text = workflow_text()
+
+    assert (
+        "Verify image excludes alpha configuration"
+        in text
+    )
+    assert (
+        "--format "
+        "'{{ range .Config.Env }}"
+        "{{ println . }}"
+        "{{ end }}'"
+        in text
+    )
+
+    forbidden_names = (
+        "PERFORMANCELAB_ENV",
+        "DATABASE_URL",
+        "PRIVACY_CONTACT_EMAIL",
+        "GEMINI_API_KEY",
+        "BETTER_STACK_ERROR_DSN",
+    )
+
+    for forbidden_name in forbidden_names:
+
+        assert forbidden_name in text
+
+    assert (
+        '"^${forbidden_name}="'
+        in text
+    )
+    assert (
+        "Alpha configuration found in "
+        "container image"
+        in text
+    )
+
