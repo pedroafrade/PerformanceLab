@@ -35,7 +35,8 @@ COPY scripts/check_alpha_configuration.py ./scripts/check_alpha_configuration.py
 COPY scripts/check_alpha_auth_configuration.py ./scripts/check_alpha_auth_configuration.py
 COPY alembic.ini ./
 
-RUN chown -R performancelab:performancelab /app
+RUN mkdir -p /app/.streamlit \
+    && chown -R performancelab:performancelab /app
 
 USER performancelab
 

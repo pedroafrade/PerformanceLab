@@ -414,3 +414,17 @@ def test_alpha_runs_runtime_and_auth_preflights_in_order():
     )
 
     assert expected_sequence in text
+
+def test_container_prepares_authentication_mount_point():
+
+    text = dockerfile_text()
+
+    assert (
+        "mkdir -p /app/.streamlit"
+        in text
+    )
+    assert (
+        "chown -R "
+        "performancelab:performancelab /app"
+        in text
+    )
