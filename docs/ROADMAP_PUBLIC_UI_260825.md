@@ -2,7 +2,7 @@
 
 **Atualizado:** 27 de agosto de 2026
 
-**Fonte auditada:** branch `main`, commit `4f54b7dc02fe17523f07c16e31a87f8efeb2937b` (`Verify unavailable database rejection in CI`)
+**Fonte auditada:** branch `main`, commit `23fef6669d75a2a42defc345abb1129498505a09` (`Enforce migration preflight on alpha startup`)
 
 **Objetivo:** disponibilizar uma alpha privada a 3–5 participantes convidados, todos com 18 anos ou mais.
 
@@ -159,7 +159,11 @@ O ambiente é reproduzível, observável e recuperável; uma falha pode ser diag
 ### Estado atual
 
 Estado confirmado na `main` em 27 de agosto de 2026, após o commit
-`4f54b7d` (`Verify unavailable database rejection in CI`).
+`23fef66` (`Enforce migration preflight on alpha startup`).
+
+O arranque alpha valida agora, por ordem, a configuração runtime, a
+configuração OIDC, a ligação PostgreSQL e as revisões das migrações antes
+de iniciar o Streamlit.
 
 Dos 15 requisitos anteriores:
 

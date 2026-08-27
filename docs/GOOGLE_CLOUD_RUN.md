@@ -284,6 +284,38 @@ fictícia permanece indisponível e o Streamlit não é iniciado.
 Esta prova confirma o bloqueio seguro, mas não valida ainda uma ligação
 real ao Google Cloud SQL, migrações aplicadas, backups ou restauro.
 
+### 8.5. Verificação das migrações
+
+No ambiente alpha, o quarto preflight é executado depois da verificação
+da ligação PostgreSQL e antes de iniciar o Streamlit.
+
+O preflight:
+
+- lê as revisões de topo definidas pelas migrações do repositório;
+- consulta as revisões atualmente aplicadas na base de dados;
+- aceita a base de dados apenas quando os dois conjuntos coincidem;
+- suporta mais do que uma revisão de topo;
+- encerra sempre a ligação e o engine;
+- não apresenta o `DATABASE_URL`, credenciais, host ou erro interno.
+
+Se a base de dados não tiver revisões, estiver desatualizada ou não
+corresponder às migrações da imagem, o contentor termina com:
+
+```text
+Alpha database migrations are not current.
+```
+Quando todas as revisões estão aplicadas, o resultado é:
+
+Alpha database migrations are current.
+
+Esta verificação não aplica migrações automaticamente. As migrações
+devem ser executadas como uma operação controlada antes de iniciar a
+nova revisão do serviço.
+
+A validação local utiliza implementações fictícias e confirma a lógica
+de comparação sem contactar uma base de dados real. A confirmação no
+Google Cloud SQL permanece dependente da criação do ambiente alpha.
+
 ## 9. Estado atual
 
 Neste momento:
@@ -299,6 +331,7 @@ Neste momento:
 - [x] preflight alpha integrado e recusa automática validada na CI;
 - [x] configuração OIDC estruturalmente validada antes do arranque;
 - [x] ligação PostgreSQL obrigatória antes do arranque alpha;
+- [x] revisões da base de dados validadas antes do arranque alpha;
 - [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;

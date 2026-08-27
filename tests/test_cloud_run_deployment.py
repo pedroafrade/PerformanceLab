@@ -558,3 +558,33 @@ def test_documentation_preserves_pending_cloud_run_service():
         )
     )
 
+def test_documentation_records_migration_preflight():
+
+    text = documentation_text()
+
+    assert "Verificação das migrações" in text
+    assert (
+        "quarto preflight é executado depois "
+        "da verificação da ligação PostgreSQL"
+        in text
+    )
+    assert (
+        "Alpha database migrations "
+        "are not current."
+        in text
+    )
+    assert (
+        "não aplica migrações automaticamente"
+        in text
+    )
+    assert (
+        "revisões da base de dados validadas "
+        "antes do arranque alpha"
+        in text
+    )
+    assert (
+        "Google Cloud SQL permanece dependente "
+        "da criação do ambiente alpha"
+        in text
+    )
+

@@ -87,3 +87,22 @@ def test_phase_h_preserves_trial_boundary():
         "de 90 dias"
         in text
     )
+
+def test_phase_h_records_alpha_startup_preflights():
+
+    text = roadmap_text()
+
+    assert (
+        "configuração runtime, a configuração "
+        "OIDC, a ligação PostgreSQL e as "
+        "revisões das migrações"
+        in text
+    )
+    assert (
+        "antes de iniciar o Streamlit"
+        in text
+    )
+    assert (
+        "23fef66"
+        in text
+    )
