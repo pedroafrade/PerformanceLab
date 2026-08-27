@@ -108,7 +108,7 @@ jobs:
 
           {
             echo "PERFORMANCELAB_ENV=alpha"
-            echo "DATABASE_URL=postgresql+psycopg://ci_user@db.invalid/performancelab"
+            echo "DATABASE_URL=postgresql+psycopg://ci_user@db.invalid/performancelab?connect_timeout=3"
             echo "PRIVACY_CONTACT_EMAIL=privacy@example.invalid"
             echo "RETENTION_INACTIVE_ACCOUNT_DAYS=90"
             echo "RETENTION_INACTIVITY_NOTICE_DAYS=14"
@@ -161,6 +161,32 @@ jobs:
             --quiet \
             "Alpha authentication configuration is structurally valid." \
             "${auth_success_log}"
+
+      - name: Reject unavailable alpha database
+        run: |
+          alpha_env="${RUNNER_TEMP}/complete-alpha.env"
+          database_log="${RUNNER_TEMP}/alpha-database-preflight.log"
+
+          if docker run \
+            --rm \
+            --env-file "${alpha_env}" \
+            --mount \
+            "type=bind,source=${GITHUB_WORKSPACE}/.streamlit/secrets.toml.example,target=/app/.streamlit/secrets.toml,readonly" \
+            performancelab-alpha:ci \
+            > "${database_log}" \
+            2>&1
+          then
+            echo \
+              "Container unexpectedly started with an unavailable database." \
+              >&2
+            exit 1
+          fi
+
+          grep \
+            --fixed-strings \
+            --quiet \
+            "Alpha database connection is unavailable." \
+            "${database_log}"
 
       - name: Stop container
         if: always()

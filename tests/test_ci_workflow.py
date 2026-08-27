@@ -194,3 +194,24 @@ def test_ci_validates_mounted_authentication_example():
         "is structurally valid."
         in text
     )
+
+def test_ci_rejects_unavailable_alpha_database():
+
+    text = workflow_text()
+
+    assert (
+        "Reject unavailable alpha database"
+        in text
+    )
+    assert "connect_timeout=3" in text
+    assert (
+        "Alpha database connection is unavailable."
+        in text
+    )
+    assert (
+        "Container unexpectedly started with "
+        "an unavailable database."
+        in text
+    )
+    assert "alpha-database-preflight.log" in text
+
