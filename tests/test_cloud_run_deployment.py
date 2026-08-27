@@ -362,3 +362,29 @@ def test_alpha_container_runs_preflight_before_streamlit():
         in text
     )
 
+def test_documentation_records_automatic_alpha_gate():
+
+    text = documentation_text()
+
+    assert (
+        "Bloqueio automático do arranque alpha"
+        in text
+    )
+    assert (
+        "o Streamlit não é iniciado"
+        in text
+    )
+    assert (
+        "preflight alpha integrado e recusa "
+        "automática validada na CI"
+        in text
+    )
+    assert (
+        "Não contém segredos reais"
+        in text
+    )
+    assert (
+        "não testa a ligação ao Cloud SQL"
+        in text
+    )
+

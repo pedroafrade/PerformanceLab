@@ -203,6 +203,29 @@ Esta verificação é apenas estrutural. Não confirma:
 
 Uma falha deste comando bloqueia o arranque do ambiente alpha.
 
+### 8.2. Bloqueio automático do arranque alpha
+
+O contentor executa automaticamente a verificação segura antes de
+iniciar o Streamlit quando `PERFORMANCELAB_ENV=alpha`.
+
+Se a configuração estiver incompleta ou for inválida:
+
+- o preflight termina com erro;
+- o Streamlit não é iniciado;
+- o contentor termina;
+- nenhuma configuração secreta é apresentada.
+
+Nos ambientes `local` e `test`, o preflight alpha não é executado.
+
+A CI confirma separadamente que:
+
+- o contentor local inicia e responde no endpoint de saúde;
+- um contentor alpha sem configuração obrigatória é recusado;
+- a recusa contém a mensagem segura produzida pelo preflight.
+
+Esta prova utiliza apenas uma configuração alpha deliberadamente
+incompleta. Não contém segredos reais e não testa a ligação ao Cloud SQL.
+
 ## 9. Estado atual
 
 Neste momento:
@@ -215,6 +238,7 @@ Neste momento:
 - [x] verificação técnica do Streamlit preparada;
 - [x] imagem construída e testada localmente;
 - [x] construção e verificação de saúde automáticas na CI;
+- [x] preflight alpha integrado e recusa automática validada na CI;
 - [ ] serviço Cloud Run criado;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;
