@@ -105,6 +105,29 @@ jobs:
             exit 1
           fi
 
+      - name: Verify image excludes sensitive paths
+        run: |
+          docker run \
+            --rm \
+            --entrypoint sh \
+            performancelab-alpha:ci \
+            -c '
+              for forbidden_path in \
+                /app/.env \
+                /app/.git \
+                /app/.streamlit/secrets.toml \
+                /app/data \
+                /app/backups \
+                /app/exports
+              do
+                if [ -e "${forbidden_path}" ]
+                then
+                  echo "Sensitive path found in container image: ${forbidden_path}" >&2
+                  exit 1
+                fi
+              done
+            '
+
       - name: Start container
         run: |
           docker run \

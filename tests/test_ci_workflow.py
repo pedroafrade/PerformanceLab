@@ -263,3 +263,35 @@ def test_ci_verifies_non_root_container_execution():
         in text
     )
 
+def test_ci_verifies_image_excludes_sensitive_paths():
+
+    text = workflow_text()
+
+    assert (
+        "Verify image excludes sensitive paths"
+        in text
+    )
+    assert "--entrypoint sh" in text
+
+    forbidden_paths = (
+        "/app/.env",
+        "/app/.git",
+        "/app/.streamlit/secrets.toml",
+        "/app/data",
+        "/app/backups",
+        "/app/exports",
+    )
+
+    for forbidden_path in forbidden_paths:
+
+        assert forbidden_path in text
+
+    assert (
+        'if [ -e "${forbidden_path}" ]'
+        in text
+    )
+    assert (
+        "Sensitive path found in container image"
+        in text
+    )
+

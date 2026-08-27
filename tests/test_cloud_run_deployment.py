@@ -140,6 +140,11 @@ def test_docker_context_excludes_sensitive_content():
         "credentials*.json",
         "service-account*.json",
         "tests",
+        "logs",
+        "*.backup",
+        "*.dump",
+        "*.bak",
+        "*_backup.sql",
     }
 
     assert required_entries <= entries
