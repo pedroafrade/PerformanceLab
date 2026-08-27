@@ -78,6 +78,19 @@ jobs:
             --retry-all-errors \
             http://127.0.0.1:8080/_stcore/health
 
+      - name: Reject incomplete alpha configuration
+        run: |
+          if docker run \
+            --rm \
+            --env PERFORMANCELAB_ENV=alpha \
+            performancelab-alpha:ci
+          then
+            echo \
+              "Container unexpectedly accepted incomplete alpha configuration." \
+              >&2
+            exit 1
+          fi
+
       - name: Stop container
         if: always()
         run: docker rm --force performancelab-alpha-ci

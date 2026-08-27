@@ -118,3 +118,21 @@ def test_ci_verifies_container_health():
         "performancelab-alpha-ci"
         in text
     )
+
+def test_ci_rejects_incomplete_alpha_container():
+
+    text = workflow_text()
+
+    assert (
+        "Reject incomplete alpha configuration"
+        in text
+    )
+    assert (
+        "--env PERFORMANCELAB_ENV=alpha"
+        in text
+    )
+    assert (
+        "Container unexpectedly accepted "
+        "incomplete alpha configuration."
+        in text
+    )
