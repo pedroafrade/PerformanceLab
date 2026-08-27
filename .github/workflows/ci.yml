@@ -101,6 +101,47 @@ jobs:
             "Alpha runtime configuration is incomplete or invalid." \
             "${alpha_log}"
 
+      - name: Reject missing alpha authentication configuration
+        run: |
+          alpha_env="${RUNNER_TEMP}/complete-alpha.env"
+          auth_log="${RUNNER_TEMP}/alpha-auth-preflight.log"
+
+          {
+            echo "PERFORMANCELAB_ENV=alpha"
+            echo "DATABASE_URL=postgresql+psycopg://ci_user@db.invalid/performancelab"
+            echo "PRIVACY_CONTACT_EMAIL=privacy@example.invalid"
+            echo "RETENTION_INACTIVE_ACCOUNT_DAYS=90"
+            echo "RETENTION_INACTIVITY_NOTICE_DAYS=14"
+            echo "RETENTION_TRAINING_COACH_USAGE_DAYS=30"
+            echo "RETENTION_CONSENT_EVIDENCE_DAYS=0"
+            echo "RETENTION_UNUSED_INVITATION_DAYS=14"
+            echo "RETENTION_EXPIRED_INVITATION_DAYS=7"
+            echo "RETENTION_APPLICATION_LOG_DAYS=14"
+            echo "RETENTION_ERROR_ALERT_DAYS=30"
+            echo "RETENTION_BACKUP_DAYS=14"
+            echo "RETENTION_SUPPORT_REQUEST_DAYS=90"
+            echo "RETENTION_POST_ALPHA_DAYS=30"
+          } > "${alpha_env}"
+
+          if docker run \
+            --rm \
+            --env-file "${alpha_env}" \
+            performancelab-alpha:ci \
+            > "${auth_log}" \
+            2>&1
+          then
+            echo \
+              "Container unexpectedly started without OIDC configuration." \
+              >&2
+            exit 1
+          fi
+
+          grep \
+            --fixed-strings \
+            --quiet \
+            "Alpha authentication configuration is incomplete or invalid." \
+            "${auth_log}"
+
       - name: Stop container
         if: always()
         run: docker rm --force performancelab-alpha-ci

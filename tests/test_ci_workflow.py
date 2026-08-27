@@ -144,3 +144,29 @@ def test_ci_rejects_incomplete_alpha_container():
     assert "--fixed-strings" in text
     assert "--quiet" in text
     assert "alpha-preflight.log" in text
+
+def test_ci_rejects_missing_alpha_authentication():
+
+    text = workflow_text()
+
+    assert (
+        "Reject missing alpha "
+        "authentication configuration"
+        in text
+    )
+    assert (
+        "--env-file "
+        '"${alpha_env}"'
+        in text
+    )
+    assert (
+        "Alpha authentication configuration "
+        "is incomplete or invalid."
+        in text
+    )
+    assert (
+        "Container unexpectedly started "
+        "without OIDC configuration."
+        in text
+    )
+    assert "alpha-auth-preflight.log" in text
