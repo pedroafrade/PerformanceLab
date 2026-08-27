@@ -138,15 +138,13 @@ python scripts/check_alpha_migrations.py
 ```
 O último comando deve terminar com:
 
-```
+```text
 Alpha database migrations are current.
 ```
 
 Se indicar que as migrações não estão atuais, o deployment deve
 permanecer bloqueado. Não se deve contornar o preflight nem iniciar
 manualmente o Streamlit.
-
-Nota: no editor, confirma que os blocos `powershell` e `text` ficam fechados por uma linha com três acentos graves.
 
 É ainda obrigatório:
 
@@ -335,7 +333,7 @@ Neste momento:
 - [x] Google Cloud SQL escolhido;
 - [x] procedimentos de deployment e incidente preparados;
 - [ ] revisão jurídica externa concluída;
-- [ ] alojamento da aplicação escolhido;
+- [x] Google Cloud Run escolhido para alojar a aplicação;
 - [ ] avaliação Google Cloud iniciada;
 - [ ] PostgreSQL alpha criado;
 - [ ] backups automáticos ativos;

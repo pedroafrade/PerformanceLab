@@ -123,7 +123,6 @@ def test_runbook_preserves_pending_blockers():
 
     pending_items = (
         "revisão jurídica externa concluída",
-        "alojamento da aplicação escolhido",
         "avaliação Google Cloud iniciada",
         "backups automáticos ativos",
         "restauro real testado",
@@ -183,5 +182,39 @@ def test_runbook_preserves_cloud_activation_boundary():
     assert (
         "não inicia o período experimental"
         in text
+    )
+
+def test_runbook_formats_migration_result_as_text():
+
+    source = RUNBOOK_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "```text\n"
+        "Alpha database migrations are current.\n"
+        "```"
+        in source
+    )
+    assert (
+        "Nota: no editor, confirma que os blocos"
+        not in source
+    )
+
+
+def test_runbook_marks_cloud_run_selection_complete():
+
+    source = RUNBOOK_PATH.read_text(
+        encoding="utf-8"
+    )
+
+    assert (
+        "- [x] Google Cloud Run escolhido "
+        "para alojar a aplicação;"
+        in source
+    )
+    assert (
+        "- [ ] alojamento da aplicação escolhido;"
+        not in source
     )
 
