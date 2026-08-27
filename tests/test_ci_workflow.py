@@ -136,3 +136,11 @@ def test_ci_rejects_incomplete_alpha_container():
         "incomplete alpha configuration."
         in text
     )
+    assert (
+        "Alpha runtime configuration is "
+        "incomplete or invalid."
+        in text
+    )
+    assert "--fixed-strings" in text
+    assert "--quiet" in text
+    assert "alpha-preflight.log" in text

@@ -80,16 +80,26 @@ jobs:
 
       - name: Reject incomplete alpha configuration
         run: |
+          alpha_log="${RUNNER_TEMP}/alpha-preflight.log"
+
           if docker run \
             --rm \
             --env PERFORMANCELAB_ENV=alpha \
-            performancelab-alpha:ci
+            performancelab-alpha:ci \
+            > "${alpha_log}" \
+            2>&1
           then
             echo \
               "Container unexpectedly accepted incomplete alpha configuration." \
               >&2
             exit 1
           fi
+
+          grep \
+            --fixed-strings \
+            --quiet \
+            "Alpha runtime configuration is incomplete or invalid." \
+            "${alpha_log}"
 
       - name: Stop container
         if: always()
