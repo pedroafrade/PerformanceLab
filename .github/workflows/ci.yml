@@ -57,7 +57,25 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build container image
-        run: docker build --tag performancelab-alpha:ci .
+        run: |
+          docker build \
+            --tag performancelab-alpha:ci \
+            --build-arg VCS_REF="${GITHUB_SHA}" \
+            .
+
+      - name: Verify image revision
+        run: |
+          revision="$(
+            docker image inspect \
+              --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+              performancelab-alpha:ci
+          )"
+
+          if [ "${revision}" != "${GITHUB_SHA}" ]
+          then
+            echo "Container image revision does not match the commit." >&2
+            exit 1
+          fi
 
       - name: Start container
         run: |

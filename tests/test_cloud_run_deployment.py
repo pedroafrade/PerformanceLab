@@ -588,3 +588,20 @@ def test_documentation_records_migration_preflight():
         in text
     )
 
+def test_container_records_source_and_revision():
+
+    text = dockerfile_text()
+
+    assert "ARG VCS_REF=unknown" in text
+    assert (
+        "org.opencontainers.image.source="
+        '"https://github.com/pedroafrade/'
+        'PerformanceLab"'
+        in text
+    )
+    assert (
+        "org.opencontainers.image.revision="
+        '"${VCS_REF}"'
+        in text
+    )
+

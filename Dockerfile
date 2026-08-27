@@ -1,5 +1,10 @@
 FROM python:3.11-slim-bookworm
 
+ARG VCS_REF=unknown
+
+LABEL org.opencontainers.image.source="https://github.com/pedroafrade/PerformanceLab"
+LABEL org.opencontainers.image.revision="${VCS_REF}"
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1

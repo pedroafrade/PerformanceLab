@@ -85,9 +85,13 @@ def test_ci_builds_container_without_publishing():
 
     assert "container:" in text
     assert "name: Docker image" in text
+    assert "docker build" in text
     assert (
-        "docker build --tag "
-        "performancelab-alpha:ci ."
+        "--tag performancelab-alpha:ci"
+        in text
+    )
+    assert (
+        '--build-arg VCS_REF="${GITHUB_SHA}"'
         in text
     )
     assert "docker push" not in text
@@ -214,4 +218,23 @@ def test_ci_rejects_unavailable_alpha_database():
         in text
     )
     assert "alpha-database-preflight.log" in text
+
+def test_ci_verifies_container_image_revision():
+
+    text = workflow_text()
+
+    assert "Verify image revision" in text
+    assert (
+        "org.opencontainers.image.revision"
+        in text
+    )
+    assert (
+        'if [ "${revision}" != "${GITHUB_SHA}" ]'
+        in text
+    )
+    assert (
+        "Container image revision does not "
+        "match the commit."
+        in text
+    )
 
