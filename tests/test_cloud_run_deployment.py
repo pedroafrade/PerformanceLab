@@ -472,6 +472,15 @@ def test_container_includes_database_preflight():
         in text
     )
 
+def test_container_includes_migration_preflight():
+
+    text = dockerfile_text()
+
+    assert (
+        "COPY scripts/check_alpha_migrations.py "
+        "./scripts/check_alpha_migrations.py"
+        in text
+    )
 
 def test_alpha_runs_all_preflights_before_streamlit():
 
@@ -484,6 +493,8 @@ def test_alpha_runs_all_preflights_before_streamlit():
         "check_alpha_auth_configuration.py || exit 1; "
         "python scripts/"
         "check_alpha_database.py || exit 1; "
+        "python scripts/"
+        "check_alpha_migrations.py || exit 1; "
         "fi; exec python -m streamlit"
     )
 
