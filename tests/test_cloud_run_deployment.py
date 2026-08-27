@@ -489,3 +489,36 @@ def test_alpha_runs_all_preflights_before_streamlit():
 
     assert expected_sequence in text
 
+def test_documentation_records_database_preflight():
+
+    text = documentation_text()
+
+    assert (
+        "Verificação da ligação PostgreSQL"
+        in text
+    )
+    assert (
+        "executa a verificação de saúde "
+        "existente com `SELECT 1`"
+        in text
+    )
+    assert (
+        "Alpha database connection "
+        "is unavailable."
+        in text
+    )
+    assert (
+        "não apresenta o `DATABASE_URL`"
+        in text
+    )
+    assert (
+        "ligação PostgreSQL obrigatória "
+        "antes do arranque alpha"
+        in text
+    )
+    assert (
+        "não valida ainda uma ligação "
+        "real ao Google Cloud SQL"
+        in text
+    )
+

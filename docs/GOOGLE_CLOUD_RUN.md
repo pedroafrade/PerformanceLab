@@ -257,6 +257,33 @@ Esta validação não confirma que as credenciais Google são reais, que o
 endereço de retorno está registado ou que o login funciona no serviço
 Cloud Run.
 
+### 8.4. Verificação da ligação PostgreSQL
+
+No ambiente alpha, o terceiro preflight é executado depois das
+verificações runtime e OIDC e antes de iniciar o Streamlit.
+
+O preflight:
+
+- constrói a configuração alpha validada;
+- cria o bundle de repositórios PostgreSQL;
+- executa a verificação de saúde existente com `SELECT 1`;
+- confirma que a base de dados responde;
+- encerra sempre as ligações e o engine utilizados no teste;
+- não apresenta o `DATABASE_URL`, credenciais, host ou erro interno.
+
+Se a ligação não estiver disponível, o contentor termina com a mensagem:
+
+```text
+Alpha database connection is unavailable.
+```
+
+A CI confirma que uma configuração runtime completa e um ficheiro OIDC
+estruturalmente válido chegam ao preflight PostgreSQL. A base de dados
+fictícia permanece indisponível e o Streamlit não é iniciado.
+
+Esta prova confirma o bloqueio seguro, mas não valida ainda uma ligação
+real ao Google Cloud SQL, migrações aplicadas, backups ou restauro.
+
 ## 9. Estado atual
 
 Neste momento:
@@ -271,7 +298,7 @@ Neste momento:
 - [x] construção e verificação de saúde automáticas na CI;
 - [x] preflight alpha integrado e recusa automática validada na CI;
 - [x] configuração OIDC estruturalmente validada antes do arranque;
-- [ ] serviço Cloud Run criado;
+- [x] ligação PostgreSQL obrigatória antes do arranque alpha;
 - [ ] acesso privado confirmado;
 - [ ] segredos configurados;
 - [ ] aplicação ligada ao Cloud SQL;
