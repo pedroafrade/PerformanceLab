@@ -343,3 +343,22 @@ def test_container_includes_alpha_configuration_preflight():
         "./scripts/check_alpha_configuration.py"
         in text
     )
+def test_alpha_container_runs_preflight_before_streamlit():
+
+    text = dockerfile_text()
+
+    assert (
+        'if [ \\"${PERFORMANCELAB_ENV:-local}\\" '
+        '= \\"alpha\\" ]'
+        in text
+    )
+    assert (
+        "python scripts/"
+        "check_alpha_configuration.py || exit 1"
+        in text
+    )
+    assert (
+        "exec python -m streamlit run app/app.py"
+        in text
+    )
+
