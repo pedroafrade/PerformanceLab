@@ -333,3 +333,13 @@ def test_alpha_preflight_documentation_has_closed_code_blocks():
     )
     assert "- ambiente definido como `alpha`;" in source
     assert "- ligação real ao PostgreSQL;" in source
+
+def test_container_includes_alpha_configuration_preflight():
+
+    text = dockerfile_text()
+
+    assert (
+        "COPY scripts/check_alpha_configuration.py "
+        "./scripts/check_alpha_configuration.py"
+        in text
+    )

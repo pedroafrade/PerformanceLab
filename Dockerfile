@@ -31,6 +31,7 @@ RUN python -m pip install --upgrade pip \
 
 COPY app ./app
 COPY migrations ./migrations
+COPY scripts/check_alpha_configuration.py ./scripts/check_alpha_configuration.py
 COPY alembic.ini ./
 
 RUN chown -R performancelab:performancelab /app
