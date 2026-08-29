@@ -190,6 +190,36 @@ A criação e execução destes recursos permanece pendente. Esta
 documentação não ativa a Google Cloud, não cria custos e não inicia o
 período experimental.
 
+### 7.1. Garantias automáticas da imagem
+
+Antes de uma imagem poder ser considerada candidata ao deployment, a
+CI confirma automaticamente que:
+
+- a imagem foi construída a partir do `Dockerfile` versionado;
+- o label OCI da revisão corresponde exatamente ao commit da CI;
+- o processo está configurado como utilizador `performancelab`;
+- o processo executa com o UID não-root `10001`;
+- o código da aplicação e os scripts de preflight não são graváveis
+  pelo utilizador runtime;
+- não existem na imagem ficheiros `.env`, configuração OIDC real,
+  dados, backups, exportações ou metadados do Git;
+- não existem valores de configuração alpha gravados nas variáveis da
+  imagem;
+- o contentor local inicia e o endpoint de saúde responde;
+- configurações alpha incompletas são recusadas antes do Streamlit.
+
+Estas verificações não provam que uma imagem publicada num registo é a
+mesma imagem testada. No deployment real será ainda necessário:
+
+1. publicar a imagem sem a reconstruir;
+2. registar o digest imutável da imagem publicada;
+3. confirmar o label OCI da revisão;
+4. publicar no Cloud Run exatamente esse digest;
+5. registar o digest e o commit no relatório da operação.
+
+A CI atual não publica imagens, não contacta a Google Cloud, não cria
+recursos e não inicia custos.
+
 ## 8. Rollback da aplicação
 
 Rollback significa voltar à última versão confirmada quando uma nova

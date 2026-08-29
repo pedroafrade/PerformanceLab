@@ -218,3 +218,49 @@ def test_runbook_marks_cloud_run_selection_complete():
         not in source
     )
 
+def test_runbook_records_automatic_image_guarantees():
+
+    text = runbook_text()
+
+    guarantees = (
+        "label OCI da revisão",
+        "utilizador `performancelab`",
+        "UID não-root `10001`",
+        "não são graváveis pelo utilizador runtime",
+        "configuração OIDC real",
+        "valores de configuração alpha",
+        "endpoint de saúde responde",
+        "recusadas antes do Streamlit",
+    )
+
+    for guarantee in guarantees:
+
+        assert guarantee in text
+
+
+def test_runbook_requires_immutable_deployment_image():
+
+    text = runbook_text()
+
+    assert "publicar a imagem sem a reconstruir" in text
+    assert "digest imutável" in text
+    assert (
+        "publicar no Cloud Run exatamente "
+        "esse digest"
+        in text
+    )
+    assert (
+        "registar o digest e o commit"
+        in text
+    )
+
+
+def test_runbook_preserves_image_publication_boundary():
+
+    text = runbook_text()
+
+    assert "A CI atual não publica imagens" in text
+    assert "não contacta a Google Cloud" in text
+    assert "não cria recursos" in text
+    assert "não inicia custos" in text
+
