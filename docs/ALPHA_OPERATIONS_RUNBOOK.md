@@ -336,6 +336,11 @@ passarem sem erros.
 
 ## 13. Registo de cada operação
 
+Deve ser criada uma cópia de
+`docs/ALPHA_DEPLOYMENT_RECORD_TEMPLATE.md` fora do repositório para
+registar a operação. O modelo versionado permanece vazio e não deve ser
+substituído por um relatório preenchido.
+
 Cada deployment, migração, rollback ou incidente deverá registar:
 
 - data e hora;
