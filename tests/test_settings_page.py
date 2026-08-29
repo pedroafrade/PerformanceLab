@@ -55,3 +55,14 @@ def test_settings_supports_training_coach_consent():
         "on_withdraw_training_coach"
         in signature.parameters
     )
+
+def test_settings_supports_visible_support_contact():
+
+    signature = inspect.signature(
+        show_settings_page
+    )
+
+    assert (
+        "support_contact_email"
+        in signature.parameters
+    )

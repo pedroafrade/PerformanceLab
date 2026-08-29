@@ -67,6 +67,32 @@ def privacy_contact_mailto(
         + email.strip().lower()
     )
 
+def support_contact_mailto(
+    email: str,
+) -> str:
+    """
+    Return a mail link for a validated support contact.
+    """
+
+    if (
+        not isinstance(
+            email,
+            str,
+        )
+        or not email.strip()
+        or "@"
+        not in email
+    ):
+
+        raise ValueError(
+            "A valid support contact email is required."
+        )
+
+    return (
+        "mailto:"
+        + email.strip().lower()
+    )
+
 def _settings_page_header() -> None:
     """
     Display the standard settings page header.
@@ -132,6 +158,7 @@ def show_settings_page(
     on_withdraw_training_coach=None,
     participant_export_json: str | None = None,
     privacy_contact_email: str | None = None,
+    support_contact_email: str | None = None,
     on_delete_participant_data=None,
     participant_deletion_error: str | None = None,
 ):
@@ -224,6 +251,37 @@ def show_settings_page(
 
         st.warning(
             "The privacy contact is not configured "
+            "in this local environment."
+        )
+
+    st.divider()
+
+    st.subheader(
+        "Support"
+    )
+
+    st.caption(
+        "For help with access, invitations, application "
+        "errors or use of the private alpha, contact the "
+        "PerformanceLab support address."
+    )
+
+    if support_contact_email:
+
+        support_url = support_contact_mailto(
+            support_contact_email
+        )
+
+        st.markdown(
+            "Support contact: "
+            f"[{support_contact_email}]"
+            f"({support_url})"
+        )
+
+    else:
+
+        st.warning(
+            "The support contact is not configured "
             "in this local environment."
         )
 

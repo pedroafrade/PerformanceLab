@@ -658,3 +658,14 @@ def test_documentation_requires_support_contact():
     assert "`SUPPORT_CONTACT_EMAIL`" in text
     assert "contacto de suporte" in text
 
+def test_application_passes_runtime_support_contact():
+
+    text = app_source_text()
+
+    assert (
+        "support_contact_email=( "
+        "runtime_configuration "
+        ".support_contact_email )"
+        in text
+    )
+
