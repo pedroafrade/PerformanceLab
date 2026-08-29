@@ -154,6 +154,11 @@ def test_ci_rejects_missing_alpha_authentication():
     text = workflow_text()
 
     assert (
+        "SUPPORT_CONTACT_EMAIL="
+        "support@example.invalid"
+        in text
+    )
+    assert (
         "Reject missing alpha "
         "authentication configuration"
         in text

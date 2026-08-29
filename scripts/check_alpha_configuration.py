@@ -50,6 +50,11 @@ def validate_alpha_configuration(
     return (
         configuration.environment
         == "alpha"
+        and (
+            configuration
+            .support_contact_email
+            is not None
+        )
     )
 
 

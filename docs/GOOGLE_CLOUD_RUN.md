@@ -56,6 +56,7 @@ Serão disponibilizados como variáveis de ambiente:
 - `PERFORMANCELAB_ENV`;
 - `DATABASE_URL`;
 - `PRIVACY_CONTACT_EMAIL`;
+- `SUPPORT_CONTACT_EMAIL`;
 - `GEMINI_API_KEY`;
 - `BETTER_STACK_ERROR_DSN`;
 - limites do Training Coach;
@@ -185,6 +186,7 @@ O comando confirma:
 - ambiente definido como `alpha`;
 - existência e formato do `DATABASE_URL`;
 - contacto de privacidade;
+- contacto de suporte;
 - valores obrigatórios da política de retenção;
 - coerência dos limites configurados.
 

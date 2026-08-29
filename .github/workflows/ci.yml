@@ -227,6 +227,7 @@ jobs:
             echo "PERFORMANCELAB_ENV=alpha"
             echo "DATABASE_URL=postgresql+psycopg://ci_user@db.invalid/performancelab?connect_timeout=3"
             echo "PRIVACY_CONTACT_EMAIL=privacy@example.invalid"
+            echo "SUPPORT_CONTACT_EMAIL=support@example.invalid"
             echo "RETENTION_INACTIVE_ACCOUNT_DAYS=90"
             echo "RETENTION_INACTIVITY_NOTICE_DAYS=14"
             echo "RETENTION_TRAINING_COACH_USAGE_DAYS=30"

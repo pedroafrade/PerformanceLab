@@ -27,6 +27,9 @@ def valid_alpha_values() -> dict[
         "PRIVACY_CONTACT_EMAIL": (
             "privacy@example.com"
         ),
+        "SUPPORT_CONTACT_EMAIL": (
+            "support@example.com"
+        ),
         "RETENTION_INACTIVE_ACCOUNT_DAYS": "90",
         "RETENTION_INACTIVITY_NOTICE_DAYS": "14",
         "RETENTION_TRAINING_COACH_USAGE_DAYS": "30",
@@ -99,3 +102,36 @@ def test_failure_does_not_expose_secret(
     assert FAILURE_MESSAGE in captured.err
     assert "super-secret-password" not in output
     assert "db.example.com" not in output
+
+def test_rejects_alpha_without_support_contact():
+
+    values = valid_alpha_values()
+
+    values.pop(
+        "SUPPORT_CONTACT_EMAIL"
+    )
+
+    assert not validate_alpha_configuration(
+        values
+    )
+
+
+def test_support_contact_is_not_printed(
+    capsys,
+):
+
+    values = valid_alpha_values()
+
+    result = main(
+        values
+    )
+
+    captured = capsys.readouterr()
+
+    output = (
+        captured.out
+        + captured.err
+    )
+
+    assert result == 0
+    assert "support@example.com" not in output

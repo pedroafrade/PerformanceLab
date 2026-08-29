@@ -651,3 +651,10 @@ def test_container_keeps_application_code_root_owned():
     )
     assert "USER performancelab" in text
 
+def test_documentation_requires_support_contact():
+
+    text = documentation_text()
+
+    assert "`SUPPORT_CONTACT_EMAIL`" in text
+    assert "contacto de suporte" in text
+
