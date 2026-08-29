@@ -764,6 +764,19 @@ if "current_user" not in st.session_state:
             "requires an invitation."
         )
 
+        support_contact_email = (
+            runtime_configuration
+            .support_contact_email
+        )
+
+        if support_contact_email:
+
+            st.markdown(
+                "Support contact: "
+                f"[{support_contact_email}]"
+                f"(mailto:{support_contact_email})"
+            )
+
         st.button(
             "Sign out",
             on_click=st.logout,
