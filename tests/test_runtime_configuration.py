@@ -547,6 +547,7 @@ def test_runtime_configuration_exposes_retention_settings():
         "PERFORMANCELAB_ENV",
         "DATABASE_URL",
         "PRIVACY_CONTACT_EMAIL",
+        "SUPPORT_CONTACT_EMAIL",
         "BETTER_STACK_ERROR_DSN",
         "TRAINING_COACH_ENABLED",
         "TRAINING_COACH_USER_DAILY_LIMIT",
@@ -646,3 +647,59 @@ def test_rejects_invalid_privacy_contact_email():
                 ),
             }
         )
+
+def test_normalizes_support_contact_email():
+
+    configuration = (
+        RuntimeConfiguration
+        .from_mapping(
+            {
+                "SUPPORT_CONTACT_EMAIL": (
+                    " Support@Example.COM "
+                ),
+            }
+        )
+    )
+
+    assert (
+        configuration
+        .support_contact_email
+        == "support@example.com"
+    )
+
+
+def test_rejects_invalid_support_contact_email():
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "SUPPORT_CONTACT_EMAIL must be "
+            "a valid email address"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                "SUPPORT_CONTACT_EMAIL": (
+                    "not-an-email"
+                ),
+            }
+        )
+
+
+def test_rejects_non_string_support_contact_email():
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "SUPPORT_CONTACT_EMAIL must be "
+            "a string or None"
+        ),
+    ):
+
+        RuntimeConfiguration.from_mapping(
+            {
+                "SUPPORT_CONTACT_EMAIL": 123,
+            }
+        )
+

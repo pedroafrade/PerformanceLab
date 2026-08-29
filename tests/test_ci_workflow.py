@@ -315,6 +315,7 @@ def test_ci_verifies_image_excludes_alpha_configuration():
         "PERFORMANCELAB_ENV",
         "DATABASE_URL",
         "PRIVACY_CONTACT_EMAIL",
+        "SUPPORT_CONTACT_EMAIL",
         "GEMINI_API_KEY",
         "BETTER_STACK_ERROR_DSN",
     )

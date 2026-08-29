@@ -40,6 +40,7 @@ RUNTIME_CONFIGURATION_SETTING_NAMES = (
     "PERFORMANCELAB_ENV",
     "DATABASE_URL",
     "PRIVACY_CONTACT_EMAIL",
+    "SUPPORT_CONTACT_EMAIL",
     "BETTER_STACK_ERROR_DSN",
     "TRAINING_COACH_ENABLED",
     "TRAINING_COACH_USER_DAILY_LIMIT",
@@ -66,6 +67,7 @@ class RuntimeConfiguration:
     )
 
     privacy_contact_email: str | None = None
+    support_contact_email: str | None = None
 
     retention_policy: (
         AlphaRetentionPolicy
@@ -227,6 +229,58 @@ class RuntimeConfiguration:
             self,
             "privacy_contact_email",
             normalized_privacy_contact,
+        )
+        if (
+            self.support_contact_email
+            is not None
+            and not isinstance(
+                self.support_contact_email,
+                str,
+            )
+        ):
+
+            raise TypeError(
+                "SUPPORT_CONTACT_EMAIL must be "
+                "a string or None."
+            )
+
+        normalized_support_contact = (
+            self.support_contact_email
+            .strip()
+            .lower()
+            if isinstance(
+                self.support_contact_email,
+                str,
+            )
+            and (
+                self.support_contact_email
+                .strip()
+            )
+            else None
+        )
+
+        if (
+            normalized_support_contact
+            is not None
+            and (
+                "@"
+                not in normalized_support_contact
+                or normalized_support_contact
+                .startswith("@")
+                or normalized_support_contact
+                .endswith("@")
+            )
+        ):
+
+            raise ValueError(
+                "SUPPORT_CONTACT_EMAIL must be "
+                "a valid email address."
+            )
+
+        object.__setattr__(
+            self,
+            "support_contact_email",
+            normalized_support_contact,
         )
 
         if (
@@ -462,6 +516,11 @@ class RuntimeConfiguration:
                 "PRIVACY_CONTACT_EMAIL"
             )
         )
+        support_contact_email = (
+            values.get(
+                "SUPPORT_CONTACT_EMAIL"
+            )
+        )
 
         normalized_environment = (
             environment.strip().lower()
@@ -541,6 +600,9 @@ class RuntimeConfiguration:
             database_url=database_url,
             privacy_contact_email=(
                 privacy_contact_email
+            ),
+            support_contact_email=(
+                support_contact_email
             ),
             retention_policy=(
                 retention_policy

@@ -633,6 +633,7 @@ def test_container_does_not_define_alpha_configuration():
         "ENV PRIVACY_CONTACT_EMAIL=",
         "ENV GEMINI_API_KEY=",
         "ENV BETTER_STACK_ERROR_DSN=",
+        "ENV SUPPORT_CONTACT_EMAIL=",
     )
 
     for definition in forbidden_definitions:
