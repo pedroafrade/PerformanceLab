@@ -416,7 +416,7 @@ def test_container_prepares_authentication_mount_point():
     assert (
         "chown -R "
         "performancelab:performancelab /app"
-        in text
+        not in text
     )
 
 def test_documentation_records_oidc_preflight():
@@ -638,3 +638,15 @@ def test_container_does_not_define_alpha_configuration():
     for definition in forbidden_definitions:
 
         assert definition not in text
+
+def test_container_keeps_application_code_root_owned():
+
+    text = dockerfile_text()
+
+    assert "RUN mkdir -p /app/.streamlit" in text
+    assert (
+        "performancelab:performancelab /app"
+        not in text
+    )
+    assert "USER performancelab" in text
+

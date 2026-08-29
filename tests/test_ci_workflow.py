@@ -333,3 +333,34 @@ def test_ci_verifies_image_excludes_alpha_configuration():
         in text
     )
 
+def test_ci_verifies_application_code_is_read_only():
+
+    text = workflow_text()
+
+    assert (
+        "Verify application code is read-only"
+        in text
+    )
+
+    protected_paths = (
+        "/app/app/app.py",
+        "/app/scripts/check_alpha_configuration.py",
+        "/app/scripts/check_alpha_auth_configuration.py",
+        "/app/scripts/check_alpha_database.py",
+        "/app/scripts/check_alpha_migrations.py",
+    )
+
+    for protected_path in protected_paths:
+
+        assert protected_path in text
+
+    assert (
+        'if [ -w "${protected_path}" ]'
+        in text
+    )
+    assert (
+        "Application code is writable by "
+        "the runtime user"
+        in text
+    )
+

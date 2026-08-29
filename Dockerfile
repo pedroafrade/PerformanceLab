@@ -42,8 +42,7 @@ COPY scripts/check_alpha_database.py ./scripts/check_alpha_database.py
 COPY scripts/check_alpha_migrations.py ./scripts/check_alpha_migrations.py
 COPY alembic.ini ./
 
-RUN mkdir -p /app/.streamlit \
-    && chown -R performancelab:performancelab /app
+RUN mkdir -p /app/.streamlit
 
 USER performancelab
 

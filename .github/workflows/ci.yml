@@ -105,6 +105,28 @@ jobs:
             exit 1
           fi
 
+      - name: Verify application code is read-only
+        run: |
+          docker run \
+            --rm \
+            --entrypoint sh \
+            performancelab-alpha:ci \
+            -c '
+              for protected_path in \
+                /app/app/app.py \
+                /app/scripts/check_alpha_configuration.py \
+                /app/scripts/check_alpha_auth_configuration.py \
+                /app/scripts/check_alpha_database.py \
+                /app/scripts/check_alpha_migrations.py
+              do
+                if [ -w "${protected_path}" ]
+                then
+                  echo "Application code is writable by the runtime user: ${protected_path}" >&2
+                  exit 1
+                fi
+              done
+            '
+
       - name: Verify image excludes sensitive paths
         run: |
           docker run \
