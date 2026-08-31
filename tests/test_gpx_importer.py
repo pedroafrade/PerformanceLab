@@ -253,3 +253,20 @@ def test_invalid_source_type():
     with pytest.raises(TypeError):
 
         GPXImporter().read(123)
+
+def test_gpx_ignores_swimming_elevation():
+
+    swimming_gpx = (
+        SAMPLE_GPX.replace(
+            "<type>running</type>",
+            "<type>swimming</type>",
+        )
+    )
+
+    workout = GPXImporter().read(
+        swimming_gpx
+    )
+
+    assert workout.sport == "Swimming"
+    assert workout.elevation_gain == 0.0
+

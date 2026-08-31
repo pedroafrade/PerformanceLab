@@ -77,9 +77,17 @@ class GPXImporter(WorkoutImporter):
         workout.info.date = self._start_time(points)
         workout.info.distance = self._distance(gpx)
         workout.info.duration = self._duration(gpx, points)
-        workout.info.elevation_gain = (
-            self._elevation_gain(gpx)
-        )
+        if workout.info.sport == "Swimming":
+
+            workout.info.elevation_gain = 0.0
+
+        else:
+
+            workout.info.elevation_gain = (
+                self._elevation_gain(
+                    gpx
+                )
+            )
 
         workout.sensors.add(
 
