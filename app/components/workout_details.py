@@ -72,7 +72,25 @@ def format_elevation(
 
     return f"{value:.0f} m"
 
+def format_elevation_source(
+    workout,
+) -> str:
+    """
+    Identify the imported activity format.
+    """
 
+    source = str(
+        workout.info.source
+        or ""
+    ).strip().upper()
+
+    if not source:
+
+        return ""
+
+    return (
+        f"Elevation source: {source}"
+    )
 # ======================================================
 # Workout summary
 # ======================================================
@@ -106,6 +124,18 @@ def show_workout_summary(
             workout.elevation_gain
         ),
     )
+
+    elevation_source = (
+        format_elevation_source(
+            workout
+        )
+    )
+
+    if elevation_source:
+
+        column_3.caption(
+            elevation_source
+        )
 
     effective_rpe = (
         workout.feedback.effective_rpe
