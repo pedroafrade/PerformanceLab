@@ -420,3 +420,128 @@ def test_history_removes_multiple_workouts():
     assert workout_1 not in history
     assert workout_3 not in history
     assert notifications == ["changed"]
+
+def test_reimport_updates_factual_fit_metrics():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+        ),
+        distance=51.26,
+        duration=timedelta(
+            hours=2,
+            minutes=47,
+        ),
+    )
+
+    existing.info.source = "fit"
+    existing.info.elevation_gain = 980.0
+    existing.feedback.rpe = 7.0
+    existing.feedback.notes = (
+        "Manual athlete note."
+    )
+
+    imported = create_identifiable_workout(
+        datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+            20,
+        ),
+        distance=51.26,
+        duration=timedelta(
+            hours=2,
+            minutes=29,
+            seconds=15,
+        ),
+    )
+
+    imported.info.source = "fit"
+    imported.info.elevation_gain = 930.0
+
+    history.add(
+        existing
+    )
+
+    result = history.merge_with_result(
+        imported
+    )
+
+    assert result.status == "updated"
+    assert len(history) == 1
+    assert (
+        existing.info.duration
+        == timedelta(
+            hours=2,
+            minutes=29,
+            seconds=15,
+        )
+    )
+    assert (
+        existing.info.elevation_gain
+        == 930.0
+    )
+    assert existing.feedback.rpe == 7.0
+    assert (
+        existing.feedback.notes
+        == "Manual athlete note."
+    )
+
+
+def test_different_sources_do_not_bypass_duration_match():
+
+    history = History()
+
+    existing = create_identifiable_workout(
+        datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+        ),
+        distance=51.26,
+        duration=timedelta(
+            hours=2,
+            minutes=47,
+        ),
+    )
+
+    existing.info.source = "fit"
+
+    candidate = create_identifiable_workout(
+        datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+        ),
+        distance=51.26,
+        duration=timedelta(
+            hours=2,
+            minutes=29,
+        ),
+    )
+
+    candidate.info.source = "gpx"
+
+    history.add(
+        existing
+    )
+
+    assert (
+        history.find_matching(
+            candidate
+        )
+        is None
+    )
+

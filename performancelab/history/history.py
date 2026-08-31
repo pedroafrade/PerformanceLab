@@ -122,6 +122,38 @@ class History:
             )
 
         changed = False
+        if self._same_import_source(
+            existing,
+            workout,
+        ):
+
+            for attribute in (
+                "distance",
+                "duration",
+                "elevation_gain",
+            ):
+
+                imported_value = getattr(
+                    workout.info,
+                    attribute,
+                )
+
+                if (
+                    imported_value is not None
+                    and getattr(
+                        existing.info,
+                        attribute,
+                    )
+                    != imported_value
+                ):
+
+                    setattr(
+                        existing.info,
+                        attribute,
+                        imported_value,
+                    )
+
+                    changed = True
 
         if (
             self._is_placeholder_title(
@@ -207,6 +239,31 @@ class History:
             result.workout,
             result.status
             == "imported",
+        )
+    @staticmethod
+    def _same_import_source(
+        existing: Workout,
+        candidate: Workout,
+    ) -> bool:
+        """
+        Return whether both workouts came from the same
+        explicit import format.
+        """
+
+        existing_source = str(
+            existing.info.source
+            or ""
+        ).strip().casefold()
+
+        candidate_source = str(
+            candidate.info.source
+            or ""
+        ).strip().casefold()
+
+        return bool(
+            existing_source
+            and existing_source
+            == candidate_source
         )
 
     @staticmethod
@@ -301,12 +358,30 @@ class History:
         ):
             return False
 
-        if (
-            abs(
-                existing.duration
-                - candidate.duration
+        duration_difference = abs(
+            existing.duration
+            - candidate.duration
+        )
+
+        same_timed_import = (
+            cls._same_import_source(
+                existing,
+                candidate,
             )
+            and isinstance(
+                existing.date,
+                datetime,
+            )
+            and isinstance(
+                candidate.date,
+                datetime,
+            )
+        )
+
+        if (
+            duration_difference
             > MATCHING_DURATION_TOLERANCE
+            and not same_timed_import
         ):
             return False
 
