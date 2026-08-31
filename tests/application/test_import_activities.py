@@ -542,3 +542,110 @@ def test_identical_activity_is_reported_as_duplicate():
 
     assert reconciler.call is None
     assert repository.save_calls == 0
+
+def test_fit_reimport_persists_corrected_metrics():
+
+    existing = workout(
+        workout_id="existing-fit",
+        day=datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+        ),
+    )
+
+    existing.info.source = "fit"
+    existing.info.distance = 51.26
+    existing.info.duration = timedelta(
+        hours=2,
+        minutes=47,
+    )
+    existing.info.elevation_gain = 980.0
+    existing.feedback.rpe = 7.0
+    existing.feedback.notes = (
+        "Manual athlete note."
+    )
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.history.add(
+        existing
+    )
+
+    imported = workout(
+        workout_id="reimported-fit",
+        day=datetime(
+            2026,
+            8,
+            30,
+            8,
+            0,
+            20,
+        ),
+    )
+
+    imported.info.source = "fit"
+    imported.info.distance = 51.26
+    imported.info.duration = timedelta(
+        hours=2,
+        minutes=29,
+        seconds=15,
+    )
+    imported.info.elevation_gain = 930.0
+
+    repository = (
+        RecordingAthleteRepository(
+            (
+                athlete,
+            )
+        )
+    )
+
+    result = ImportActivities(
+        repository=repository,
+        reconciler=FakeReconciler(),
+    ).execute(
+        athlete.athlete_id,
+        (
+            imported,
+        ),
+    )
+
+    stored = repository.get(
+        athlete.athlete_id
+    )
+
+    assert result.added_count == 0
+    assert result.updated_count == 1
+    assert result.duplicate_count == 0
+    assert len(stored.history) == 1
+
+    stored_workout = (
+        stored.history[0]
+    )
+
+    assert (
+        stored_workout.info.duration
+        == timedelta(
+            hours=2,
+            minutes=29,
+            seconds=15,
+        )
+    )
+    assert (
+        stored_workout.info.elevation_gain
+        == 930.0
+    )
+    assert (
+        stored_workout.feedback.rpe
+        == 7.0
+    )
+    assert (
+        stored_workout.feedback.notes
+        == "Manual athlete note."
+    )
+    assert repository.save_calls == 1
