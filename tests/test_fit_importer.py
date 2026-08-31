@@ -564,3 +564,31 @@ def test_fit_prefers_session_total_ascent():
 
     assert result == 319.0
 
+def test_fit_prefers_active_timer_duration():
+
+    result = FITImporter._duration(
+        [],
+        {
+            "total_timer_time": 540.0,
+            "total_elapsed_time": 600.0,
+        },
+    )
+
+    assert result == timedelta(
+        minutes=9
+    )
+
+
+def test_fit_uses_elapsed_duration_without_timer():
+
+    result = FITImporter._duration(
+        [],
+        {
+            "total_elapsed_time": 600.0,
+        },
+    )
+
+    assert result == timedelta(
+        minutes=10
+    )
+

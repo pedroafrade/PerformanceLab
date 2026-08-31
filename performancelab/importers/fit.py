@@ -689,6 +689,16 @@ class FITImporter(WorkoutImporter):
         session: dict,
     ) -> timedelta | None:
 
+        timer = session.get(
+            "total_timer_time"
+        )
+
+        if timer is not None and timer > 0:
+
+            return timedelta(
+                seconds=float(timer)
+            )
+
         elapsed = session.get(
             "total_elapsed_time"
         )
