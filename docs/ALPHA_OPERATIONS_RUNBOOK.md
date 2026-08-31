@@ -51,6 +51,42 @@ git log -1 --oneline
 
 Nunca utilizar `git add .` para preparar uma publicação.
 
+### 3.1. Referência imutável da imagem
+
+Depois de a imagem candidata ter sido publicada num registo e antes
+do deployment, a referência completa deve ser disponibilizada através
+de:
+
+```text
+DEPLOYMENT_IMAGE_REFERENCE
+```
+
+A referência tem de identificar a imagem através de um digest
+`sha256`. Uma tag mutável, incluindo `latest`, não é suficiente.
+
+A validação utiliza:
+
+```powershell
+python scripts/check_alpha_image_reference.py
+```
+
+O resultado esperado é:
+
+```text
+Alpha deployment image reference is immutable.
+```
+
+Uma falha bloqueia o deployment. O preflight não apresenta a
+referência configurada e não contacta o registo, o Cloud Run ou outro
+serviço externo.
+
+Esta verificação confirma apenas o formato imutável da referência.
+A correspondência entre digest, label OCI e commit continua a ter de
+ser registada e confirmada durante a operação real.
+
+A criação deste procedimento não publica imagens, não ativa a Google
+Cloud, não cria recursos e não inicia custos.
+
 ## 4. Segredos do ambiente alpha
 
 Os valores reais são configurados apenas no serviço de alojamento.

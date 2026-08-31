@@ -282,3 +282,26 @@ def test_runbook_references_deployment_record_template():
         in text
     )
 
+def test_runbook_requires_image_reference_preflight():
+
+    text = runbook_text()
+
+    required_content = (
+        "DEPLOYMENT_IMAGE_REFERENCE",
+        "check_alpha_image_reference.py",
+        "Alpha deployment image reference "
+        "is immutable.",
+        "tag mutável",
+        "Uma falha bloqueia o deployment",
+        "não contacta o registo",
+    )
+
+    for content in required_content:
+
+        assert content in text
+
+    assert (
+        "não inicia custos"
+        in text
+    )
+
