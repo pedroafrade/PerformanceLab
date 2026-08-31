@@ -305,3 +305,41 @@ def test_runbook_requires_image_reference_preflight():
         in text
     )
 
+def test_runbook_defines_device_ui_validation():
+
+    text = runbook_text()
+
+    environments = (
+        "navegador desktop suportado",
+        "dispositivo Android",
+        "dispositivo iOS",
+    )
+
+    for environment in environments:
+
+        assert environment in text
+
+    required_checks = (
+        "login e logout",
+        "conta sem convite",
+        "contacto de suporte",
+        "ausência de deslocamento horizontal",
+        "importação de um FIT descartável",
+        "edição e eliminação",
+        "dados de outra conta interna",
+    )
+
+    for check in required_checks:
+
+        assert check in text
+
+    assert (
+        "bloqueia os convites"
+        in text
+    )
+    assert (
+        "Não devem ser guardadas capturas "
+        "com emails"
+        in text
+    )
+

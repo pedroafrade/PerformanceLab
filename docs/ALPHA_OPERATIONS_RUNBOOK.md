@@ -256,6 +256,42 @@ mesma imagem testada. No deployment real será ainda necessário:
 A CI atual não publica imagens, não contacta a Google Cloud, não cria
 recursos e não inicia custos.
 
+### 7.2. Validação essencial da interface
+
+Antes do primeiro convite, a mesma revisão candidata deve ser testada
+nos seguintes ambientes:
+
+- navegador desktop suportado;
+- navegador Chrome num dispositivo Android;
+- navegador Safari num dispositivo iOS.
+
+Em cada ambiente deve ser confirmado:
+
+1. carregamento inicial sem erro visível;
+2. login e logout com uma conta interna;
+3. recusa de uma conta sem convite e apresentação do contacto de
+   suporte;
+4. navegação entre Dashboard, Today, Training, Activities, Development,
+   Calendar e Settings;
+5. leitura das tabelas e cartões sem conteúdo cortado;
+6. ausência de deslocamento horizontal global inesperado;
+7. seleção e consulta de uma atividade;
+8. importação de um FIT descartável;
+9. edição e eliminação da atividade descartável;
+10. exportação com dados descartáveis;
+11. apresentação clara de erros e avisos;
+12. impossibilidade de visualizar dados de outra conta interna.
+
+Os três testes devem utilizar a mesma revisão do Cloud Run e ser
+registados no modelo de deployment como `passou` ou `falhou`.
+
+Uma falha funcional, de isolamento ou de utilização em qualquer destes
+ambientes bloqueia os convites. Não devem ser guardadas capturas com
+emails, nomes, percursos ou outros dados pessoais.
+
+Esta preparação não executa os testes externos, não ativa serviços e
+não inicia custos.
+
 ## 8. Rollback da aplicação
 
 Rollback significa voltar à última versão confirmada quando uma nova
