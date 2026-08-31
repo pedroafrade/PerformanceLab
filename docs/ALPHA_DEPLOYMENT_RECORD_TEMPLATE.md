@@ -43,12 +43,15 @@ privados ou outros valores de ligação.
 
 ## 4. Preflights
 
+- Referência imutável da imagem: passou / falhou
 - Configuração runtime: passou / falhou
 - Configuração OIDC: passou / falhou
 - Ligação PostgreSQL: passou / falhou
 - Revisões das migrações: passou / falhou
 
-Qualquer falha bloqueia o arranque da aplicação.
+Uma falha da referência imutável bloqueia o deployment.
+Qualquer falha dos restantes preflights bloqueia o arranque da
+aplicação.
 
 ## 5. Verificação interna
 

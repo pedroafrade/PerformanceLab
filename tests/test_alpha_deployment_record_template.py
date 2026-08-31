@@ -93,6 +93,7 @@ def test_template_requires_all_preflights():
     text = template_text()
 
     preflights = (
+        "Referência imutável da imagem",
         "Configuração runtime",
         "Configuração OIDC",
         "Ligação PostgreSQL",
@@ -104,7 +105,13 @@ def test_template_requires_all_preflights():
         assert preflight in text
 
     assert (
-        "Qualquer falha bloqueia o arranque"
+        "Uma falha da referência imutável "
+        "bloqueia o deployment"
+        in text
+    )
+    assert (
+        "restantes preflights bloqueia o "
+        "arranque da aplicação"
         in text
     )
 
