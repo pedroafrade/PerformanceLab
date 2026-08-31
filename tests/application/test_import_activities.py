@@ -649,3 +649,79 @@ def test_fit_reimport_persists_corrected_metrics():
         == "Manual athlete note."
     )
     assert repository.save_calls == 1
+
+def test_fit_reimport_can_clear_elevation_to_zero():
+
+    existing = workout(
+        workout_id="existing-swim",
+        day=datetime(
+            2026,
+            8,
+            20,
+            12,
+            0,
+        ),
+    )
+
+    existing.info.sport = "Swimming"
+    existing.info.source = "fit"
+    existing.info.distance = 0.9
+    existing.info.elevation_gain = 86.0
+
+    athlete = Athlete(
+        name="Pedro"
+    )
+
+    athlete.history.add(
+        existing
+    )
+
+    imported = workout(
+        workout_id="reimported-swim",
+        day=datetime(
+            2026,
+            8,
+            20,
+            12,
+            0,
+        ),
+    )
+
+    imported.info.sport = "Swimming"
+    imported.info.source = "fit"
+    imported.info.distance = 0.9
+    imported.info.elevation_gain = 0.0
+
+    repository = (
+        RecordingAthleteRepository(
+            (
+                athlete,
+            )
+        )
+    )
+
+    result = ImportActivities(
+        repository=repository,
+        reconciler=FakeReconciler(),
+    ).execute(
+        athlete.athlete_id,
+        (
+            imported,
+        ),
+    )
+
+    stored = repository.get(
+        athlete.athlete_id
+    )
+
+    assert result.added_count == 0
+    assert result.updated_count == 1
+    assert result.duplicate_count == 0
+    assert len(stored.history) == 1
+    assert (
+        stored.history[0]
+        .info
+        .elevation_gain
+        == 0.0
+    )
+    assert repository.save_calls == 1
