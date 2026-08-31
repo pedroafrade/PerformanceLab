@@ -728,10 +728,73 @@ class FITImporter(WorkoutImporter):
     # ======================================================
 
     @staticmethod
+    def _smooth_elevations(
+        elevations: list[float],
+        *,
+        window_size: int = 5,
+    ) -> list[float]:
+        """
+        Reduce sample-level altitude noise.
+
+        FIT files without a session total_ascent value
+        require elevation gain to be derived from record
+        samples. A short rolling mean prevents small
+        alternating changes from being counted as repeated
+        ascent.
+        """
+
+        if not elevations:
+            return []
+
+        if len(elevations) < window_size:
+            return list(
+                elevations
+            )
+
+        return [
+            (
+                sum(
+                    elevations[
+                        max(
+                            0,
+                            index
+                            - window_size
+                            + 1,
+                        ):
+                        index + 1
+                    ]
+                )
+                / len(
+                    elevations[
+                        max(
+                            0,
+                            index
+                            - window_size
+                            + 1,
+                        ):
+                        index + 1
+                    ]
+                )
+            )
+            for index
+            in range(
+                len(elevations)
+            )
+        ]
+
+    @classmethod
     def _elevation_gain(
+        cls,
         records: list[dict],
         session: dict,
     ) -> float | None:
+        """
+        Return the best available FIT ascent value.
+
+        A session total_ascent value remains authoritative.
+        Otherwise elevation records are smoothed before
+        positive differences are accumulated.
+        """
 
         total_ascent = session.get(
             "total_ascent"
@@ -762,20 +825,23 @@ class FITImporter(WorkoutImporter):
 
             return None
 
-        gain = 0.0
+        smoothed_elevations = (
+            cls._smooth_elevations(
+                elevations
+            )
+        )
 
-        for previous, current in zip(
-            elevations,
-            elevations[1:],
-        ):
-
-            difference = current - previous
-
-            if difference > 0:
-
-                gain += difference
-
-        return gain
+        return sum(
+            max(
+                0.0,
+                current - previous,
+            )
+            for previous, current
+            in zip(
+                smoothed_elevations,
+                smoothed_elevations[1:],
+            )
+        )
 
     # ======================================================
     # Coordinates

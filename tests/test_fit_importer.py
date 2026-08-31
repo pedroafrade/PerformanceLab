@@ -503,3 +503,64 @@ def test_fit_normalizes_sub_sport_name(
         workout.info.sub_sport
         == "indoor_running"
     )
+
+def test_fit_filters_record_elevation_noise():
+
+    elevations = (
+        100.0,
+        102.0,
+        100.0,
+        102.0,
+        100.0,
+        102.0,
+        100.0,
+    )
+
+    records = [
+        {
+            "enhanced_altitude": value,
+        }
+        for value in elevations
+    ]
+
+    result = FITImporter._elevation_gain(
+        records,
+        {},
+    )
+
+    raw_gain = sum(
+        max(
+            0.0,
+            current - previous,
+        )
+        for previous, current
+        in zip(
+            elevations,
+            elevations[1:],
+        )
+    )
+
+    assert result == pytest.approx(
+        1.7333333333
+    )
+    assert result < raw_gain
+
+
+def test_fit_prefers_session_total_ascent():
+
+    result = FITImporter._elevation_gain(
+        [
+            {
+                "enhanced_altitude": 100.0,
+            },
+            {
+                "enhanced_altitude": 900.0,
+            },
+        ],
+        {
+            "total_ascent": 319.0,
+        },
+    )
+
+    assert result == 319.0
+
