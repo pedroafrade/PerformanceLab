@@ -95,12 +95,18 @@ class FITImporter(WorkoutImporter):
             records,
             session,
         )
-        workout.info.elevation_gain = (
-            self._elevation_gain(
-                records,
-                session,
+        if workout.info.sport == "Swimming":
+
+            workout.info.elevation_gain = 0.0
+
+        else:
+
+            workout.info.elevation_gain = (
+                self._elevation_gain(
+                    records,
+                    session,
+                )
             )
-        )
 
         route = self._route(records)
 

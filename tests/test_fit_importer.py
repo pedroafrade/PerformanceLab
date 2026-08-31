@@ -592,3 +592,32 @@ def test_fit_uses_elapsed_duration_without_timer():
         minutes=10
     )
 
+def test_fit_ignores_swimming_elevation():
+
+    importer = FITImporter()
+
+    messages = sample_messages()
+
+    messages["sessions"][0][
+        "sport"
+    ] = "swimming"
+
+    messages["sessions"][0][
+        "total_ascent"
+    ] = 86.0
+
+    importer._read_source = (
+        lambda source: b"fake-fit"
+    )
+
+    importer._read_messages = (
+        lambda content: messages
+    )
+
+    workout = importer.read(
+        b"ignored"
+    )
+
+    assert workout.sport == "Swimming"
+    assert workout.elevation_gain == 0.0
+
