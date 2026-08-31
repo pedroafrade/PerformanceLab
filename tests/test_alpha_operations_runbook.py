@@ -264,3 +264,21 @@ def test_runbook_preserves_image_publication_boundary():
     assert "não cria recursos" in text
     assert "não inicia custos" in text
 
+def test_runbook_references_deployment_record_template():
+
+    text = runbook_text()
+
+    assert (
+        "docs/ALPHA_DEPLOYMENT_RECORD_TEMPLATE.md"
+        in text
+    )
+    assert (
+        "O modelo versionado permanece vazio"
+        in text
+    )
+    assert (
+        "não deve ser substituído por um "
+        "relatório preenchido"
+        in text
+    )
+
