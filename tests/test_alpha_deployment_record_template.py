@@ -163,3 +163,33 @@ def test_template_records_internal_validation():
         in text
     )
 
+def test_template_records_rollback_and_outcome():
+
+    text = template_text()
+
+    rollback_fields = (
+        "Commit anterior confirmado",
+        "Digest anterior confirmado",
+        "Revisão Cloud Run anterior",
+        "Alteração incompatível da base de dados",
+        "Procedimento de recuperação escolhido",
+        "Resultado do rollback",
+    )
+
+    for field in rollback_fields:
+
+        assert field in text
+
+    outcome_fields = (
+        "Aplicação mantida suspensa",
+        "Convites mantidos bloqueados",
+        "Operação concluída",
+        "Incidente aberto",
+        "Referência não sensível do incidente",
+        "Observações sem dados pessoais",
+    )
+
+    for field in outcome_fields:
+
+        assert field in text
+
