@@ -137,3 +137,29 @@ def test_template_preserves_activation_boundary():
     assert "não publica imagens" in text
     assert "não executa migrações" in text
     assert "não inicia custos" in text
+
+def test_template_records_internal_validation():
+
+    text = template_text()
+
+    required_checks = (
+        "Endpoint de saúde",
+        "Login da primeira conta interna",
+        "Login da segunda conta interna",
+        "Isolamento entre contas",
+        "Importação com dados descartáveis",
+        "Exportação com dados descartáveis",
+        "Eliminação com dados descartáveis",
+        "Alertas operacionais",
+    )
+
+    for check in required_checks:
+
+        assert check in text
+
+    assert (
+        "Não incluir emails, nomes, "
+        "identificadores OIDC ou dados dos atletas"
+        in text
+    )
+
