@@ -28,6 +28,9 @@ def show_performance_chart_card(
         st.plotly_chart(
             figure,
             width="stretch",
+            config={
+                "displayModeBar": False,
+            },
         )
 
         chart_data = pd.DataFrame(

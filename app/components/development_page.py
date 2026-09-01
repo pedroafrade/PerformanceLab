@@ -15,6 +15,41 @@ from performancelab.presentation import (
 )
 
 
+def _mobile_chart_cutoff(development):
+    """Return an inclusive 60-calendar-day display window."""
+    if not development.dates:
+        return None
+    return max(development.dates) - timedelta(days=59)
+
+
+def _mobile_chart_predicate(development, mobile):
+    """Use a temporal predicate, not a string comparison on parsed dates."""
+    cutoff = _mobile_chart_cutoff(development) if mobile else None
+    if cutoff is None:
+        return "true"
+    return alt.FieldGTEPredicate(
+        field="Date",
+        gte=alt.DateTime(year=cutoff.year, month=cutoff.month, date=cutoff.day),
+    )
+
+
+def _show_responsive_development_chart(development, builder, *, key):
+    """Keep the desktop chart and show a shorter view below 700px."""
+    with st.container(key=f"{key}_desktop"):
+        st.altair_chart(
+            builder(development),
+            use_container_width=True,
+            key=f"{key}_desktop_chart",
+        )
+    with st.container(key=f"{key}_mobile"):
+        st.caption("Last 60 days of available history")
+        st.altair_chart(
+            builder(development, mobile=True),
+            use_container_width=True,
+            key=f"{key}_mobile_chart",
+        )
+
+
 def _development_chart_rows(
     development,
 ) -> list[dict]:
@@ -66,6 +101,8 @@ def _daily_load_chart_rows(
 
 def _daily_training_load_chart(
     development,
+    *,
+    mobile: bool = False,
 ):
     """
     Builds daily training load with a rolling
@@ -118,11 +155,14 @@ def _daily_training_load_chart(
                     format="%d %b",
                     labelAngle=0,
                     grid=False,
-                    tickCount=10,
+                    tickCount=4 if mobile else 10,
                 ),
             )
         )
     )
+
+    if mobile:
+        base = base.transform_filter(_mobile_chart_predicate(development, mobile))
 
     bars = (
         base
@@ -190,14 +230,14 @@ def _daily_training_load_chart(
             rolling_line,
         )
         .properties(
-            height=175,
+            height=240 if mobile else 175,
         )
         .configure_view(
             strokeWidth=0,
         )
         .configure_axis(
-            labelFontSize=10,
-            titleFontSize=11,
+            labelFontSize=11 if mobile else 10,
+            titleFontSize=12 if mobile else 11,
             gridColor=(
                 "rgba(128,128,128,0.14)"
             ),
@@ -210,6 +250,8 @@ def _daily_training_load_chart(
 
 def _development_load_form_chart(
     development,
+    *,
+    mobile: bool = False,
 ):
     """
     Builds the main ATL, CTL and TSB development chart.
@@ -246,11 +288,14 @@ def _development_load_form_chart(
                     format="%d %b",
                     labelAngle=0,
                     grid=False,
-                    tickCount=10,
+                    tickCount=4 if mobile else 10,
                 ),
             )
         )
     )
+
+    if mobile:
+        base = base.transform_filter(_mobile_chart_predicate(development, mobile))
 
     load_lines = (
         base
@@ -389,14 +434,14 @@ def _development_load_form_chart(
             y="independent"
         )
         .properties(
-            height=225,
+            height=280 if mobile else 225,
         )
         .configure_view(
             strokeWidth=0,
         )
         .configure_axis(
-            labelFontSize=10,
-            titleFontSize=11,
+            labelFontSize=11 if mobile else 10,
+            titleFontSize=12 if mobile else 11,
             gridColor=(
                 "rgba(128,128,128,0.14)"
             ),
@@ -406,7 +451,7 @@ def _development_load_form_chart(
             ),
         )
         .configure_legend(
-            labelFontSize=10,
+            labelFontSize=11 if mobile else 10,
             symbolStrokeWidth=3,
         )
     )
@@ -1668,6 +1713,29 @@ def show_development_page(
     training-load development.
     """
 
+
+    st.markdown(
+        """
+        <style>
+        .st-key-development_load_form_mobile,
+        .st-key-development_daily_load_mobile {
+            display: none;
+        }
+        @media (max-width: 700px) {
+            .st-key-development_load_form_desktop,
+            .st-key-development_daily_load_desktop {
+                display: none;
+            }
+            .st-key-development_load_form_mobile,
+            .st-key-development_daily_load_mobile {
+                display: block;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     development = (
         DevelopmentPresenter(
             athlete
@@ -1824,11 +1892,10 @@ def show_development_page(
 
         if performance_rows:
 
-            st.altair_chart(
-                _development_load_form_chart(
-                    development
-                ),
-                use_container_width=True,
+            _show_responsive_development_chart(
+                development,
+                _development_load_form_chart,
+                key="development_load_form",
             )
 
         else:
@@ -1862,11 +1929,10 @@ def show_development_page(
 
         if load_rows:
 
-            st.altair_chart(
-                _daily_training_load_chart(
-                    development
-                ),
-                use_container_width=True,
+            _show_responsive_development_chart(
+                development,
+                _daily_training_load_chart,
+                key="development_daily_load",
             )
 
         else:

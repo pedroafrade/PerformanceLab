@@ -1334,6 +1334,8 @@ def _activity_coach_display_text(
 
 def _show_activity_coach_narrative(
     narrative,
+    *,
+    stale: bool = False,
 ) -> None:
     """
     Presents the generated interpretation compactly.
@@ -1397,6 +1399,13 @@ def _show_activity_coach_narrative(
             f"{narrative.model}"
         )
     )
+
+    if stale:
+        st.caption(
+            "This saved interpretation was generated from an earlier "
+            "version of the activity context. Regenerate it to include "
+            "the current information."
+        )
 
 def _training_coach_error_message(
     error_code: str | None,
@@ -1664,90 +1673,6 @@ def show_activities_page(
         ):
 
             # ==========================================
-            # Sticky filters
-            # ==========================================
-
-            with st.container(
-                key="activities_browser_filters"
-            ):
-
-                (
-                    search_column,
-                    sport_column,
-                    result_column,
-                    period_column,
-                ) = st.columns(
-                    [
-                        2.0,
-                        0.85,
-                        0.9,
-                        0.9,
-                    ],
-                    gap="small",
-                )
-
-                with search_column:
-
-                    st.text_input(
-                        "Search",
-                        placeholder=(
-                            "Search activities"
-                        ),
-                        label_visibility=(
-                            "collapsed"
-                        ),
-                        key=(
-                            "activities_search"
-                        ),
-                    )
-
-                with sport_column:
-
-                    st.selectbox(
-                        "Sport",
-                        options=(
-                            "All sports",
-                            *available_sports,
-                        ),
-                        label_visibility=(
-                            "collapsed"
-                        ),
-                        key=(
-                            "activities_sport"
-                        ),
-                    )
-
-                with result_column:
-
-                    st.selectbox(
-                        "Result",
-                        options=(
-                            _OUTCOME_OPTIONS
-                        ),
-                        label_visibility=(
-                            "collapsed"
-                        ),
-                        key=(
-                            "activities_outcome"
-                        ),
-                    )
-
-                with period_column:
-
-                    st.selectbox(
-                        "Period",
-                        options=(
-                            _PERIOD_OPTIONS
-                        ),
-                        label_visibility=(
-                            "collapsed"
-                        ),
-                        key=(
-                            "activities_period"
-                        ),
-                    )
-
-            # ==========================================
             # Activity rows
             # ==========================================
 
@@ -1838,6 +1763,91 @@ def show_activities_page(
                     ),
                 )
 
+        # ==========================================
+        # Filters outside the scrolling list
+        # ==========================================
+
+        with st.container(
+            key="activities_browser_filters"
+        ):
+
+            (
+                search_column,
+                sport_column,
+                result_column,
+                period_column,
+            ) = st.columns(
+                [
+                    2.0,
+                    0.85,
+                    0.9,
+                    0.9,
+                ],
+                gap="small",
+            )
+
+            with search_column:
+
+                st.text_input(
+                    "Search",
+                    placeholder=(
+                        "Search activities"
+                    ),
+                    label_visibility=(
+                        "collapsed"
+                    ),
+                    key=(
+                        "activities_search"
+                    ),
+                )
+
+            with sport_column:
+
+                st.selectbox(
+                    "Sport",
+                    options=(
+                        "All sports",
+                        *available_sports,
+                    ),
+                    label_visibility=(
+                        "collapsed"
+                    ),
+                    key=(
+                        "activities_sport"
+                    ),
+                )
+
+            with result_column:
+
+                st.selectbox(
+                    "Result",
+                    options=(
+                        _OUTCOME_OPTIONS
+                    ),
+                    label_visibility=(
+                        "collapsed"
+                    ),
+                    key=(
+                        "activities_outcome"
+                    ),
+                )
+
+            with period_column:
+
+                st.selectbox(
+                    "Period",
+                    options=(
+                        _PERIOD_OPTIONS
+                    ),
+                    label_visibility=(
+                        "collapsed"
+                    ),
+                    key=(
+                        "activities_period"
+                    ),
+                )
+
+
     # ==================================================
     # RIGHT — Training coach
     # ==================================================
@@ -1903,23 +1913,6 @@ def show_activities_page(
                     ),
                     athlete=athlete,
                 )
-                if (
-                    stored_interpretation
-                    is not None
-                    and not (
-                        stored_matches_current_context
-                    )
-                ):
-
-                    st.caption(
-                        (
-                            "This saved interpretation was "
-                            "generated from an earlier version "
-                            "of the activity context. Regenerate "
-                            "it to include the current information."
-                        )
-                    )
-
                 if (
                     stored_interpretation
                     is None
@@ -2005,7 +1998,8 @@ def show_activities_page(
 
                         _show_activity_coach_narrative(
                             stored_interpretation
-                            .narrative
+                            .narrative,
+                            stale=not stored_matches_current_context,
                         )
 
                     else:
@@ -2065,7 +2059,8 @@ def show_activities_page(
 
                             _show_activity_coach_narrative(
                                 stored_interpretation
-                                .narrative
+                                .narrative,
+                                stale=not stored_matches_current_context,
                             )
 
                         elif (
@@ -2082,7 +2077,8 @@ def show_activities_page(
 
                             _show_activity_coach_narrative(
                                 stored_interpretation
-                                .narrative
+                                .narrative,
+                                stale=not stored_matches_current_context,
                             )
 
                         else:
@@ -2095,7 +2091,8 @@ def show_activities_page(
 
                             _show_activity_coach_narrative(
                                 stored_interpretation
-                                .narrative
+                                .narrative,
+                                stale=not stored_matches_current_context,
                             )
 
                 else:

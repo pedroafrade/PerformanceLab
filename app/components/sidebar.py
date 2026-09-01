@@ -70,10 +70,11 @@ def _sidebar_styles(
     st.markdown(
         f"""
         <style>
+
         [data-testid="stAppViewContainer"],
         [data-testid="stSidebar"],
         [data-testid="stSidebarContent"] {{
-            background: var(--background-color);
+            background: inherit;
         }}
 
         [data-testid="stSidebar"] {{
@@ -273,7 +274,6 @@ def _sidebar_styles(
             min-height: 0;
             margin: 0;
             padding: 0;
-            background: var(--background-color);
         }}
 
         .st-key-sidebar_lower {{

@@ -588,12 +588,12 @@ def _calendar_styles() -> None:
         .training-calendar-day-link:hover,
         .training-calendar-day-link:active {
             min-width: 0;
-            color: #000 !important;
+            color: inherit !important;
             text-decoration: none !important;
         }
 
         .training-calendar-day-link * {
-            color: #000 !important;
+            color: inherit !important;
             text-decoration: none !important;
         }
 
@@ -616,7 +616,7 @@ def _calendar_styles() -> None:
         }
 
         .training-calendar-day.outside-month {
-            opacity: 0.38;
+            opacity: 0.7;
         }
 
         .training-calendar-day.selected {
@@ -630,7 +630,7 @@ def _calendar_styles() -> None:
             z-index: 2;
             box-shadow:
                 inset 0 0 0 2px
-                rgba(0, 0, 0, 0.95) !important;
+                currentColor !important;
         }
 
         .calendar-selected-day-stack {
@@ -726,7 +726,8 @@ def _calendar_styles() -> None:
 
         .training-calendar-rest {
             margin-top: 0.42rem;
-            color: rgba(0, 0, 0, 0.3) !important;
+            color: inherit !important;
+            opacity: 0.75;
             font-size: 0.64rem;
             line-height: 1.1;
             text-decoration: none !important;
