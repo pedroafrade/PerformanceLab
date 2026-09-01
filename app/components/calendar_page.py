@@ -905,6 +905,39 @@ def _calendar_styles() -> None:
             font-size: 0.68rem;
         }
 
+        .st-key-calendar-month-navigation .calendar-month-heading {
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+        @media (min-width: 901px) {
+            .st-key-calendar_layout [data-testid="stHorizontalBlock"]:has(.st-key-calendar_grid_area) {
+                align-items: stretch;
+            }
+            .st-key-calendar_layout [data-testid="stHorizontalBlock"]:has(.st-key-calendar_grid_area)
+            > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+                height: 100%;
+            }
+            .st-key-calendar_layout [data-testid="stLayoutWrapper"] {
+                flex-shrink: 0;
+            }
+            .st-key-calendar_layout [data-testid="stLayoutWrapper"]:has(> .st-key-calendar_events_card) {
+                flex: 1 0 auto;
+                display: flex;
+            }
+            .st-key-calendar_events_card { flex: 1; }
+            .st-key-calendar_layout [data-testid="stLayoutWrapper"]:has(> .st-key-calendar_grid_area),
+            .st-key-calendar_grid_area,
+            .st-key-calendar_grid_area [data-testid="stElementContainer"],
+            .st-key-calendar_grid_area [data-testid="stHtml"],
+            .st-key-calendar_grid_area .training-calendar-scroll {
+                display: flex;
+                flex: 1 0 auto;
+                flex-direction: column;
+            }
+            .st-key-calendar_grid_area .training-calendar-grid {
+                flex: 1;
+            }
+        }
         @media (max-width: 900px) {
             .training-calendar-grid {
                 min-width: 760px;
@@ -954,7 +987,7 @@ def _show_month_navigation(
             heading_column,
             navigation_column,
         ) = st.columns(
-            [8, 1],
+            [2, 1],
             gap="small",
             vertical_alignment="center",
         )
@@ -1009,7 +1042,7 @@ def _show_selected_day(
     """
 
     with st.container(
-        border=True
+        border=True, key="calendar_selected_card"
     ):
         st.markdown(
             (
@@ -1038,7 +1071,7 @@ def _show_upcoming_events(
     """
 
     with st.container(
-        border=True
+        border=True, key="calendar_events_card"
     ):
         (
             title_column,
@@ -1134,54 +1167,28 @@ def show_calendar_page(
         ),
     )
 
-    (
-        calendar_column,
-        sidebar_column,
-    ) = st.columns(
-        [3.4, 1],
-        gap="medium",
-        vertical_alignment="top",
+    with st.container(key="calendar_layout"):
+        calendar_column, sidebar_column = st.columns(
+            [3.4, 1], gap="medium", vertical_alignment="top",
+        )
+        with calendar_column:
+            with st.container(key="calendar_grid_area"):
+                st.html(_calendar_html(calendar, selected_day=default_selected_day))
+
+        with sidebar_column:
+            _show_month_navigation(
+                anchor=anchor, previous_month=previous_month, next_month=next_month,
+            )
+            _show_selected_day(calendar, default_day=default_selected_day)
+            _show_upcoming_events(athlete=athlete, events=calendar.upcoming_events)
+
+    st.markdown(
+        """
+        <div class="training-calendar-legend">
+            <span class="planned">Planned workout</span>
+            <span class="completed">Completed activity</span>
+            <span class="event">Event</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-
-    with calendar_column:
-        _show_month_navigation(
-            anchor=anchor,
-            previous_month=previous_month,
-            next_month=next_month,
-        )
-
-        st.markdown(
-            _calendar_html(
-                calendar,
-                selected_day=(
-                    default_selected_day
-                ),
-            ),
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            """
-            <div class="training-calendar-legend">
-                <span class="planned">Planned workout</span>
-                <span class="completed">Completed activity</span>
-                <span class="event">Event</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with sidebar_column:
-        _show_selected_day(
-            calendar,
-            default_day=(
-                default_selected_day
-            ),
-        )
-
-        _show_upcoming_events(
-            athlete=athlete,
-            events=(
-                calendar.upcoming_events
-            ),
-        )

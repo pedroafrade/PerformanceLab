@@ -297,8 +297,73 @@ def _display_value(
 # View mode
 # ======================================================
 
+def _compact_profile_html(athlete) -> str:
+    """Render the read-only summary as naturally sized, escaped rows."""
+    from html import escape
+
+    def section(title, rows, note=""):
+        cells = "".join(
+            '<div class="athlete-profile-row">'
+            f'<dt>{escape(str(label))}</dt><dd>{escape(str(value))}</dd></div>'
+            for label, value in rows
+        )
+        return (
+            '<section class="athlete-profile-section">'
+            f'<h4>{escape(title)}</h4><dl>{cells}</dl>'
+            f'<div class="athlete-profile-note">{escape(note)}</div></section>'
+        )
+
+    identity = []
+    if athlete.birth_date is not None:
+        today = date.today()
+        age = today.year - athlete.birth_date.year - (
+            (today.month, today.day) < (athlete.birth_date.month, athlete.birth_date.day)
+        )
+        identity.append(("Age", f"{age} years"))
+    identity.extend(
+        (label, _display_value(getattr(athlete, field), unit))
+        for label, field, unit in (
+            ("Gender", "gender", ""), ("Height", "height", " m"),
+            ("Weight", "weight", " kg"), ("FTP", "ftp", " W"),
+            ("Maximum heart rate", "max_hr", " bpm"),
+            ("Resting heart rate", "resting_hr", " bpm"),
+            ("Threshold heart rate", "threshold_hr", " bpm"),
+        )
+    )
+    profile = athlete.analytics.heart_rate_profile
+    zones = [] if profile is None else [
+        (zone.name, f"{zone.lower_bpm}–{zone.upper_bpm} bpm") for zone in profile.zones
+    ]
+    zone_note = (
+        "Set maximum and resting heart rate to calculate training zones."
+        if profile is None else "Zone source: " + (
+            "manually configured" if profile.uses_manual_zones
+            else "automatically calculated using Karvonen"
+        )
+    )
+    nutrition = athlete.nutrition_profile
+    nutrition_rows = [
+        ("Carbohydrate during long exercise", f"{nutrition.carbohydrate_per_hour} g/h"),
+        ("Fluid", f"{nutrition.fluid_lower_ml_per_hour}–{nutrition.fluid_upper_ml_per_hour} ml/h"),
+        ("Sodium", f"{nutrition.sodium_lower_mg_per_hour}–{nutrition.sodium_upper_mg_per_hour} mg/h"),
+        ("Carbohydrate per gel", f"{nutrition.gel_carbohydrate_grams} g"),
+        ("Pre-race carbohydrate", f"{nutrition.pre_race_carbohydrate_lower}–{nutrition.pre_race_carbohydrate_upper} g"),
+    ]
+    return (
+        '<div class="athlete-profile-grid">'
+        + section("Personal and physiological data", identity)
+        + section("Heart-rate training zones", zones, zone_note)
+        + section("Endurance nutrition", nutrition_rows, "Nutrition source: " + (
+            "athlete tested" if nutrition.source == "athlete-tested" else "default reference"
+        ))
+        + "</div>"
+    )
+
+
 def _show_athlete_summary(
     athlete,
+    *,
+    compact: bool = False,
 ) -> None:
     """
     Displays the current athlete information.
@@ -308,152 +373,166 @@ def _show_athlete_summary(
         athlete.name or "Unnamed athlete"
     )
 
-    if athlete.birth_date is not None:
+    if compact:
+        st.html(_compact_profile_html(athlete))
+        if st.button("Edit athlete", key="edit_athlete_button", use_container_width=True):
+            _start_editing(athlete)
+            st.rerun()
+        return
+    else:
+        identity_column = st.container()
+        zones_column = st.container()
+        nutrition_column = st.container()
 
-        today = date.today()
+    with identity_column:
+        if athlete.birth_date is not None:
 
-        age = (
-            today.year
-            - athlete.birth_date.year
-            - (
-                (
-                    today.month,
-                    today.day,
-                )
-                < (
-                    athlete.birth_date.month,
-                    athlete.birth_date.day,
+            today = date.today()
+
+            age = (
+                today.year
+                - athlete.birth_date.year
+                - (
+                    (
+                        today.month,
+                        today.day,
+                    )
+                    < (
+                        athlete.birth_date.month,
+                        athlete.birth_date.day,
+                    )
                 )
             )
+
+            st.caption(
+                f"{age} years old"
+            )
+
+        st.write(
+            "**Gender:** "
+            f"{_display_value(athlete.gender)}"
+        )
+
+        st.write(
+            "**Height:** "
+            f"{_display_value(athlete.height, ' m')}"
+        )
+
+        st.write(
+            "**Weight:** "
+            f"{_display_value(athlete.weight, ' kg')}"
+        )
+
+        st.write(
+            "**FTP:** "
+            f"{_display_value(athlete.ftp, ' W')}"
+        )
+
+        st.write(
+            "**Maximum heart rate:** "
+            f"{_display_value(athlete.max_hr, ' bpm')}"
+        )
+
+        st.write(
+            "**Resting heart rate:** "
+            f"{_display_value(athlete.resting_hr, ' bpm')}"
+        )
+
+        st.write(
+            "**Threshold heart rate:** "
+            f"{_display_value(athlete.threshold_hr, ' bpm')}"
+        )
+
+    with zones_column:
+        heart_rate_profile = (
+            athlete.analytics
+            .heart_rate_profile
         )
 
         st.caption(
-            f"{age} years old"
+            "Heart-rate training zones:"
         )
 
-    st.write(
-        "**Gender:** "
-        f"{_display_value(athlete.gender)}"
-    )
+        if heart_rate_profile is None:
 
-    st.write(
-        "**Height:** "
-        f"{_display_value(athlete.height, ' m')}"
-    )
+            st.caption(
+                "Set maximum and resting heart rate "
+                "to calculate training zones."
+            )
 
-    st.write(
-        "**Weight:** "
-        f"{_display_value(athlete.weight, ' kg')}"
-    )
+        else:
 
-    st.write(
-        "**FTP:** "
-        f"{_display_value(athlete.ftp, ' W')}"
-    )
+            source = (
+                "manually configured"
+                if (
+                    heart_rate_profile
+                    .uses_manual_zones
+                )
+                else (
+                    "automatically calculated "
+                    "using Karvonen"
+                )
+            )
 
-    st.write(
-        "**Maximum heart rate:** "
-        f"{_display_value(athlete.max_hr, ' bpm')}"
-    )
+            for zone in heart_rate_profile.zones:
 
-    st.write(
-        "**Resting heart rate:** "
-        f"{_display_value(athlete.resting_hr, ' bpm')}"
-    )
+                st.write(
+                    f"**{zone.name}:** "
+                    f"{zone.lower_bpm}–"
+                    f"{zone.upper_bpm} bpm"
+                )
 
-    st.write(
-        "**Threshold heart rate:** "
-        f"{_display_value(athlete.threshold_hr, ' bpm')}"
-    )
+            st.caption(
+                f"Zone source: {source}"
+            )
 
-    heart_rate_profile = (
-        athlete.analytics
-        .heart_rate_profile
-    )
-
-    st.caption(
-        "Heart-rate training zones:"
-    )
-
-    if heart_rate_profile is None:
+    with nutrition_column:
+        nutrition_profile = (
+            athlete.nutrition_profile
+        )
 
         st.caption(
-            "Set maximum and resting heart rate "
-            "to calculate training zones."
+            "Endurance nutrition profile:"
         )
 
-    else:
+        st.write(
+            "**Carbohydrate during long exercise:** "
+            f"{nutrition_profile.carbohydrate_per_hour} g/h"
+        )
+
+        st.write(
+            "**Fluid:** "
+            f"{nutrition_profile.fluid_lower_ml_per_hour}–"
+            f"{nutrition_profile.fluid_upper_ml_per_hour} ml/h"
+        )
+
+        st.write(
+            "**Sodium:** "
+            f"{nutrition_profile.sodium_lower_mg_per_hour}–"
+            f"{nutrition_profile.sodium_upper_mg_per_hour} mg/h"
+        )
+
+        st.write(
+            "**Carbohydrate per gel:** "
+            f"{nutrition_profile.gel_carbohydrate_grams} g"
+        )
+
+        st.write(
+            "**Pre-race carbohydrate:** "
+            f"{nutrition_profile.pre_race_carbohydrate_lower}–"
+            f"{nutrition_profile.pre_race_carbohydrate_upper} g"
+        )
 
         source = (
-            "manually configured"
-            if (
-                heart_rate_profile
-                .uses_manual_zones
-            )
-            else (
-                "automatically calculated "
-                "using Karvonen"
-            )
+            "athlete tested"
+            if nutrition_profile.source
+            == "athlete-tested"
+            else "default reference"
         )
-
-        for zone in heart_rate_profile.zones:
-
-            st.write(
-                f"**{zone.name}:** "
-                f"{zone.lower_bpm}–"
-                f"{zone.upper_bpm} bpm"
-            )
 
         st.caption(
-            f"Zone source: {source}"
+            f"Nutrition source: {source}"
         )
-
-    nutrition_profile = (
-        athlete.nutrition_profile
-    )
-
-    st.caption(
-        "Endurance nutrition profile:"
-    )
-
-    st.write(
-        "**Carbohydrate during long exercise:** "
-        f"{nutrition_profile.carbohydrate_per_hour} g/h"
-    )
-
-    st.write(
-        "**Fluid:** "
-        f"{nutrition_profile.fluid_lower_ml_per_hour}–"
-        f"{nutrition_profile.fluid_upper_ml_per_hour} ml/h"
-    )
-
-    st.write(
-        "**Sodium:** "
-        f"{nutrition_profile.sodium_lower_mg_per_hour}–"
-        f"{nutrition_profile.sodium_upper_mg_per_hour} mg/h"
-    )
-
-    st.write(
-        "**Carbohydrate per gel:** "
-        f"{nutrition_profile.gel_carbohydrate_grams} g"
-    )
-
-    st.write(
-        "**Pre-race carbohydrate:** "
-        f"{nutrition_profile.pre_race_carbohydrate_lower}–"
-        f"{nutrition_profile.pre_race_carbohydrate_upper} g"
-    )
-
-    source = (
-        "athlete tested"
-        if nutrition_profile.source
-        == "athlete-tested"
-        else "default reference"
-    )
-
-    st.caption(
-        f"Nutrition source: {source}"
-    )
 
     if st.button(
         "Edit athlete",
@@ -1123,6 +1202,7 @@ def show_athlete_panel(
     athlete,
     *,
     show_heading: bool = True,
+    compact_summary: bool = False,
 ):
     """
     Displays athlete information and allows it to be edited.
@@ -1159,7 +1239,8 @@ def show_athlete_panel(
         )
 
     _show_athlete_summary(
-        athlete
+        athlete,
+        compact=compact_summary,
     )
 
     return athlete

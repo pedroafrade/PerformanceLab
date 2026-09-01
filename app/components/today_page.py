@@ -409,7 +409,8 @@ def _show_today_session(
     )
 
     with st.container(
-        border=True
+        border=True,
+        key="today_session_card",
     ):
         st.markdown(
             (
@@ -582,32 +583,16 @@ def _guidance_item_html(
     index: int,
     text: str,
 ) -> str:
-    """
-    Builds one monochrome guidance row.
-    """
-
+    """Build a compact, theme-aware guidance row."""
     return (
-        "<div style='"
-        "display:grid;"
-        "grid-template-columns:1.35rem minmax(0,1fr);"
-        "gap:0.55rem;"
-        "padding:0.42rem 0;"
-        "align-items:start;"
-        "'>"
-        "<span style='"
-        "font-size:0.72rem;"
-        "font-weight:600;"
-        "line-height:1.45;"
-        "'>"
+        '<div class="today-guidance-item">'
+        '<span class="today-guidance-number">'
         f"{index}"
-        "</span>"
-        "<span style='"
-        "font-size:0.82rem;"
-        "line-height:1.4;"
-        "'>"
+        '</span>'
+        '<span class="today-guidance-text">'
         f"{escape(text)}"
-        "</span>"
-        "</div>"
+        '</span>'
+        '</div>'
     )
 
 
@@ -793,18 +778,13 @@ def _show_latest_adaptation(
     )
 
     with st.container(
-        border=True
+        border=True,
+        key="today_adaptation_card",
     ):
-        st.markdown(
-            "**Latest plan adaptation**"
-        )
-
-        st.caption(
-            adaptation.reason
-        )
-
         st.html(
-            comparison_html
+            '<div class="today-guidance-heading">Latest plan adaptation</div>'
+            '<div class="today-adaptation-reason">'
+            + escape(adaptation.reason or "") + '</div>' + comparison_html
         )
 
 def _show_guidance_card(
@@ -817,12 +797,9 @@ def _show_guidance_card(
     """
 
     with st.container(
-        border=True
+        border=True,
+        key="today_guidance_" + title.lower().replace(" ", "_"),
     ):
-        st.markdown(
-            f"**{title}**"
-        )
-
         content = "".join(
             _guidance_item_html(
                 index=index,
@@ -835,7 +812,8 @@ def _show_guidance_card(
         )
 
         st.html(
-            content
+            '<div class="today-guidance-heading">'
+            + escape(title) + '</div>' + content
         )
 
 
@@ -1025,6 +1003,77 @@ def _apply_today_page_styles(
         .st-key-today-recommendation-card p {
             margin-top: 0;
             margin-bottom: 0.18rem;
+        }
+
+
+        .today-guidance-item {
+            display: grid;
+            grid-template-columns: 1.1rem minmax(0, 1fr);
+            gap: 0.4rem;
+            padding: 0.2rem 0;
+            align-items: start;
+        }
+        .today-guidance-number {
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        .today-guidance-text {
+            font-size: 0.8rem;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+        .today-guidance-heading {
+            margin: 0 0 0.6rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        .today-adaptation-reason {
+            margin: 0 0 0.65rem;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            opacity: 0.65;
+        }
+        .st-key-today_detail_row [data-testid="stLayoutWrapper"] {
+            flex-shrink: 0;
+        }
+        @media (min-width: 761px) {
+            .st-key-today_detail_row [data-testid="stHorizontalBlock"]:has(.st-key-today_session_card) {
+                align-items: stretch;
+            }
+            .st-key-today_detail_row [data-testid="stHorizontalBlock"]:has(.st-key-today_session_card)
+            > [data-testid="stColumn"] {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .st-key-today_detail_row [data-testid="stHorizontalBlock"]:has(.st-key-today_session_card)
+            > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+                flex: 1 1 auto;
+                height: 100%;
+                gap: 0.45rem;
+            }
+            .st-key-today_detail_row [data-testid="stLayoutWrapper"]:has(> .st-key-today_session_card),
+            .st-key-today_session_card {
+                flex: 1 1 auto;
+                height: 100%;
+            }
+            .st-key-today_detail_row [data-testid="stLayoutWrapper"]:has(> .st-key-today_adaptation_card) {
+                margin-top: auto;
+            }
+            .today-adaptation-comparison {
+                margin-top: 0.2rem;
+            }
+            .today-adaptation-column {
+                padding: 0.4rem 0.5rem;
+            }
+            .today-adaptation-column-label {
+                margin-bottom: 0.15rem;
+            }
+            .today-adaptation-metric {
+                line-height: 1.15;
+            }
         }
 
         @media (max-width: 760px) {
@@ -1292,39 +1341,41 @@ def show_today_page(
         today
     )
 
-    session_column, guidance_column = (
-        st.columns(
-            [1.7, 1],
-            gap="large",
-            vertical_alignment="top",
-        )
-    )
-
-    with session_column:
-        _show_today_session(
-            today.session_card,
-            today.today_activity_summary,
-            today_workout,
+    with st.container(key="today_detail_row"):
+        session_column, guidance_column = (
+            st.columns(
+                [1.7, 1],
+                gap="large",
+                vertical_alignment="top",
+            )
         )
 
-        if today_workout is not None:
-            show_activity_analysis(
+        with session_column:
+            _show_today_session(
+                today.session_card,
+                today.today_activity_summary,
                 today_workout,
-                history=athlete.history,
-                key_prefix="today_activity_analysis",
             )
 
-    with guidance_column:
-        _show_guidance_card(
-            title="Why this workout today",
-            items=today.guidance.reasons,
-        )
+        with guidance_column:
+            _show_guidance_card(
+                title="Why this workout today",
+                items=today.guidance.reasons,
+            )
 
-        _show_guidance_card(
-            title="Attention during training",
-            items=today.guidance.cautions,
-        )
+            _show_guidance_card(
+                title="Attention during training",
+                items=today.guidance.cautions,
+            )
 
-        _show_latest_adaptation(
-            today.latest_adaptation
+            _show_latest_adaptation(
+                today.latest_adaptation
+            )
+
+
+    if today_workout is not None:
+        show_activity_analysis(
+            today_workout,
+            history=athlete.history,
+            key_prefix="today_activity_analysis",
         )
