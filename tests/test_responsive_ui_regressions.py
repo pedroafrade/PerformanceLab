@@ -177,3 +177,29 @@ def test_compact_charts_are_selected_by_css_viewport_not_user_agent():
     assert "@media (max-width: 700px)" in source
     assert ".st-key-development_load_form_mobile" in source
     assert ".st-key-development_load_form_desktop" in source
+
+def test_app_locks_sidebar_on_desktop():
+    app_path = ROOT.parent / "app.py"
+    tree = ast.parse(
+        app_path.read_text(encoding="utf-8")
+    )
+
+    configurations = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "st"
+        and node.func.attr == "set_page_config"
+    ]
+
+    assert len(configurations) == 1
+
+    options = {
+        keyword.arg: ast.literal_eval(keyword.value)
+        for keyword in configurations[0].keywords
+    }
+
+    assert options["initial_sidebar_state"] == "locked"
+

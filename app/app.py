@@ -97,6 +97,7 @@ st.set_page_config(
     page_title="PerformanceLab",
     page_icon="📈",
     layout="wide",
+    initial_sidebar_state="locked",
 )
 configure_operational_logging()
 
