@@ -56,6 +56,9 @@ aplicação.
 ## 5. Verificação interna
 
 - Endpoint de saúde: passou / falhou
+- Interface desktop: passou / falhou
+- Interface Android: passou / falhou
+- Interface iOS: passou / falhou
 - Login da primeira conta interna: passou / falhou
 - Login da segunda conta interna: passou / falhou
 - Isolamento entre contas: passou / falhou

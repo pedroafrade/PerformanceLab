@@ -151,6 +151,9 @@ def test_template_records_internal_validation():
 
     required_checks = (
         "Endpoint de saúde",
+        "Interface desktop",
+        "Interface Android",
+        "Interface iOS",
         "Login da primeira conta interna",
         "Login da segunda conta interna",
         "Isolamento entre contas",
