@@ -196,7 +196,6 @@ def _sidebar_styles(
             font-size: 0.72rem;
         }}
 
-        .st-key-sidebar_edit_athlete button,
         .st-key-sidebar_logout button {{
             min-height: clamp(1.65rem, 3.6vh, 2rem);
             padding:
@@ -274,6 +273,11 @@ def _sidebar_styles(
             min-height: 0;
             margin: 0;
             padding: 0;
+        }}
+
+        .st-key-sidebar_logout_area {{
+            flex: 0 0 auto;
+            margin-top: 0.3rem;
         }}
 
         .st-key-sidebar_lower {{
@@ -516,26 +520,12 @@ def _show_user_account(
         unsafe_allow_html=True,
     )
 
-    edit_column, logout_column = st.columns(
-        2,
-        gap="small",
-    )
-
-    with edit_column:
-
-        st.button(
-            "Edit",
-            icon=":material/edit:",
-            use_container_width=True,
-            key="sidebar_edit_athlete",
-            on_click=_set_page,
-            args=("athlete",),
-        )
-
-    with logout_column:
-
+def _show_sidebar_logout(on_logout) -> None:
+    """Keep sign-out below the activity importer."""
+    with st.container(key="sidebar_logout_area"):
+        st.divider()
         if st.button(
-            "Logout",
+            "Log out",
             icon=":material/logout:",
             use_container_width=True,
             key="sidebar_logout",
@@ -600,15 +590,6 @@ def show_sidebar(
             key="sidebar_lower",
         ):
 
-            st.markdown(
-                (
-                    '<div class="sidebar-section-label">'
-                    f'{translate("activity.section")}'
-                    '</div>'
-                ),
-                unsafe_allow_html=True,
-            )
-
             with st.container(
                 key="sidebar_activity",
             ):
@@ -620,5 +601,7 @@ def show_sidebar(
                     ),
                     key_prefix="sidebar_activity",
                 )
+
+        _show_sidebar_logout(on_logout)
 
         return athlete

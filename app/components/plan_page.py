@@ -3235,28 +3235,24 @@ def _compact_plan_layout_styles(
             margin-bottom: 0.35rem;
         }
 
-        div[data-testid="stDivider"] {
+        section[data-testid="stMain"] div[data-testid="stDivider"] {
             margin-top: 0.25rem;
             margin-bottom: 0.25rem;
         }
 
-        div[data-testid="stCaptionContainer"] {
+        section[data-testid="stMain"] div[data-testid="stCaptionContainer"] {
             margin-bottom: 0.15rem;
         }
 
-        div[data-testid="stAltairChart"] {
+        section[data-testid="stMain"] div[data-testid="stAltairChart"] {
             margin-top: -0.45rem;
             margin-bottom: -0.45rem;
         }
 
-        button[kind="primary"] {
+        section[data-testid="stMain"] .st-key-plan_generate button {
             min-height: 2.45rem;
             margin-top: 0;
             white-space: nowrap;
-        }
-
-        .plan-generate-button-spacer {
-            height: 1.55rem;
         }
 
         .plan-progression-heading {
@@ -3293,19 +3289,19 @@ def _compact_plan_layout_styles(
             font-weight: 700;
         }
 
-        div[data-testid="stExpander"] {
+        section[data-testid="stMain"] div[data-testid="stExpander"] {
             margin-bottom: 0.45rem;
             border-radius: 0.55rem;
         }
 
-        div[data-testid="stExpander"] details {
+        section[data-testid="stMain"] div[data-testid="stExpander"] details {
             overflow: hidden;
             border: 1px solid rgba(128, 128, 128, 0.24);
             border-radius: 0.55rem;
             background: rgba(128, 128, 128, 0.015);
         }
 
-        div[data-testid="stExpander"] details summary {
+        section[data-testid="stMain"] div[data-testid="stExpander"] details summary {
             min-height: 2.15rem;
             padding: 0.35rem 0.65rem;
             font-size: 0.72rem;
@@ -3313,35 +3309,35 @@ def _compact_plan_layout_styles(
             box-sizing: border-box;
         }
 
-        div[data-testid="stExpander"] details summary:hover {
+        section[data-testid="stMain"] div[data-testid="stExpander"] details summary:hover {
             background: rgba(128, 128, 128, 0.045);
         }
 
-        div[data-testid="stExpander"] details[open] summary {
+        section[data-testid="stMain"] div[data-testid="stExpander"] details[open] summary {
             border-bottom: 1px solid rgba(128, 128, 128, 0.16);
             background: rgba(128, 128, 128, 0.035);
         }
 
-        div[data-testid="stExpander"] details summary:focus,
-        div[data-testid="stExpander"] details summary:focus-visible {
+        section[data-testid="stMain"] div[data-testid="stExpander"] details summary:focus,
+        section[data-testid="stMain"] div[data-testid="stExpander"] details summary:focus-visible {
             outline: none;
             box-shadow: none;
         }
 
-        div[data-testid="stExpanderDetails"] {
+        section[data-testid="stMain"] div[data-testid="stExpanderDetails"] {
             display: block;
             overflow: hidden;
             padding: 0;
             box-sizing: border-box;
         }
 
-        div[data-testid="stExpander"] summary p {
+        section[data-testid="stMain"] div[data-testid="stExpander"] summary p {
             margin: 0;
             font-size: 0.72rem;
             line-height: 1.2;
         }
 
-        div[data-testid="stExpander"] summary p:first-letter {
+        section[data-testid="stMain"] div[data-testid="stExpander"] summary p:first-letter {
             color: #ff4b4b;
         }
 
@@ -3821,6 +3817,55 @@ def _show_plan_generation_confirmation(
             on_generate_plan()
             st.rerun()
 
+def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
+    """Render both full-width actions in the plan's right column."""
+    generate_plan_requested = (
+        st.button(
+            "Generate plan",
+            icon=(
+                ":material/auto_awesome:"
+            ),
+            type="primary",
+            use_container_width=True,
+            key="plan_generate",
+            disabled=(
+                on_generate_plan is None
+            ),
+        )
+    )
+
+    calendar_data = (
+        _plan_calendar_ics(
+            plan
+        )
+        if plan.weeks
+        else ""
+    )
+
+    st.download_button(
+        "Export calendar",
+        data=calendar_data,
+        file_name=(
+            "performancelab-plan.ics"
+        ),
+        mime=(
+            "text/calendar; "
+            "charset=utf-8"
+        ),
+        use_container_width=True,
+        disabled=(
+            not bool(
+                plan.weeks
+            )
+        ),
+    )
+    if generate_plan_requested:
+        _show_plan_generation_confirmation(
+            athlete,
+            on_generate_plan,
+        )
+
+
 def show_plan_page(
     athlete,
     *,
@@ -3839,84 +3884,25 @@ def show_plan_page(
         reference_day=today
     )
 
-    title_column, action_column = (
-        st.columns(
-            [4.5, 1.5],
-            gap="medium",
-        )
+    _compact_plan_layout_styles(
+        _plan_header_caption(plan)
     )
 
-    with title_column:
+    main_column, sidebar_column = st.columns(
+        [3.4, 1],
+        gap="medium",
+    )
 
-        plan_subtitle = (
-            _plan_header_caption(
-                plan
-            )
-        )
-
-        _compact_plan_layout_styles(
-            plan_subtitle
-        )
-
-    with action_column:
-
-        st.markdown(
-            '<div class="plan-generate-button-spacer"></div>',
-            unsafe_allow_html=True,
-        )
-
-        generate_plan_requested = (
-            st.button(
-                "Generate plan",
-                icon=(
-                    ":material/auto_awesome:"
-                ),
-                type="primary",
-                use_container_width=True,
-                key="plan_generate",
-                disabled=(
-                    on_generate_plan is None
-                ),
-            )
-        )
-
-        calendar_data = (
-            _plan_calendar_ics(
-                plan
-            )
-            if plan.weeks
-            else ""
-        )
-
-        st.download_button(
-            "Export calendar",
-            data=calendar_data,
-            file_name=(
-                "performancelab-plan.ics"
-            ),
-            mime=(
-                "text/calendar; "
-                "charset=utf-8"
-            ),
-            use_container_width=True,
-            disabled=(
-                not bool(
-                    plan.weeks
-                )
-            ),
-        )
-        if generate_plan_requested:
-            _show_plan_generation_confirmation(
-                athlete,
-                on_generate_plan,
-            )
+    with sidebar_column:
+        _show_plan_actions(plan, athlete, on_generate_plan)
 
     if not plan.weeks:
 
-        st.info(
-            "No training plan is available. "
-            "Generate a plan to begin."
-        )
+        with main_column:
+            st.info(
+                "No training plan is available. "
+                "Generate a plan to begin."
+            )
 
         return
 
@@ -3930,13 +3916,6 @@ def show_plan_page(
         _current_plan_week(
             plan.weeks,
             reference_day=today,
-        )
-    )
-
-    main_column, sidebar_column = (
-        st.columns(
-            [3.4, 1],
-            gap="medium",
         )
     )
 
