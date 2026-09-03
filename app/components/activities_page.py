@@ -655,10 +655,22 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.45;
         }
 
-        .st-key-activity_coach_notes,
-        .st-key-activity_coach_notes
-        div[data-testid="stVerticalBlock"] {
-            gap: 0.75rem !important;
+        /* Three explicit rows fill the 274px inside the 308px bordered slot.
+           Scope this to the notes block, never to nested widget containers. */
+        [data-testid="stVerticalBlock"].st-key-activity_coach_notes {
+            display: grid !important;
+            grid-template-rows: 28px 184px 34px;
+            row-gap: 14px !important;
+            align-content: start;
+        }
+
+        .st-key-activity_coach_notes > div {
+            margin: 0 !important;
+            min-height: 0;
+        }
+
+        .st-key-activity_coach_notes > div:first-child {
+            align-self: center;
         }
 
         .st-key-activity_coach_notes
@@ -676,7 +688,8 @@ def _apply_activities_page_styles() -> None:
 
         .st-key-activity_coach_notes
         div[data-testid="stButton"] > button {
-            min-height: 2.1rem;
+            height: 34px;
+            min-height: 34px;
             padding-top: 0.25rem;
             padding-bottom: 0.25rem;
         }
