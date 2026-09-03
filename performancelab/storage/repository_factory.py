@@ -29,6 +29,9 @@ from sqlalchemy.engine import (
 from performancelab.runtime_configuration import (
     RuntimeConfiguration,
 )
+from performancelab.storage.daily_brief_privacy_repository import (
+    DailyBriefPrivacyRepository,
+)
 from performancelab.storage.json_alpha_invitation_repository import (
     JsonAlphaInvitationRepository,
 )
@@ -104,6 +107,10 @@ class RepositoryBundle:
         repr=False,
     )
     connection: Connection | None = field(
+        default=None,
+        repr=False,
+    )
+    daily_brief_privacy_repository: object | None = field(
         default=None,
         repr=False,
     )
@@ -305,4 +312,5 @@ def build_repository_bundle(
         ),
         engine=engine,
         connection=connection,
+        daily_brief_privacy_repository=DailyBriefPrivacyRepository(connection),
     )

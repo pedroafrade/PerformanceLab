@@ -47,6 +47,7 @@ class ManageTrainingCoachConsent:
             [],
             datetime,
         ] = current_utc_time,
+        daily_brief_privacy_repository=None,
     ) -> None:
 
         if not callable(
@@ -59,6 +60,7 @@ class ManageTrainingCoachConsent:
 
         self._repository = repository
         self._clock = clock
+        self._daily_brief_privacy_repository = daily_brief_privacy_repository
 
     @staticmethod
     def _normalized_user_id(
@@ -177,6 +179,8 @@ class ManageTrainingCoachConsent:
         Withdraw the current active consent.
 
         If no active consent exists, no new record is created.
+        The caller must wrap this operation in the repository transaction.
+        Reservations are cancelled even when consent is already inactive.
         """
 
         normalized_user_id = (
@@ -188,6 +192,9 @@ class ManageTrainingCoachConsent:
         existing = self.current(
             user_id=normalized_user_id
         )
+
+        if self._daily_brief_privacy_repository is not None:
+            self._daily_brief_privacy_repository.cancel_for_user(normalized_user_id)
 
         if (
             existing is None

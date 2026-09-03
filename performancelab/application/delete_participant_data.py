@@ -46,6 +46,7 @@ class DeleteParticipantData:
         training_coach_usage_repository,
         authorization: AthleteAuthorizationService,
         transaction_factory,
+        daily_brief_privacy_repository=None,
     ) -> None:
 
         if not isinstance(
@@ -91,6 +92,7 @@ class DeleteParticipantData:
             training_coach_usage_repository
         )
         self._authorization = authorization
+        self._daily_brief_privacy_repository = daily_brief_privacy_repository
         self._transaction_factory = (
             transaction_factory
         )
@@ -206,6 +208,11 @@ class DeleteParticipantData:
         )
 
         with self._transaction_factory():
+
+            # Same transaction as the owner/account deletion. Never use the
+            # generation store's separate Engine transaction here.
+            if self._daily_brief_privacy_repository is not None:
+                self._daily_brief_privacy_repository.delete_for_user(user_id)
 
             for link in identity_links:
 

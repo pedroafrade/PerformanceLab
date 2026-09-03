@@ -543,3 +543,29 @@ continuamente com o relógio.
   retirada de consentimento, exportação/eliminação e interface. Só depois ativar
   a geração automática. O estado clínico do texto não é validado por testes de
   formato; validar também cenários de relatos adversariais antes da ativação.
+
+### Privacidade Daily Brief nos fluxos existentes — conjunto seguinte
+
+- Adaptador Gemini: pytest, commit e push confirmados pelo utilizador.
+- Ligar exportação, eliminação de conta e retirada da autorização única Training
+  Coach ao repositório Daily Brief em ambientes SQL. O repositório de privacidade
+  usa a Connection partilhada; não abre uma transação independente no Engine.
+- Exportar o último comentário retido do utilizador/atleta autorizado, incluindo
+  chave de contexto, texto, data e motivo, sem tokens de reserva nem backoff.
+  O JSON de exportação recebe o campo aditivo `daily_briefs`, vazio sem conteúdo.
+- Cancelar reservas mesmo quando a autorização já está inativa. A retirada não
+  apaga o comentário guardado: permanece exportável, mas não autoriza geração.
+- Apagar comentários e reservas na mesma transação da eliminação da conta.
+  Falhas posteriores fazem rollback; outro atleta não é afetado. Um resultado
+  de geração com token cancelado/eliminado não pode ser gravado tardiamente.
+- A ausência da tabela antes da migração significa ausência de conteúdo Daily
+  Brief. Exportação/retirada/eliminação continuam disponíveis sem criar tabelas.
+  Erros de ligação ou permissões não são confundidos com tabela inexistente.
+- Local JSON não recebe uma base SQL paralela nem armazenamento novo nesta etapa.
+  O adaptador de privacidade é `None` nesse modo e a exportação indica lista vazia.
+- Testes com SQL real em SQLite, modelos reais de utilizador/consentimento e
+  serviços da aplicação; verificação da ligação no app e na factory. Ainda falta
+  validar estes fluxos numa base PostgreSQL de testes com a migração aplicada.
+- Sem alterações visuais nem chamadas ao fornecedor. A geração automática
+  continua desativada. Próximo conjunto: quota/registo de utilização e métricas
+  calculadas, antes da configuração de fuso e ligação final ao login/Dashboard.

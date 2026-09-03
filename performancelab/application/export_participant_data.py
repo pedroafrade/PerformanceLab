@@ -85,6 +85,7 @@ class ExportParticipantData:
         training_coach_consent_repository,
         training_coach_usage_repository,
         authorization: AthleteAuthorizationService,
+        daily_brief_privacy_repository=None,
     ) -> None:
 
         if not isinstance(
@@ -116,6 +117,7 @@ class ExportParticipantData:
             training_coach_usage_repository
         )
         self._authorization = authorization
+        self._daily_brief_privacy_repository = daily_brief_privacy_repository
 
     def execute(
         self,
@@ -356,6 +358,13 @@ class ExportParticipantData:
                 athlete
             ),
         }
+
+        data["daily_briefs"] = (
+            self._daily_brief_privacy_repository.export_for_user(
+                user.user_id, athlete_id=user.athlete_id,
+            )
+            if self._daily_brief_privacy_repository is not None else []
+        )
 
         return ExportParticipantDataResult(
             data=data

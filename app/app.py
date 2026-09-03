@@ -241,7 +241,10 @@ training_coach_consent_manager = (
     ManageTrainingCoachConsent(
         repository=(
             training_coach_consent_repository
-        )
+        ),
+        daily_brief_privacy_repository=(
+            repository_bundle.daily_brief_privacy_repository
+        ),
     )
 )
 training_coach_provider = (
@@ -454,6 +457,9 @@ def export_participant_data() -> str:
     )
 
     result = ExportParticipantData(
+        daily_brief_privacy_repository=(
+            repository_bundle.daily_brief_privacy_repository
+        ),
         athlete_repository=(
             athlete_repository
         ),
@@ -496,6 +502,9 @@ def delete_participant_account() -> None:
     try:
 
         DeleteParticipantData(
+            daily_brief_privacy_repository=(
+                repository_bundle.daily_brief_privacy_repository
+            ),
             athlete_repository=(
                 athlete_repository
             ),
