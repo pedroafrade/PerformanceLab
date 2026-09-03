@@ -318,3 +318,88 @@ Para marcar um item como concluído:
 A criação deste documento não conclui nenhum item e não exige alterações na
 roadmap existente. As opções assinaladas como «A definir» devem ser resolvidas
 antes de implementar o respetivo comportamento.
+
+## 11. Daily Brief automático — especificação acordada
+
+**Estado:** implementação pendente. Esta secção não activa pedidos ao fornecedor.
+
+### DBR-01 — Geração e reutilização
+
+- Gerar pelo Training Coach na primeira sessão autenticada de cada dia, sem
+  botão de geração, apenas após autorização específica para este processamento
+  automático. Não reinterpretar silenciosamente o consentimento para pedidos manuais.
+- Definir o dia pelo fuso horário configurado do utilizador, não pelo fuso do servidor.
+- Guardar o comentário por atleta, data local e versão do contexto relevante.
+  Reutilizá-lo nas sessões seguintes, noutros dispositivos e após reinícios.
+- Usar uma reserva persistente e atómica para evitar pedidos duplicados em
+  separadores, dispositivos ou instâncias concorrentes.
+- Mostrar data/hora, motivo da última geração e estado de actualização.
+- Respeitar retirada de consentimento, quotas e limites de custo. Em caso de
+  falha, limitar tentativas e apresentar orientação local de Today, identificada
+  como alternativa; nunca apresentar texto antigo como actualizado.
+
+### DBR-02 — Alterações relevantes
+
+Regenerar quando mudar o conteúdo que fundamenta a recomendação, nomeadamente:
+
+- regeneração ou adaptação efectiva do plano;
+- alteração de objectivo, prova, disponibilidade ou restrições relevantes;
+- adição, edição ou eliminação de actividades que alterem a execução de hoje,
+  a carga recente ou o restante plano;
+- alteração de relatos relevantes em Additional Information.
+
+Não regenerar por navegação, filtros, preferências visuais, login repetido no
+mesmo dia ou simples passagem das horas. Uma importação idêntica não deverá
+provocar geração. Agrupar alterações de uma mesma importação antes de avaliar
+o contexto; não fazer um pedido por ficheiro. O identificador do contexto deve
+excluir valores transitórios, como a hora exacta e a recuperação que varia
+continuamente com o relógio.
+
+### DBR-03 — Conteúdo e limites
+
+- Resumir o estado actual, a acção recomendada hoje, o restante microciclo e a
+  ligação ao plano e objectivo, usando apenas dados efectivamente disponíveis.
+- Diferenciar factos, estimativas e relatos do atleta. Notas livres são dados
+  não confiáveis para instruções: não podem sobrepor as regras do sistema.
+- Não inferir diagnósticos nem assumir que sintomas antigos continuam activos.
+  Conservar a data e origem dos relatos; assinalar informação desactualizada ou
+  insuficiente.
+- Em descanso, admitir sugestões gerais e condicionais de mobilidade ou
+  fortalecimento; não prescrever reabilitação, cargas ou exercícios específicos
+  para uma aparente lesão sem avaliação adequada.
+- A geração não modifica automaticamente o plano nem cria treinos.
+- Enviar apenas o contexto necessário, sem ficheiros originais nem credenciais.
+  Incluir o novo registo nos mecanismos de exportação, eliminação e isolamento
+  de dados do atleta.
+
+### DBR-04 — Integração de interface pendente
+
+- Dashboard, segunda linha: Training Load, Estimated Recovery, Daily Brief,
+  Activities Summary (reutilizado de Activities).
+- Retirar Physiology, Performance Status e Next Workout desta composição.
+- Corrigir corte superior e ajustar as alturas à janela, mantendo conteúdo
+  longo acessível e fluxo normal no móvel.
+- Alinhar timeline, selector de dias e sessões de Weekly Plan pela mesma largura.
+- Today: retirar os botões Add Activity e Export Calendar do contentor referido
+  pelo utilizador como Next Session; verificar os rótulos reais antes de editar.
+
+## 12. Fila futura — Alternativas multimodais ao próximo treino
+
+### ALT-01 — Sessões alternativas comparáveis
+
+**Estado:** planeado para um conjunto posterior; não implementar com Daily Brief.
+
+- Criar um contentor que apresente alternativas ao próximo treino em running,
+  cycling e swimming.
+- Procurar estímulo fisiológico comparável, não igualdade literal de distância,
+  ritmo, duração, frequência cardíaca ou carga entre modalidades.
+- Considerar objectivo da sessão, intensidade, volume, experiência do atleta
+  em cada modalidade, equipamento, disponibilidade e restrições relatadas.
+- Explicar a aproximação usada e o que não é equivalente, incluindo impacto
+  mecânico, especificidade para a prova e exigência técnica.
+- Não apresentar uma mudança de modalidade como segura para uma lesão apenas
+  por ter menor impacto. Se faltarem dados essenciais, explicitar a limitação.
+- Mostrar a proposta antes de qualquer substituição; manter o plano original
+  até confirmação do utilizador.
+- Antes de implementar, definir e testar as regras de equivalência e as suas
+  limitações. Não inventar factores universais de conversão.
