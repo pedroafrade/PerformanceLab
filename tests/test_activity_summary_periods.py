@@ -19,7 +19,7 @@ def load_summary(st=None):
     nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
     scope = {"date": date, "datetime": datetime, "timedelta": timedelta,
              "monthrange": monthrange, "st": st,
-             "_SUMMARY_PERIODS": ("All time", "1 year", "6 months", "1 month", "This year"),
+             "_SUMMARY_PERIODS": ("All time", "1 year", "This year", "6 months", "1 month"),
              "format_duration": lambda v: "—" if v is None else str(v),
              "format_distance": lambda v: "—" if v is None else f"{v:.2f} km",
              "format_elevation": lambda v: "—" if v is None else f"{v:.0f} m"}
@@ -98,7 +98,7 @@ def test_controls_default_to_one_month_and_ignore_list_filters():
     scope = load_summary(st)
     scope["_show_activity_summary"]((activity(date(2026, 9, 3)),), reference_day=date(2026, 9, 3))
     options = st.selectbox.call_args_list
-    assert options[0].kwargs["index"] == 3
+    assert options[0].kwargs["index"] == 4
     assert options[0].kwargs["key"] == "activities_summary_period"
     assert options[1].kwargs["key"] == "activities_summary_sport"
     assert "10.00 km" in st.html.call_args.args[0]

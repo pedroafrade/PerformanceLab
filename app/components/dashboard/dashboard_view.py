@@ -55,6 +55,13 @@ def show_dashboard(
         padding-bottom: 1.25rem;
     }
     .st-key-dashboard_page {gap: 0.75rem;}
+    .st-key-dashboard_top_latest,.st-key-dashboard_top_plan,.st-key-dashboard_top_event {gap:0.4rem;}
+    .st-key-dashboard_load_header,.st-key-dashboard_recovery_header {min-height:2.6rem;}
+    .st-key-dashboard_load .metric-card-body,
+    .st-key-dashboard_recovery .metric-card-body {
+        display:grid!important;grid-template-rows:100px 96px 18px auto;
+        align-items:start!important;
+    }
     .st-key-dashboard_page .activities-summary-grid {
         display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.42rem;
     }
@@ -93,6 +100,7 @@ def _show_dashboard_content(athlete):
     activity_col, planning_col, event_col = (
         dashboard_row(
             (1, 3.2, 1),
+            gap="small",
         )
     )
 
@@ -146,7 +154,7 @@ def _show_dashboard_content(athlete):
                 next_event,
             )
 
-    load_col, recovery_col, brief_col, workout_col, summary_col = dashboard_row((1, 1, 1.7, 1.6, 1.6))
+    load_col, recovery_col, brief_col, workout_col, summary_col = dashboard_row((1, 1, 1.7, 1.6, 1.6), gap="small")
 
     with load_col:
         with dashboard_widget(title="Training Load", icon=":material/monitoring:",

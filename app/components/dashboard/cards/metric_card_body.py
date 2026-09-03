@@ -145,7 +145,7 @@ def metric_card_body(
     """
 
     parts = [
-        "<div style='"
+        "<div class='metric-card-body' style='"
         "display:flex;"
         "flex-direction:column;"
         "align-items:flex-start;"
@@ -155,15 +155,18 @@ def metric_card_body(
         "'>"
     ]
 
+    parts.append("<div class='metric-card-metrics'>")
     parts.extend(
         _metric_html(metric)
         for metric in metrics
     )
+    parts.append("</div><div class='metric-card-details'>")
 
     parts.extend(
         _detail_html(detail)
         for detail in details
     )
+    parts.append("</div>")
 
     if progress is not None:
 

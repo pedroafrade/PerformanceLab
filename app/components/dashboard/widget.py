@@ -97,7 +97,7 @@ def dashboard_widget(
         container_options["key"] = key
         # Set the bordered container height, not only its inner content block.
         if key.startswith("dashboard_top_"):
-            container_options["height"] = 360
+            container_options["height"] = 320
         elif key in {"dashboard_load", "dashboard_recovery", "dashboard_brief", "dashboard_next_workout", "dashboard_summary"}:
             container_options["height"] = 380
 
@@ -108,7 +108,22 @@ def dashboard_widget(
         **container_options,
     ):
 
-        if title:
+        if title and key is not None and key.startswith("dashboard_"):
+            with st.container(key=f"{key}_header"):
+                if center_text:
+                    title_col, date_col = st.columns([1, 1], vertical_alignment="center", gap="small")
+                    with title_col:
+                        st.markdown(f"{icon} **{title}**" if icon else f"**{title}**")
+                    with date_col:
+                        st.caption(center_text)
+                else:
+                    st.markdown(f"{icon} **{title}**" if icon else f"**{title}**")
+                if subtitle:
+                    st.caption(subtitle)
+            if divider:
+                st.divider()
+
+        elif title:
 
             if center_text:
 

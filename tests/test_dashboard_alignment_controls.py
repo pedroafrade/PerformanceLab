@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1] / "app/components/dashboard"
 
 
 @pytest.mark.parametrize("key,height", [
-    ("dashboard_top_latest", 360), ("dashboard_top_plan", 360),
-    ("dashboard_top_event", 360), ("dashboard_load", 380),
+    ("dashboard_top_latest", 320), ("dashboard_top_plan", 320),
+    ("dashboard_top_event", 320), ("dashboard_load", 380),
     ("dashboard_recovery", 380), ("dashboard_brief", 380), ("dashboard_next_workout", 380), ("dashboard_summary", 380),
     ("another_card", None),
 ])

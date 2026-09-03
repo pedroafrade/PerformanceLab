@@ -865,7 +865,7 @@ def _activity_row_html(
         "</div>"
     )
 
-_SUMMARY_PERIODS = ("All time", "1 year", "6 months", "1 month", "This year")
+_SUMMARY_PERIODS = ("All time", "1 year", "This year", "6 months", "1 month")
 
 
 def _summary_start_date(period, *, reference_day):
@@ -894,7 +894,12 @@ def _summary_activities(activities, *, period, sport, reference_day):
             continue
         if start is not None and day < start:
             continue
-        if sport is not None and _summary_sport(activity) != sport:
+        if sport == "All Running":
+            normalized = _summary_sport(activity).casefold()
+            if (any(token in normalized for token in ("cycl", "bike", "swim"))
+                    or not (normalized == "trail" or "run" in normalized or "jog" in normalized)):
+                continue
+        elif sport is not None and _summary_sport(activity) != sport:
             continue
         selected.append(activity)
     return tuple(selected)
@@ -948,14 +953,14 @@ def _show_activity_summary(all_activities, *, reference_day, show_title=True):
     with st.container(border=False, key="activities_summary_card"):
         if show_title:
             st.markdown("**Activities Summary**")
-        sports = [None] + sorted({_summary_sport(a) for a in all_activities}, key=str.casefold)
+        sports = [None, "All Running"] + sorted({_summary_sport(a) for a in all_activities} - {"All Running"}, key=str.casefold)
         if st.session_state.get("activities_summary_period", "1 month") not in _SUMMARY_PERIODS:
             st.session_state["activities_summary_period"] = "1 month"
         if st.session_state.get("activities_summary_sport") not in sports:
             st.session_state["activities_summary_sport"] = None
         period_col, sport_col = st.columns(2, gap="small")
         with period_col:
-            period = st.selectbox("Summary period", _SUMMARY_PERIODS, index=3,
+            period = st.selectbox("Summary period", _SUMMARY_PERIODS, index=_SUMMARY_PERIODS.index("1 month"),
                                   key="activities_summary_period")
         with sport_col:
             sport = st.selectbox("Summary sport", sports,
