@@ -23,8 +23,10 @@ def load_route(st=None, has_route=lambda workout: True, coordinates=()):
         View=lambda **kwargs: kwargs,
     )
     scope = {"log2": log2, "pdk": pdk, "st": st,
+             "components_html": MagicMock(),
              "has_route": has_route, "route_coordinates": lambda workout: coordinates}
     exec(compile(ast.Module(body=nodes, type_ignores=[]), "route_map.py", "exec"), scope)
+    scope["_route_document"] = lambda deck: deck
     return scope
 
 
@@ -41,12 +43,12 @@ def test_layers_preserve_route_and_endpoint_coordinates(coordinates):
     assert start["data"][0]["position"] == original[0]
     assert finish["data"][0]["position"] == original[-1]
     assert coordinates == original
-    assert route["get_color"] == [229, 57, 53, 255]
+    assert route["get_color"] == [25, 25, 25, 255]
     assert outline["get_width"] > route["get_width"]
     assert route["width_units"] == "pixels"
-    assert start["filled"] is False and finish["filled"] is True
-    # The finish cannot cover the start ring when coordinates coincide.
-    assert start["get_radius"] - start["get_line_width"] > finish["get_radius"]
+    assert start["filled"] is True and finish["filled"] is True
+    assert start["get_radius"] == finish["get_radius"] == 6
+    assert start["get_fill_color"] == [22, 130, 78, 255]
 
 
 def test_empty_route_has_no_layers():
@@ -60,12 +62,12 @@ def test_real_pydeck_serializes_route_width_and_marker_units():
     scope = load_route()
     scope["pdk"] = pdk
     layers = scope["_route_layers"]([[-9.4, 38.7], [-9.2, 38.8]])
-    payload = json.loads(pdk.Deck(layers=layers, map_style="road").to_json())
+    payload = json.loads(pdk.Deck(layers=layers, map_style="light").to_json())
     assert len(payload["layers"]) == 4
     assert payload["layers"][1]["widthUnits"] == "pixels"
-    assert payload["layers"][1]["getColor"] == [229, 57, 53, 255]
+    assert payload["layers"][1]["getColor"] == [25, 25, 25, 255]
     assert payload["layers"][2]["radiusUnits"] == "pixels"
-    assert payload["layers"][2]["getRadius"] == 11
+    assert payload["layers"][2]["getRadius"] == 6
     assert payload["layers"][3]["getRadius"] == 6
 
 
@@ -82,16 +84,18 @@ def test_provider_view_height_and_controls_are_preserved():
     coordinates = [[-9.4, 38.7], [-9.2, 38.8]]
     scope = load_route(st, coordinates=coordinates)
     scope["show_route_map"](object(), height=260)
-    deck = st.pydeck_chart.call_args.args[0]
-    assert deck["map_style"] == "road"
+    deck = scope["components_html"].call_args.args[0]
+    assert deck["map_style"] == "light"
     assert deck["initial_view_state"]["pitch"] == 0
     assert deck["tooltip"] == {"text": "{label}"}
-    assert deck["views"][0]["controller"]["scrollZoom"] is True
+    assert deck["views"][0]["controller"]["scrollZoom"] is False
+    assert deck["views"][0]["controller"]["doubleClickZoom"] is False
     assert deck["views"][0]["controller"]["dragPan"] is True
-    assert st.pydeck_chart.call_args.kwargs["height"] == 260
+    assert scope["components_html"].call_args.kwargs["height"] == 260
+    assert scope["components_html"].call_args.kwargs["scrolling"] is False
     assert "Start" in st.html.call_args.args[0] and "Finish" in st.html.call_args.args[0]
     css = st.markdown.call_args.args[0]
-    assert '.st-key-route_map_surface [data-testid="stDeckGlJsonChart"]' in css
+    assert '.st-key-route_map_surface iframe' in css
     assert "border-radius: 0.65rem" in css
 
 

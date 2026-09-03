@@ -120,6 +120,6 @@ def test_summary_uses_unfiltered_source_and_desktop_alignment_is_scoped():
     assert isinstance(summary.args[0], ast.Name) and summary.args[0].id == "all_activities"
     assert "@media (min-width: 1100px)" in text
     assert "@media (max-width: 1099px)" in text
-    for key in ("activities_utility", "activities_tools_scroll", "activities_browser"):
+    for key in ("activities_utility", "activities_bottom_slot", "activities_browser"):
         assert any(any(k.arg == "key" and isinstance(k.value, ast.Constant) and k.value.value == key
                        for k in n.keywords) for n in calls)

@@ -1376,9 +1376,10 @@ def show_activity_analysis(
 
             else:
 
-                st.caption(
-                    "No sufficiently similar historical "
-                    "route was found."
+                st.markdown(
+                    '<div style="text-align: right; font-size: 0.8rem; opacity: 0.65;">'
+                    'No sufficiently similar historical route was found.</div>',
+                    unsafe_allow_html=True,
                 )
 
         else:

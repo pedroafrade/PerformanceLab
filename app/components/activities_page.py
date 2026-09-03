@@ -687,28 +687,14 @@ def _apply_activities_page_styles() -> None:
 
         @media (min-width: 1100px) {
             .st-key-activities_utility {
-                height: 720px !important;
-                overflow: visible;
                 gap: 0.75rem;
             }
-            .st-key-activities_utility > [data-testid="stLayoutWrapper"]:has(> .st-key-activities_tools_scroll) {
-                flex: 1 1 0;
-                min-height: 0;
-                display: flex;
-            }
-            .st-key-activities_tools_scroll {
-                height: 100% !important;
-                min-height: 0;
-                flex: 1;
-                overflow-y: auto;
-            }
-            .st-key-activities_utility > [data-testid="stLayoutWrapper"]:has(> .st-key-activities_summary_card) {
+            .st-key-activities_utility > [data-testid="stLayoutWrapper"] {
                 flex-shrink: 0;
             }
         }
         @media (max-width: 1099px) {
-            .st-key-activities_utility,
-            .st-key-activities_tools_scroll {
+            .st-key-activities_bottom_slot {
                 height: auto !important;
                 max-height: none !important;
                 overflow: visible !important;
@@ -943,7 +929,7 @@ def _activities_summary_html(*, activities) -> str:
 
 def _show_activity_summary(all_activities, *, reference_day):
     """Summary controls use independent session keys, not browser filters."""
-    with st.container(border=True, key="activities_summary_card"):
+    with st.container(border=False, key="activities_summary_card"):
         st.markdown("**Activities Summary**")
         sports = [None] + sorted({_summary_sport(a) for a in all_activities}, key=str.casefold)
         if st.session_state.get("activities_summary_period", "1 month") not in _SUMMARY_PERIODS:
@@ -1923,150 +1909,227 @@ def show_activities_page(
     # ==================================================
 
     with utility_column:
-        with st.container(height=720, border=False, key="activities_utility"):
-            with st.container(height=360, border=False, key="activities_tools_scroll"):
+        with st.container(key="activities_utility"):
+            with st.container(
+                height=400,
+                border=True,
+                key="activity_coach_card",
+            ):
 
-                with st.container(
-                    height=360,
-                    border=True,
-                    key="activity_coach_card",
-                ):
+                coach_activity_title = (
+                    selected_activity.title
+                    if selected_activity is not None
+                    else ""
+                )
 
-                    coach_activity_title = (
-                        selected_activity.title
-                        if selected_activity is not None
-                        else ""
+                st.html(
+                    (
+                        '<div class="activities-coach-header">'
+                        '<div class="activities-coach-heading">'
+                        "Training coach"
+                        "</div>"
+                        '<div class="activities-coach-activity">'
+                        f"{escape(coach_activity_title)}"
+                        "</div>"
+                        "</div>"
                     )
+                )
+
+                if selected_activity is None:
 
                     st.html(
                         (
-                            '<div class="activities-coach-header">'
-                            '<div class="activities-coach-heading">'
-                            "Training coach"
-                            "</div>"
-                            '<div class="activities-coach-activity">'
-                            f"{escape(coach_activity_title)}"
-                            "</div>"
+                            '<div class="'
+                            'activities-coach-placeholder">'
+                            "Select an activity to receive "
+                            "a concise training interpretation."
                             "</div>"
                         )
                     )
 
-                    if selected_activity is None:
+                elif selected_workout is None:
 
-                        st.html(
+                    st.warning(
+                        "The selected activity "
+                        "is no longer available."
+                    )
+
+                else:
+
+                    (
+                        coach_payload,
+                        stored_interpretation,
+                        stored_matches_current_context,
+                    ) = _activity_coach_material(
+                        activity=(
+                            selected_activity
+                        ),
+                        workout=(
+                            selected_workout
+                        ),
+                        athlete=athlete,
+                    )
+                    if (
+                        stored_interpretation
+                        is None
+                    ):
+
+                        disclosure = (
+                            build_activity_coach_disclosure()
+                        )
+
+                        st.markdown(
+                            f"**{disclosure.heading}**"
+                        )
+
+                        st.caption(
+                            disclosure.purpose
+                        )
+
+                        st.caption(
                             (
-                                '<div class="'
-                                'activities-coach-placeholder">'
-                                "Select an activity to receive "
-                                "a concise training interpretation."
-                                "</div>"
+                                "Data sent: "
+                                f"{disclosure.data_summary}."
                             )
                         )
 
-                    elif selected_workout is None:
-
-                        st.warning(
-                            "The selected activity "
-                            "is no longer available."
+                        st.caption(
+                            (
+                                "The original activity file is "
+                                "not sent. The generated "
+                                "interpretation is saved with "
+                                "the activity."
+                            )
                         )
 
-                    else:
+                        st.caption(
+                            disclosure.limitation
+                        )
+                    if not training_coach_permitted:
 
-                        (
-                            coach_payload,
-                            stored_interpretation,
-                            stored_matches_current_context,
-                        ) = _activity_coach_material(
-                            activity=(
-                                selected_activity
+                        st.caption(
+                            (
+                                "Training Coach is disabled. "
+                                "You can enable it in Settings."
+                            )
+                        )
+                    if (
+                        stored_interpretation
+                        is not None
+                    ):
+
+                        regenerate = st.button(
+                            "Regenerate interpretation",
+                            key=(
+                                "regenerate_activity_coach_"
+                                f"{selected_activity.workout_id}"
                             ),
-                            workout=(
-                                selected_workout
-                            ),
-                            athlete=athlete,
+                            use_container_width=True,
                         )
+
                         if (
-                            stored_interpretation
-                            is None
+                            regenerate
+                            and not training_coach_permitted
                         ):
-
-                            disclosure = (
-                                build_activity_coach_disclosure()
-                            )
-
-                            st.markdown(
-                                f"**{disclosure.heading}**"
-                            )
-
-                            st.caption(
-                                disclosure.purpose
-                            )
-
-                            st.caption(
-                                (
-                                    "Data sent: "
-                                    f"{disclosure.data_summary}."
-                                )
-                            )
-
-                            st.caption(
-                                (
-                                    "The original activity file is "
-                                    "not sent. The generated "
-                                    "interpretation is saved with "
-                                    "the activity."
-                                )
-                            )
-
-                            st.caption(
-                                disclosure.limitation
-                            )
-                        if not training_coach_permitted:
-
-                            st.caption(
-                                (
-                                    "Training Coach is disabled. "
-                                    "You can enable it in Settings."
-                                )
-                            )
-                        if (
-                            stored_interpretation
-                            is not None
-                        ):
-
-                            regenerate = st.button(
-                                "Regenerate interpretation",
-                                key=(
-                                    "regenerate_activity_coach_"
-                                    f"{selected_activity.workout_id}"
-                                ),
-                                use_container_width=True,
-                            )
 
                             if (
-                                regenerate
-                                and not training_coach_permitted
+                                on_allow_training_coach
+                                is not None
                             ):
 
-                                if (
-                                    on_allow_training_coach
-                                    is not None
-                                ):
-
-                                    show_training_coach_consent_dialog(
-                                        on_allow=(
-                                            on_allow_training_coach
-                                        )
+                                show_training_coach_consent_dialog(
+                                    on_allow=(
+                                        on_allow_training_coach
                                     )
+                                )
 
-                                else:
+                            else:
 
-                                    st.warning(
-                                        "Training Coach permission "
-                                        "cannot be changed right now."
+                                st.warning(
+                                    "Training Coach permission "
+                                    "cannot be changed right now."
+                                )
+
+                        elif not regenerate:
+
+                            _show_activity_coach_narrative(
+                                stored_interpretation
+                                .narrative,
+                                stale=not stored_matches_current_context,
+                            )
+
+                        else:
+
+                            with st.spinner(
+                                "Regenerating interpretation..."
+                            ):
+
+                                resolution = (
+                                    _resolve_activity_coach(
+                                        athlete=athlete,
+                                        activity=(
+                                            selected_activity
+                                        ),
+                                        payload=(
+                                            coach_payload
+                                        ),
+                                        regenerate=True,
+                                        consent_permitted=(
+                                            training_coach_permitted
+                                        ),
+                                        resolver=(
+                                            on_resolve_training_coach
+                                        ),
                                     )
+                                )
 
-                            elif not regenerate:
+                            if (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .GENERATED
+                                and resolution.interpretation
+                                is not None
+                            ):
+
+                                st.session_state[
+                                    "activity_coach_refresh_requested"
+                                ] = True
+
+                                _show_activity_coach_narrative(
+                                    resolution
+                                    .interpretation
+                                    .narrative
+                                )
+
+                            elif (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .IN_PROGRESS
+                            ):
+
+                                st.warning(
+                                    "An interpretation for this "
+                                    "activity is already being "
+                                    "generated. Please wait."
+                                )
+
+                                _show_activity_coach_narrative(
+                                    stored_interpretation
+                                    .narrative,
+                                    stale=not stored_matches_current_context,
+                                )
+
+                            elif (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .LIMIT_REACHED
+                            ):
+
+                                st.warning(
+                                    _training_coach_limit_message(
+                                        resolution.error_code
+                                    )
+                                )
 
                                 _show_activity_coach_narrative(
                                     stored_interpretation
@@ -2076,222 +2139,140 @@ def show_activities_page(
 
                             else:
 
-                                with st.spinner(
-                                    "Regenerating interpretation..."
-                                ):
-
-                                    resolution = (
-                                        _resolve_activity_coach(
-                                            athlete=athlete,
-                                            activity=(
-                                                selected_activity
-                                            ),
-                                            payload=(
-                                                coach_payload
-                                            ),
-                                            regenerate=True,
-                                            consent_permitted=(
-                                                training_coach_permitted
-                                            ),
-                                            resolver=(
-                                                on_resolve_training_coach
-                                            ),
-                                        )
+                                st.warning(
+                                    _training_coach_error_message(
+                                        resolution.error_code
                                     )
+                                )
 
-                                if (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .GENERATED
-                                    and resolution.interpretation
-                                    is not None
-                                ):
+                                _show_activity_coach_narrative(
+                                    stored_interpretation
+                                    .narrative,
+                                    stale=not stored_matches_current_context,
+                                )
 
-                                    st.session_state[
-                                        "activity_coach_refresh_requested"
-                                    ] = True
+                    else:
 
-                                    _show_activity_coach_narrative(
-                                        resolution
-                                        .interpretation
-                                        .narrative
-                                    )
+                        generate = st.button(
+                            "Generate interpretation",
+                            key=(
+                                "generate_activity_coach_"
+                                f"{selected_activity.workout_id}"
+                            ),
+                            type="primary",
+                            use_container_width=True,
+                        )
 
-                                elif (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .IN_PROGRESS
-                                ):
-
-                                    st.warning(
-                                        "An interpretation for this "
-                                        "activity is already being "
-                                        "generated. Please wait."
-                                    )
-
-                                    _show_activity_coach_narrative(
-                                        stored_interpretation
-                                        .narrative,
-                                        stale=not stored_matches_current_context,
-                                    )
-
-                                elif (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .LIMIT_REACHED
-                                ):
-
-                                    st.warning(
-                                        _training_coach_limit_message(
-                                            resolution.error_code
-                                        )
-                                    )
-
-                                    _show_activity_coach_narrative(
-                                        stored_interpretation
-                                        .narrative,
-                                        stale=not stored_matches_current_context,
-                                    )
-
-                                else:
-
-                                    st.warning(
-                                        _training_coach_error_message(
-                                            resolution.error_code
-                                        )
-                                    )
-
-                                    _show_activity_coach_narrative(
-                                        stored_interpretation
-                                        .narrative,
-                                        stale=not stored_matches_current_context,
-                                    )
-
-                        else:
-
-                            generate = st.button(
-                                "Generate interpretation",
-                                key=(
-                                    "generate_activity_coach_"
-                                    f"{selected_activity.workout_id}"
-                                ),
-                                type="primary",
-                                use_container_width=True,
-                            )
+                        if (
+                            generate
+                            and not training_coach_permitted
+                        ):
 
                             if (
-                                generate
-                                and not training_coach_permitted
+                                on_allow_training_coach
+                                is not None
                             ):
 
-                                if (
-                                    on_allow_training_coach
-                                    is not None
-                                ):
-
-                                    show_training_coach_consent_dialog(
-                                        on_allow=(
-                                            on_allow_training_coach
-                                        )
+                                show_training_coach_consent_dialog(
+                                    on_allow=(
+                                        on_allow_training_coach
                                     )
+                                )
 
-                                else:
+                            else:
 
-                                    st.warning(
-                                        "Training Coach permission "
-                                        "cannot be changed right now."
+                                st.warning(
+                                    "Training Coach permission "
+                                    "cannot be changed right now."
+                                )
+
+                        elif generate:
+
+                            with st.spinner(
+                                "Generating interpretation..."
+                            ):
+
+                                resolution = (
+                                    _resolve_activity_coach(
+                                        athlete=athlete,
+                                        activity=(
+                                            selected_activity
+                                        ),
+                                        payload=(
+                                            coach_payload
+                                        ),
+                                        regenerate=False,
+                                        consent_permitted=(
+                                            training_coach_permitted
+                                        ),
+                                        resolver=(
+                                            on_resolve_training_coach
+                                        ),
                                     )
+                                )
 
-                            elif generate:
+                            if (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .GENERATED
+                                and resolution.interpretation
+                                is not None
+                            ):
 
-                                with st.spinner(
-                                    "Generating interpretation..."
-                                ):
+                                st.session_state[
+                                    "activity_coach_refresh_requested"
+                                ] = True
 
-                                    resolution = (
-                                        _resolve_activity_coach(
-                                            athlete=athlete,
-                                            activity=(
-                                                selected_activity
-                                            ),
-                                            payload=(
-                                                coach_payload
-                                            ),
-                                            regenerate=False,
-                                            consent_permitted=(
-                                                training_coach_permitted
-                                            ),
-                                            resolver=(
-                                                on_resolve_training_coach
-                                            ),
-                                        )
+                                _show_activity_coach_narrative(
+                                    resolution
+                                    .interpretation
+                                    .narrative
+                                )
+
+                            elif (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .IN_PROGRESS
+                            ):
+
+                                st.warning(
+                                    "An interpretation for this "
+                                    "activity is already being "
+                                    "generated. Please wait."
+                                )
+
+                            elif (
+                                resolution.status
+                                is ActivityCoachResolutionStatus
+                                .LIMIT_REACHED
+                            ):
+
+                                st.warning(
+                                    _training_coach_limit_message(
+                                        resolution.error_code
                                     )
+                                )
 
-                                if (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .GENERATED
-                                    and resolution.interpretation
-                                    is not None
-                                ):
+                            elif (
+                                resolution.status
+                                in {
+                                    ActivityCoachResolutionStatus
+                                    .UNAVAILABLE,
+                                    ActivityCoachResolutionStatus
+                                    .FAILED,
+                                }
+                            ):
 
-                                    st.session_state[
-                                        "activity_coach_refresh_requested"
-                                    ] = True
-
-                                    _show_activity_coach_narrative(
-                                        resolution
-                                        .interpretation
-                                        .narrative
+                                st.warning(
+                                    _training_coach_error_message(
+                                        resolution.error_code
                                     )
-
-                                elif (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .IN_PROGRESS
-                                ):
-
-                                    st.warning(
-                                        "An interpretation for this "
-                                        "activity is already being "
-                                        "generated. Please wait."
-                                    )
-
-                                elif (
-                                    resolution.status
-                                    is ActivityCoachResolutionStatus
-                                    .LIMIT_REACHED
-                                ):
-
-                                    st.warning(
-                                        _training_coach_limit_message(
-                                            resolution.error_code
-                                        )
-                                    )
-
-                                elif (
-                                    resolution.status
-                                    in {
-                                        ActivityCoachResolutionStatus
-                                        .UNAVAILABLE,
-                                        ActivityCoachResolutionStatus
-                                        .FAILED,
-                                    }
-                                ):
-
-                                    st.warning(
-                                        _training_coach_error_message(
-                                            resolution.error_code
-                                        )
-                                    )
-                # ==============================================
-                # Additional athlete information
-                # ==============================================
-
+                                )
+            with st.container(height=308, border=True, key="activities_bottom_slot"):
                 if selected_workout is not None:
 
                     with st.container(
-                        border=True,
+                        border=False,
                         key="activity_coach_notes",
                     ):
 
@@ -2318,7 +2299,7 @@ def show_activities_page(
                                 "soreness, how the session felt, or "
                                 "VO2max: 52.4 ."
                             ),
-                            height=72,
+                            height=160,
                             label_visibility="collapsed",
                             key=notes_key,
                         )
@@ -2341,7 +2322,8 @@ def show_activities_page(
                                 "state_key": notes_key,
                             },
                         )
-            _show_activity_summary(all_activities, reference_day=today)
+                else:
+                    _show_activity_summary(all_activities, reference_day=today)
 
 
     return athlete_changed
