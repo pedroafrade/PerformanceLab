@@ -512,3 +512,34 @@ continuamente com o relógio.
   exportação e eliminação. Não ativar antes de concluir essas integrações.
 - Falhas devolvem estados estáveis sem expor exceções, credenciais ou contexto.
   A interface poderá continuar a mostrar orientação local de Today nesses estados.
+
+### Adaptador Gemini Daily Brief — conjunto seguinte
+
+- Coordenador: pytest, commit e push confirmados pelo utilizador.
+- Adicionar projeção específica para envio ao fornecedor: atividades dos últimos
+  42 dias, relatos dos últimos 28 dias, prescrições da semana atual até aos
+  próximos 14 dias e resumo semanal das fases restantes. São limites técnicos
+  de contexto, não novas fórmulas fisiológicas nem avaliação clínica.
+- Limitar número de registos, tamanho do texto e tamanho total do pedido;
+  explicitar omissões. Não enviar identificadores, ficheiros originais, sensores
+  brutos, nome do atleta ou histórico integral. Notas livres podem conter dados
+  pessoais; esta seleção não é uma garantia de anonimização.
+- Preservar datas, unidades e escala 0–10 do feedback. Relatos sem data ou antigos
+  ficam fora do pedido; não concluir que sintomas estão ativos ou resolvidos.
+- Separar instruções do sistema dos dados não confiáveis. O texto deverá ser
+  curto, distinguir planeado de realizado e não inventar métricas, diagnósticos
+  ou prescrições de reabilitação. Validar formato, tamanho e término da resposta.
+- Reutilizar o modelo Gemini configurado por defeito em Activities. Aplicar
+  timeout HTTP de 60 segundos e uma única tentativa, sem retries automáticos.
+  Referência SDK: https://googleapis.github.io/python-genai/ . A configuração e
+  serialização são verificadas com SDK real e transporte HTTP simulado.
+- Exigir callback de registo de utilização; registar apenas modelo, estado e
+  contagens de tokens, nunca prompts ou respostas. Valores desconhecidos ficam
+  desconhecidos, não zero. Falha de registo impede devolver o comentário.
+- Nenhuma chamada real foi feita na validação. O adaptador não está ligado ao
+  login/Dashboard e não deve ser chamado fora do coordenador com quota atómica.
+- Ainda faltam métricas calculadas e correspondência de sessões realizadas,
+  integração da quota e registo reais, armazenamento configurado, fuso persistente,
+  retirada de consentimento, exportação/eliminação e interface. Só depois ativar
+  a geração automática. O estado clínico do texto não é validado por testes de
+  formato; validar também cenários de relatos adversariais antes da ativação.
