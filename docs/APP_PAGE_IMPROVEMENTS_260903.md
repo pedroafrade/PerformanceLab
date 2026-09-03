@@ -491,3 +491,24 @@ continuamente com o relógio.
   de ativação. O repositório não executa migrações automaticamente.
 - Próxima etapa: integrar armazenamento, exportação/eliminação, fuso horário e
   coordenador com consentimento Training Coach unificado, antes da geração real.
+
+### Coordenador Daily Brief — conjunto seguinte
+
+- Armazenamento e reservas: pytest, commit e push confirmados pelo utilizador.
+- Adicionar coordenador que verifica autorização de proprietário e consentimento
+  Training Coach unificado, carrega contexto, reutiliza cache e obtém reserva.
+- Exigir ativação booleana explícita e adaptadores de geração e quota configurados.
+  Um pedido em cache não consome quota nem volta a chamar o gerador.
+- Recarregar contexto antes da geração e antes da gravação; descartar resultado
+  se o plano/dados mudarem, se o dia local mudar, se a autorização for retirada
+  ou se a reserva expirar.
+- O gerador injetado recebe contexto interno, não um prompt pronto. O adaptador
+  Gemini terá de minimizar os dados, aplicar limites/regras, controlar timeout
+  inferior à duração da reserva e registar utilização.
+- Os testes usam armazenamento SQL real e gerador simulado; nenhuma chamada ao
+  fornecedor. O coordenador ainda não é chamado pelo login ou Dashboard.
+- Ainda faltam integração com a quota real, adaptador Gemini, fuso persistente,
+  configuração do armazenamento e ligação dos fluxos de retirada de consentimento,
+  exportação e eliminação. Não ativar antes de concluir essas integrações.
+- Falhas devolvem estados estáveis sem expor exceções, credenciais ou contexto.
+  A interface poderá continuar a mostrar orientação local de Today nesses estados.

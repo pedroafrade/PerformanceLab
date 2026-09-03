@@ -105,6 +105,21 @@ class DailyBriefStore:
             & (daily_briefs.c.lease_until > _now(now))
         )
 
+    def is_active(self, lease: BriefLease, *, now: datetime) -> bool:
+        """Recheck the token just before dispatch; this does not extend its life."""
+        with self._engine.connect() as connection:
+            return connection.execute(select(daily_briefs.c.lease_token).where(
+                self._active_lease(lease, now),
+            )).scalar_one_or_none() is not None
+
+    def release(self, lease: BriefLease, *, now: datetime) -> bool:
+        """Release this still-valid token without affecting a replacement worker."""
+        with self._engine.begin() as connection:
+            result = connection.execute(update(daily_briefs).where(
+                self._active_lease(lease, now),
+            ).values(lease_key=None, lease_token=None, lease_until=None))
+            return result.rowcount == 1
+
     def complete(self, lease: BriefLease, *, narrative: str, reason: str,
                  now: datetime) -> bool:
         """Commit only a still-valid lease; a late/stale worker cannot overwrite."""
