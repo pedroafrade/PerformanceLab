@@ -588,16 +588,20 @@ def show_planning_card(
 The navigation columns contain only these tertiary buttons.
 Their height matches the 29 px day markers.
 */
-div[data-testid="stButton"] > button[kind="tertiary"] {
-    min-height: 25px;
-    height: 25px;
+.st-key-planning_window_previous button,
+.st-key-planning_window_next button {
+    min-height: 50px;
+    height: 50px;
+    margin-top: 6px;
     padding: 0;
     border: 0;
     background: transparent;
     box-shadow: none;
-    font-size: 1.35rem;
+    font-size: 2.7rem;
     line-height: 1;
 }
+.st-key-planning_window_previous button p,
+.st-key-planning_window_next button p {font-size:2.7rem;line-height:1;}
 
 div[data-testid="stButton"] > button[kind="tertiary"]:hover,
 div[data-testid="stButton"] > button[kind="tertiary"]:focus,
@@ -714,23 +718,24 @@ div[class*="st-key-weekly_plan_selector_"] {{
         )
     )
 
-    if timeline_html:
+    with st.columns([0.45, 7, 0.45], gap=None)[1]:
+        if timeline_html:
 
-        st.markdown(
-            timeline_html,
-            unsafe_allow_html=True,
+            st.markdown(
+                timeline_html,
+                unsafe_allow_html=True,
+            )
+
+        selected_date = st.segmented_control(
+            "Workout details",
+            options=tuple(day_by_date),
+            default=selected_date,
+            required=True,
+            format_func=lambda day: str(day.day),
+            key=selector_key,
+            label_visibility="collapsed",
+            width="stretch",
         )
-
-    selected_date = st.segmented_control(
-        "Workout details",
-        options=tuple(day_by_date),
-        default=selected_date,
-        required=True,
-        format_func=lambda day: str(day.day),
-        key=selector_key,
-        label_visibility="collapsed",
-        width="stretch",
-    )
 
     selected_day = day_by_date.get(
         selected_date
@@ -738,6 +743,7 @@ div[class*="st-key-weekly_plan_selector_"] {{
     
     columns = st.columns(
         [
+            0.45,
             1,
             1,
             1,
@@ -745,11 +751,16 @@ div[class*="st-key-weekly_plan_selector_"] {{
             1,
             1,
             1,
+            0.45,
         ],
         gap=None,
     )
 
-    day_columns = columns
+    day_columns = columns[1:-1]
+    with columns[0]:
+        _show_previous_button()
+    with columns[-1]:
+        _show_next_button()
 
     for column, day in zip(
         day_columns,
@@ -803,11 +814,6 @@ div[class*="st-key-weekly_plan_selector_"] {{
                 unsafe_allow_html=True,
             )
 
-    previous_column, next_column = st.columns(2, gap="small")
-    with previous_column:
-        _show_previous_button()
-    with next_column:
-        _show_next_button()
 
     selected_description = (
         _selected_day_description(

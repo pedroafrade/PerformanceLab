@@ -865,12 +865,14 @@ def _activity_row_html(
         "</div>"
     )
 
-_SUMMARY_PERIODS = ("All time", "1 year", "6 months", "1 month")
+_SUMMARY_PERIODS = ("All time", "1 year", "6 months", "1 month", "This year")
 
 
 def _summary_start_date(period, *, reference_day):
     if period == "All time":
         return None
+    if period == "This year":
+        return date(reference_day.year, 1, 1)
     months = {"1 year": 12, "6 months": 6, "1 month": 1}[period]
     year, month_index = divmod(reference_day.year * 12 + reference_day.month - 1 - months, 12)
     month = month_index + 1

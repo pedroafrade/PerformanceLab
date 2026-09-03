@@ -34,8 +34,9 @@ def test_dashboard_card_heights_and_scroll_are_native():
                and isinstance(n.func, ast.Name) and n.func.id == "dashboard_widget"
                for k in n.keywords if k.arg == "height"]
     assert heights == []
-    assert "40dvh" in source and "100dvh" in source
-    assert "overflow-y:auto" in source
+    widget = (ROOT / "dashboard/widget.py").read_text(encoding="utf-8")
+    assert 'container_options["height"] = 360' in widget
+    assert 'container_options["height"] = 380' in widget
     assert "padding-top: 4.75rem" in source
     assert "overflow:hidden" not in source and "overflow: hidden" not in source
     assert "padding-bottom: 1.25rem" in source

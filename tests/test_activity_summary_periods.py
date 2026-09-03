@@ -19,7 +19,7 @@ def load_summary(st=None):
     nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in names]
     scope = {"date": date, "datetime": datetime, "timedelta": timedelta,
              "monthrange": monthrange, "st": st,
-             "_SUMMARY_PERIODS": ("All time", "1 year", "6 months", "1 month"),
+             "_SUMMARY_PERIODS": ("All time", "1 year", "6 months", "1 month", "This year"),
              "format_duration": lambda v: "—" if v is None else str(v),
              "format_distance": lambda v: "—" if v is None else f"{v:.2f} km",
              "format_elevation": lambda v: "—" if v is None else f"{v:.0f} m"}
@@ -34,6 +34,8 @@ def activity(day, sport="Running", duration=timedelta(hours=1), distance=10, ele
 
 @pytest.mark.parametrize("period,reference,expected", [
     ("All time", date(2026, 9, 3), None),
+    ("This year", date(2026, 9, 3), date(2026, 1, 1)),
+    ("This year", date(2024, 2, 29), date(2024, 1, 1)),
     ("1 month", date(2026, 9, 3), date(2026, 8, 3)),
     ("6 months", date(2026, 9, 3), date(2026, 3, 3)),
     ("1 year", date(2026, 9, 3), date(2025, 9, 3)),
@@ -52,6 +54,9 @@ def test_inclusive_dates_and_future_exclusion():
     select = load_summary()["_summary_activities"]
     assert select(rows, period="1 month", sport=None, reference_day=date(2026, 9, 3)) == tuple(rows[1:3])
     assert select(rows, period="All time", sport=None, reference_day=date(2026, 9, 3)) == tuple(rows[:3])
+    yearly = [activity(date(2025, 12, 31)), activity(date(2026, 1, 1)),
+              activity(date(2026, 9, 3)), activity(date(2026, 9, 4))]
+    assert select(yearly, period="This year", sport=None, reference_day=date(2026, 9, 3)) == tuple(yearly[1:3])
 
 
 def test_global_and_per_sport_totals_without_mutating_rows():

@@ -15,6 +15,7 @@ from performancelab.presentation import (
 )
 
 from .cards import (
+    next_workout_card,
     show_planning_card,
 )
 from .cards.latest_activity_card import (
@@ -62,15 +63,6 @@ def show_dashboard(
     }
     .st-key-dashboard_page .activities-summary-label {font-size:0.6rem;opacity:0.65;}
     .st-key-dashboard_page .activities-summary-value {font-size:0.92rem;font-weight:720;}
-    @media (min-width: 1100px) and (min-height: 850px) {
-        .st-key-dashboard_top_latest,.st-key-dashboard_top_plan,.st-key-dashboard_top_event {
-            height:clamp(330px,40dvh,400px);overflow-y:auto;box-sizing:border-box;
-        }
-        .st-key-dashboard_load,.st-key-dashboard_recovery,.st-key-dashboard_brief,.st-key-dashboard_summary {
-            height:max(290px,calc(100dvh - clamp(330px,40dvh,400px) - 12rem));
-            overflow-y:auto;box-sizing:border-box;
-        }
-    }
     .st-key-dashboard_page .next-workout-steps {gap:0.25rem;}
     .st-key-dashboard_page .next-workout-step {padding:0.28rem 0.35rem;}
     .st-key-dashboard_page .next-workout-context {margin-top:0.4rem;padding-top:0.35rem;}
@@ -154,7 +146,7 @@ def _show_dashboard_content(athlete):
                 next_event,
             )
 
-    load_col, recovery_col, brief_col, summary_col = dashboard_row((1, 1, 2.1, 1.6))
+    load_col, recovery_col, brief_col, workout_col, summary_col = dashboard_row((1, 1, 1.7, 1.6, 1.6))
 
     with load_col:
         with dashboard_widget(title="Training Load", icon=":material/monitoring:",
@@ -178,6 +170,11 @@ def _show_dashboard_content(athlete):
             if next_event is not None:
                 st.caption(f"Next event: {next_event.name} · {next_event.event_date:%d %b %Y}")
             st.caption("This guidance does not change your training plan.")
+
+    with workout_col:
+        with dashboard_widget(title="Next Workout", icon=":material/fitness_center:",
+                              divider=False, key="dashboard_next_workout"):
+            next_workout_card(planning.next_workout)
 
     with summary_col:
         from ..activities_page import _show_activity_summary
