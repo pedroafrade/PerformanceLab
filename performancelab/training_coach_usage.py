@@ -173,9 +173,22 @@ class TrainingCoachUsageEvent:
         )
     )
 
+    # Legacy events belong to manually requested activity interpretations.
+    purpose: str = "activity"
+    prompt_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+
     def __post_init__(
         self,
     ) -> None:
+
+        if self.purpose not in ("activity", "daily_brief"):
+            raise ValueError("Unsupported Training Coach usage purpose.")
+        for name in ("prompt_tokens", "output_tokens", "total_tokens"):
+            object.__setattr__(self, name, _validated_optional_count(
+                getattr(self, name), field_name=name,
+            ))
 
         object.__setattr__(
             self,

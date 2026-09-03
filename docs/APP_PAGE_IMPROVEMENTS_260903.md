@@ -569,3 +569,30 @@ continuamente com o relógio.
 - Sem alterações visuais nem chamadas ao fornecedor. A geração automática
   continua desativada. Próximo conjunto: quota/registo de utilização e métricas
   calculadas, antes da configuração de fuso e ligação final ao login/Dashboard.
+
+### Registo persistente de utilização Daily Brief — conjunto seguinte
+
+- Integração de privacidade: pytest, commit e push confirmados pelo utilizador.
+- Acrescentar finalidade (`activity` ou `daily_brief`) e contagens de tokens de
+  entrada, saída e total ao registo Training Coach existente, sem guardar notas,
+  prompts ou comentários. Não estimar tokens desconhecidos nem custos monetários.
+- Manter compatibilidade de leitura com JSON v1/v2. Novos ficheiros usam v3;
+  registos antigos pertencem a Activities e têm tokens desconhecidos. O modelo
+  mantém os parâmetros posicionais anteriores e valores predefinidos compatíveis.
+- Persistir os mesmos campos em PostgreSQL e incluí-los na exportação de dados.
+  Eliminação e retenção continuam a usar os mecanismos existentes de utilização.
+- Adicionar callback por pedido, associado pelo chamador ao utilizador autorizado
+  e a um usage_id estável. Repetir o mesmo resultado é idempotente; alterar o
+  resultado para o mesmo ID é rejeitado. Dados do fornecedor não escolhem o dono.
+- Migração `20260904_02`, após `20260904_01`: acrescentar quatro colunas e
+  restrições de valores. Registos existentes mantêm-se; finalidade predefinida
+  `activity`, tokens NULL. Aplicar em PostgreSQL de testes antes de usar este código
+  numa instância PostgreSQL e antes de qualquer rollout. JSON local não exige SQL.
+- O downgrade remove os novos metadados, não os registos originais; ponderar esta
+  perda antes de o executar. Nenhuma migração foi executada em bases externas.
+- Validar SQL da migração/downgrade com o dialeto PostgreSQL e convenção de nomes
+  real. Os testes de persistência usam SQLite; PostgreSQL real ainda por validar.
+- A regra atual de quota conta apenas gerações bem-sucedidas e permanece intacta.
+  Este callback regista utilização: NÃO reserva quota e NÃO autoriza pedidos.
+  A reserva atómica partilhada entre Activities e Daily Brief continua pendente,
+  tal como a ligação deste callback ao runtime. Não ativar geração automática.

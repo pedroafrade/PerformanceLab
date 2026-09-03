@@ -389,6 +389,12 @@ def test_export_contains_complete_participant_data():
         "usage_id"
     ] == "usage-event"
 
+    exported_usage = data["training_coach_usage"][0]
+    assert exported_usage["purpose"] == "activity"
+    assert exported_usage["prompt_tokens"] is None
+    assert exported_usage["output_tokens"] is None
+    assert exported_usage["total_tokens"] is None
+
     assert data[
         "athlete"
     ][

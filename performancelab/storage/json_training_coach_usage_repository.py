@@ -159,6 +159,7 @@ class JsonTrainingCoachUsageRepository:
         if version not in (
             1,
             2,
+            3,
         ):
 
             raise ValueError(
@@ -167,6 +168,10 @@ class JsonTrainingCoachUsageRepository:
             )
 
         return TrainingCoachUsageEvent(
+            purpose=data.get("purpose", "activity"),
+            prompt_tokens=data.get("prompt_tokens"),
+            output_tokens=data.get("output_tokens"),
+            total_tokens=data.get("total_tokens"),
             usage_id=data[
                 "usage_id"
             ],
@@ -248,7 +253,11 @@ class JsonTrainingCoachUsageRepository:
             )
 
         data = {
-            "version": 2,
+            "version": 3,
+            "purpose": event.purpose,
+            "prompt_tokens": event.prompt_tokens,
+            "output_tokens": event.output_tokens,
+            "total_tokens": event.total_tokens,
             "usage_id": event.usage_id,
             "user_id": event.user_id,
             "occurred_at": (

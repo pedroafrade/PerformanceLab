@@ -309,6 +309,10 @@ def test_training_coach_usage_contains_no_payload():
         "latency_ms",
         "remaining_user_requests",
         "remaining_global_requests",
+        "purpose",
+        "prompt_tokens",
+        "output_tokens",
+        "total_tokens",
     )
 
     assert primary_key_names(

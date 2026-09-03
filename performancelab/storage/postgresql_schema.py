@@ -383,6 +383,14 @@ training_coach_usage = Table(
         "status IN ('generated', 'failed')",
         name="status",
     ),
+    Column("purpose", String(20), nullable=False, server_default="activity"),
+    Column("prompt_tokens", Integer),
+    Column("output_tokens", Integer),
+    Column("total_tokens", Integer),
+    CheckConstraint("purpose IN ('activity', 'daily_brief')", name="purpose"),
+    CheckConstraint("prompt_tokens IS NULL OR prompt_tokens >= 0", name="prompt_tokens_nonnegative"),
+    CheckConstraint("output_tokens IS NULL OR output_tokens >= 0", name="output_tokens_nonnegative"),
+    CheckConstraint("total_tokens IS NULL OR total_tokens >= 0", name="total_tokens_nonnegative"),
 )
 
 alpha_participation_consents = Table(

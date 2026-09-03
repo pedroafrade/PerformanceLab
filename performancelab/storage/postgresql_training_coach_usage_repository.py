@@ -124,6 +124,10 @@ class PostgreSQLTrainingCoachUsageRepository:
     ) -> TrainingCoachUsageEvent:
 
         return TrainingCoachUsageEvent(
+            purpose=row["purpose"],
+            prompt_tokens=row["prompt_tokens"],
+            output_tokens=row["output_tokens"],
+            total_tokens=row["total_tokens"],
             usage_id=row[
                 "usage_id"
             ],
@@ -216,6 +220,10 @@ class PostgreSQLTrainingCoachUsageRepository:
                 training_coach_usage
             ).values(
                 usage_id=event.usage_id,
+                purpose=event.purpose,
+                prompt_tokens=event.prompt_tokens,
+                output_tokens=event.output_tokens,
+                total_tokens=event.total_tokens,
                 user_id=event.user_id,
                 occurred_at=(
                     event.occurred_at

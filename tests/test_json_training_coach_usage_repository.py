@@ -291,7 +291,7 @@ def test_saves_operational_metadata(
         )
     )
 
-    assert saved_data["version"] == 2
+    assert saved_data["version"] == 3
 
     assert (
         saved_data["provider"]

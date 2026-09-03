@@ -327,6 +327,10 @@ class ExportParticipantData:
             "training_coach_usage": [
                 {
                     "usage_id": event.usage_id,
+                    "purpose": event.purpose,
+                    "prompt_tokens": event.prompt_tokens,
+                    "output_tokens": event.output_tokens,
+                    "total_tokens": event.total_tokens,
                     "user_id": event.user_id,
                     "occurred_at": (
                         event.occurred_at
