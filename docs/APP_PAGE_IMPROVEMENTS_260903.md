@@ -1,7 +1,7 @@
 # PerformanceLab — Plano de melhorias das páginas
 
 **Criado em:** 3 de setembro de 2026  
-**Estado:** alterações planeadas — implementação pendente  
+**Estado:** implementação por etapas; consultar o registo de progresso abaixo  
 **Destino no repositório:** `docs/APP_PAGE_IMPROVEMENTS_260903.md`
 
 ## 1. Objetivo e âmbito
@@ -13,8 +13,9 @@ Este documento complementa, mas não substitui nem atualiza,
 `ROADMAP_PUBLIC_UI_260825.md`. Não altera os requisitos de segurança,
 privacidade, deployment ou convite da alpha.
 
-Todos os itens abaixo estão pendentes. A sua descrição representa o resultado
-pretendido, não uma confirmação do comportamento atual do código.
+As listas originais descrevem o resultado pretendido. As caixas ainda não
+reconciliadas não significam que todas as alterações continuem por implementar.
+O registo de progresso distingue confirmação do utilizador de trabalho em curso.
 
 ## 2. Regras comuns
 
@@ -375,8 +376,9 @@ continuamente com o relógio.
 ### DBR-04 — Integração de interface pendente
 
 - Dashboard, segunda linha: Training Load, Estimated Recovery, Daily Brief,
-  Activities Summary (reutilizado de Activities).
-- Retirar Physiology, Performance Status e Next Workout desta composição.
+  Next Workout, Activities Summary (reutilizado de Activities).
+- Retirar Physiology e Performance Status desta composição. Next Workout foi
+  recuperado por decisão posterior do utilizador e deve ser preservado.
 - Corrigir corte superior e ajustar as alturas à janela, mantendo conteúdo
   longo acessível e fluxo normal no móvel.
 - Alinhar timeline, selector de dias e sessões de Weekly Plan pela mesma largura.
@@ -403,3 +405,25 @@ continuamente com o relógio.
   até confirmação do utilizador.
 - Antes de implementar, definir e testar as regras de equivalência e as suas
   limitações. Não inventar factores universais de conversão.
+
+## 13. Registo de progresso e próximo conjunto
+
+- Dashboard compacto e All Running: commit `c53f570`; testes e apresentação
+  confirmados pelo utilizador. Documento publicado em `3ffc5fc`.
+- Correção de Weekly Plan neste conjunto: impedir compressão dos blocos dentro
+  do cartão de altura fixa, remover margem negativa do selector e separar a
+  descrição inferior. Validar visualmente textos longos, seleção de dias,
+  navegação, móvel e ambos os temas antes de marcar como concluído.
+- DBR-01/DBR-02, etapa inicial: módulo puro de decisão, sem ligação ao login ou
+  fornecedor. Inclui chave por atleta/dia local/fuso/contexto, consentimento
+  automático versionado, reutilização, invalidação e respeito por backoff.
+- O fingerprint recebe projeções mínimas de dados relevantes. O adaptador de
+  domínio que selecionará esses dados ainda está por implementar; não passar
+  objetos completos do atleta, segredos ou valores transitórios.
+- A decisão de gerar representa apenas elegibilidade. Ainda faltam consentimento
+  persistente em Settings, contexto de domínio, armazenamento e reserva atómica,
+  quotas, geração, exportação/eliminação e integração na interface. Não ativar a
+  geração automática antes de concluir e testar estas salvaguardas.
+- Daily Brief continua a apresentar a orientação local de Today nesta etapa.
+- Próximo conjunto: adaptar contexto e persistência à arquitetura existente,
+  incluindo testes de isolamento entre atletas e concorrência.

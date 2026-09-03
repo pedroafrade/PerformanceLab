@@ -568,8 +568,8 @@ def show_planning_card(
 }
 
 .weekly-plan-next {
-    margin-top: 0;
-    padding-top: 3px;
+    margin-top: 8px;
+    padding-top: 6px;
     overflow: visible;
     overflow-wrap: anywhere;
     border-top: 1px solid rgba(128, 128, 128, 0.30);
@@ -612,7 +612,18 @@ div[data-testid="stButton"] > button[kind="tertiary"]:active {
 }
 
 div[class*="st-key-weekly_plan_selector_"] {
-    margin-bottom: -8px;
+    margin-bottom: 0;
+}
+
+/* A fixed-height dashboard card must scroll, not shrink its content rows.
+   In particular, multiline day details must contribute their full height
+   before the selected workout description starts. */
+.st-key-dashboard_top_plan [data-testid="stVerticalBlock"] > *,
+.st-key-dashboard_top_plan > * {
+    flex-shrink: 0 !important;
+}
+.st-key-dashboard_top_plan [data-testid="stMarkdownContainer"] {
+    overflow: visible;
 }
 
 div[class*="st-key-weekly_plan_selector_"] button {
@@ -661,10 +672,6 @@ div[class*="st-key-weekly_plan_selector_"] {{
             """,
             unsafe_allow_html=True,
         )
-
-    days = tuple(
-        planning.weekly_plan.days
-    )
 
     days = tuple(
         planning.weekly_plan.days
