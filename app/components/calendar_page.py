@@ -77,6 +77,20 @@ def _calendar_item_label(
     return item.title
 
 
+def _calendar_session_class(item) -> str:
+    """Match explicit planned-session names; do not infer type from intensity."""
+    if item.kind != "planned":
+        return ""
+    title = " ".join(str(item.title or "").casefold().replace("_", " ").replace("-", " ").split())
+    groups = {
+        "easy": {"easy run", "easy runs", "shakeout", "shakeouts", "shakeout run", "shakeout runs"},
+        "tempo": {"tempo", "tempo run", "tempo runs", "interval", "intervals", "interval run", "interval runs", "lt2 run"},
+        "hills": {"hill", "hills", "hill run", "hill runs", "hill reps", "hill repeats"},
+        "long": {"long run", "long runs"},
+    }
+    return "session-" + next((group for group, titles in groups.items() if title in titles), "other")
+
+
 def _phase_label(
     calendar_day,
 ) -> str | None:
@@ -229,7 +243,8 @@ def _calendar_html(
                     (
                         '<div class="training-calendar-item '
                         f'{escape(item.kind)} '
-                        f'status-{escape(status_class)}">'
+                        f'status-{escape(status_class)} {_calendar_session_class(item)}" '
+                        f'title="{escape(item.title)} — {escape(status_class)}">'
                         '<span class="training-calendar-item-title">'
                         f"{label}"
                         "</span>"
@@ -736,8 +751,8 @@ def _calendar_styles() -> None:
         }
 
         .training-calendar-item.planned {
-            border-color: #4f86f7;
-            background: transparent;
+            border-color: #87909b;
+            background: rgba(160, 160, 160, 0.14);
         }
 
         .training-calendar-item.completed {
@@ -752,9 +767,14 @@ def _calendar_styles() -> None:
         }
 
         .training-calendar-item.status-missed {
-            border-color: #d28b27;
-            background: transparent;
+            border-left-style: dotted;
         }
+
+        .training-calendar-item.planned.session-easy { border-color: #8bcf91; }
+        .training-calendar-item.planned.session-tempo { border-color: #e4b932; }
+        .training-calendar-item.planned.session-hills { border-color: #287342; }
+        .training-calendar-item.planned.session-long { border-color: #a078cf; }
+        .training-calendar-item.planned.session-other { border-color: #87909b; }
 
         .training-calendar-item.status-substitute,
         .training-calendar-item.status-modified {
@@ -782,8 +802,12 @@ def _calendar_styles() -> None:
         }
 
         .training-calendar-legend .planned::before {
-            background: #4f86f7;
+            background: #87909b;
         }
+        .training-calendar-legend .session-easy::before { background: #8bcf91; }
+        .training-calendar-legend .session-tempo::before { background: #e4b932; }
+        .training-calendar-legend .session-hills::before { background: #287342; }
+        .training-calendar-legend .session-long::before { background: #a078cf; }
 
         .training-calendar-legend .completed::before {
             background: #39a96b;
@@ -1206,7 +1230,11 @@ def show_calendar_page(
     st.markdown(
         """
         <div class="training-calendar-legend">
-            <span class="planned">Planned workout</span>
+            <span class="session-easy">Easy / Shakeout</span>
+            <span class="session-tempo">Tempo / Intervals</span>
+            <span class="session-hills">Hills</span>
+            <span class="session-long">Long run</span>
+            <span class="planned">Other planned workout</span>
             <span class="completed">Completed activity</span>
             <span class="event">Event</span>
         </div>

@@ -3238,9 +3238,10 @@ def _compact_plan_layout_styles(
             .st-key-plan_summary_cards .plan-sidebar-stack {
                 flex: 1 0 auto;
                 gap: 0.5rem;
+                justify-content: space-between;
             }
             .st-key-plan_summary_cards .plan-sidebar-card { flex-shrink: 0; padding: 0.65rem; }
-            .st-key-plan_summary_cards .plan-sidebar-card:last-child { margin-top: auto; }
+            .st-key-plan_summary_cards .plan-sidebar-card:last-child { margin-top: 0; }
             .st-key-plan_summary_cards .plan-sidebar-heading { margin-bottom: 0.45rem; }
             .st-key-plan_summary_cards .plan-sidebar-phase-name { font-size: 1.35rem; margin-bottom: 0.25rem; }
             .st-key-plan_summary_cards .plan-sidebar-date-range,
@@ -3261,6 +3262,14 @@ def _compact_plan_layout_styles(
                 overflow: visible !important;
             }
         }
+
+        .plan-overview {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+        .plan-overview > * { flex-shrink: 0; }
+        .plan-overview .weekly-phase-timeline { margin: 0; }
 
         .plan-page-header {
             margin: 0 0 0.45rem 0;
@@ -3990,18 +3999,6 @@ def show_plan_page(
             )
         )
 
-        if timeline_html:
-
-            st.markdown(
-                (
-                    "<style>"
-                    + phase_timeline_styles()
-                    + "</style>"
-                    + timeline_html
-                ),
-                unsafe_allow_html=True,
-            )
-
         summary_html = (
             summary_cards_html(
                 (
@@ -4029,14 +4026,9 @@ def show_plan_page(
             )
         )
 
-        st.markdown(
-            (
-                "<style>"
-                + summary_cards_styles()
-                + "</style>"
-                + summary_html
-            ),
-            unsafe_allow_html=True,
+        st.html(
+            "<style>" + phase_timeline_styles() + summary_cards_styles() + "</style>"
+            + '<div class="plan-overview">' + (timeline_html or "") + summary_html + '</div>'
         )
 
         st.markdown(

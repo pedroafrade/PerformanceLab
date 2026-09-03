@@ -52,7 +52,8 @@ def test_scroll_sizing_and_card_alignment_are_desktop_only():
     assert "calc(100dvh - 44rem)" in desktop
     assert "overflow-y: auto" in desktop
     assert "align-items: stretch" in desktop
-    assert ".plan-sidebar-card:last-child { margin-top: auto; }" in desktop
+    assert "justify-content: space-between;" in desktop
+    assert ".plan-sidebar-card:last-child { margin-top: 0; }" in desktop
     assert "flex-shrink: 0" in desktop
     assert "overflow: hidden" not in desktop
     mobile = css.split("@media (max-width: 1099px)", 1)[1].split(".plan-page-header", 1)[0]
