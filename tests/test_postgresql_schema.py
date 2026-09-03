@@ -20,6 +20,7 @@ from performancelab.storage.postgresql_schema import (
     alpha_invitations,
     alpha_participation_consents,
     athlete_snapshots,
+    daily_briefs,
     athletes,
     external_identities,
     metadata,
@@ -65,6 +66,7 @@ def test_defines_expected_postgresql_tables():
         "training_coach_usage",
         "alpha_participation_consents",
         "athlete_snapshots",
+        "daily_briefs",
     }
 
     assert tuple(
@@ -79,6 +81,7 @@ def test_defines_expected_postgresql_tables():
         training_coach_usage,
         alpha_participation_consents,
         athlete_snapshots,
+        daily_briefs,
     )
 
 

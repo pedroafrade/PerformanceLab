@@ -465,3 +465,29 @@ continuamente com o relógio.
 - Não alterar fórmulas, planos ou dados do atleta. A interface permanece igual
   e a geração automática continua desativada nesta etapa.
 - Validar este conjunto com pytest completo antes de registar a conclusão.
+
+### Armazenamento Daily Brief e reservas — conjunto seguinte
+
+- Contexto de domínio: pytest, commit e push confirmados pelo utilizador.
+- Adicionar tabela SQL diária e repositório de operações transacionais curtas,
+  compatíveis com PostgreSQL e SQLite. Não ligar ainda à aplicação nem ao fornecedor.
+- Guardar o último comentário concluído por utilizador/atleta, com chave de
+  contexto, dia, fuso, data de geração e motivo. Trata-se de cache do último
+  comentário, não de um arquivo ilimitado de todos os dias.
+- Reservar atomicamente um pedido por utilizador/atleta, incluindo quando o
+  contexto muda durante uma geração. Uma reserva válida bloqueia concorrentes.
+- Usar token e prazo da reserva para rejeitar resultados atrasados; respeitar
+  backoff após falhas, mesmo se entretanto mudar o contexto.
+- Disponibilizar operações de cancelamento, exportação sem tokens e eliminação.
+  A ligação destas operações aos fluxos da aplicação ainda falta; não ativar
+  geração antes dessa integração e das verificações de consentimento e quota.
+- A migração PostgreSQL adiciona a tabela, com eliminação em cascata quando o
+  utilizador ou atleta é eliminado. Não modifica os dados de treinos existentes.
+- Uma reserva expirada permite recuperar de processos interrompidos, mas não
+  garante faturação externa exatamente uma vez após um timeout de resultado
+  incerto. O coordenador deverá tratar essas situações conservadoramente.
+- Testes funcionais de concorrência e persistência em SQLite; esquema e SQL
+  compilados para PostgreSQL. Validar migração na base de testes PostgreSQL antes
+  de ativação. O repositório não executa migrações automaticamente.
+- Próxima etapa: integrar armazenamento, exportação/eliminação, fuso horário e
+  coordenador com consentimento Training Coach unificado, antes da geração real.

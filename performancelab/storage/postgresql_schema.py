@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     MetaData,
     String,
     Table,
@@ -459,6 +460,21 @@ athlete_snapshots = Table(
 )
 
 
+daily_briefs = Table(
+    "daily_briefs", metadata,
+    Column("user_id", String(36), ForeignKey("users.user_id", ondelete="CASCADE",
+                                           name="fk_daily_briefs_user"), primary_key=True),
+    Column("athlete_id", String(36), ForeignKey("athletes.athlete_id", ondelete="CASCADE",
+                                              name="fk_daily_briefs_athlete"), primary_key=True),
+    Column("saved_key", String(64)),
+    Column("saved_payload", JSON),
+    Column("lease_key", String(64)),
+    Column("lease_token", String(36)),
+    Column("lease_until", DateTime(timezone=True)),
+    Column("retry_after", DateTime(timezone=True)),
+)
+
+
 POSTGRESQL_TABLES = (
     athletes,
     users,
@@ -469,4 +485,5 @@ POSTGRESQL_TABLES = (
     training_coach_usage,
     alpha_participation_consents,
     athlete_snapshots,
+    daily_briefs,
 )
