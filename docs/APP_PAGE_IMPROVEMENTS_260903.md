@@ -444,3 +444,24 @@ continuamente com o relógio.
   e só aceita um registo ativo pertencente ao utilizador autenticado.
 - Este conjunto ainda não ativa geração automática nem envia dados ao fornecedor.
   Testes completos e confirmação visual permanecem por validar pelo utilizador.
+
+### Contexto de domínio Daily Brief — conjunto seguinte
+
+- Consentimento unificado: pytest, commit, push e apresentação confirmados pelo
+  utilizador. Mantém-se uma única autorização Training Coach.
+- Adicionar uma projeção de leitura dos campos reais de Athlete, Workout,
+  PlannedWorkout, objetivos, provas, disponibilidade, preferências e restrições.
+- Capturar a semana atual e o restante plano, incluindo alterações de prescrição
+  e identificação da regeneração. Preservar as doses históricas de atividade
+  para detetar alterações que possam afetar o estado calculado.
+- Manter relatos de Additional Information separados, com a data da atividade,
+  origem e estado não verificado. A data de escrita da nota e o estado atual do
+  sintoma são desconhecidos quando não existem no modelo; não os inventar.
+- Excluir nome, data de nascimento, credenciais, ficheiros originais, sensores
+  brutos, filtros e valores de recuperação que variam apenas com o relógio.
+- A projeção é contexto interno para invalidação, não um prompt pronto a enviar.
+  Ainda faltam seleção/limites do contexto enviado, integração das métricas
+  calculadas, armazenamento/reserva atómica e geração pelo fornecedor.
+- Não alterar fórmulas, planos ou dados do atleta. A interface permanece igual
+  e a geração automática continua desativada nesta etapa.
+- Validar este conjunto com pytest completo antes de registar a conclusão.
