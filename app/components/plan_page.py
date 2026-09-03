@@ -3205,6 +3205,63 @@ def _compact_plan_layout_styles(
             padding-bottom: 0 !important;
         }
 
+        /* Scope sizing to Plan; never change the application sidebar. */
+        @media (min-width: 1100px) {
+            .st-key-plan_page_columns [data-testid="stHorizontalBlock"]:has(.st-key-plan_weeks_scroll) {
+                align-items: stretch;
+            }
+            .st-key-plan_page_columns [data-testid="stHorizontalBlock"]:has(.st-key-plan_weeks_scroll)
+            > [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+                height: 100%;
+                gap: 0.4rem;
+            }
+            .st-key-plan_page_columns [data-testid="stLayoutWrapper"] {
+                flex-shrink: 0;
+            }
+            .st-key-plan_weeks_scroll {
+                height: clamp(8rem, calc(100dvh - 44rem), 18rem) !important;
+                min-height: 8rem;
+                overflow-y: auto;
+                scrollbar-gutter: stable;
+            }
+            .st-key-plan_page_columns [data-testid="stLayoutWrapper"]:has(> .st-key-plan_weeks_scroll) {
+                margin-top: auto;
+            }
+            .st-key-plan_page_columns [data-testid="stLayoutWrapper"]:has(> .st-key-plan_summary_cards),
+            .st-key-plan_summary_cards,
+            .st-key-plan_summary_cards [data-testid="stElementContainer"],
+            .st-key-plan_summary_cards [data-testid="stHtml"] {
+                display: flex;
+                flex-direction: column;
+                flex: 1 0 auto;
+            }
+            .st-key-plan_summary_cards .plan-sidebar-stack {
+                flex: 1 0 auto;
+                gap: 0.5rem;
+            }
+            .st-key-plan_summary_cards .plan-sidebar-card { flex-shrink: 0; padding: 0.65rem; }
+            .st-key-plan_summary_cards .plan-sidebar-card:last-child { margin-top: auto; }
+            .st-key-plan_summary_cards .plan-sidebar-heading { margin-bottom: 0.45rem; }
+            .st-key-plan_summary_cards .plan-sidebar-phase-name { font-size: 1.35rem; margin-bottom: 0.25rem; }
+            .st-key-plan_summary_cards .plan-sidebar-date-range,
+            .st-key-plan_summary_cards .plan-sidebar-week-phase,
+            .st-key-plan_summary_cards .plan-sidebar-week-summary { margin-bottom: 0.4rem; }
+            .st-key-plan_summary_cards .plan-sidebar-divider { margin: 0.45rem 0; }
+            .st-key-plan_summary_cards .plan-sidebar-phase-metrics { gap: 0.3rem; }
+            .st-key-plan_summary_cards .plan-sidebar-phase-metric { padding: 0.3rem 0.4rem; }
+            .st-key-plan_summary_cards .plan-sidebar-week-range { font-size: 1.15rem; }
+            .st-key-plan_summary_cards .plan-sidebar-session { min-height: 1.75rem; padding: 0.25rem 0.4rem; }
+            .st-key-plan_summary_cards .plan-sidebar-adaptation-context { margin-bottom: 0.4rem; }
+            .st-key-plan_summary_cards .plan-sidebar-adaptation-column { padding: 0.35rem; }
+        }
+        @media (max-width: 1099px) {
+            .st-key-plan_weeks_scroll {
+                height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+
         .plan-page-header {
             margin: 0 0 0.45rem 0;
             padding: 0;
@@ -3841,6 +3898,17 @@ def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
         )
 
 
+def _show_plan_weeks(plan, *, reference_day: date) -> None:
+    """Keep every week and expanded details inside one scrollable region."""
+    with st.container(height=220, border=True, key="plan_weeks_scroll"):
+        for week in plan.weeks:
+            with st.expander(
+                _week_summary_label(week, reference_day=reference_day),
+                expanded=False,
+            ):
+                st.markdown(_week_html(week), unsafe_allow_html=True)
+
+
 def show_plan_page(
     athlete,
     *,
@@ -3863,10 +3931,11 @@ def show_plan_page(
         _plan_header_caption(plan)
     )
 
-    main_column, sidebar_column = st.columns(
-        [3.4, 1],
-        gap="medium",
-    )
+    with st.container(key="plan_page_columns"):
+        main_column, sidebar_column = st.columns(
+            [3.4, 1],
+            gap="medium",
+        )
 
     with sidebar_column:
         _show_plan_actions(plan, athlete, on_generate_plan)
@@ -4034,27 +4103,8 @@ def show_plan_page(
 
         _plan_styles()
 
-        for week in plan.weeks:
+        _show_plan_weeks(plan, reference_day=today)
 
-            label = (
-                _week_summary_label(
-                    week,
-                    reference_day=today,
-                )
-            )
-
-            with st.expander(
-                label,
-                expanded=False,
-            ):
-
-                st.markdown(
-                    _week_html(
-                        week
-                    ),
-                    unsafe_allow_html=True,
-                )
-                
     with sidebar_column:
 
         sidebar_html = (
@@ -4072,12 +4122,5 @@ def show_plan_page(
             + "</div>"
         )
 
-        st.markdown(
-            (
-                "<style>"
-                + _sidebar_styles()
-                + "</style>"
-                + sidebar_html
-            ),
-            unsafe_allow_html=True,
-        )
+        with st.container(key="plan_summary_cards"):
+            st.html("<style>" + _sidebar_styles() + "</style>" + sidebar_html)

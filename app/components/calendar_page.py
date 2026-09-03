@@ -1196,10 +1196,10 @@ def show_calendar_page(
                 st.html(_calendar_html(calendar, selected_day=default_selected_day))
 
         with sidebar_column:
-            _show_calendar_export(athlete, reference_day=today)
             _show_month_navigation(
                 anchor=anchor, previous_month=previous_month, next_month=next_month,
             )
+            _show_calendar_export(athlete, reference_day=today)
             _show_selected_day(calendar, default_day=default_selected_day)
             _show_upcoming_events(athlete=athlete, events=calendar.upcoming_events)
 

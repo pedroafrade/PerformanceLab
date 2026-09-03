@@ -45,14 +45,15 @@ def test_calendar_export_preserves_download_contract(has_plan):
         exporter.assert_not_called()
 
 
-def test_calendar_export_precedes_month_navigation_and_uses_today():
+def test_calendar_export_follows_month_navigation_and_uses_today():
     column = next(n for n in ast.walk(calendar_tree()) if isinstance(n, ast.With)
                   and any(isinstance(i.context_expr, ast.Name)
                           and i.context_expr.id == "sidebar_column" for i in n.items))
     calls = {n.func.id: n for n in ast.walk(column)
              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
     export = calls["_show_calendar_export"]
-    assert export.lineno < calls["_show_month_navigation"].lineno
+    assert calls["_show_month_navigation"].lineno < export.lineno
+    assert export.lineno < calls["_show_selected_day"].lineno
     reference = next(k.value for k in export.keywords if k.arg == "reference_day")
     assert isinstance(reference, ast.Name) and reference.id == "today"
 
