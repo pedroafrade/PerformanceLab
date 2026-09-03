@@ -596,3 +596,34 @@ continuamente com o relógio.
   Este callback regista utilização: NÃO reserva quota e NÃO autoriza pedidos.
   A reserva atómica partilhada entre Activities e Daily Brief continua pendente,
   tal como a ligação deste callback ao runtime. Não ativar geração automática.
+
+### Reserva atómica partilhada Training Coach — conjunto seguinte
+
+- Metadados de utilização e correção do teste de esquema: pytest, commit e push
+  confirmados pelo utilizador.
+- Adicionar armazenamento SQL de admissões partilhadas por Activities e Daily
+  Brief, com limites diários por utilizador e globais. As duas finalidades usam
+  a mesma reserva, não quotas independentes que dupliquem o limite configurado.
+- Serializar a operação curta de leitura/verificação/gravação: advisory lock
+  transacional em PostgreSQL e BEGIN IMMEDIATE em SQLite. Nunca manter o bloqueio
+  durante chamadas ao fornecedor. A tabela não é criada automaticamente.
+- Um request_id autoriza no máximo uma admissão. O mesmo identificador deverá
+  ser usado no usage_id do resultado. Evitar dupla contagem e atribuir pedidos
+  que atravessam meia-noite ao dia UTC da admissão, não ao dia local do comentário.
+- Contar gerações existentes e reservas ainda ocupadas. Uma falha confirmada
+  sem geração liberta capacidade antes de expirar; timeout/resultado incerto
+  mantém a reserva a contar nesse dia. Não libertar automaticamente após cinco
+  minutos: o prazo limita a libertação, não prova ausência de custos externos.
+- Exportar os registos do próprio utilizador, com datas UTC explícitas, estado e
+  finalidade, sem conteúdo de treino. Eliminar na transação de eliminação da
+  conta e por cascata; rollback preserva os registos se a eliminação falhar.
+  Retirar consentimento cancela a geração, mas não apaga quota possivelmente gasta.
+- Migração `20260904_03`, após `20260904_02`. Downgrade perde as reservas e deve
+  ocorrer apenas com geração desativada. Nenhuma migração externa foi executada.
+- Testes de concorrência com ligações/instâncias separadas em SQLite, isolamento,
+  idempotência, expiração, meia-noite, erros e privacidade. SQL da migração compilado
+  para PostgreSQL; testar advisory locks numa base PostgreSQL real antes de ativar.
+- Esta etapa NÃO liga ainda as entradas de geração à quota nova. O controlo só
+  será efetivo quando ambos os fluxos usarem esta admissão. O coordenador Daily
+  Brief continua desativado. Falta ligar também o usage_id e o tratamento de
+  resultados conhecidos/incertos, e integrar limpeza com a política de retenção.

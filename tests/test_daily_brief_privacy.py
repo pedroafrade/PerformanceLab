@@ -14,7 +14,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SQL = run_path(str(Path(__file__).with_name("test_daily_brief_store.py")))
 load, TABLE, NOW = SQL["load"], SQL["TABLE"], SQL["NOW"]
 Privacy = load("performancelab/storage/daily_brief_privacy_repository.py",
-               daily_briefs=TABLE)["DailyBriefPrivacyRepository"]
+               daily_briefs=TABLE,
+               training_coach_quota_reservations=SQL["SCHEMA"]["training_coach_quota_reservations"]
+               )["DailyBriefPrivacyRepository"]
 User = load("performancelab/identity.py")["User"]
 access_model = load("performancelab/athlete_access.py")
 Grant = access_model["AthleteAccessGrant"]

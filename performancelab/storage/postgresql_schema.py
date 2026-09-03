@@ -7,6 +7,7 @@ SQLAlchemy Core metadata for PostgreSQL persistence.
 from sqlalchemy import (
     CheckConstraint,
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -483,6 +484,20 @@ daily_briefs = Table(
 )
 
 
+training_coach_quota_reservations = Table(
+    "training_coach_quota_reservations", metadata,
+    Column("request_id", String(36), primary_key=True),
+    Column("user_id", String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False),
+    Column("utc_day", Date, nullable=False),
+    Column("purpose", String(20), nullable=False),
+    Column("state", String(20), nullable=False),
+    Column("reserved_at", DateTime(timezone=True), nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    CheckConstraint("purpose IN ('activity', 'daily_brief')", name="purpose"),
+    CheckConstraint("state IN ('reserved', 'generated', 'released')", name="state"),
+)
+
+
 POSTGRESQL_TABLES = (
     athletes,
     users,
@@ -494,4 +509,5 @@ POSTGRESQL_TABLES = (
     alpha_participation_consents,
     athlete_snapshots,
     daily_briefs,
+    training_coach_quota_reservations,
 )

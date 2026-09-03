@@ -8,9 +8,10 @@ Database permission/connection errors are not swallowed.
 """
 
 from sqlalchemy import delete, inspect, select, update
+from datetime import timezone
 from sqlalchemy.engine import Connection
 
-from performancelab.storage.postgresql_schema import daily_briefs
+from performancelab.storage.postgresql_schema import daily_briefs, training_coach_quota_reservations
 
 
 def _identity(value):
@@ -19,16 +20,34 @@ def _identity(value):
     return value.strip()
 
 
+def _utc_timestamp(value):
+    # SQLite returns naive SQL timestamps although these records are stored UTC.
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat()
+
+
 class DailyBriefPrivacyRepository:
     def __init__(self, connection: Connection):
         if not isinstance(connection, Connection):
             raise TypeError("A shared SQLAlchemy Connection is required")
         self._connection = connection
 
-    def _exists(self):
+    def _exists(self, table=daily_briefs):
         # Do not cache this result: migrations may run between app sessions.
-        return inspect(self._connection).has_table(daily_briefs.name,
-                                                  schema=daily_briefs.schema)
+        return inspect(self._connection).has_table(table.name, schema=table.schema)
+
+    def export_quota_for_user(self, user_id: str) -> list[dict]:
+        user_id = _identity(user_id)
+        table = training_coach_quota_reservations
+        if not self._exists(table):
+            return []
+        rows = self._connection.execute(select(table).where(table.c.user_id == user_id)
+                                        .order_by(table.c.reserved_at, table.c.request_id)).mappings()
+        return [{"request_id": row["request_id"], "purpose": row["purpose"],
+                 "state": row["state"], "utc_day": row["utc_day"].isoformat(),
+                 "reserved_at": _utc_timestamp(row["reserved_at"]),
+                 "expires_at": _utc_timestamp(row["expires_at"])} for row in rows]
 
     def export_for_user(self, user_id: str, *, athlete_id: str) -> list[dict]:
         user_id, athlete_id = _identity(user_id), _identity(athlete_id)
@@ -53,6 +72,9 @@ class DailyBriefPrivacyRepository:
 
     def delete_for_user(self, user_id: str) -> None:
         user_id = _identity(user_id)
+        table = training_coach_quota_reservations
+        if self._exists(table):
+            self._connection.execute(delete(table).where(table.c.user_id == user_id))
         if self._exists():
             self._connection.execute(delete(daily_briefs).where(
                 daily_briefs.c.user_id == user_id,

@@ -370,6 +370,11 @@ class ExportParticipantData:
             if self._daily_brief_privacy_repository is not None else []
         )
 
+        data["training_coach_quota_reservations"] = (
+            self._daily_brief_privacy_repository.export_quota_for_user(user.user_id)
+            if self._daily_brief_privacy_repository is not None else []
+        )
+
         return ExportParticipantDataResult(
             data=data
         )
