@@ -166,11 +166,16 @@ def _daily_training_load_chart(
 
     bars = (
         base
+        .transform_calculate(Series="'Daily load'")
         .mark_bar(
             opacity=0.42,
             size=4,
         )
         .encode(
+            color=alt.Color("Series:N", title=None,
+                scale=alt.Scale(domain=["Daily load", "7-day average"],
+                                range=["#4f86f7", "#f97316"]),
+                legend=alt.Legend(orient="top", direction="horizontal")),
             y=alt.Y(
                 "Training load:Q",
                 title="Daily load (AU)",
@@ -200,11 +205,16 @@ def _daily_training_load_chart(
 
     rolling_line = (
         base
+        .transform_calculate(Series="'7-day average'")
         .mark_line(
             strokeWidth=2,
             opacity=0.72,
         )
         .encode(
+            color=alt.Color("Series:N", title=None,
+                scale=alt.Scale(domain=["Daily load", "7-day average"],
+                                range=["#4f86f7", "#f97316"]),
+                legend=alt.Legend(orient="top", direction="horizontal")),
             y=alt.Y(
                 "rolling_load:Q",
                 title="Daily load (AU)",
@@ -330,10 +340,12 @@ def _development_load_form_chart(
                     domain=[
                         "Fatigue",
                         "Fitness",
+                        "Form",
                     ],
                     range=[
                         "#ff4b4b",
                         "#4f86f7",
+                        "#7c3aed",
                     ],
                 ),
                 legend=alt.Legend(
@@ -362,11 +374,15 @@ def _development_load_form_chart(
 
     form_line = (
         base
+        .transform_calculate(Metric="'Form'")
         .mark_line(
             strokeWidth=2,
-            color="#7c3aed",
         )
         .encode(
+            color=alt.Color("Metric:N", title=None,
+                scale=alt.Scale(domain=["Fatigue", "Fitness", "Form"],
+                                range=["#ff4b4b", "#4f86f7", "#7c3aed"]),
+                legend=alt.Legend(orient="top", direction="horizontal")),
             y=alt.Y(
                 "Form:Q",
                 title="Form (TSB)",

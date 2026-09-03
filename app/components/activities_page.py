@@ -655,16 +655,21 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.45;
         }
 
-        /* Three explicit rows fill the 274px inside the 308px bordered slot.
+        /* Three explicit rows fill the 234px inside the 268px bordered slot.
            Scope this to the notes block, never to nested widget containers. */
         [data-testid="stVerticalBlock"].st-key-activity_coach_notes {
             display: grid !important;
-            grid-template-rows: 28px 184px 34px;
-            row-gap: 14px !important;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: 24px 152px 34px;
+            width: 100% !important;
+            row-gap: 12px !important;
             align-content: start;
         }
 
         .st-key-activity_coach_notes > div {
+            width: 100% !important;
+            min-width: 0 !important;
+            justify-self: stretch;
             margin: 0 !important;
             min-height: 0;
         }
@@ -1920,7 +1925,7 @@ def show_activities_page(
     with utility_column:
         with st.container(key="activities_utility"):
             with st.container(
-                height=400,
+                height=440,
                 border=True,
                 key="activity_coach_card",
             ):
@@ -2268,7 +2273,7 @@ def show_activities_page(
                                         resolution.error_code
                                     )
                                 )
-            with st.container(height=308, border=True, key="activities_bottom_slot"):
+            with st.container(height=268, border=True, key="activities_bottom_slot"):
                 if selected_workout is not None:
 
                     with st.container(
@@ -2299,7 +2304,7 @@ def show_activities_page(
                                 "soreness, how the session felt, or "
                                 "VO2max: 52.4 ."
                             ),
-                            height=184,
+                            height=152,
                             label_visibility="collapsed",
                             key=notes_key,
                         )

@@ -40,7 +40,7 @@ def test_notes_keep_save_callback_and_fixed_bottom_slot():
                  and n.func.attr == "text_area" and n.args
                  and isinstance(n.args[0], ast.Constant)
                  and n.args[0].value == "Information for the Training Coach")
-    assert next(k.value.value for k in notes.keywords if k.arg == "height") == 184
+    assert next(k.value.value for k in notes.keywords if k.arg == "height") == 152
     save = next(n for n in calls if isinstance(n.func, ast.Attribute)
                 and n.func.attr == "button" and n.args
                 and isinstance(n.args[0], ast.Constant)
@@ -50,7 +50,7 @@ def test_notes_keep_save_callback_and_fixed_bottom_slot():
     slot = next(n for n in calls if any(k.arg == "key" and
                 isinstance(k.value, ast.Constant) and k.value.value == "activities_bottom_slot"
                 for k in n.keywords))
-    assert next(k.value.value for k in slot.keywords if k.arg == "height") == 308
+    assert next(k.value.value for k in slot.keywords if k.arg == "height") == 268
 
 
 def test_map_has_no_legend_or_white_route_outline():

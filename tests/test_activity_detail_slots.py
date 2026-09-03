@@ -24,7 +24,7 @@ def test_lower_slot_swaps_notes_and_summary_instead_of_stacking_them():
     coach, bottom = utility.body
     heights = [next(k.value.value for k in n.items[0].context_expr.keywords
                     if k.arg == "height") for n in (coach, bottom)]
-    assert heights == [400, 308]
+    assert heights == [440, 268]
     conditional = bottom.body[0]
     assert isinstance(conditional, ast.If)
     assert ast.unparse(conditional.test) == "selected_workout is not None"
