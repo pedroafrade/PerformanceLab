@@ -649,26 +649,16 @@ def _apply_activities_page_styles() -> None:
             line-height: 1.2;
         }
 
-        .activities-coach-activity {
-            min-width: 0;
-            overflow: hidden;
-            font-size: 0.7rem;
-            line-height: 1.2;
-            opacity: 0.58;
-            text-align: right;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
         .st-key-activity_coach_card
         div[data-testid="stMarkdownContainer"] p {
             font-size: 0.86rem;
             line-height: 1.45;
         }
 
+        .st-key-activity_coach_notes,
         .st-key-activity_coach_notes
         div[data-testid="stVerticalBlock"] {
-            gap: 0.4rem !important;
+            gap: 0.75rem !important;
         }
 
         .st-key-activity_coach_notes
@@ -676,6 +666,12 @@ def _apply_activities_page_styles() -> None:
             margin: 0;
             font-size: 0.82rem;
             line-height: 1.2;
+        }
+
+        .st-key-activity_coach_notes
+        textarea {
+            line-height: 1.5;
+            padding: 0.75rem;
         }
 
         .st-key-activity_coach_notes
@@ -1916,20 +1912,11 @@ def show_activities_page(
                 key="activity_coach_card",
             ):
 
-                coach_activity_title = (
-                    selected_activity.title
-                    if selected_activity is not None
-                    else ""
-                )
-
                 st.html(
                     (
                         '<div class="activities-coach-header">'
                         '<div class="activities-coach-heading">'
                         "Training coach"
-                        "</div>"
-                        '<div class="activities-coach-activity">'
-                        f"{escape(coach_activity_title)}"
                         "</div>"
                         "</div>"
                     )
@@ -2299,7 +2286,7 @@ def show_activities_page(
                                 "soreness, how the session felt, or "
                                 "VO2max: 52.4 ."
                             ),
-                            height=160,
+                            height=184,
                             label_visibility="collapsed",
                             key=notes_key,
                         )

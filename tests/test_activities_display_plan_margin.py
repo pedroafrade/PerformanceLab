@@ -38,10 +38,21 @@ def test_current_heart_rate_is_red_even_if_comparison_sorts_first(comparison):
     assert spec["scale"]["range"] == ["#e53935", "#2563eb"]
 
 
-def test_other_metrics_keep_default_color_scale():
-    spec = helper("activity_analysis.py", "_metric_activity_color")(
-        "Power", [{"Activity": "Current"}], None).to_dict()
-    assert "scale" not in spec
+def test_power_uses_purple_color_scale():
+    spec = helper(
+        "activity_analysis.py",
+        "_metric_activity_color",
+    )(
+        "Power",
+        [{"Activity": "Current"}],
+        None,
+    ).to_dict()
+
+    assert spec["scale"]["domain"] == ["Current"]
+    assert spec["scale"]["range"] == [
+        "#9333ea",
+        "#2563eb",
+    ]
 
 
 def test_plan_overview_keeps_svg_capable_renderer_and_explicit_gap():

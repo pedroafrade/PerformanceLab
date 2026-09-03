@@ -37,14 +37,14 @@ def load_route(st=None, has_route=lambda workout: True, coordinates=()):
 ])
 def test_layers_preserve_route_and_endpoint_coordinates(coordinates):
     original = deepcopy(coordinates)
-    outline, route, start, finish = load_route()["_route_layers"](coordinates)
+    route, start, finish = load_route()["_route_layers"](coordinates)
     assert route["data"][0]["path"] == original
-    assert outline["data"][0]["path"] == original
     assert start["data"][0]["position"] == original[0]
     assert finish["data"][0]["position"] == original[-1]
     assert coordinates == original
     assert route["get_color"] == [25, 25, 25, 255]
-    assert outline["get_width"] > route["get_width"]
+    assert route["get_width"] == 1.6
+    assert route["cap_rounded"] and route["joint_rounded"]
     assert route["width_units"] == "pixels"
     assert start["filled"] is True and finish["filled"] is True
     assert start["get_radius"] == finish["get_radius"] == 6
@@ -63,12 +63,12 @@ def test_real_pydeck_serializes_route_width_and_marker_units():
     scope["pdk"] = pdk
     layers = scope["_route_layers"]([[-9.4, 38.7], [-9.2, 38.8]])
     payload = json.loads(pdk.Deck(layers=layers, map_style="light").to_json())
-    assert len(payload["layers"]) == 4
-    assert payload["layers"][1]["widthUnits"] == "pixels"
-    assert payload["layers"][1]["getColor"] == [25, 25, 25, 255]
-    assert payload["layers"][2]["radiusUnits"] == "pixels"
+    assert len(payload["layers"]) == 3
+    assert payload["layers"][0]["widthUnits"] == "pixels"
+    assert payload["layers"][0]["getColor"] == [25, 25, 25, 255]
+    assert payload["layers"][1]["radiusUnits"] == "pixels"
+    assert payload["layers"][1]["getRadius"] == 6
     assert payload["layers"][2]["getRadius"] == 6
-    assert payload["layers"][3]["getRadius"] == 6
 
 
 @pytest.mark.parametrize("available,coords", [(False, []), (True, [])])
@@ -93,7 +93,7 @@ def test_provider_view_height_and_controls_are_preserved():
     assert deck["views"][0]["controller"]["dragPan"] is True
     assert scope["components_html"].call_args.kwargs["height"] == 260
     assert scope["components_html"].call_args.kwargs["scrolling"] is False
-    assert "Start" in st.html.call_args.args[0] and "Finish" in st.html.call_args.args[0]
+    st.html.assert_not_called()
     css = st.markdown.call_args.args[0]
     assert '.st-key-route_map_surface iframe' in css
     assert "border-radius: 0.65rem" in css

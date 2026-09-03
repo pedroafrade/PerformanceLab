@@ -896,11 +896,16 @@ def _distance_domain(
     )
 
 def _metric_activity_color(metric, rows, legend):
-    """Keep current BPM red and route-comparison BPM blue, including the legend."""
+    """Use consistent metric colours, with blue for a historical comparison."""
     options = {}
-    if metric == "Heart rate":
+    metric_colors = {
+        "Heart rate": "#e53935",
+        "Power": "#9333ea",
+        "Pace": "#f97316",
+    }
+    if metric in metric_colors:
         labels = list(dict.fromkeys(row["Activity"] for row in rows))
-        options["scale"] = alt.Scale(domain=labels, range=["#e53935", "#2563eb"])
+        options["scale"] = alt.Scale(domain=labels, range=[metric_colors[metric], "#2563eb"])
     return alt.Color("Activity:N", title=None, legend=legend, **options)
 
 

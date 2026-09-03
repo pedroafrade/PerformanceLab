@@ -123,7 +123,7 @@ def _route_view(
     )
 
 def _route_layers(coordinates):
-    """Draw a black route with equally sized filled endpoint markers."""
+    """Draw a thin, rounded route without changing recorded coordinates."""
     if not coordinates:
         return []
     route = [{"path": coordinates}]
@@ -132,9 +132,7 @@ def _route_layers(coordinates):
         cap_rounded=True, joint_rounded=True, pickable=False,
     )
     return [
-        pdk.Layer("PathLayer", id="route-outline", get_width=7,
-                  get_color=[255, 255, 255, 230], **path_options),
-        pdk.Layer("PathLayer", id="route-line", get_width=3.5,
+        pdk.Layer("PathLayer", id="route-line", get_width=1.6,
                   get_color=[25, 25, 25, 255], **path_options),
         pdk.Layer(
             "ScatterplotLayer", id="route-start",
@@ -177,6 +175,7 @@ def _route_document(deck):
     if (deckInstance) {
         let routeView = {...jsonInput.initialViewState};
         deckInstance.setProps({
+            useDevicePixels: true,
             viewState: routeView,
             onViewStateChange: ({viewState}) => {
                 routeView = viewState;
@@ -268,27 +267,8 @@ def show_route_map(
             border-radius: 0.65rem;
             overflow: hidden;
         }
-        .route-map-legend {
-            display: flex; flex-wrap: wrap; gap: 0.8rem;
-            align-items: center; font-size: 0.72rem; line-height: 1.4;
-        }
-        .route-map-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
-        .route-map-start {
-            width: 0.55rem; height: 0.55rem; background: #16824e;
-            border-radius: 50%; display: inline-block; box-sizing: border-box;
-        }
-        .route-map-finish {
-            width: 0.55rem; height: 0.55rem; background: #e53935;
-            border-radius: 50%; display: inline-block;
-        }
         </style>
         """, unsafe_allow_html=True,
     )
     with st.container(key="route_map_surface"):
         components_html(_route_document(deck), height=height if height is not None else 420, scrolling=False)
-        st.html(
-            '<div class="route-map-legend">'
-            '<span><i class="route-map-start" aria-hidden="true"></i>Start</span>'
-            '<span><i class="route-map-finish" aria-hidden="true"></i>Finish</span>'
-            '</div>'
-        )
