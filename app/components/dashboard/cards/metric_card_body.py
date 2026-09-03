@@ -87,8 +87,19 @@ def _detail_html(
     )
 
 
+def metric_status_color(status: str) -> str:
+    """Colour existing textual states; never introduce new numeric thresholds."""
+    return {
+        "Good": "#16a34a", "Moderate": "#ca8a04", "Low": "#ea580c",
+        "Recovery needed": "#dc2626", "Optimal": "#16a34a",
+        "Maintaining": "#2563eb", "Detraining": "#ca8a04",
+        "High load": "#ea580c", "Overreaching": "#dc2626",
+    }.get(status, "#6b7280")
+
+
 def _progress_html(
     progress: int,
+    color: str = "#111111",
 ) -> str:
     """
     Builds a monochromatic progress bar.
@@ -115,7 +126,7 @@ def _progress_html(
         f"width:{clamped_progress}%;"
         "height:100%;"
         "border-radius:999px;"
-        "background:#111111;"
+        f"background:{escape(color, quote=True)};"
         "'></div>"
         "</div>"
     )
@@ -127,6 +138,7 @@ def metric_card_body(
     details: Sequence[MetricCardDetail] = (),
     progress: int | None = None,
     status: str | None = None,
+    progress_color: str = "#111111",
 ) -> None:
     """
     Render a compact, vertically aligned metric card body.
@@ -157,7 +169,7 @@ def metric_card_body(
 
         parts.append(
             _progress_html(
-                progress
+                progress, progress_color
             )
         )
 

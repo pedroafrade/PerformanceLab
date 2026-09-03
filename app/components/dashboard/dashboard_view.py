@@ -5,6 +5,8 @@ Streamlit dashboard view.
 """
 
 import streamlit as st
+from datetime import datetime
+from performancelab.presentation.recent_activity_summary import recent_activity_summary
 
 from performancelab.presentation import (
     DashboardData,
@@ -14,16 +16,12 @@ from performancelab.presentation import (
 from .cards import (
     next_workout_card,
     show_athlete_overview_card,
-    show_performance_chart_card,
     show_performance_management_card,
     show_planning_card,
     show_training_summary_card,
 )
 from .cards.latest_activity_card import (
     latest_activity_card,
-)
-from .cards.monthly_summary_card import (
-    monthly_summary_card,
 )
 from .cards.next_event_card import (
     next_event_card,
@@ -38,7 +36,6 @@ from .event_manager import (
     open_event_manager,
 )
 from .grid import (
-    dashboard_bottom_row,
     dashboard_row,
 )
 from .widget import (
@@ -66,17 +63,18 @@ def show_dashboard(
 
     latest_activity = dashboard_data["latest_activity"]
     physiology = dashboard_data["physiology"]
-    monthly_summary = dashboard_data["monthly_summary"]
     summary = dashboard_data["summary"]
-    performance = dashboard_data["performance"]
     planning = dashboard_data["planning"]
     next_event = dashboard_data["next_event"]
     recovery = dashboard_data["recovery"]
     training_load = dashboard_data["training_load"]
+    reference_time = datetime.now().astimezone()
+    recent_summary = recent_activity_summary(athlete.history, reference_time.date())
+    current_state = athlete.analytics.training_state_at(reference_time=reference_time)
 
     activity_col, planning_col, event_col = (
         dashboard_row(
-            (1.1, 2.5, 1.2),
+            (1, 3.2, 1),
         )
     )
 
@@ -181,7 +179,7 @@ def show_dashboard(
         ):
 
             show_training_summary_card(
-                summary,
+                recent_summary,
             )
 
     with status_col:
@@ -199,13 +197,14 @@ def show_dashboard(
     with recovery_col:
 
         with dashboard_widget(
-            title="Recovery",
+            title="Estimated Recovery",
             icon=":material/favorite:",
             divider=False,
         ):
 
             recovery_card(
                 recovery,
+                current_state=current_state,
             )
 
     with load_col:
@@ -218,29 +217,6 @@ def show_dashboard(
 
             training_load_card(
                 training_load,
-            )
-
-    with dashboard_widget(
-        title="Performance",
-        icon="📈",
-    ):
-
-        show_performance_chart_card(
-            performance,
-        )
-
-    left, right = dashboard_bottom_row()
-
-    with right:
-
-        with dashboard_widget(
-            title="Monthly Summary",
-            icon=":material/assessment:",
-            divider=False,
-        ):
-
-            monthly_summary_card(
-                monthly_summary,
             )
 
     return None

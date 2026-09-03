@@ -28,7 +28,7 @@ def show_training_summary_card(
         metrics=(
             MetricCardMetric(
                 value=str(summary.workouts),
-                label="Workouts",
+                label="Workouts · last 30 days",
             ),
             MetricCardMetric(
                 value=str(summary.training_days),

@@ -12,6 +12,7 @@ from .metric_card_body import (
     MetricCardDetail,
     MetricCardMetric,
     metric_card_body,
+    metric_status_color,
 )
 
 
@@ -44,5 +45,6 @@ def training_load_card(
             ),
         ),
         progress=data.score,
+        progress_color=metric_status_color(data.status),
         status=data.status,
     )

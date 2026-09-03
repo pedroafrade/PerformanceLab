@@ -6,6 +6,8 @@ Athlete development page.
 
 from datetime import datetime, timedelta
 from html import escape
+from dataclasses import replace
+from performancelab.presentation.recent_activity_summary import recent_activity_summary
 
 import altair as alt
 import streamlit as st
@@ -582,6 +584,57 @@ def _load_status(
         return "Reduced"
 
     return "Stable"
+
+
+def _distance_summary_card(card, totals, sport):
+    """Replace only the displayed pace card; retain stored pace and calculations."""
+    cycling = sport == "Cycling"
+    distance = totals.cycling_distance if cycling else totals.running_distance
+    missing = totals.cycling_missing if cycling else totals.running_missing
+    return replace(card, key="total-distance", icon="↔",
+                   label=f"Total {'Cycling' if cycling else 'Running'} Distance",
+                   value="—" if distance is None else f"{distance:.1f} km",
+                   trend="Last 30 days",
+                   context=(f"{missing} activities missing distance" if missing
+                            else "Cycling" if cycling else "Running + trail"))
+
+
+def _remember_distance_sport():
+    st.session_state["development_distance_sport"] = st.session_state["_development_distance_sport"]
+
+
+def _show_development_summary_cards(cards, athlete, reference_day):
+    totals = recent_activity_summary(athlete.history, reference_day)
+    st.markdown("<style>" + _development_summary_styles() + """
+    .st-key-development_kpi_row .development-kpi-grid {grid-template-columns:minmax(0,1fr);}
+    .st-key-development_distance_card {position:relative;}
+    .st-key-development_distance_card > div:has([data-testid="stPopover"]) {
+        position:absolute;right:0.15rem;top:0.1rem;width:auto!important;z-index:2;
+    }
+    .st-key-development_distance_card [data-testid="stPopover"] button {
+        min-height:1.5rem;padding:0 0.35rem;border:0;background:transparent;
+    }
+    .st-key-development_distance_card .development-kpi-content {padding-right:1.3rem;}
+    </style>""", unsafe_allow_html=True)
+    with st.container(key="development_kpi_row"):
+        columns = st.columns(len(cards), gap="small")
+        for column, card in zip(columns, cards):
+            with column:
+                if card.key == "running-pace":
+                    with st.container(key="development_distance_card"):
+                        choice = st.session_state.get("development_distance_sport", "Running")
+                        if choice not in ("Running", "Cycling"):
+                            choice = "Running"
+                        with st.popover("⋮", help="Choose distance sport"):
+                            st.radio("Distance sport", ("Running", "Cycling"),
+                                     index=("Running", "Cycling").index(choice),
+                                     key="_development_distance_sport",
+                                     on_change=_remember_distance_sport)
+                        choice = st.session_state.get("development_distance_sport", choice)
+                        st.markdown(_development_summary_cards_html((
+                            _distance_summary_card(card, totals, choice),)), unsafe_allow_html=True)
+                else:
+                    st.markdown(_development_summary_cards_html((card,)), unsafe_allow_html=True)
 
 
 def _development_summary_cards_html(
@@ -1752,12 +1805,13 @@ def show_development_page(
         unsafe_allow_html=True,
     )
 
+    reference_time = datetime.now().astimezone()
     development = (
         DevelopmentPresenter(
             athlete
         ).build(
             reference_time=(
-                datetime.now().astimezone()
+                reference_time
             )
         )
     )
@@ -1864,17 +1918,7 @@ def show_development_page(
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        (
-            "<style>"
-            + _development_summary_styles()
-            + "</style>"
-            + _development_summary_cards_html(
-                development.summary_cards
-            )
-        ),
-        unsafe_allow_html=True,
-    )
+    _show_development_summary_cards(development.summary_cards, athlete, reference_time.date())
     st.markdown(
         '<div class="development-section-gap"></div>',
         unsafe_allow_html=True,
