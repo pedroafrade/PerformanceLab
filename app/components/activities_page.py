@@ -941,10 +941,11 @@ def _activities_summary_html(*, activities) -> str:
     )
 
 
-def _show_activity_summary(all_activities, *, reference_day):
+def _show_activity_summary(all_activities, *, reference_day, show_title=True):
     """Summary controls use independent session keys, not browser filters."""
     with st.container(border=False, key="activities_summary_card"):
-        st.markdown("**Activities Summary**")
+        if show_title:
+            st.markdown("**Activities Summary**")
         sports = [None] + sorted({_summary_sport(a) for a in all_activities}, key=str.casefold)
         if st.session_state.get("activities_summary_period", "1 month") not in _SUMMARY_PERIODS:
             st.session_state["activities_summary_period"] = "1 month"

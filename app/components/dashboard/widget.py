@@ -84,6 +84,7 @@ def dashboard_widget(
     action: DashboardAction | None = None,
     divider: bool = True,
     height: int | str | None = None,
+    key: str | None = None,
 ) -> Iterator[None]:
     """
     Dashboard widget container.
@@ -92,6 +93,8 @@ def dashboard_widget(
     container_options = {
         "border": True,
     }
+    if key is not None:
+        container_options["key"] = key
 
     if height is not None:
         container_options["height"] = height

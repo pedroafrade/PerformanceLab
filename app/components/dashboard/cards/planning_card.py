@@ -612,6 +612,8 @@ div[class*="st-key-weekly_plan_selector_"] {
 }
 
 div[class*="st-key-weekly_plan_selector_"] button {
+    flex: 1 1 0;
+    min-width: 0;
     min-height: 24px;
     height: 24px;
     padding: 0 0.30rem;
@@ -719,29 +721,16 @@ div[class*="st-key-weekly_plan_selector_"] {{
             unsafe_allow_html=True,
         )
 
-    selector_columns = st.columns(
-        [
-            0.42,
-            7,
-            0.42,
-        ],
-        gap="small",
+    selected_date = st.segmented_control(
+        "Workout details",
+        options=tuple(day_by_date),
+        default=selected_date,
+        required=True,
+        format_func=lambda day: str(day.day),
+        key=selector_key,
+        label_visibility="collapsed",
+        width="stretch",
     )
-
-    with selector_columns[1]:
-
-        selected_date = st.segmented_control(
-            "Workout details",
-            options=tuple(day_by_date),
-            default=selected_date,
-            required=True,
-            format_func=lambda day: str(
-                day.day
-            ),
-            key=selector_key,
-            label_visibility="collapsed",
-            width="stretch",
-        )
 
     selected_day = day_by_date.get(
         selected_date
@@ -749,7 +738,6 @@ div[class*="st-key-weekly_plan_selector_"] {{
     
     columns = st.columns(
         [
-            0.55,
             1,
             1,
             1,
@@ -757,17 +745,11 @@ div[class*="st-key-weekly_plan_selector_"] {{
             1,
             1,
             1,
-            0.55,
         ],
-        gap="small",
+        gap=None,
     )
 
-    previous_column = columns[0]
-    day_columns = columns[1:-1]
-    next_column = columns[-1]
-
-    with previous_column:
-        _show_previous_button()
+    day_columns = columns
 
     for column, day in zip(
         day_columns,
@@ -821,6 +803,9 @@ div[class*="st-key-weekly_plan_selector_"] {{
                 unsafe_allow_html=True,
             )
 
+    previous_column, next_column = st.columns(2, gap="small")
+    with previous_column:
+        _show_previous_button()
     with next_column:
         _show_next_button()
 

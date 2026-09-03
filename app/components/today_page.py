@@ -543,40 +543,6 @@ def _show_today_session(
                 )
             )
 
-        activity_column, calendar_column = (
-            st.columns(
-                2,
-                gap="small",
-            )
-        )
-
-        with activity_column:
-            st.button(
-                (
-                    "View activity"
-                    if completed_today
-                    else "Add activity"
-                ),
-                icon=(
-                    ":material/directions_run:"
-                    if completed_today
-                    else ":material/add:"
-                ),
-                use_container_width=True,
-                key="today_add_activity",
-                on_click=_navigate_to,
-                args=("activities",),
-            )
-
-        with calendar_column:
-            st.button(
-                "View calendar",
-                icon=":material/calendar_month:",
-                use_container_width=True,
-                key="today_view_calendar",
-                on_click=_navigate_to,
-                args=("calendar",),
-            )
 
 def _guidance_item_html(
     *,

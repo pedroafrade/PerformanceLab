@@ -139,9 +139,9 @@ def test_status_colours_and_progress_clamping(status, color):
 
 def test_dashboard_removes_only_requested_widgets_and_uses_shared_window():
     source = (ROOT / "app/components/dashboard/dashboard_view.py").read_text(encoding="utf-8")
-    assert 'title="Performance Status"' in source
+    assert 'title="Performance Status"' not in source
     assert 'title="Performance"' not in source and 'title="Monthly Summary"' not in source
     assert 'title="Estimated Recovery"' in source
     assert "(1, 3.2, 1)" in source
-    assert "recent_activity_summary(athlete.history, reference_time.date())" in source
+    assert "_show_activity_summary(activities," in source
     assert "training_state_at(reference_time=reference_time)" in source

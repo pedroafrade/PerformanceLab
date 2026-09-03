@@ -6,19 +6,16 @@ Streamlit dashboard view.
 
 import streamlit as st
 from datetime import datetime
-from performancelab.presentation.recent_activity_summary import recent_activity_summary
 
 from performancelab.presentation import (
     DashboardData,
+    ActivitiesPresenter,
+    TodayPresenter,
     has_route,
 )
 
 from .cards import (
-    next_workout_card,
-    show_athlete_overview_card,
-    show_performance_management_card,
     show_planning_card,
-    show_training_summary_card,
 )
 from .cards.latest_activity_card import (
     latest_activity_card,
@@ -47,20 +44,33 @@ from ..route_map import (
 )
 
 
-FIRST_ROW_HEIGHT = 330
-SECOND_ROW_HEIGHT = 400
-
-
 def show_dashboard(
     athlete,
 ):
     """Keep the dashboard within the reference desktop viewport."""
     st.html("""<style>
     [data-testid="stMainBlockContainer"]:has(.st-key-dashboard_page) {
-        padding-top: 3.65rem;
+        padding-top: 4.75rem;
         padding-bottom: 1.25rem;
     }
     .st-key-dashboard_page {gap: 0.75rem;}
+    .st-key-dashboard_page .activities-summary-grid {
+        display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.42rem;
+    }
+    .st-key-dashboard_page .activities-summary-item {
+        padding:0.52rem 0.58rem;border:1px solid rgba(128,128,128,0.18);border-radius:0.5rem;
+    }
+    .st-key-dashboard_page .activities-summary-label {font-size:0.6rem;opacity:0.65;}
+    .st-key-dashboard_page .activities-summary-value {font-size:0.92rem;font-weight:720;}
+    @media (min-width: 1100px) and (min-height: 850px) {
+        .st-key-dashboard_top_latest,.st-key-dashboard_top_plan,.st-key-dashboard_top_event {
+            height:clamp(330px,40dvh,400px);overflow-y:auto;box-sizing:border-box;
+        }
+        .st-key-dashboard_load,.st-key-dashboard_recovery,.st-key-dashboard_brief,.st-key-dashboard_summary {
+            height:max(290px,calc(100dvh - clamp(330px,40dvh,400px) - 12rem));
+            overflow-y:auto;box-sizing:border-box;
+        }
+    }
     .st-key-dashboard_page .next-workout-steps {gap:0.25rem;}
     .st-key-dashboard_page .next-workout-step {padding:0.28rem 0.35rem;}
     .st-key-dashboard_page .next-workout-context {margin-top:0.4rem;padding-top:0.35rem;}
@@ -81,14 +91,11 @@ def _show_dashboard_content(athlete):
     ).build()
 
     latest_activity = dashboard_data["latest_activity"]
-    physiology = dashboard_data["physiology"]
-    summary = dashboard_data["summary"]
     planning = dashboard_data["planning"]
     next_event = dashboard_data["next_event"]
     recovery = dashboard_data["recovery"]
     training_load = dashboard_data["training_load"]
     reference_time = datetime.now().astimezone()
-    recent_summary = recent_activity_summary(athlete.history, reference_time.date())
     current_state = athlete.analytics.training_state_at(reference_time=reference_time)
 
     activity_col, planning_col, event_col = (
@@ -103,7 +110,7 @@ def _show_dashboard_content(athlete):
             title="Latest Activity",
             icon=":material/history:",
             divider=False,
-            height=FIRST_ROW_HEIGHT,
+            key="dashboard_top_latest",
         ):
 
             latest_activity_card(
@@ -120,7 +127,7 @@ def _show_dashboard_content(athlete):
             ),
             icon=":material/calendar_view_week:",
             divider=False,
-            height=FIRST_ROW_HEIGHT,
+            key="dashboard_top_plan",
         ):
 
             show_planning_card(
@@ -133,7 +140,7 @@ def _show_dashboard_content(athlete):
             title="Next Event",
             icon=":material/event:",
             divider=False,
-            height=FIRST_ROW_HEIGHT,
+            key="dashboard_top_event",
             action=DashboardAction(
                 label="Manage Events",
                 key="next-event-action",
@@ -147,102 +154,40 @@ def _show_dashboard_content(athlete):
                 next_event,
             )
 
-    (
-        physiology_col,
-        workout_col,
-        summary_col,
-        status_col,
-        recovery_col,
-        load_col,
-    ) = dashboard_row(
-        (
-            1.7,
-            1.6,
-            1,
-            1,
-            1,
-            1,
-        ),
-    )
-
-    with physiology_col:
-
-        with dashboard_widget(
-            title="Physiology",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/ecg_heart:",
-            divider=False,
-        ):
-
-            show_athlete_overview_card(
-                physiology,
-            )
-
-    with workout_col:
-
-        with dashboard_widget(
-            title="Next Workout",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/fitness_center:",
-            divider=False,
-        ):
-
-            next_workout_card(
-                planning.next_workout,
-            )
-
-    with summary_col:
-
-        with dashboard_widget(
-            title="Training Summary",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/calendar_month:",
-            divider=False,
-        ):
-
-            show_training_summary_card(
-                recent_summary,
-            )
-
-    with status_col:
-
-        with dashboard_widget(
-            title="Performance Status",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/monitoring:",
-            divider=False,
-        ):
-
-            show_performance_management_card(
-                summary,
-            )
-
-    with recovery_col:
-
-        with dashboard_widget(
-            title="Estimated Recovery",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/favorite:",
-            divider=False,
-        ):
-
-            recovery_card(
-                recovery,
-                current_state=current_state,
-            )
+    load_col, recovery_col, brief_col, summary_col = dashboard_row((1, 1, 2.1, 1.6))
 
     with load_col:
+        with dashboard_widget(title="Training Load", icon=":material/monitoring:",
+                              divider=False, key="dashboard_load"):
+            training_load_card(training_load)
 
-        with dashboard_widget(
-            title="Training Load",
-            height=SECOND_ROW_HEIGHT,
-            icon=":material/monitoring:",
-            divider=False,
-        ):
+    with recovery_col:
+        with dashboard_widget(title="Estimated Recovery", icon=":material/favorite:",
+                              divider=False, key="dashboard_recovery"):
+            recovery_card(recovery, current_state=current_state)
 
-            training_load_card(
-                training_load,
-            )
+    with brief_col:
+        with dashboard_widget(title="Daily Brief", icon=":material/today:",
+                              divider=False, key="dashboard_brief"):
+            st.caption("Local guidance from Today. Automatic Training Coach is not enabled yet.")
+            today = TodayPresenter(athlete).build(reference_time=reference_time)
+            st.markdown(f"**{today.guidance.title}**")
+            st.write(today.guidance.action)
+            if planning.next_workout is not None:
+                st.caption(f"Next planned session: {planning.next_workout.title}")
+            if next_event is not None:
+                st.caption(f"Next event: {next_event.name} · {next_event.event_date:%d %b %Y}")
+            st.caption("This guidance does not change your training plan.")
+
+    with summary_col:
+        from ..activities_page import _show_activity_summary
+        with dashboard_widget(title="Activities Summary", icon=":material/assessment:",
+                              divider=False, key="dashboard_summary"):
+            activities = ActivitiesPresenter(
+                athlete.history, training_plan=athlete.training_plan,
+                reference_day=reference_time.date(),
+            ).build()
+            _show_activity_summary(activities, reference_day=reference_time.date(), show_title=False)
 
     return None
 

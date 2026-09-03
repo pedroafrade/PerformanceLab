@@ -30,15 +30,13 @@ def test_development_first_output_contains_header_and_responsive_styles():
 def test_dashboard_card_heights_and_scroll_are_native():
     source = (ROOT / "dashboard/dashboard_view.py").read_text(encoding="utf-8")
     tree = ast.parse(source)
-    constants = {n.targets[0].id: n.value.value for n in tree.body
-                 if isinstance(n, ast.Assign) and isinstance(n.value, ast.Constant)}
-    assert constants["FIRST_ROW_HEIGHT"] == 330
-    assert constants["SECOND_ROW_HEIGHT"] == 400
     heights = [k.value.id for n in ast.walk(tree) if isinstance(n, ast.Call)
                and isinstance(n.func, ast.Name) and n.func.id == "dashboard_widget"
                for k in n.keywords if k.arg == "height"]
-    assert heights.count("FIRST_ROW_HEIGHT") == 3
-    assert heights.count("SECOND_ROW_HEIGHT") == 6
+    assert heights == []
+    assert "40dvh" in source and "100dvh" in source
+    assert "overflow-y:auto" in source
+    assert "padding-top: 4.75rem" in source
     assert "overflow:hidden" not in source and "overflow: hidden" not in source
     assert "padding-bottom: 1.25rem" in source
 
@@ -46,5 +44,5 @@ def test_dashboard_card_heights_and_scroll_are_native():
 def test_weekly_timeline_uses_full_content_width():
     source = (ROOT / "dashboard/cards/planning_card.py").read_text(encoding="utf-8")
     assert "timeline_columns" not in source
-    assert "selector_columns" in source
+    assert "selector_columns" not in source
     assert "phase_timeline_html(" in source
