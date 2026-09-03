@@ -11,11 +11,13 @@ import streamlit as st
 
 from performancelab.presentation import (
     CalendarPresenter,
+    PlanPresenter,
 )
 
 from .dashboard.event_manager import (
     open_event_manager,
 )
+from .plan_page import _plan_calendar_ics
 
 
 def _shift_month(
@@ -1109,6 +1111,24 @@ def _show_upcoming_events(
         )
 
 
+def _show_calendar_export(athlete, *, reference_day: date) -> None:
+    """Export the complete persistent plan, independently of the visible month."""
+    plan = PlanPresenter(
+        plan=athlete.training_plan,
+        history=athlete.history,
+    ).build(reference_day=reference_day)
+    st.download_button(
+        "Export calendar",
+        data=_plan_calendar_ics(plan) if plan.weeks else "",
+        file_name="performancelab-plan.ics",
+        mime="text/calendar; charset=utf-8",
+        use_container_width=True,
+        disabled=not bool(plan.weeks),
+        key="calendar_export",
+        help="Export the complete training plan, not just the visible month.",
+    )
+
+
 def show_calendar_page(
     athlete,
 ) -> None:
@@ -1176,6 +1196,7 @@ def show_calendar_page(
                 st.html(_calendar_html(calendar, selected_day=default_selected_day))
 
         with sidebar_column:
+            _show_calendar_export(athlete, reference_day=today)
             _show_month_navigation(
                 anchor=anchor, previous_month=previous_month, next_month=next_month,
             )

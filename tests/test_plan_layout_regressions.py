@@ -31,7 +31,7 @@ def load_helper(name, **namespace):
 
 
 @pytest.mark.parametrize("has_plan", [False, True])
-def test_plan_actions_are_full_width_and_export_state_is_preserved(has_plan):
+def test_plan_generation_is_full_width_without_export(has_plan):
     streamlit = MagicMock()
     streamlit.button.return_value = False
     export = MagicMock(return_value="calendar-content")
@@ -47,11 +47,8 @@ def test_plan_actions_are_full_width_and_export_state_is_preserved(has_plan):
 
     assert streamlit.button.call_args.kwargs["use_container_width"] is True
     assert streamlit.button.call_args.kwargs["disabled"] is True
-    options = streamlit.download_button.call_args.kwargs
-    assert options["use_container_width"] is True
-    assert options["disabled"] is (not has_plan)
-    assert options["data"] == ("calendar-content" if has_plan else "")
-    assert export.call_count == int(has_plan)
+    streamlit.download_button.assert_not_called()
+    export.assert_not_called()
     confirmation.assert_not_called()
 
 

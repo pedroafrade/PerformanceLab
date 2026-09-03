@@ -3818,7 +3818,7 @@ def _show_plan_generation_confirmation(
             st.rerun()
 
 def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
-    """Render both full-width actions in the plan's right column."""
+    """Render plan generation in the plan's right column."""
     generate_plan_requested = (
         st.button(
             "Generate plan",
@@ -3834,31 +3834,6 @@ def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
         )
     )
 
-    calendar_data = (
-        _plan_calendar_ics(
-            plan
-        )
-        if plan.weeks
-        else ""
-    )
-
-    st.download_button(
-        "Export calendar",
-        data=calendar_data,
-        file_name=(
-            "performancelab-plan.ics"
-        ),
-        mime=(
-            "text/calendar; "
-            "charset=utf-8"
-        ),
-        use_container_width=True,
-        disabled=(
-            not bool(
-                plan.weeks
-            )
-        ),
-    )
     if generate_plan_requested:
         _show_plan_generation_confirmation(
             athlete,
