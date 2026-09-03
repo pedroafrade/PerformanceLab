@@ -714,21 +714,10 @@ div[class*="st-key-weekly_plan_selector_"] {{
 
     if timeline_html:
 
-        timeline_columns = st.columns(
-            [
-                0.42,
-                7,
-                0.42,
-            ],
-            gap="small",
+        st.markdown(
+            timeline_html,
+            unsafe_allow_html=True,
         )
-
-        with timeline_columns[1]:
-
-            st.markdown(
-                timeline_html,
-                unsafe_allow_html=True,
-            )
 
     selector_columns = st.columns(
         [

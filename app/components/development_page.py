@@ -1783,6 +1783,18 @@ def show_development_page(
     """
 
 
+
+    reference_time = datetime.now().astimezone()
+    development = (
+        DevelopmentPresenter(
+            athlete
+        ).build(
+            reference_time=(
+                reference_time
+            )
+        )
+    )
+
     st.markdown(
         """
         <style>
@@ -1800,25 +1812,6 @@ def show_development_page(
                 display: block;
             }
         }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    reference_time = datetime.now().astimezone()
-    development = (
-        DevelopmentPresenter(
-            athlete
-        ).build(
-            reference_time=(
-                reference_time
-            )
-        )
-    )
-
-    st.markdown(
-        """
-        <style>
         div[data-testid="stMainBlockContainer"] {
             padding-top: 3.65rem;
             padding-bottom: 0;

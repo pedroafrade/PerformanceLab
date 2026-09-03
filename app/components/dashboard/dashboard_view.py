@@ -47,12 +47,31 @@ from ..route_map import (
 )
 
 
-FIRST_ROW_HEIGHT = 277
+FIRST_ROW_HEIGHT = 330
+SECOND_ROW_HEIGHT = 400
 
 
 def show_dashboard(
     athlete,
 ):
+    """Keep the dashboard within the reference desktop viewport."""
+    st.html("""<style>
+    [data-testid="stMainBlockContainer"]:has(.st-key-dashboard_page) {
+        padding-top: 3.65rem;
+        padding-bottom: 1.25rem;
+    }
+    .st-key-dashboard_page {gap: 0.75rem;}
+    .st-key-dashboard_page .next-workout-steps {gap:0.25rem;}
+    .st-key-dashboard_page .next-workout-step {padding:0.28rem 0.35rem;}
+    .st-key-dashboard_page .next-workout-context {margin-top:0.4rem;padding-top:0.35rem;}
+    .st-key-dashboard_page .next-workout-meta,
+    .st-key-dashboard_page .next-workout-label {color:inherit;opacity:0.65;}
+    </style>""")
+    with st.container(key="dashboard_page"):
+        return _show_dashboard_content(athlete)
+
+
+def _show_dashboard_content(athlete):
     """
     Displays the main athlete dashboard.
     """
@@ -150,6 +169,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Physiology",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/ecg_heart:",
             divider=False,
         ):
@@ -162,6 +182,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Next Workout",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/fitness_center:",
             divider=False,
         ):
@@ -174,6 +195,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Training Summary",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/calendar_month:",
             divider=False,
         ):
@@ -186,6 +208,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Performance Status",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/monitoring:",
             divider=False,
         ):
@@ -198,6 +221,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Estimated Recovery",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/favorite:",
             divider=False,
         ):
@@ -211,6 +235,7 @@ def show_dashboard(
 
         with dashboard_widget(
             title="Training Load",
+            height=SECOND_ROW_HEIGHT,
             icon=":material/monitoring:",
             divider=False,
         ):
