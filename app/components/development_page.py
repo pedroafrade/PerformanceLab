@@ -175,7 +175,7 @@ def _daily_training_load_chart(
             color=alt.Color("Series:N", title=None,
                 scale=alt.Scale(domain=["Daily load", "7-day average"],
                                 range=["#4f86f7", "#f97316"]),
-                legend=alt.Legend(orient="top", direction="horizontal")),
+                legend=None),
             y=alt.Y(
                 "Training load:Q",
                 title="Daily load (AU)",
@@ -214,7 +214,7 @@ def _daily_training_load_chart(
             color=alt.Color("Series:N", title=None,
                 scale=alt.Scale(domain=["Daily load", "7-day average"],
                                 range=["#4f86f7", "#f97316"]),
-                legend=alt.Legend(orient="top", direction="horizontal")),
+                legend=None),
             y=alt.Y(
                 "rolling_load:Q",
                 title="Daily load (AU)",

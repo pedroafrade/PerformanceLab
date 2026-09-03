@@ -37,6 +37,10 @@ def test_chart_legends_and_series_keep_correct_axes(mobile, count):
     assert form["encoding"]["y"]["axis"]["orient"] == "right"
     daily = scope["_daily_training_load_chart"](data, mobile=mobile).to_dict()
     bars, average = daily["layer"]
+    assert bars["encoding"]["color"]["legend"] is None
+    assert average["encoding"]["color"]["legend"] is None
+    assert load["encoding"]["color"]["legend"] is not None
+    assert form["encoding"]["color"]["legend"] is not None
     assert bars["encoding"]["color"]["scale"] == average["encoding"]["color"]["scale"]
     assert bars["encoding"]["color"]["scale"]["range"] == ["#4f86f7", "#f97316"]
     assert bars["encoding"]["y"]["field"] == "Training load"
