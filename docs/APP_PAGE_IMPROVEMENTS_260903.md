@@ -327,8 +327,12 @@ antes de implementar o respetivo comportamento.
 ### DBR-01 — Geração e reutilização
 
 - Gerar pelo Training Coach na primeira sessão autenticada de cada dia, sem
-  botão de geração, apenas após autorização específica para este processamento
-  automático. Não reinterpretar silenciosamente o consentimento para pedidos manuais.
+  botão de geração. Uma única autorização Training Coach abrange comentários
+  pedidos em Activities e Daily Brief automático. O texto explica ambos os usos;
+  não há uma segunda autorização nem um controlo separado para Daily Brief.
+- Atualizar a versão desse consentimento: permissões antigas, apenas manuais,
+  exigem confirmação do novo âmbito no mesmo fluxo existente. Não são migradas
+  silenciosamente. Uma retirada de permissão bloqueia ambos os usos.
 - Definir o dia pelo fuso horário configurado do utilizador, não pelo fuso do servidor.
 - Guardar o comentário por atleta, data local e versão do contexto relevante.
   Reutilizá-lo nas sessões seguintes, noutros dispositivos e após reinícios.
@@ -416,14 +420,27 @@ continuamente com o relógio.
   navegação, móvel e ambos os temas antes de marcar como concluído.
 - DBR-01/DBR-02, etapa inicial: módulo puro de decisão, sem ligação ao login ou
   fornecedor. Inclui chave por atleta/dia local/fuso/contexto, consentimento
-  automático versionado, reutilização, invalidação e respeito por backoff.
+  Training Coach versionado, reutilização, invalidação e respeito por backoff.
 - O fingerprint recebe projeções mínimas de dados relevantes. O adaptador de
   domínio que selecionará esses dados ainda está por implementar; não passar
   objetos completos do atleta, segredos ou valores transitórios.
-- A decisão de gerar representa apenas elegibilidade. Ainda faltam consentimento
-  persistente em Settings, contexto de domínio, armazenamento e reserva atómica,
+- A decisão de gerar representa apenas elegibilidade. Ainda faltam contexto de
+  domínio, armazenamento do comentário e reserva atómica,
   quotas, geração, exportação/eliminação e integração na interface. Não ativar a
   geração automática antes de concluir e testar estas salvaguardas.
 - Daily Brief continua a apresentar a orientação local de Today nesta etapa.
 - Próximo conjunto: adaptar contexto e persistência à arquitetura existente,
   incluindo testes de isolamento entre atletas e concorrência.
+
+### Consentimento unificado — conjunto seguinte
+
+- Usar apenas o consentimento Training Coach existente, na versão v2, para
+  Activities e Daily Brief automático; a versão v1 continua no histórico,
+  mas não autoriza o novo âmbito sem confirmação explícita.
+- Activities e Settings apresentam o mesmo texto e mantêm os botões existentes.
+  Não adicionar uma segunda autorização, checkbox ou repositório.
+- O armazenamento, a retirada, a exportação e a eliminação reutilizam os
+  mecanismos existentes. A política Daily Brief usa a mesma versão central
+  e só aceita um registo ativo pertencente ao utilizador autenticado.
+- Este conjunto ainda não ativa geração automática nem envia dados ao fornecedor.
+  Testes completos e confirmação visual permanecem por validar pelo utilizador.

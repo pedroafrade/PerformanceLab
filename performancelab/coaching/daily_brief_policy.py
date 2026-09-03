@@ -13,9 +13,32 @@ import json
 from typing import Mapping, Sequence
 from zoneinfo import ZoneInfo
 
+from performancelab.training_coach_consent import (
+    TRAINING_COACH_CONSENT_VERSION,
+    TrainingCoachConsent,
+)
+
 
 CONTEXT_VERSION = "daily-brief-context-v1"
-CONSENT_VERSION = "automatic-daily-brief-consent-v1"
+CONSENT_VERSION = TRAINING_COACH_CONSENT_VERSION
+
+
+def active_consent_version(
+    *, consent: TrainingCoachConsent | None, user_id: str,
+) -> str | None:
+    """Resolve authorization from an active record belonging to this user.
+
+    The caller must obtain user_id from authenticated identity and the record
+    from persistent storage; this function does not perform either operation.
+    """
+    if (
+        isinstance(consent, TrainingCoachConsent)
+        and isinstance(user_id, str)
+        and consent.user_id == user_id.strip()
+        and consent.permits_current_policy()
+    ):
+        return consent.policy_version
+    return None
 
 
 def _aware(value: datetime) -> datetime:
@@ -100,7 +123,9 @@ def decide_daily_brief(
 
     Read saved/backoff state from the authenticated athlete's persistent store.
     A saved key means a complete successful record, never a failed attempt.
-    Manual Training Coach consent cannot authorize this automatic workflow.
+    Require the current combined Training Coach consent. Legacy manual-only
+    consent cannot authorize this automatic workflow. The coordinator must
+    obtain the version from an ACTIVE stored record, never from the constant.
     """
     _aware(now)
     if not enabled:

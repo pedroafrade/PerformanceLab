@@ -18,7 +18,7 @@ from uuid import (
 
 
 TRAINING_COACH_CONSENT_VERSION = (
-    "training-coach-consent-v1"
+    "training-coach-consent-v2"
 )
 
 
@@ -58,6 +58,10 @@ def _validated_timestamp(
 class TrainingCoachConsent:
     """
     Immutable, versioned consent granted by one internal user.
+
+    Version 2 covers requested activity interpretations and automatic Daily
+    Brief processing together. Version 1 was manual-only and is not upgraded
+    silently. One withdrawal blocks both workflows.
 
     Withdrawal preserves the historical consent record while
     preventing any further Training Coach generation.
