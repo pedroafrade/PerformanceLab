@@ -116,7 +116,7 @@ def test_builds_activity_table_rows():
             "Distance": "50.30 km",
             "Duration": "2h 32m",
             "Elevation": "980 m",
-            "RPE": 7.5,
+            "RPE": 8,
             "Plan result": "Not assessed",
             "Planned": "—",
         }
@@ -610,7 +610,7 @@ def test_builds_activity_row_grid_html():
     assert ">11.58 km<" in html
     assert ">1h 42m<" in html
     assert ">630 m<" in html
-    assert ">RPE 7.7<" in html
+    assert ">RPE 8<" in html
     assert ">Not assessed<" in html
 
 

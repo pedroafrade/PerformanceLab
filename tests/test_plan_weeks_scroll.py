@@ -49,7 +49,7 @@ def test_scroll_sizing_and_card_alignment_are_desktop_only():
     load_helper("_compact_plan_layout_styles", st=st)("Plan")
     css = st.markdown.call_args.args[0]
     desktop = css.split("@media (min-width: 1100px)", 1)[1].split("@media (max-width: 1099px)", 1)[0]
-    assert "calc(100dvh - 44rem)" in desktop
+    assert "calc(100dvh - 46rem)" in desktop
     assert "overflow-y: auto" in desktop
     assert "align-items: stretch" in desktop
     assert "justify-content: space-between;" in desktop

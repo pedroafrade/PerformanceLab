@@ -99,6 +99,11 @@ def _activity_date_label(
         value
     )
 
+def _rpe_label(value) -> str:
+    """Round RPE for display only; retain the original feedback for calculations."""
+    return f"{value:.0f}" if value is not None else "—"
+
+
 def _activity_rows(
     activities,
     *,
@@ -133,7 +138,7 @@ def _activity_rows(
                 activity.elevation_gain
             ),
             "RPE": (
-                activity.rpe
+                round(activity.rpe)
                 if activity.rpe is not None
                 else "—"
             ),
@@ -769,7 +774,7 @@ def _activity_row_html(
     )
 
     rpe_label = (
-        f"RPE {activity.rpe:g}"
+        f"RPE {_rpe_label(activity.rpe)}"
         if activity.rpe is not None
         else "—"
     )
@@ -1033,7 +1038,7 @@ def _compact_activity_metrics_html(
         (
             "RPE",
             (
-                f"{effective_rpe:.1f}"
+                _rpe_label(effective_rpe)
                 if effective_rpe is not None
                 else "—"
             ),

@@ -895,6 +895,15 @@ def _distance_domain(
         ),
     )
 
+def _metric_activity_color(metric, rows, legend):
+    """Keep current BPM red and route-comparison BPM blue, including the legend."""
+    options = {}
+    if metric == "Heart rate":
+        labels = list(dict.fromkeys(row["Activity"] for row in rows))
+        options["scale"] = alt.Scale(domain=labels, range=["#e53935", "#2563eb"])
+    return alt.Color("Activity:N", title=None, legend=legend, **options)
+
+
 def _comparison_chart(
     workout,
     *,
@@ -1083,11 +1092,7 @@ def _comparison_chart(
                 ),
                 scale=metric_scale,
             ),
-            color=alt.Color(
-                "Activity:N",
-                title=None,
-                legend=activity_legend,
-            ),
+            color=_metric_activity_color(metric, metric_rows, activity_legend),
             tooltip=[
                 alt.Tooltip(
                     "Activity:N",

@@ -78,7 +78,7 @@ def test_plan_overview_has_one_flow_and_cards_use_equal_free_space():
     assert ".plan-sidebar-card:last-child { margin-top: auto; }" not in css
     tree = ast.parse((COMPONENTS / "plan_page.py").read_text(encoding="utf-8"))
     overview = [n for n in ast.walk(tree) if isinstance(n, ast.Call)
-                and isinstance(n.func, ast.Attribute) and n.func.attr == "html"
+                and isinstance(n.func, ast.Attribute) and n.func.attr == "markdown"
                 and any(isinstance(v, ast.Constant) and isinstance(v.value, str)
                         and 'class="plan-overview"' in v.value for v in ast.walk(n))]
     assert len(overview) == 1

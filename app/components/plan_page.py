@@ -3219,13 +3219,13 @@ def _compact_plan_layout_styles(
                 flex-shrink: 0;
             }
             .st-key-plan_weeks_scroll {
-                height: clamp(8rem, calc(100dvh - 44rem), 18rem) !important;
+                height: clamp(8rem, calc(100dvh - 46rem), 16rem) !important;
                 min-height: 8rem;
                 overflow-y: auto;
                 scrollbar-gutter: stable;
             }
-            .st-key-plan_page_columns [data-testid="stLayoutWrapper"]:has(> .st-key-plan_weeks_scroll) {
-                margin-top: auto;
+            .st-key-plan_page_columns [data-testid="stLayoutWrapper"]:has(> .st-key-plan_weeks_section) {
+                margin-top: -0.5rem;
             }
             .st-key-plan_page_columns [data-testid="stLayoutWrapper"]:has(> .st-key-plan_summary_cards),
             .st-key-plan_summary_cards,
@@ -4026,9 +4026,10 @@ def show_plan_page(
             )
         )
 
-        st.html(
+        st.markdown(
             "<style>" + phase_timeline_styles() + summary_cards_styles() + "</style>"
-            + '<div class="plan-overview">' + (timeline_html or "") + summary_html + '</div>'
+            + '<div class="plan-overview">' + (timeline_html or "") + summary_html + '</div>',
+            unsafe_allow_html=True,
         )
 
         st.markdown(
@@ -4084,18 +4085,10 @@ def show_plan_page(
             use_container_width=True,
         )
 
-        st.markdown(
-            (
-                '<div class="plan-weeks-heading">'
-                "Plan weeks"
-                "</div>"
-            ),
-            unsafe_allow_html=True,
-        )
-
         _plan_styles()
-
-        _show_plan_weeks(plan, reference_day=today)
+        with st.container(key="plan_weeks_section"):
+            st.markdown('<div class="plan-weeks-heading">Plan weeks</div>', unsafe_allow_html=True)
+            _show_plan_weeks(plan, reference_day=today)
 
     with sidebar_column:
 
