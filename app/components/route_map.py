@@ -6,7 +6,6 @@ Route Map Component.
 
 from math import log2
 
-import pandas as pd
 import pydeck as pdk
 import streamlit as st
 
@@ -122,6 +121,38 @@ def _route_view(
         zoom,
     )
 
+def _route_layers(coordinates):
+    """Draw a cased route and concentric-compatible endpoint markers."""
+    if not coordinates:
+        return []
+    route = [{"path": coordinates}]
+    path_options = dict(
+        data=route, get_path="path", width_units=pdk.types.String("pixels"),
+        cap_rounded=True, joint_rounded=True, pickable=False,
+    )
+    return [
+        pdk.Layer("PathLayer", id="route-outline", get_width=7,
+                  get_color=[255, 255, 255, 230], **path_options),
+        pdk.Layer("PathLayer", id="route-line", get_width=3.5,
+                  get_color=[229, 57, 53, 255], **path_options),
+        pdk.Layer(
+            "ScatterplotLayer", id="route-start",
+            data=[{"position": coordinates[0], "label": "Start"}],
+            get_position="position", radius_units=pdk.types.String("pixels"), get_radius=11,
+            filled=False, stroked=True, get_line_color=[22, 130, 78, 255],
+            line_width_units=pdk.types.String("pixels"), get_line_width=3, pickable=True,
+        ),
+        pdk.Layer(
+            "ScatterplotLayer", id="route-finish",
+            data=[{"position": coordinates[-1], "label": "Finish"}],
+            get_position="position", radius_units=pdk.types.String("pixels"), get_radius=6,
+            filled=True, stroked=True, get_fill_color=[229, 57, 53, 255],
+            get_line_color=[255, 255, 255, 255], line_width_units=pdk.types.String("pixels"),
+            get_line_width=2, pickable=True,
+        ),
+    ]
+
+
 def show_route_map(
     workout,
     *,
@@ -130,7 +161,7 @@ def show_route_map(
     """
     Displays the workout route.
 
-    Panning remains available, while zooming is locked.
+    Panning and zooming remain available, with a flat map view.
     """
 
     if not has_route(workout):
@@ -139,6 +170,8 @@ def show_route_map(
     coordinates = route_coordinates(
         workout
     )
+    if not coordinates:
+        return
 
     (
         latitude,
@@ -146,22 +179,6 @@ def show_route_map(
         route_zoom,
     ) = _route_view(
         coordinates
-    )
-
-    route = pd.DataFrame(
-        {
-            "path": [
-                coordinates
-            ]
-        }
-    )
-
-    layer = pdk.Layer(
-        "PathLayer",
-        data=route,
-        get_path="path",
-        get_width=5,
-        pickable=False,
     )
 
     view_state = pdk.ViewState(
@@ -186,18 +203,44 @@ def show_route_map(
     )
 
     deck = pdk.Deck(
-        layers=[
-            layer
-        ],
+        layers=_route_layers(coordinates),
         views=[
             map_view
         ],
         initial_view_state=view_state,
         map_style="road",
+        tooltip={"text": "{label}"},
     )
 
-    st.pydeck_chart(
-        deck,
-        use_container_width=True,
-        height=height,
+    st.markdown(
+        """
+        <style>
+        .st-key-route_map_surface [data-testid="stDeckGlJsonChart"] {
+            border: 1px solid rgba(128, 128, 128, 0.25);
+            border-radius: 0.65rem;
+            overflow: hidden;
+        }
+        .route-map-legend {
+            display: flex; flex-wrap: wrap; gap: 0.8rem;
+            align-items: center; font-size: 0.72rem; line-height: 1.4;
+        }
+        .route-map-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .route-map-start {
+            width: 0.75rem; height: 0.75rem; border: 2px solid #16824e;
+            border-radius: 50%; display: inline-block; box-sizing: border-box;
+        }
+        .route-map-finish {
+            width: 0.55rem; height: 0.55rem; background: #e53935;
+            border-radius: 50%; display: inline-block;
+        }
+        </style>
+        """, unsafe_allow_html=True,
     )
+    with st.container(key="route_map_surface"):
+        st.pydeck_chart(deck, use_container_width=True, height=height)
+        st.html(
+            '<div class="route-map-legend">'
+            '<span><i class="route-map-start" aria-hidden="true"></i>Start</span>'
+            '<span><i class="route-map-finish" aria-hidden="true"></i>Finish</span>'
+            '</div>'
+        )

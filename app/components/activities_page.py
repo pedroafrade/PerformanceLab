@@ -960,9 +960,6 @@ def _show_activity_summary(all_activities, *, reference_day):
                                  key="activities_summary_sport")
         selected = _summary_activities(all_activities, period=period, sport=sport,
                                        reference_day=reference_day)
-        start = _summary_start_date(period, reference_day=reference_day)
-        date_label = start.isoformat() if start else "All history"
-        st.caption(f"{date_label} → {reference_day.isoformat()} · Independent of list filters")
         st.html(_activities_summary_html(activities=selected))
         if not selected:
             st.caption("No activities in this period for this selection.")
