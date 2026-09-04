@@ -28,6 +28,9 @@ from .dashboard import (
 from .development_page import (
     show_development_page,
 )
+from .metrics_guide_page import (
+    show_metrics_guide_page,
+)
 from .elevation_profile import (
     show_elevation_profile,
 )

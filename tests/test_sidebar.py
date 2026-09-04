@@ -34,6 +34,7 @@ def test_sidebar_uses_public_page_navigation():
         "activities",
         "calendar",
         "development",
+        "guide",
         "settings",
     )
 
@@ -51,6 +52,7 @@ def test_sidebar_uses_semantic_translation_keys():
         "nav.activities",
         "nav.calendar",
         "nav.development",
+        "nav.guide",
         "nav.settings",
     )
 

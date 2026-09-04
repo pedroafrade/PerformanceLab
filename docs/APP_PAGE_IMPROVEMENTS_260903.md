@@ -258,6 +258,10 @@ Performance Status nem eliminar métricas usadas noutras páginas.
   encontrar rapidamente um conceito.
 - [ ] Usar linguagem simples, apresentando os detalhes técnicos progressivamente.
 
+**Implementação inicial:** criar a rota e navegação bilingue, pesquisa, filtro
+por categoria e primeiras explicações sem publicar fórmulas ainda não verificadas.
+O inventário técnico completo continua em GUI-02/GUI-03.
+
 ### GUI-02 — Inventário dos conceitos e fórmulas
 
 - [ ] Inventariar todas as métricas, coeficientes e regras efetivamente usados

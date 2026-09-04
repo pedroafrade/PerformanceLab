@@ -45,6 +45,11 @@ _NAVIGATION_ITEMS = (
         ":material/trending_up:",
     ),
     (
+        "guide",
+        "nav.guide",
+        ":material/menu_book:",
+    ),
+    (
         "settings",
         "nav.settings",
         ":material/settings:",
