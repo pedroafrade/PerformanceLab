@@ -25,6 +25,8 @@ def test_builds_current_state_summary():
         recovery_recommendation=(
             "Prioritise recovery before training."
         ),
+        load_score=75.2,
+        ramp_rate=24.8,
         recovery_reference_time=datetime(
             2026,
             8,
@@ -65,7 +67,14 @@ def test_builds_current_state_summary():
         compact=True,
     )
     assert "current-state-grid-compact" in compact_result
-    assert 'role="progressbar"' in compact_result
+    assert compact_result.count('role="progressbar"') == 2
     assert 'aria-valuenow="19"' in compact_result
     assert "width:19.0%" in compact_result
+    assert 'aria-label="Training load balance"' in compact_result
+    assert 'aria-valuenow="75"' in compact_result
+    assert "Load balance 75/100" in compact_result
+    assert "Ramp +24.8%" in compact_result
+    assert 'role="meter"' in compact_result
+    assert 'aria-valuenow="-30.9"' in compact_result
+    assert "left:19.1%;width:30.9%" in compact_result
     assert "Prioritise recovery before training." in compact_result

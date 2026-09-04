@@ -195,6 +195,8 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
                 recovery_recommendation=(
                     current_state.recovery_recommendation
                 ),
+                load_score=training_load.score,
+                ramp_rate=training_load.ramp_rate,
                 recovery_reference_time=current_state.reference_time,
                 hours_since_last_workout=current_state.hours_since_last_workout,
                 recovery_is_time_aware=current_state.recovery_is_time_aware,

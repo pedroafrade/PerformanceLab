@@ -1938,6 +1938,14 @@ def show_development_page(
                         recovery_recommendation=(
                             development.recovery_recommendation
                         ),
+                        load_score=max(
+                            0.0,
+                            min(
+                                100.0,
+                                100.0 - abs(development.ramp_rate),
+                            ),
+                        ),
+                        ramp_rate=development.ramp_rate,
                         recovery_reference_time=development.recovery_reference_time,
                         hours_since_last_workout=development.hours_since_last_workout,
                         recovery_is_time_aware=development.recovery_is_time_aware,

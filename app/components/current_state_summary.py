@@ -26,6 +26,8 @@ class CurrentStateSummaryData:
     form: float
 
     recovery_recommendation: str = ""
+    load_score: float = 0.0
+    ramp_rate: float = 0.0
 
     recovery_reference_time: (
         datetime | None
@@ -145,6 +147,55 @@ def current_state_summary_html(
     Builds the four current physiological-state cards.
     """
 
+    recovery_progress = max(
+        0.0,
+        min(summary.recovery_score, 100.0),
+    )
+    load_progress = max(
+        0.0,
+        min(summary.load_score, 100.0),
+    )
+    form_position = max(
+        0.0,
+        min(summary.form + 50.0, 100.0),
+    )
+    form_left = min(50.0, form_position)
+    form_width = abs(form_position - 50.0)
+
+    recovery_bar = (
+        '<div class="current-state-indicator-label">'
+        f"Recovery {recovery_progress:.0f}/100"
+        "</div>"
+        '<div class="current-state-progress" role="progressbar" '
+        f'aria-label="Estimated recovery" aria-valuenow="{recovery_progress:.0f}" '
+        'aria-valuemin="0" aria-valuemax="100">'
+        '<div class="current-state-progress-fill" '
+        f'style="width:{recovery_progress:.1f}%"></div></div>'
+    )
+    load_bar = (
+        '<div class="current-state-indicator-label">'
+        f"Load balance {load_progress:.0f}/100"
+        "</div>"
+        '<div class="current-state-progress" role="progressbar" '
+        f'aria-label="Training load balance" aria-valuenow="{load_progress:.0f}" '
+        'aria-valuemin="0" aria-valuemax="100">'
+        '<div class="current-state-progress-fill" '
+        f'style="width:{load_progress:.1f}%"></div></div>'
+    )
+    form_bar = (
+        '<div class="current-state-indicator-label">'
+        "Fatigued · Form · Fresh"
+        "</div>"
+        '<div class="current-state-form-track" role="meter" '
+        f'aria-label="Form" aria-valuenow="{summary.form:.1f}" '
+        'aria-valuemin="-50" aria-valuemax="50">'
+        '<div class="current-state-form-zero"></div>'
+        '<div class="current-state-form-fill" '
+        f'style="left:{form_left:.1f}%;width:{form_width:.1f}%"></div>'
+        '<div class="current-state-form-marker" '
+        f'style="left:{form_position:.1f}%"></div></div>'
+    )
+
     cards = (
         (
             "♡",
@@ -154,6 +205,7 @@ def current_state_summary_html(
             recovery_context(
                 summary
             ),
+            recovery_bar,
         ),
         (
             "↗",
@@ -164,6 +216,7 @@ def current_state_summary_html(
                 summary.chronic_load,
             ),
             "Current training state",
+            "",
         ),
         (
             "⚖",
@@ -173,13 +226,15 @@ def current_state_summary_html(
                 summary.form
             ),
             "Today",
+            form_bar,
         ),
         (
             "▥",
             "Acute load",
             f"{summary.acute_load:.0f}",
             summary.load_status,
-            "Recent training load",
+            f"Ramp {summary.ramp_rate:+.1f}%",
+            load_bar,
         ),
     )
 
@@ -191,6 +246,7 @@ def current_state_summary_html(
         value,
         status,
         context,
+        indicator,
     ) in cards:
         cards_html.append(
             (
@@ -211,6 +267,7 @@ def current_state_summary_html(
                 '<div class="current-state-context">'
                 f"{escape(context)}"
                 "</div>"
+                f"{indicator if compact else ''}"
                 "</div>"
                 "</section>"
             )
@@ -225,21 +282,8 @@ def current_state_summary_html(
     footer_html = ""
 
     if compact:
-        progress = max(
-            0.0,
-            min(summary.recovery_score, 100.0),
-        )
-        footer_html = (
-            '<div class="current-state-progress" '
-            'role="progressbar" '
-            f'aria-valuenow="{progress:.0f}" '
-            'aria-valuemin="0" aria-valuemax="100">'
-            '<div class="current-state-progress-fill" '
-            f'style="width:{progress:.1f}%"></div>'
-            "</div>"
-        )
         if summary.recovery_recommendation:
-            footer_html += (
+            footer_html = (
                 '<div class="current-state-recommendation">'
                 f"{escape(summary.recovery_recommendation)}"
                 "</div>"
@@ -293,6 +337,46 @@ def current_state_summary_styles() -> str:
         height: 100%;
         border-radius: inherit;
         background: #16a34a;
+    }
+
+    .current-state-indicator-label {
+        margin-top: 0.25rem;
+        font-size: 0.57rem;
+        opacity: 0.58;
+    }
+
+    .current-state-form-track {
+        position: relative;
+        width: 100%;
+        height: 0.42rem;
+        margin-top: 0.2rem;
+        border-radius: 999px;
+        background: rgba(128, 128, 128, 0.18);
+    }
+
+    .current-state-form-zero,
+    .current-state-form-marker,
+    .current-state-form-fill {
+        position: absolute;
+        top: 0;
+        height: 100%;
+    }
+
+    .current-state-form-zero {
+        left: 50%;
+        width: 1px;
+        background: rgba(128, 128, 128, 0.8);
+    }
+
+    .current-state-form-fill {
+        background: #16a34a;
+    }
+
+    .current-state-form-marker {
+        width: 0.18rem;
+        border-radius: 999px;
+        background: currentColor;
+        transform: translateX(-50%);
     }
 
     .current-state-recommendation {
