@@ -12,6 +12,7 @@ from datetime import (
     timezone,
 )
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 
@@ -319,6 +320,12 @@ training_coach_generator = (
 # ======================================================
 # Session state
 # ======================================================
+
+def invalidate_daily_brief() -> None:
+    """Allow one fresh resolution after a material context change."""
+
+    st.session_state.pop("daily_brief_attempt_key", None)
+    st.session_state.pop("daily_brief_resolution", None)
     
 def regenerate_weekly_plan() -> None:
     """
@@ -355,6 +362,7 @@ def regenerate_weekly_plan() -> None:
     st.session_state.athlete = (
         result.athlete
     )
+    invalidate_daily_brief()
 
     st.session_state.persisted_notice = (
         "Training plan generated."
@@ -381,6 +389,7 @@ def import_completed_activities(
     st.session_state.athlete = (
         result.athlete
     )
+    invalidate_daily_brief()
 
     return result
 
@@ -407,6 +416,7 @@ def update_completed_workout(
     st.session_state.athlete = (
         result.athlete
     )
+    invalidate_daily_brief()
 
     return result
 
@@ -431,6 +441,7 @@ def delete_completed_workouts(
     st.session_state.athlete = (
         result.athlete
     )
+    invalidate_daily_brief()
 
     return result
 
@@ -677,6 +688,8 @@ def confirm_daily_brief_timezone(timezone_name: str) -> None:
             timezone_name=timezone_name,
             confirmed_at=datetime.now(timezone.utc),
         )
+
+    invalidate_daily_brief()
 
     st.session_state.persisted_notice = "Daily Brief timezone confirmed."
 
@@ -979,34 +992,40 @@ training_coach_permitted = (
     )
 )
 
-daily_brief_resolution = st.session_state.get(
-    "daily_brief_resolution"
+daily_brief_resolution = st.session_state.get("daily_brief_resolution")
+timezone_preference = (
+    daily_brief_timezone_store.get(user_id=current_user.user_id)
+    if daily_brief_timezone_store is not None
+    else None
 )
+daily_brief_attempt_key = None
+if timezone_preference is not None:
+    local_day = datetime.now(timezone.utc).astimezone(
+        ZoneInfo(timezone_preference.timezone_name)
+    ).date()
+    daily_brief_attempt_key = f"{current_user.user_id}:{local_day.isoformat()}"
 if (
-    not st.session_state.get("daily_brief_attempted", False)
+    daily_brief_attempt_key is not None
+    and st.session_state.get("daily_brief_attempt_key") != daily_brief_attempt_key
     and training_coach_permitted
     and daily_brief_runtime_settings.permits(current_user.user_id)
     and daily_brief_generation_service is not None
     and daily_brief_timezone_store is not None
     and repository_bundle.engine is not None
 ):
-    st.session_state.daily_brief_attempted = True
-    timezone_preference = daily_brief_timezone_store.get(
-        user_id=current_user.user_id
+    st.session_state.daily_brief_attempt_key = daily_brief_attempt_key
+    daily_brief_resolution = DailyBriefCoordinator(
+        store=DailyBriefStore(repository_bundle.engine),
+        authorization=athlete_authorization,
+        consent_manager=training_coach_consent_manager,
+        load_athlete=lambda authenticated_user: athlete,
+        generation_service=daily_brief_generation_service,
+    ).resolve(
+        user=current_user,
+        timezone_name=timezone_preference.timezone_name,
+        enabled=True,
     )
-    if timezone_preference is not None:
-        daily_brief_resolution = DailyBriefCoordinator(
-            store=DailyBriefStore(repository_bundle.engine),
-            authorization=athlete_authorization,
-            consent_manager=training_coach_consent_manager,
-            load_athlete=lambda authenticated_user: athlete,
-            generation_service=daily_brief_generation_service,
-        ).resolve(
-            user=current_user,
-            timezone_name=timezone_preference.timezone_name,
-            enabled=True,
-        )
-        st.session_state.daily_brief_resolution = daily_brief_resolution
+    st.session_state.daily_brief_resolution = daily_brief_resolution
 
 if (
     not training_coach_permitted

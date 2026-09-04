@@ -767,3 +767,13 @@ continuamente com o relógio.
 - Reutilizar o resultado diário guardado e apresentar a narrativa no cartão
   Daily Brief. Manter a orientação local de Today como fallback seguro.
 - Não expor erros técnicos, conteúdo enviado ou respostas do fornecedor.
+
+### Renovação diária e invalidação material — conjunto seguinte
+
+- Ativação restrita no Dashboard: pytest, validação visual, commit e push
+  confirmados pelo utilizador.
+- Identificar a tentativa por utilizador e dia civil na timezone confirmada,
+  permitindo uma nova resolução quando uma sessão atravessa a meia-noite.
+- Limpar a tentativa e o comentário em memória após regenerar o plano, importar,
+  editar ou eliminar atividades, ou confirmar outra timezone. O coordenador
+  volta então a calcular a chave de contexto e só gera se esta tiver mudado.

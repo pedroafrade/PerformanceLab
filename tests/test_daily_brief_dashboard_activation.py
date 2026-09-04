@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_app_gates_automatic_resolution_before_provider_path():
     source = (ROOT / "app/app.py").read_text(encoding="utf-8")
-    gate = source.index("not st.session_state.get(\"daily_brief_attempted\", False)")
+    gate = source.index("daily_brief_attempt_key is not None")
     resolution = source.index("DailyBriefCoordinator(", gate)
     segment = source[gate:resolution]
     assert "training_coach_permitted" in segment
@@ -18,7 +18,7 @@ def test_app_gates_automatic_resolution_before_provider_path():
 def test_missing_timezone_does_not_call_coordinator():
     source = (ROOT / "app/app.py").read_text(encoding="utf-8")
     preference = source.index("timezone_preference =")
-    guard = source.index("if timezone_preference is not None:", preference)
+    guard = source.index("daily_brief_attempt_key is not None", preference)
     coordinator = source.index("DailyBriefCoordinator(", guard)
     assert preference < guard < coordinator
 
