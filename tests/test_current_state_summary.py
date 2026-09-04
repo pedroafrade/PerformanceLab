@@ -56,3 +56,9 @@ def test_builds_current_state_summary():
         in result
     )
     assert "Updated 23:07" in result
+
+    compact_result = current_state_summary_html(
+        summary,
+        compact=True,
+    )
+    assert "current-state-grid-compact" in compact_result

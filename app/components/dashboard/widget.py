@@ -98,7 +98,7 @@ def dashboard_widget(
         # Set the bordered container height, not only its inner content block.
         if key.startswith("dashboard_top_"):
             container_options["height"] = 320
-        elif key in {"dashboard_load", "dashboard_recovery", "dashboard_brief", "dashboard_next_workout", "dashboard_summary"}:
+        elif key in {"dashboard_current_state", "dashboard_brief", "dashboard_next_workout", "dashboard_summary"}:
             container_options["height"] = 380
 
     if height is not None:

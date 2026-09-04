@@ -136,6 +136,8 @@ _recovery_context = recovery_context
 
 def current_state_summary_html(
     summary: CurrentStateSummaryData,
+    *,
+    compact: bool = False,
 ) -> str:
     """
     Builds the four current physiological-state cards.
@@ -212,8 +214,14 @@ def current_state_summary_html(
             )
         )
 
+    grid_class = (
+        "current-state-grid current-state-grid-compact"
+        if compact
+        else "current-state-grid"
+    )
+
     return (
-        '<div class="current-state-grid">'
+        f'<div class="{grid_class}">'
         + "".join(
             cards_html
         )
@@ -233,6 +241,12 @@ def current_state_summary_styles() -> str:
             repeat(4, minmax(0, 1fr));
         gap: 0.65rem;
         margin: 0 0 0.15rem 0;
+    }
+
+    .current-state-grid-compact {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        margin-bottom: 0;
     }
 
     .current-state-card {

@@ -24,12 +24,6 @@ from .cards.latest_activity_card import (
 from .cards.next_event_card import (
     next_event_card,
 )
-from .cards.recovery_card import (
-    recovery_card,
-)
-from .cards.training_load_card import (
-    training_load_card,
-)
 from .event_manager import (
     open_event_manager,
 )
@@ -42,6 +36,11 @@ from .widget import (
 )
 from ..route_map import (
     show_route_map,
+)
+from ..current_state_summary import (
+    CurrentStateSummaryData,
+    current_state_summary_html,
+    current_state_summary_styles,
 )
 
 
@@ -83,12 +82,6 @@ def show_dashboard(
     }
     .st-key-dashboard_page {gap: 0.75rem;}
     .st-key-dashboard_top_latest,.st-key-dashboard_top_plan,.st-key-dashboard_top_event {gap:0.4rem;}
-    .st-key-dashboard_load_header,.st-key-dashboard_recovery_header {min-height:2.6rem;}
-    .st-key-dashboard_load .metric-card-body,
-    .st-key-dashboard_recovery .metric-card-body {
-        display:grid!important;grid-template-rows:100px 96px 18px auto;
-        align-items:start!important;
-    }
     .st-key-dashboard_page .activities-summary-grid {
         display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.42rem;
     }
@@ -123,7 +116,6 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
     latest_activity = dashboard_data["latest_activity"]
     planning = dashboard_data["planning"]
     next_event = dashboard_data["next_event"]
-    recovery = dashboard_data["recovery"]
     reference_time = datetime.now().astimezone()
     current_state = athlete.analytics.training_state_at(reference_time=reference_time)
     training_load = dashboard.training_load_at(
@@ -187,17 +179,28 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
                 next_event,
             )
 
-    load_col, recovery_col, brief_col, workout_col, summary_col = dashboard_row((1, 1, 1.7, 1.6, 1.6), gap="small")
+    state_col, brief_col, workout_col, summary_col = dashboard_row((2, 1.7, 1.6, 1.6), gap="small")
 
-    with load_col:
-        with dashboard_widget(title="Training Load", icon=":material/monitoring:",
-                              divider=False, key="dashboard_load"):
-            training_load_card(training_load)
-
-    with recovery_col:
-        with dashboard_widget(title="Estimated Recovery", icon=":material/favorite:",
-                              divider=False, key="dashboard_recovery"):
-            recovery_card(recovery, current_state=current_state)
+    with state_col:
+        with dashboard_widget(title="Training Load & Recovery", icon=":material/monitoring:",
+                              divider=False, key="dashboard_current_state"):
+            summary = CurrentStateSummaryData(
+                recovery_score=current_state.recovery_score,
+                recovery_balance=current_state.recovery_balance,
+                recovery_status=current_state.recovery_status,
+                chronic_load=current_state.ctl,
+                acute_load=current_state.atl,
+                load_status=training_load.status,
+                form=current_state.form,
+                recovery_reference_time=current_state.reference_time,
+                hours_since_last_workout=current_state.hours_since_last_workout,
+                recovery_is_time_aware=current_state.recovery_is_time_aware,
+            )
+            st.markdown(
+                "<style>" + current_state_summary_styles() + "</style>"
+                + current_state_summary_html(summary, compact=True),
+                unsafe_allow_html=True,
+            )
 
     with brief_col:
         with dashboard_widget(title="Daily Brief", icon=":material/today:",

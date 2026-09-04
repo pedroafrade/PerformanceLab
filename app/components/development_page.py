@@ -20,6 +20,8 @@ from .current_state_summary import (
     form_status as _form_status,
     load_status as _load_status,
     recovery_context,
+    current_state_summary_html,
+    current_state_summary_styles,
 )
 def _mobile_chart_cutoff(development):
     """Return an inclusive 60-calendar-day display window."""
@@ -1922,10 +1924,22 @@ def show_development_page(
         st.markdown(
             (
                 "<style>"
-                + _development_interpretation_styles()
+                + current_state_summary_styles()
                 + "</style>"
-                + _development_interpretation_html(
-                    development
+                + current_state_summary_html(
+                    CurrentStateSummaryData(
+                        recovery_score=development.recovery_score,
+                        recovery_balance=development.recovery_balance,
+                        recovery_status=development.recovery_status,
+                        chronic_load=development.chronic_load,
+                        acute_load=development.acute_load,
+                        load_status=development.load_status,
+                        form=development.current_form,
+                        recovery_reference_time=development.recovery_reference_time,
+                        hours_since_last_workout=development.hours_since_last_workout,
+                        recovery_is_time_aware=development.recovery_is_time_aware,
+                    ),
+                    compact=True,
                 )
             ),
             unsafe_allow_html=True,
