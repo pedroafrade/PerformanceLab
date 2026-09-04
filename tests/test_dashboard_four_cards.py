@@ -14,7 +14,9 @@ def test_dashboard_has_exact_requested_card_order():
               for k in n.keywords if k.arg == "title"]
     assert titles == ["Latest Activity", "Weekly Plan", "Next Event", "Training Load",
                       "Estimated Recovery", "Daily Brief", "Next Workout", "Activities Summary"]
-    assert "Automatic Training Coach is not enabled yet" in source
+    assert 'getattr(daily_brief_resolution, "narrative", None)' in source
+    assert "Automatic Training Coach · generated for today" in source
+    assert "Local guidance from Today." in source
     assert "TodayPresenter(athlete).build(reference_time=reference_time)" in source
     assert "show_title=False" in source
 

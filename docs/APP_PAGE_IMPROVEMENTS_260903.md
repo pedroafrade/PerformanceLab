@@ -757,3 +757,13 @@ continuamente com o relógio.
   ligado. Este passo não chama o fornecedor nem gera ou apresenta comentários.
 - Próximo conjunto: executar a decisão no primeiro acesso diário para um
   utilizador autorizado, com fuso confirmado, e apresentar o resultado guardado.
+
+### Ativação automática restrita e apresentação — conjunto seguinte
+
+- Ligação segura da configuração: pytest, commit e push confirmados pelo
+  utilizador.
+- Tentar resolver o Daily Brief uma vez por sessão, apenas quando o interruptor,
+  allowlist, consentimento, PostgreSQL, quota e timezone confirmada permitem.
+- Reutilizar o resultado diário guardado e apresentar a narrativa no cartão
+  Daily Brief. Manter a orientação local de Today como fallback seguro.
+- Não expor erros técnicos, conteúdo enviado ou respostas do fornecedor.

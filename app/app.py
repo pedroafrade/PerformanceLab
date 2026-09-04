@@ -65,6 +65,9 @@ from performancelab.coaching import (
     ActivityCoachGenerationService,
     ActivityCoachResolutionStatus,
 )
+from performancelab.coaching.daily_brief_coordinator import (
+    DailyBriefCoordinator,
+)
 from performancelab.exception_reporting import (
     capture_exception,
 )
@@ -93,6 +96,9 @@ from performancelab.runtime_configuration import (
 )
 from performancelab.storage.repository_factory import (
     build_repository_bundle,
+)
+from performancelab.storage.daily_brief_store import (
+    DailyBriefStore,
 )
 from performancelab.storage.training_coach_quota_store import (
     TrainingCoachQuotaStore,
@@ -973,6 +979,35 @@ training_coach_permitted = (
     )
 )
 
+daily_brief_resolution = st.session_state.get(
+    "daily_brief_resolution"
+)
+if (
+    not st.session_state.get("daily_brief_attempted", False)
+    and training_coach_permitted
+    and daily_brief_runtime_settings.permits(current_user.user_id)
+    and daily_brief_generation_service is not None
+    and daily_brief_timezone_store is not None
+    and repository_bundle.engine is not None
+):
+    st.session_state.daily_brief_attempted = True
+    timezone_preference = daily_brief_timezone_store.get(
+        user_id=current_user.user_id
+    )
+    if timezone_preference is not None:
+        daily_brief_resolution = DailyBriefCoordinator(
+            store=DailyBriefStore(repository_bundle.engine),
+            authorization=athlete_authorization,
+            consent_manager=training_coach_consent_manager,
+            load_athlete=lambda authenticated_user: athlete,
+            generation_service=daily_brief_generation_service,
+        ).resolve(
+            user=current_user,
+            timezone_name=timezone_preference.timezone_name,
+            enabled=True,
+        )
+        st.session_state.daily_brief_resolution = daily_brief_resolution
+
 if (
     not training_coach_permitted
     and not st.session_state.get(
@@ -1033,6 +1068,7 @@ if page == "dashboard":
 
     selected_workout = show_dashboard(
         athlete,
+        daily_brief_resolution=daily_brief_resolution,
     )
 
     show_workout_editor(

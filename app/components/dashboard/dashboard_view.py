@@ -47,6 +47,8 @@ from ..route_map import (
 
 def show_dashboard(
     athlete,
+    *,
+    daily_brief_resolution=None,
 ):
     """Keep the dashboard within the reference desktop viewport."""
     st.html("""<style>
@@ -77,10 +79,13 @@ def show_dashboard(
     .st-key-dashboard_page .next-workout-label {color:inherit;opacity:0.65;}
     </style>""")
     with st.container(key="dashboard_page"):
-        return _show_dashboard_content(athlete)
+        return _show_dashboard_content(
+            athlete,
+            daily_brief_resolution=daily_brief_resolution,
+        )
 
 
-def _show_dashboard_content(athlete):
+def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
     """
     Displays the main athlete dashboard.
     """
@@ -169,14 +174,19 @@ def _show_dashboard_content(athlete):
     with brief_col:
         with dashboard_widget(title="Daily Brief", icon=":material/today:",
                               divider=False, key="dashboard_brief"):
-            st.caption("Local guidance from Today. Automatic Training Coach is not enabled yet.")
-            today = TodayPresenter(athlete).build(reference_time=reference_time)
-            st.markdown(f"**{today.guidance.title}**")
-            st.write(today.guidance.action)
-            if planning.next_workout is not None:
-                st.caption(f"Next planned session: {planning.next_workout.title}")
-            if next_event is not None:
-                st.caption(f"Next event: {next_event.name} · {next_event.event_date:%d %b %Y}")
+            narrative = getattr(daily_brief_resolution, "narrative", None)
+            if isinstance(narrative, str) and narrative.strip():
+                st.write(narrative.strip())
+                st.caption("Automatic Training Coach · generated for today")
+            else:
+                st.caption("Local guidance from Today.")
+                today = TodayPresenter(athlete).build(reference_time=reference_time)
+                st.markdown(f"**{today.guidance.title}**")
+                st.write(today.guidance.action)
+                if planning.next_workout is not None:
+                    st.caption(f"Next planned session: {planning.next_workout.title}")
+                if next_event is not None:
+                    st.caption(f"Next event: {next_event.name} · {next_event.event_date:%d %b %Y}")
             st.caption("This guidance does not change your training plan.")
 
     with workout_col:
