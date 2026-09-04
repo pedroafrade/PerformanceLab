@@ -14,6 +14,9 @@ from performancelab.presentation import (
     PlanGenerationNoticePresenter,
     PlanPresenter,
 )
+from performancelab.training.planning.planned_workout import (
+    format_planned_duration_minutes,
+)
 from .phase_timeline import (
     phase_timeline_from_phases_html,
     phase_timeline_styles,
@@ -104,6 +107,13 @@ def _plan_chart_data(
                 ),
                 "Duration": (
                     duration_minutes
+                ),
+                "Duration label": (
+                    format_planned_duration_minutes(
+                        duration_minutes
+                    )
+                    if duration_minutes is not None
+                    else "—"
                 ),
                 "Session": point.title,
                 "Intensity": (
@@ -730,9 +740,8 @@ def _planned_load_chart(
                     title="Session",
                 ),
                 alt.Tooltip(
-                    "Duration:Q",
-                    title="Duration (min)",
-                    format=".0f",
+                    "Duration label:N",
+                    title="Duration",
                 ),
                 alt.Tooltip(
                     "Intensity:N",
@@ -915,9 +924,8 @@ def _planned_load_chart(
                     title="Race",
                 ),
                 alt.Tooltip(
-                    "Duration:Q",
-                    title="Duration (min)",
-                    format=".0f",
+                    "Duration label:N",
+                    title="Duration",
                 ),
                 alt.Tooltip(
                     "Planned load:Q",
