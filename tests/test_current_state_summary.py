@@ -22,6 +22,9 @@ def test_builds_current_state_summary():
         acute_load=329.9,
         load_status="High load",
         form=-30.9,
+        recovery_recommendation=(
+            "Prioritise recovery before training."
+        ),
         recovery_reference_time=datetime(
             2026,
             8,
@@ -62,3 +65,7 @@ def test_builds_current_state_summary():
         compact=True,
     )
     assert "current-state-grid-compact" in compact_result
+    assert 'role="progressbar"' in compact_result
+    assert 'aria-valuenow="19"' in compact_result
+    assert "width:19.0%" in compact_result
+    assert "Prioritise recovery before training." in compact_result

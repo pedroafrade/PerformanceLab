@@ -192,6 +192,9 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
                 acute_load=current_state.atl,
                 load_status=training_load.status,
                 form=current_state.form,
+                recovery_recommendation=(
+                    current_state.recovery_recommendation
+                ),
                 recovery_reference_time=current_state.reference_time,
                 hours_since_last_workout=current_state.hours_since_last_workout,
                 recovery_is_time_aware=current_state.recovery_is_time_aware,

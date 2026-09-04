@@ -1935,6 +1935,9 @@ def show_development_page(
                         acute_load=development.acute_load,
                         load_status=development.load_status,
                         form=development.current_form,
+                        recovery_recommendation=(
+                            development.recovery_recommendation
+                        ),
                         recovery_reference_time=development.recovery_reference_time,
                         hours_since_last_workout=development.hours_since_last_workout,
                         recovery_is_time_aware=development.recovery_is_time_aware,

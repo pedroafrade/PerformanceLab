@@ -25,6 +25,8 @@ class CurrentStateSummaryData:
 
     form: float
 
+    recovery_recommendation: str = ""
+
     recovery_reference_time: (
         datetime | None
     ) = None
@@ -220,11 +222,35 @@ def current_state_summary_html(
         else "current-state-grid"
     )
 
+    footer_html = ""
+
+    if compact:
+        progress = max(
+            0.0,
+            min(summary.recovery_score, 100.0),
+        )
+        footer_html = (
+            '<div class="current-state-progress" '
+            'role="progressbar" '
+            f'aria-valuenow="{progress:.0f}" '
+            'aria-valuemin="0" aria-valuemax="100">'
+            '<div class="current-state-progress-fill" '
+            f'style="width:{progress:.1f}%"></div>'
+            "</div>"
+        )
+        if summary.recovery_recommendation:
+            footer_html += (
+                '<div class="current-state-recommendation">'
+                f"{escape(summary.recovery_recommendation)}"
+                "</div>"
+            )
+
     return (
         f'<div class="{grid_class}">'
         + "".join(
             cards_html
         )
+        + footer_html
         + "</div>"
     )
 
@@ -244,9 +270,37 @@ def current_state_summary_styles() -> str:
     }
 
     .current-state-grid-compact {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
         margin-bottom: 0;
+    }
+
+    .current-state-grid-compact .current-state-card {
+        min-height: 3.6rem;
+        padding: 0.28rem 0.55rem;
+    }
+
+    .current-state-progress {
+        width: 100%;
+        height: 0.42rem;
+        overflow: hidden;
+        margin-top: 0.2rem;
+        border-radius: 999px;
+        background: rgba(128, 128, 128, 0.18);
+    }
+
+    .current-state-progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: #16a34a;
+    }
+
+    .current-state-recommendation {
+        padding: 0.2rem 0.1rem 0;
+        font-size: 0.67rem;
+        line-height: 1.3;
+        opacity: 0.68;
+        text-align: left;
     }
 
     .current-state-card {
