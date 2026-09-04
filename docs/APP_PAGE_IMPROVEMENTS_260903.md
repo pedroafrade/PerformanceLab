@@ -682,3 +682,21 @@ continuamente com o relógio.
 - Próximo conjunto: criar a composição PostgreSQL transacional do fornecedor,
   repositório de utilização e quota; definir fuso persistente e configuração de
   ativação segura antes de integrar com login e Dashboard.
+
+### Composição PostgreSQL Daily Brief — conjunto seguinte
+
+- Coordenador e quota: pytest, commit e push confirmados pelo utilizador.
+- Criar a composição do fornecedor Gemini, quota partilhada e gravação factual
+  de utilização apenas para bundles PostgreSQL. O modo local/JSON recebe `None`
+  e não ganha uma dependência SQL paralela.
+- Gravar cada evento de utilização numa transação curta própria. Não manter a
+  transação principal da aplicação aberta durante o pedido externo e não manter
+  qualquer bloqueio de quota enquanto o Gemini responde.
+- Construir a composição não contacta o fornecedor, não reserva quota e não
+  ativa o Daily Brief. A criação real do fornecedor ocorre apenas após admissão
+  e após a verificação final fornecida pelo coordenador.
+- Não ligar ainda esta composição a `app.py`. Continuam pendentes o fuso horário
+  persistente, a configuração desligada por defeito e a decisão explícita do
+  momento de chamada no login/Dashboard.
+- Validar posteriormente esta separação numa base PostgreSQL real; os testes
+  automatizados exercitam as transações e relações usando SQL real em SQLite.
