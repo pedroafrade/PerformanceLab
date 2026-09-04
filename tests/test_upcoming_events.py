@@ -34,3 +34,14 @@ def test_renders_compact_next_event_and_full_upcoming_events():
 
 def test_renders_empty_event_state():
     assert "No upcoming events." in upcoming_events_html(())
+
+
+def test_compact_variant_keeps_all_upcoming_events():
+    event = SimpleNamespace(
+        name="Event", event_date=date(2026, 9, 27),
+        days_remaining=None, sport=None, distance=None,
+        elevation_gain=None, priority=None, location=None,
+        country=None, target_time=None,
+    )
+    result = upcoming_events_html((event, event), compact=True)
+    assert result.count('<article class="upcoming-event">') == 2

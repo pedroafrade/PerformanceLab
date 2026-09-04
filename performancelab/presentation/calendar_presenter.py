@@ -420,7 +420,7 @@ class CalendarPresenter:
 
         return phases
 
-    def _upcoming_events(
+    def upcoming_events(
         self,
         *,
         reference_day: date,
@@ -753,7 +753,7 @@ class CalendarPresenter:
             weeks=weeks,
             selected_day=selected,
             upcoming_events=(
-                self._upcoming_events(
+                self.upcoming_events(
                     reference_day=(
                         reference_day
                     )

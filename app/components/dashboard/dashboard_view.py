@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from performancelab.presentation import (
     DashboardData,
     ActivitiesPresenter,
+    CalendarPresenter,
     TodayPresenter,
     has_route,
 )
@@ -118,6 +119,13 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
     next_event = dashboard_data["next_event"]
     reference_time = datetime.now().astimezone()
     current_state = athlete.analytics.training_state_at(reference_time=reference_time)
+    upcoming_events = CalendarPresenter(
+        history=athlete.history,
+        training_plan=athlete.training_plan,
+        events=athlete.events,
+    ).upcoming_events(
+        reference_day=reference_time.date(),
+    )
     training_load = dashboard.training_load_at(
         reference_time=reference_time,
     )
@@ -162,7 +170,7 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
     with event_col:
 
         with dashboard_widget(
-            title="Next Event",
+            title="Upcoming Events",
             icon=":material/event:",
             divider=False,
             key="dashboard_top_event",
@@ -176,7 +184,7 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
         ):
 
             next_event_card(
-                next_event,
+                upcoming_events,
             )
 
     state_col, brief_col, workout_col, summary_col = dashboard_row((2, 1.7, 1.6, 1.6), gap="small")

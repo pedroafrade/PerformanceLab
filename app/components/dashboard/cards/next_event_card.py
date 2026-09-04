@@ -8,11 +8,11 @@ from ...upcoming_events import (
 )
 
 
-def next_event_card(event) -> None:
-    """Display the nearest event using the shared event renderer."""
+def next_event_card(events) -> None:
+    """Display upcoming events using the shared event renderer."""
 
     st.markdown(
         "<style>" + upcoming_events_styles() + "</style>"
-        + upcoming_events_html((event,), compact=True),
+        + upcoming_events_html(events, compact=True),
         unsafe_allow_html=True,
     )

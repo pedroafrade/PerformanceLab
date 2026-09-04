@@ -12,7 +12,7 @@ def test_dashboard_has_exact_requested_card_order():
     titles = [k.value.value for n in ast.walk(view) if isinstance(n, ast.Call)
               and isinstance(n.func, ast.Name) and n.func.id == "dashboard_widget"
               for k in n.keywords if k.arg == "title"]
-    assert titles == ["Latest Activity", "Weekly Plan", "Next Event",
+    assert titles == ["Latest Activity", "Weekly Plan", "Upcoming Events",
                       "Training Load & Recovery", "Daily Brief", "Next Workout",
                       "Activities Summary"]
     assert 'getattr(daily_brief_resolution, "narrative", None)' in source

@@ -20,7 +20,7 @@ def upcoming_events_html(events, *, compact: bool = False) -> str:
         return '<div class="upcoming-events-empty">No upcoming events.</div>'
 
     items = []
-    for event in events[:1] if compact else events:
+    for event in events:
         priority = getattr(event, "priority", None)
         location = " · ".join(
             value for value in (
