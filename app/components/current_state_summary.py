@@ -36,7 +36,7 @@ class CurrentStateSummaryData:
     recovery_is_time_aware: bool = False
 
 
-def _form_status(
+def form_status(
     value: float,
 ) -> str:
     """
@@ -55,7 +55,7 @@ def _form_status(
     return "Fatigued"
 
 
-def _load_status(
+def load_status(
     acute_load: float,
     chronic_load: float,
 ) -> str:
@@ -80,7 +80,7 @@ def _load_status(
     return "Stable"
 
 
-def _recovery_context(
+def recovery_context(
     summary: CurrentStateSummaryData,
 ) -> str:
     """
@@ -130,6 +130,10 @@ def _recovery_context(
     )
 
 
+# Compatibility name for components loaded independently in tests.
+_recovery_context = recovery_context
+
+
 def current_state_summary_html(
     summary: CurrentStateSummaryData,
 ) -> str:
@@ -143,7 +147,7 @@ def current_state_summary_html(
             "Estimated recovery",
             f"{summary.recovery_score:.0f}",
             summary.recovery_status,
-            _recovery_context(
+            recovery_context(
                 summary
             ),
         ),
@@ -151,7 +155,7 @@ def current_state_summary_html(
             "↗",
             "Chronic load",
             f"{summary.chronic_load:.0f}",
-            _load_status(
+            load_status(
                 summary.acute_load,
                 summary.chronic_load,
             ),
@@ -161,7 +165,7 @@ def current_state_summary_html(
             "⚖",
             "Form",
             f"{summary.form:+.1f}",
-            _form_status(
+            form_status(
                 summary.form
             ),
             "Today",

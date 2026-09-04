@@ -20,7 +20,6 @@ from app.components.development_page import (
     _development_summary_cards_html,
     _form_status,
     _load_status,
-    _recovery_status,
     show_development_page,
 )
 
@@ -165,30 +164,6 @@ def test_interprets_form_status():
             -20.0
         )
         == "Fatigued"
-    )
-
-
-def test_interprets_recovery_status():
-
-    assert (
-        _recovery_status(
-            80.0
-        )
-        == "Good"
-    )
-
-    assert (
-        _recovery_status(
-            60.0
-        )
-        == "Moderate"
-    )
-
-    assert (
-        _recovery_status(
-            40.0
-        )
-        == "Low"
     )
 
 
@@ -380,6 +355,8 @@ def test_builds_development_interpretation():
         "-7.2 TSB"
         in result
     )
+    assert "Balance -8.0" in result
+    assert "Daily estimate" in result
 
 
 def test_prioritises_low_recovery_in_overall_status():

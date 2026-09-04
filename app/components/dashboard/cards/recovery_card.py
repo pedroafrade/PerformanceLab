@@ -14,7 +14,7 @@ from .metric_card_body import (
     metric_card_body,
     metric_status_color,
 )
-from ...current_state_summary import CurrentStateSummaryData, _recovery_context
+from ...current_state_summary import CurrentStateSummaryData, recovery_context as _recovery_context
 
 
 def recovery_card(

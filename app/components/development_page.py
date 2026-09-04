@@ -15,8 +15,12 @@ import streamlit as st
 from performancelab.presentation import (
     DevelopmentPresenter,
 )
-
-
+from .current_state_summary import (
+    CurrentStateSummaryData,
+    form_status as _form_status,
+    load_status as _load_status,
+    recovery_context,
+)
 def _mobile_chart_cutoff(development):
     """Return an inclusive 60-calendar-day display window."""
     if not development.dates:
@@ -474,40 +478,6 @@ def _development_load_form_chart(
         )
     )
 
-def _form_status(
-    value: float,
-) -> str:
-    """
-    Returns a concise current-form interpretation.
-    """
-
-    if value >= 5:
-        return "Fresh"
-
-    if value >= -5:
-        return "Balanced"
-
-    if value >= -15:
-        return "Loaded"
-
-    return "Fatigued"
-
-
-def _recovery_status(
-    score: float,
-) -> str:
-    """
-    Returns a concise recovery interpretation.
-    """
-
-    if score >= 70:
-        return "Good"
-
-    if score >= 50:
-        return "Moderate"
-
-    return "Low"
-
 def _development_recovery_context(
     development,
 ) -> str:
@@ -516,74 +486,26 @@ def _development_recovery_context(
     estimate.
     """
 
-    values = [
-        (
-            "Balance "
-            f"{development.recovery_balance:+.1f}"
+    return recovery_context(
+        CurrentStateSummaryData(
+            recovery_score=development.recovery_score,
+            recovery_balance=development.recovery_balance,
+            recovery_status=development.recovery_status,
+            chronic_load=development.chronic_load,
+            acute_load=development.acute_load,
+            load_status=development.load_status,
+            form=development.current_form,
+            recovery_reference_time=(
+                development.recovery_reference_time
+            ),
+            hours_since_last_workout=(
+                development.hours_since_last_workout
+            ),
+            recovery_is_time_aware=(
+                development.recovery_is_time_aware
+            ),
         )
-    ]
-
-    if (
-        development
-        .recovery_is_time_aware
-    ):
-        hours = (
-            development
-            .hours_since_last_workout
-        )
-
-        if hours is not None:
-            values.append(
-                f"{round(hours)} h since "
-                "last session"
-            )
-        else:
-            values.append(
-                "Time-aware estimate"
-            )
-    else:
-        values.append(
-            "Daily estimate"
-        )
-
-    reference_time = (
-        development
-        .recovery_reference_time
     )
-
-    if reference_time is not None:
-        values.append(
-            f"Updated {reference_time:%H:%M}"
-        )
-
-    return " · ".join(
-        values
-    )
-
-def _load_status(
-    acute_load: float,
-    chronic_load: float,
-) -> str:
-    """
-    Describes recent load relative to chronic load.
-    """
-
-    if chronic_load <= 0:
-
-        return "No baseline"
-
-    ratio = (
-        acute_load
-        / chronic_load
-    )
-
-    if ratio > 1.2:
-        return "Elevated"
-
-    if ratio < 0.8:
-        return "Reduced"
-
-    return "Stable"
 
 
 def _distance_summary_card(card, totals, sport):
@@ -1202,9 +1124,7 @@ def _development_overall_status(
     )
 
     recovery_status = (
-        _recovery_status(
-            development.recovery_score
-        )
+        development.recovery_status
     )
 
     form_status = (
@@ -1214,7 +1134,8 @@ def _development_overall_status(
     )
 
     if (
-        recovery_status == "Low"
+        recovery_status
+        in {"Low", "Recovery needed"}
         or form_status == "Fatigued"
     ):
 
@@ -1284,9 +1205,7 @@ def _development_interpretation_html(
     )
 
     recovery_status = (
-        _recovery_status(
-            development.recovery_score
-        )
+        development.recovery_status
     )
 
     form_status = (
@@ -1305,6 +1224,10 @@ def _development_interpretation_html(
         f"{development.recovery_score:.0f}/100"
         " · "
         f"{development.recovery_status}"
+        " · "
+        + _development_recovery_context(
+            development
+        )
     )
 
     form_detail = (
