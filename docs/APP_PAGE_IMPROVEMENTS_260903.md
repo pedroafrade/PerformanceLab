@@ -647,3 +647,20 @@ continuamente com o relógio.
 - O Daily Brief continua desativado e ainda não usa a quota. Antes de o ativar,
   ligar o seu coordenador à mesma admissão, fechar observabilidade/retenção e
   concluir os restantes controlos operacionais descritos neste documento.
+
+### Fronteira de quota preparada para Daily Brief — conjunto seguinte
+
+- Quota partilhada aplicada a Activities: pytest, commit e push confirmados pelo
+  utilizador. O runtime local continua sem depender de PostgreSQL.
+- Adicionar uma fronteira interna que reserve a mesma quota para a finalidade
+  `daily_brief`, associe reserva e utilização pelo mesmo ID e transporte as
+  contagens de tokens factuais fornecidas pelo adaptador Gemini.
+- Construir o fornecedor apenas depois da admissão. Não devolver comentário se
+  faltar o registo de utilização ou a finalização da reserva; nunca repetir o
+  pedido nesta camada. Libertar apenas falhas confirmadas sem geração e manter
+  resultados ambíguos a contar de forma conservadora.
+- Este componente ainda não é chamado pelo coordenador, login ou Dashboard.
+  A geração automática permanece desativada e não existe alteração visual.
+- Próximo conjunto: adaptar o coordenador para consumir este resultado, ligar
+  transações e configuração PostgreSQL e testar novamente consentimento,
+  alteração de contexto, expiração e concorrência antes de qualquer ativação.
