@@ -140,6 +140,35 @@ users = Table(
 )
 
 
+daily_brief_timezones = Table(
+    "daily_brief_timezones",
+    metadata,
+    Column(
+        "user_id",
+        String(36),
+        ForeignKey(
+            "users.user_id",
+            ondelete="CASCADE",
+        ),
+        primary_key=True,
+    ),
+    Column(
+        "timezone_name",
+        String(64),
+        nullable=False,
+    ),
+    Column(
+        "confirmed_at",
+        DateTime(timezone=True),
+        nullable=False,
+    ),
+    CheckConstraint(
+        "length(timezone_name) > 0",
+        name="timezone_name_not_empty",
+    ),
+)
+
+
 external_identities = Table(
     "external_identities",
     metadata,
@@ -501,6 +530,7 @@ training_coach_quota_reservations = Table(
 POSTGRESQL_TABLES = (
     athletes,
     users,
+    daily_brief_timezones,
     external_identities,
     user_athlete_access,
     alpha_invitations,

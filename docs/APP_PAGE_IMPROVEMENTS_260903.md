@@ -717,3 +717,21 @@ continuamente com o relógio.
 - Não existe alteração visual. Próximo conjunto: persistir e validar o fuso por
   utilizador, mantendo UTC como migração explícita para registos existentes e
   permitindo ao próprio utilizador confirmar a sua zona antes da ativação.
+
+### Fuso horário persistente Daily Brief — conjunto seguinte
+
+- Ativação controlada: pytest, commit e push confirmados pelo utilizador.
+- Guardar uma zona IANA explicitamente confirmada por utilizador, com data UTC
+  de confirmação. Não deduzir o dia pelo relógio do servidor e não gerar quando
+  ainda não existir uma preferência válida.
+- Registos existentes não recebem silenciosamente UTC: ficam sem linha nesta
+  nova tabela até confirmação. Isto substitui a hipótese anterior de migração
+  automática para UTC e evita associar o comentário ao dia local errado.
+- Validar a zona com `ZoneInfo`, limitar tamanho e eliminar por cascata com o
+  utilizador. A alteração da zona será uma mudança relevante de contexto quando
+  o coordenador for ligado ao runtime.
+- Migração `20260904_04`, dependente de `20260904_03`. Nenhuma base externa é
+  alterada por este patch; aplicar a migração apenas no processo de deployment.
+- Ainda falta disponibilizar a confirmação ao utilizador em Settings e integrar
+  este armazenamento na composição runtime. Essa futura etapa terá alteração
+  visual e exigirá confirmação no Streamlit.

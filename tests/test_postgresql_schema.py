@@ -21,6 +21,7 @@ from performancelab.storage.postgresql_schema import (
     alpha_participation_consents,
     athlete_snapshots,
     daily_briefs,
+    daily_brief_timezones,
     athletes,
     external_identities,
     metadata,
@@ -68,6 +69,7 @@ def test_defines_expected_postgresql_tables():
         "alpha_participation_consents",
         "athlete_snapshots",
         "daily_briefs",
+        "daily_brief_timezones",
         "training_coach_quota_reservations",
     }
 
@@ -76,6 +78,7 @@ def test_defines_expected_postgresql_tables():
     ) == (
         athletes,
         users,
+        daily_brief_timezones,
         external_identities,
         user_athlete_access,
         alpha_invitations,

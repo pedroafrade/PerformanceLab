@@ -27,6 +27,7 @@ dependencies = [
     "alembic>=1.16,<2",
     "psycopg[binary]>=3.2,<4",
     "sentry-sdk>=2.0,<3",
+    "tzdata>=2025.2,<2027; platform_system == 'Windows'",
 ]
 
 [project.optional-dependencies]

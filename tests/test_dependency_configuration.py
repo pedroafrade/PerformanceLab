@@ -61,6 +61,7 @@ def test_pyproject_contains_all_runtime_dependencies():
         "sentry-sdk",
         "sqlalchemy",
         "streamlit",
+        "tzdata",
     }
 
 
