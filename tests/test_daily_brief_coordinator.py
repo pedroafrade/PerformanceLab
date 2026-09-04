@@ -111,6 +111,87 @@ def test_generate_then_reuse_without_new_quota_or_request(harness):
     h.quota.assert_called_once_with("user-a")
 
 
+def test_shared_generation_service_replaces_legacy_quota_pair(harness):
+    h = harness
+    service = MagicMock()
+    dispatch_checks = []
+    def generate_with_dispatch_check(**arguments):
+        dispatch_checks.append(arguments["can_dispatch"]())
+        return SimpleNamespace(
+            status="generated",
+            narrative="Shared quota guidance",
+            reason=None,
+        )
+    service.generate.side_effect = generate_with_dispatch_check
+    h.coordinator.generation_service = service
+    h.coordinator.generate = None
+    h.coordinator.acquire_quota = None
+
+    first = resolve(h)
+    second = resolve(h)
+
+    assert first.status == "generated"
+    assert first.narrative == "Shared quota guidance"
+    assert second.status == "cached"
+    service.generate.assert_called_once()
+    assert service.generate.call_args.kwargs["user_id"] == "user-a"
+    assert dispatch_checks == [True]
+    h.quota.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("reason", "retry_minutes"),
+    (
+        ("global_daily_limit", 5),
+        ("generation_failed", 30),
+    ),
+)
+def test_shared_generation_failure_uses_bounded_backoff(
+    harness,
+    reason,
+    retry_minutes,
+):
+    h = harness
+    service = MagicMock()
+    service.generate.return_value = SimpleNamespace(
+        status="unavailable",
+        narrative=None,
+        reason=reason,
+    )
+    h.coordinator.generation_service = service
+
+    result = resolve(h)
+
+    assert result.status == "unavailable"
+    assert result.reason == reason
+    h.clock.value += timedelta(minutes=retry_minutes - 1)
+    assert resolve(h).status == "waiting"
+    h.clock.value += timedelta(minutes=1)
+    assert resolve(h).status == "unavailable"
+    assert service.generate.call_count == 2
+
+
+def test_shared_service_rechecks_permission_immediately_before_dispatch(harness):
+    h = harness
+    service = MagicMock()
+    def cancel_before_dispatch(**arguments):
+        h.consent.record = h.consent.record.withdraw(withdrawn_at=NOW)
+        assert arguments["can_dispatch"]() is False
+        return SimpleNamespace(
+            status="unavailable",
+            narrative=None,
+            reason="dispatch_cancelled",
+        )
+    service.generate.side_effect = cancel_before_dispatch
+    h.coordinator.generation_service = service
+
+    result = resolve(h)
+
+    assert result.status == "blocked"
+    assert result.reason == "dispatch_cancelled"
+    assert h.store.export_for_user("user-a") == []
+
+
 def test_next_local_day_and_changed_foundations_regenerate(harness):
     h = harness
     resolve(h)

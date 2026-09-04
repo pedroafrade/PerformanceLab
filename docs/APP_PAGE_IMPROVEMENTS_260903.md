@@ -664,3 +664,21 @@ continuamente com o relógio.
 - Próximo conjunto: adaptar o coordenador para consumir este resultado, ligar
   transações e configuração PostgreSQL e testar novamente consentimento,
   alteração de contexto, expiração e concorrência antes de qualquer ativação.
+
+### Coordenador ligado à fronteira de quota — conjunto seguinte
+
+- Fronteira Daily Brief: pytest, commit e push confirmados pelo utilizador.
+- Permitir ao coordenador consumir o resultado da fronteira partilhada, passando
+  apenas o ID do utilizador autenticado e o contexto interno já selecionado.
+  Cache válido continua a ser resolvida antes da quota e do fornecedor.
+- Manter temporariamente os adaptadores anteriores para compatibilidade dos
+  testes e para uma migração explícita do runtime; a fronteira nova tem
+  precedência quando configurada, evitando duas verificações de quota.
+- Aplicar backoff curto a indisponibilidade/limites de quota e conservador às
+  restantes falhas, sem expor exceções do fornecedor. Preservar todas as
+  verificações posteriores de consentimento, contexto, proprietário e lease.
+- A aplicação ainda não constrói este coordenador no login e a funcionalidade
+  permanece desligada. Não há alteração visual nem pedido real ao Gemini.
+- Próximo conjunto: criar a composição PostgreSQL transacional do fornecedor,
+  repositório de utilização e quota; definir fuso persistente e configuração de
+  ativação segura antes de integrar com login e Dashboard.

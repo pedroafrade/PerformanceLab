@@ -29,20 +29,24 @@ def _utc_now():
 class DailyBriefCoordinator:
     """Use authenticated identity, fresh domain snapshots and persistent leases.
 
-    acquire_quota(user_id) must atomically consume a request budget and return
-    an actual bool. Missing quota/generation adapters fail closed. The caller
-    must supply an authenticated User, never an ID from browser input.
+    generation_service.generate(user_id=..., context=...) is the preferred
+    boundary: it owns shared quota, provider dispatch and factual usage. The
+    legacy generate/acquire_quota pair remains temporarily supported until the
+    runtime is migrated. The caller supplies an authenticated User, never an ID
+    received from browser input.
     """
 
     def __init__(self, *, store, authorization, consent_manager, load_athlete,
                  generate=None, acquire_quota=None, clock=_utc_now,
-                 context_builder=build_daily_brief_context):
+                 context_builder=build_daily_brief_context,
+                 generation_service=None):
         self.store = store
         self.authorization = authorization
         self.consent_manager = consent_manager
         self.load_athlete = load_athlete
         self.generate = generate
         self.acquire_quota = acquire_quota
+        self.generation_service = generation_service
         self.clock = clock
         self.context_builder = context_builder
 
@@ -82,7 +86,14 @@ class DailyBriefCoordinator:
         """Resolve once; caller may show local Today guidance for non-success."""
         if enabled is not True:
             return DailyBriefResolution("disabled")
-        if not callable(self.generate) or not callable(self.acquire_quota):
+        uses_generation_service = callable(
+            getattr(self.generation_service, "generate", None)
+        )
+        uses_legacy_adapters = (
+            callable(self.generate)
+            and callable(self.acquire_quota)
+        )
+        if not uses_generation_service and not uses_legacy_adapters:
             return DailyBriefResolution("unavailable", reason="adapters_not_configured")
         lease = None
         try:
@@ -110,16 +121,50 @@ class DailyBriefCoordinator:
                 return DailyBriefResolution("waiting", reason="context_changed")
             if not self.store.is_active(lease, now=self._now()):
                 return DailyBriefResolution("waiting", reason="lease_expired")
-            if self.acquire_quota(user.user_id) is not True:
-                failed_at = self._now()
-                self.store.fail(lease, now=failed_at,
-                                retry_after=failed_at + timedelta(minutes=5))
-                return DailyBriefResolution("unavailable", reason="quota_unavailable")
             if not self._permitted(user) or not self.store.is_active(lease, now=self._now()):
                 self.store.release(lease, now=self._now())
                 return DailyBriefResolution("blocked", reason="dispatch_cancelled")
 
-            narrative = self.generate(context)
+            if uses_generation_service:
+                generation = self.generation_service.generate(
+                    user_id=user.user_id,
+                    context=context,
+                    can_dispatch=lambda: (
+                        self._permitted(user)
+                        and self.store.is_active(lease, now=self._now())
+                        and self._snapshot(user, zone, self._now())[1] == key
+                    ),
+                )
+                if getattr(generation, "reason", None) == "dispatch_cancelled":
+                    self.store.release(lease, now=self._now())
+                    return DailyBriefResolution(
+                        "blocked",
+                        reason="dispatch_cancelled",
+                    )
+                if getattr(generation, "status", None) != "generated":
+                    failed_at = self._now()
+                    reason = getattr(generation, "reason", None) or "generation_unavailable"
+                    short_backoff = reason in {
+                        "user_daily_limit",
+                        "global_daily_limit",
+                        "quota_unavailable",
+                    }
+                    self.store.fail(
+                        lease,
+                        now=failed_at,
+                        retry_after=failed_at + timedelta(
+                            minutes=5 if short_backoff else 30
+                        ),
+                    )
+                    return DailyBriefResolution("unavailable", reason=reason)
+                narrative = getattr(generation, "narrative", None)
+            else:
+                if self.acquire_quota(user.user_id) is not True:
+                    failed_at = self._now()
+                    self.store.fail(lease, now=failed_at,
+                                    retry_after=failed_at + timedelta(minutes=5))
+                    return DailyBriefResolution("unavailable", reason="quota_unavailable")
+                narrative = self.generate(context)
             if not isinstance(narrative, str) or not narrative.strip():
                 raise ValueError("Invalid Daily Brief output")
             finished_at = self._now()

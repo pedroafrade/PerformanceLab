@@ -70,7 +70,9 @@ class QuotaLimitedDailyBriefGeneration:
     def _unavailable(reason):
         return DailyBriefGenerationResult("unavailable", reason=reason)
 
-    def generate(self, *, user_id, context):
+    def generate(self, *, user_id, context, can_dispatch):
+        if not callable(can_dispatch):
+            return self._unavailable("dispatch_guard_required")
         try:
             started_at = _now(self.clock)
             admission = self.quota_store.reserve(
@@ -124,6 +126,26 @@ class QuotaLimitedDailyBriefGeneration:
             recorded_event = event
 
         try:
+            try:
+                dispatch_permitted = can_dispatch() is True
+            except Exception:
+                dispatch_permitted = False
+            if not dispatch_permitted:
+                record_usage({
+                    "purpose": "daily_brief",
+                    "provider": None,
+                    "model": None,
+                    "status": "dispatch_cancelled",
+                    "prompt_tokens": None,
+                    "output_tokens": None,
+                    "total_tokens": None,
+                })
+                self.quota_store.finish(
+                    receipt,
+                    outcome="not_generated",
+                    now=_now(self.clock),
+                )
+                return self._unavailable("dispatch_cancelled")
             provider = self.provider_factory(record_usage=record_usage)
             narrative = provider(context)
             finished_at = _now(self.clock)
