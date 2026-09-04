@@ -77,4 +77,5 @@ def test_builds_current_state_summary():
     assert 'role="meter"' in compact_result
     assert 'aria-valuenow="-30.9"' in compact_result
     assert "left:19.1%;width:30.9%" in compact_result
+    assert "<span>Fatigue</span><span>Form</span><span>Fresh</span>" in compact_result
     assert "Prioritise recovery before training." in compact_result

@@ -99,7 +99,7 @@ def dashboard_widget(
         if key.startswith("dashboard_top_"):
             container_options["height"] = 320
         elif key in {"dashboard_current_state", "dashboard_brief", "dashboard_next_workout", "dashboard_summary"}:
-            container_options["height"] = 380
+            container_options["height"] = 440
 
     if height is not None:
         container_options["height"] = height

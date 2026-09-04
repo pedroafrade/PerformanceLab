@@ -184,7 +184,7 @@ def current_state_summary_html(
     )
     form_bar = (
         '<div class="current-state-indicator-label">'
-        "Fatigued · Form · Fresh"
+        '<span>Fatigue</span><span>Form</span><span>Fresh</span>'
         "</div>"
         '<div class="current-state-form-track" role="meter" '
         f'aria-label="Form" aria-valuenow="{summary.form:.1f}" '
@@ -340,6 +340,9 @@ def current_state_summary_styles() -> str:
     }
 
     .current-state-indicator-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-top: 0.25rem;
         font-size: 0.57rem;
         opacity: 0.58;

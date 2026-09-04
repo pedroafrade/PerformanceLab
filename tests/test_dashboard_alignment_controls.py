@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[1] / "app/components/dashboard"
 
 @pytest.mark.parametrize("key,height", [
     ("dashboard_top_latest", 320), ("dashboard_top_plan", 320),
-    ("dashboard_top_event", 320), ("dashboard_current_state", 380),
-    ("dashboard_brief", 380), ("dashboard_next_workout", 380), ("dashboard_summary", 380),
+    ("dashboard_top_event", 320), ("dashboard_current_state", 440),
+    ("dashboard_brief", 440), ("dashboard_next_workout", 440), ("dashboard_summary", 440),
     ("another_card", None),
 ])
 def test_border_container_receives_uniform_native_height(key, height):

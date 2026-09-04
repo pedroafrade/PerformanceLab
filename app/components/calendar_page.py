@@ -9,6 +9,11 @@ from html import escape
 
 import streamlit as st
 
+from .upcoming_events import (
+    upcoming_events_html,
+    upcoming_events_styles,
+)
+
 from performancelab.presentation import (
     CalendarPresenter,
     PlanPresenter,
@@ -419,78 +424,7 @@ def _upcoming_events_html(
     Builds the factual six-month event list.
     """
 
-    if not events:
-        return (
-            '<div class="calendar-sidebar-empty">'
-            "No events are scheduled in the next six months."
-            "</div>"
-        )
-
-    parts = [
-        '<div class="calendar-upcoming-events-list">'
-    ]
-
-    for event in events:
-        details = tuple(
-            value
-            for value in (
-                event.sport,
-                (
-                    f"{event.distance:g} km"
-                    if event.distance
-                    is not None
-                    else None
-                ),
-                (
-                    f"+{event.elevation_gain:g} m"
-                    if event.elevation_gain
-                    is not None
-                    else None
-                ),
-            )
-            if value
-        )
-
-        details_label = (
-            " · ".join(details)
-            if details
-            else "Event"
-        )
-
-        priority = (
-            (
-                '<span class="calendar-event-priority">'
-                f"{escape(event.priority.upper())}"
-                "</span>"
-            )
-            if event.priority
-            else ""
-        )
-
-        parts.append(
-            (
-                '<div class="calendar-upcoming-event">'
-                '<div class="calendar-upcoming-event-header">'
-                '<span class="calendar-upcoming-event-name">'
-                f"{escape(event.name)}"
-                "</span>"
-                f"{priority}"
-                "</div>"
-                '<div class="calendar-upcoming-event-date">'
-                f"{event.event_date:%d %b %Y}"
-                "</div>"
-                '<div class="calendar-upcoming-event-details">'
-                f"{escape(details_label)}"
-                "</div>"
-                "</div>"
-            )
-        )
-
-    parts.append(
-        "</div>"
-    )
-
-    return "".join(parts)
+    return upcoming_events_html(events)
 
 
 def _calendar_styles() -> None:
@@ -1129,9 +1063,8 @@ def _show_upcoming_events(
             )
 
         st.html(
-            _upcoming_events_html(
-                events
-            )
+            "<style>" + upcoming_events_styles() + "</style>"
+            + _upcoming_events_html(events)
         )
 
 
