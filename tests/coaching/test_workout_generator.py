@@ -1103,7 +1103,7 @@ def test_builds_mountainous_long_run_structure():
     assert structure == (
         (
             "Long aerobic run on mountainous "
-            "terrain 120 min"
+            "terrain 2h00"
         ),
         "Target elevation gain: 450 m D+",
         (
@@ -1128,7 +1128,7 @@ def test_builds_hilly_long_run_structure():
     assert structure == (
         (
             "Long aerobic run on hilly "
-            "terrain 120 min"
+            "terrain 2h00"
         ),
         (
             "Keep sustained climbs aerobic and "
@@ -1146,7 +1146,7 @@ def test_flat_long_run_keeps_standard_structure():
     )
 
     assert structure == (
-        "Long aerobic run 120 min",
+        "Long aerobic run 2h00",
     )
 
 
@@ -1162,7 +1162,7 @@ def test_easy_run_uses_one_continuous_total_duration():
     )
 
     assert structure == (
-        "Easy aerobic run 60 min",
+        "Easy aerobic run 1h00",
     )
 def test_long_run_practises_default_nutrition():
 

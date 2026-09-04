@@ -20,6 +20,22 @@ _LEGACY_WARM_UP_STEP = re.compile(r"Warm up \d+ min")
 _LEGACY_COOL_DOWN_STEP = re.compile(r"Cool down \d+ min")
 
 
+def format_planned_duration_minutes(
+    total_minutes: int,
+) -> str:
+    """Formats a planned duration using hours from 60 minutes."""
+
+    if total_minutes < 60:
+        return f"{total_minutes} min"
+
+    hours, minutes = divmod(
+        total_minutes,
+        60,
+    )
+
+    return f"{hours}h{minutes:02d}"
+
+
 @dataclass(frozen=True)
 class PlannedWorkout:
     """
@@ -125,7 +141,7 @@ class PlannedWorkout:
         return tuple(
             (
                 f"{main_match.group('label')} "
-                f"{total_minutes} min"
+                f"{format_planned_duration_minutes(total_minutes)}"
                 if index == main_index
                 else step
             )

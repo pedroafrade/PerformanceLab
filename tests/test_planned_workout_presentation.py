@@ -20,7 +20,7 @@ def test_collapses_legacy_long_run_for_presentation():
     )
 
     assert workout.presentation_structure == (
-        "Long aerobic run on hilly terrain 100 min",
+        "Long aerobic run on hilly terrain 1h40",
         "Target elevation gain: 450 m D+",
         "Heart rate target: Z2 · 121–156 bpm",
     )

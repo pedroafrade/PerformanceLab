@@ -8,7 +8,10 @@ Converts a concrete TrainingWeek into planned workouts.
 
 from datetime import date, datetime, time, timedelta
 
-from performancelab.training.planning.planned_workout import PlannedWorkout
+from performancelab.training.planning.planned_workout import (
+    PlannedWorkout,
+    format_planned_duration_minutes,
+)
 
 from performancelab.physiology.thresholds import lthr
 
@@ -1728,7 +1731,8 @@ class WorkoutGenerator:
             or not split_sections
         ):
             return (
-                f"{main_label} {duration_minutes} min",
+                f"{main_label} "
+                f"{format_planned_duration_minutes(duration_minutes)}",
             )
 
         reserved_minutes = (
