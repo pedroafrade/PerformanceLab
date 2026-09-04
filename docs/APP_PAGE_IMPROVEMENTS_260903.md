@@ -700,3 +700,20 @@ continuamente com o relógio.
   momento de chamada no login/Dashboard.
 - Validar posteriormente esta separação numa base PostgreSQL real; os testes
   automatizados exercitam as transações e relações usando SQL real em SQLite.
+
+### Ativação controlada Daily Brief — conjunto seguinte
+
+- Composição PostgreSQL: pytest, commit e push confirmados pelo utilizador.
+- Adicionar uma configuração independente, desligada por defeito, para impedir
+  ativação acidental durante a preparação do restante runtime. Um valor inválido
+  falha fechado em vez de ser interpretado como verdadeiro.
+- Mesmo quando a opção é ligada, exigir uma lista explícita de utilizadores de
+  teste. Não aceitar wildcard nem ativar automaticamente todos os participantes.
+  A lista não é mostrada na representação da configuração nem contém conteúdo
+  do treino; é apenas um controlo temporário de rollout.
+- Este conjunto não acrescenta ainda as novas chaves ao carregamento de `app.py`
+  e não inicia geração. A configuração será integrada apenas juntamente com o
+  fuso persistente e a composição completa do coordenador.
+- Não existe alteração visual. Próximo conjunto: persistir e validar o fuso por
+  utilizador, mantendo UTC como migração explícita para registos existentes e
+  permitindo ao próprio utilizador confirmar a sua zona antes da ativação.
