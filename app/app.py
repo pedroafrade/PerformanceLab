@@ -647,6 +647,8 @@ def allow_training_coach() -> None:
             user_id=current_user.user_id
         )
 
+    invalidate_daily_brief()
+
     st.session_state.persisted_notice = (
         "Training Coach enabled."
     )
@@ -665,6 +667,8 @@ def withdraw_training_coach() -> None:
         training_coach_consent_manager.withdraw(
             user_id=current_user.user_id
         )
+
+    invalidate_daily_brief()
 
     st.session_state[
         "training_coach_prompt_dismissed"
@@ -738,6 +742,13 @@ def logout() -> None:
 
     st.session_state.pop(
         "training_coach_prompt_dismissed",
+        None,
+    )
+
+    invalidate_daily_brief()
+
+    st.session_state.pop(
+        "daily_brief_timezone_selection",
         None,
     )
 

@@ -777,3 +777,11 @@ continuamente com o relógio.
 - Limpar a tentativa e o comentário em memória após regenerar o plano, importar,
   editar ou eliminar atividades, ou confirmar outra timezone. O coordenador
   volta então a calcular a chave de contexto e só gera se esta tiver mudado.
+
+### Limpeza de privacidade da sessão — conjunto seguinte
+
+- Renovação e invalidação: pytest, commit e push confirmados pelo utilizador.
+- Remover comentário e tentativa da memória ao conceder ou retirar o
+  consentimento Training Coach e ao terminar sessão.
+- No logout, remover também o estado visual da seleção de timezone, impedindo a
+  reutilização acidental de dados entre autenticações no mesmo browser.
