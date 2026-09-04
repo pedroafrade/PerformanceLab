@@ -9,6 +9,9 @@ import streamlit as st
 from .athlete_panel import (
     show_athlete_panel,
 )
+from .daily_brief_timezone import (
+    show_daily_brief_timezone_settings,
+)
 from .training_coach_consent import (
     show_training_coach_consent_settings,
 )
@@ -225,6 +228,8 @@ def show_settings_page(
     support_contact_email: str | None = None,
     on_delete_participant_data=None,
     participant_deletion_error: str | None = None,
+    daily_brief_timezone: str | None = None,
+    on_confirm_daily_brief_timezone=None,
 ):
     """
     Display athlete settings and participant data controls.
@@ -293,6 +298,12 @@ def show_settings_page(
             st.warning(
                 "Your data export is temporarily unavailable."
             )
+
+        st.divider()
+        show_daily_brief_timezone_settings(
+            current_timezone=daily_brief_timezone,
+            on_confirm=on_confirm_daily_brief_timezone,
+        )
 
     with contact_tab:
         privacy_column, support_column = st.columns(2, gap="medium")

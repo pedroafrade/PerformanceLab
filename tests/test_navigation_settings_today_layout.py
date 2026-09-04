@@ -63,6 +63,7 @@ def settings_harness():
     athlete = object()
     profile = MagicMock(return_value=athlete)
     coach = MagicMock()
+    timezone_settings = MagicMock()
     st.attach_mock(profile, "profile_render")
     st.attach_mock(coach, "coach_render")
     confirmed = helper("settings_page.py", "participant_deletion_confirmed",
@@ -70,6 +71,7 @@ def settings_harness():
     show = helper("settings_page.py", "show_settings_page", st=st,
                   _settings_page_header=MagicMock(), show_athlete_panel=profile,
                   show_training_coach_consent_settings=coach,
+                  show_daily_brief_timezone_settings=timezone_settings,
                   participant_deletion_confirmed=confirmed,
                   privacy_contact_mailto=lambda v: "mailto:" + v,
                   support_contact_mailto=lambda v: "mailto:" + v)

@@ -735,3 +735,14 @@ continuamente com o relógio.
 - Ainda falta disponibilizar a confirmação ao utilizador em Settings e integrar
   este armazenamento na composição runtime. Essa futura etapa terá alteração
   visual e exigirá confirmação no Streamlit.
+
+### Confirmação do fuso horário em Settings — conjunto seguinte
+
+- Fuso horário persistente: pytest, commit e push confirmados pelo utilizador.
+- Disponibilizar em **Settings > Your data** uma seleção explícita da zona local
+  do utilizador, incluindo Lisboa e Açores, sem a inferir do dispositivo.
+- Usar a tabela própria em PostgreSQL e uma preferência JSON equivalente no
+  ambiente local, permitindo testar a confirmação sem configurar uma base SQL.
+- A confirmação usa sempre o utilizador autenticado e regista o instante UTC.
+- Este conjunto ainda não inicia pedidos automáticos ao fornecedor. A ativação
+  no primeiro acesso diário será feita apenas depois da composição completa.

@@ -32,8 +32,14 @@ from performancelab.runtime_configuration import (
 from performancelab.storage.daily_brief_privacy_repository import (
     DailyBriefPrivacyRepository,
 )
+from performancelab.storage.daily_brief_timezone_store import (
+    DailyBriefTimezoneStore,
+)
 from performancelab.storage.json_alpha_invitation_repository import (
     JsonAlphaInvitationRepository,
+)
+from performancelab.storage.json_daily_brief_timezone_store import (
+    JsonDailyBriefTimezoneStore,
 )
 from performancelab.storage.json_alpha_participation_consent_repository import (
     JsonAlphaParticipationConsentRepository,
@@ -111,6 +117,10 @@ class RepositoryBundle:
         repr=False,
     )
     daily_brief_privacy_repository: object | None = field(
+        default=None,
+        repr=False,
+    )
+    daily_brief_timezone_store: object | None = field(
         default=None,
         repr=False,
     )
@@ -247,6 +257,12 @@ def build_repository_bundle(
                     / "training_coach_usage"
                 )
             ),
+            daily_brief_timezone_store=(
+                JsonDailyBriefTimezoneStore(
+                    data_directory
+                    / "daily_brief_timezones"
+                )
+            ),
         )
 
     if not configuration.uses_postgresql:
@@ -313,4 +329,5 @@ def build_repository_bundle(
         engine=engine,
         connection=connection,
         daily_brief_privacy_repository=DailyBriefPrivacyRepository(connection),
+        daily_brief_timezone_store=DailyBriefTimezoneStore(connection),
     )

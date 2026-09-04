@@ -228,6 +228,9 @@ training_coach_usage_repository = (
     repository_bundle
     .training_coach_usage_repository
 )
+daily_brief_timezone_store = (
+    repository_bundle.daily_brief_timezone_store
+)
 athlete_authorization = (
     AthleteAuthorizationService(
         athlete_access_repository
@@ -629,6 +632,23 @@ def withdraw_training_coach() -> None:
     st.session_state.persisted_notice = (
         "Training Coach permission withdrawn."
     )
+
+def confirm_daily_brief_timezone(timezone_name: str) -> None:
+    """Persist the authenticated user's explicitly selected local timezone."""
+
+    if daily_brief_timezone_store is None:
+        raise RuntimeError(
+            "Timezone confirmation requires PostgreSQL persistence."
+        )
+
+    with repository_bundle.transaction():
+        daily_brief_timezone_store.confirm(
+            user_id=st.session_state.current_user.user_id,
+            timezone_name=timezone_name,
+            confirmed_at=datetime.now(timezone.utc),
+        )
+
+    st.session_state.persisted_notice = "Daily Brief timezone confirmed."
 
 def show_login_screen() -> None:
     """
@@ -1094,6 +1114,14 @@ elif page == "settings":
 
         participant_export_json = None
 
+    daily_brief_timezone = (
+        daily_brief_timezone_store.get(
+            user_id=st.session_state.current_user.user_id
+        )
+        if daily_brief_timezone_store is not None
+        else None
+    )
+
     athlete = show_settings_page(
         athlete,
         training_coach_permitted=(
@@ -1123,6 +1151,16 @@ elif page == "settings":
             st.session_state.get(
                 "participant_deletion_error"
             )
+        ),
+        daily_brief_timezone=(
+            daily_brief_timezone.timezone_name
+            if daily_brief_timezone is not None
+            else None
+        ),
+        on_confirm_daily_brief_timezone=(
+            confirm_daily_brief_timezone
+            if daily_brief_timezone_store is not None
+            else None
         ),
     )
 
