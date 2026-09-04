@@ -5,7 +5,7 @@ Streamlit dashboard view.
 """
 
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timezone
 
 from performancelab.presentation import (
     DashboardData,
@@ -43,6 +43,31 @@ from .widget import (
 from ..route_map import (
     show_route_map,
 )
+
+
+def _daily_brief_metadata(resolution) -> str | None:
+    """Return safe, human-readable generation metadata for the card."""
+
+    if resolution is None:
+        return None
+    generated_at = getattr(resolution, "generated_at", None)
+    if not isinstance(generated_at, str) or not generated_at.strip():
+        return None
+    try:
+        instant = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        if instant.tzinfo is None:
+            instant = instant.replace(tzinfo=timezone.utc)
+        instant = instant.astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+    reasons = {
+        "daily_or_context_refresh": "Daily or context refresh",
+    }
+    reason = reasons.get(getattr(resolution, "reason", None), "Daily update")
+    status = getattr(resolution, "status", None)
+    state = "Reused" if status == "cached" else "Updated"
+    return f"{state} {instant:%d %b %Y · %H:%M} UTC · {reason}"
 
 
 def show_dashboard(
@@ -177,9 +202,13 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
             narrative = getattr(daily_brief_resolution, "narrative", None)
             if isinstance(narrative, str) and narrative.strip():
                 st.write(narrative.strip())
-                st.caption("Automatic Training Coach · generated for today")
+                metadata = _daily_brief_metadata(daily_brief_resolution)
+                st.caption(
+                    "Automatic Training Coach"
+                    + (f" · {metadata}" if metadata else " · Generated for today")
+                )
             else:
-                st.caption("Local guidance from Today.")
+                st.caption("Local guidance from Today · Fallback")
                 today = TodayPresenter(athlete).build(reference_time=reference_time)
                 st.markdown(f"**{today.guidance.title}**")
                 st.write(today.guidance.action)

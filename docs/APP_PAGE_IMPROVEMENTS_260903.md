@@ -793,3 +793,11 @@ continuamente com o relógio.
   coordenador. Registar apenas o erro operacional pelos mecanismos existentes.
 - Nunca bloquear a aplicação nem mostrar detalhes técnicos ao utilizador; o
   Dashboard mantém a orientação local de Today como fallback.
+
+### Metadados visíveis do Daily Brief — conjunto seguinte
+
+- Isolamento final de falhas: pytest, commit e push confirmados pelo utilizador.
+- Mostrar no cartão o instante UTC da geração, se o resultado foi atualizado ou
+  reutilizado e um motivo legível, sem apresentar códigos técnicos internos.
+- Identificar explicitamente a orientação local de Today como fallback quando
+  não existir uma narrativa automática atual.
