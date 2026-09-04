@@ -1101,10 +1101,9 @@ def test_builds_mountainous_long_run_structure():
     )
 
     assert structure == (
-        "Warm up 10 min",
         (
             "Long aerobic run on mountainous "
-            "terrain 105 min"
+            "terrain 120 min"
         ),
         "Target elevation gain: 450 m D+",
         (
@@ -1115,7 +1114,6 @@ def test_builds_mountainous_long_run_structure():
             "Practise controlled downhill technique "
             "without racing descents"
         ),
-        "Cool down 5 min",
     )
 
 
@@ -1128,16 +1126,14 @@ def test_builds_hilly_long_run_structure():
     )
 
     assert structure == (
-        "Warm up 10 min",
         (
             "Long aerobic run on hilly "
-            "terrain 105 min"
+            "terrain 120 min"
         ),
         (
             "Keep sustained climbs aerobic and "
             "descend with controlled technique"
         ),
-        "Cool down 5 min",
     )
 
 
@@ -1150,9 +1146,23 @@ def test_flat_long_run_keeps_standard_structure():
     )
 
     assert structure == (
-        "Warm up 10 min",
-        "Long aerobic run 105 min",
-        "Cool down 5 min",
+        "Long aerobic run 120 min",
+    )
+
+
+def test_easy_run_uses_one_continuous_total_duration():
+
+    structure = WorkoutGenerator._prescribed_structure(
+        template=EASY_TEMPLATE.for_sport(
+            "Road Running"
+        ),
+        duration_minutes=60,
+        coach_context=SimpleNamespace(),
+        strategy_plan=SimpleNamespace(),
+    )
+
+    assert structure == (
+        "Easy aerobic run 60 min",
     )
 def test_long_run_practises_default_nutrition():
 

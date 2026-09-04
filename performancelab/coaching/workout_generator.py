@@ -1496,6 +1496,9 @@ class WorkoutGenerator:
                 ),
                 warm_up_minutes=10,
                 cool_down_minutes=5,
+                split_sections=not cls._is_running(
+                    str(template.sport or "").strip().lower()
+                ),
             )
 
         if purpose is SessionPurpose.PRE_RACE:
@@ -1713,13 +1716,17 @@ class WorkoutGenerator:
         main_label: str,
         warm_up_minutes: int,
         cool_down_minutes: int,
+        split_sections: bool = True,
     ) -> tuple[str, ...]:
         """
         Splits a continuous workout into warm-up, main work
         and cool-down.
         """
 
-        if duration_minutes <= 15:
+        if (
+            duration_minutes <= 15
+            or not split_sections
+        ):
             return (
                 f"{main_label} {duration_minutes} min",
             )
@@ -1750,6 +1757,37 @@ class WorkoutGenerator:
             f"Warm up {warm_up_minutes} min",
             f"{main_label} {main_minutes} min",
             f"Cool down {cool_down_minutes} min",
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _add_continuous_guidance(
+        structure: tuple[str, ...],
+        *guidance: str,
+    ) -> tuple[str, ...]:
+        """
+        Adds guidance without turning it into timed work.
+
+        Split sessions keep the cool-down last. A continuous
+        run keeps its single timed block first.
+        """
+
+        if (
+            structure
+            and structure[-1].lower().startswith(
+                "cool down"
+            )
+        ):
+            return (
+                *structure[:-1],
+                *guidance,
+                structure[-1],
+            )
+
+        return (
+            *structure,
+            *guidance,
         )
 
     # ======================================================
@@ -1939,16 +1977,18 @@ class WorkoutGenerator:
             main_label=main_label,
             warm_up_minutes=10,
             cool_down_minutes=5,
+            split_sections=not cls._is_running(
+                str(sport or "").strip().lower()
+            ),
         )
         
         if target_elevation_gain is not None:
-            structure = (
-                *structure[:-1],
+            structure = cls._add_continuous_guidance(
+                structure,
                 (
                     "Target elevation gain: "
                     f"{target_elevation_gain} m D+"
                 ),
-                structure[-1],
             )
 
         nutrition_guidance = (
@@ -1963,15 +2003,14 @@ class WorkoutGenerator:
         )
 
         if nutrition_guidance is not None:
-            structure = (
-                *structure[:-1],
+            structure = cls._add_continuous_guidance(
+                structure,
                 nutrition_guidance,
-                structure[-1],
             )
 
         if elevation_demand == "mountainous":
-            return (
-                *structure[:-1],
+            return cls._add_continuous_guidance(
+                structure,
                 (
                     "Keep climbs aerobic and use "
                     "purposeful hiking on steep gradients"
@@ -1980,17 +2019,15 @@ class WorkoutGenerator:
                     "Practise controlled downhill "
                     "technique without racing descents"
                 ),
-                structure[-1],
             )
 
         if elevation_demand == "hilly":
-            return (
-                *structure[:-1],
+            return cls._add_continuous_guidance(
+                structure,
                 (
                     "Keep sustained climbs aerobic and "
                     "descend with controlled technique"
                 ),
-                structure[-1],
             )
 
         return structure
