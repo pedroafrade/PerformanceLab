@@ -627,3 +627,23 @@ continuamente com o relógio.
   será efetivo quando ambos os fluxos usarem esta admissão. O coordenador Daily
   Brief continua desativado. Falta ligar também o usage_id e o tratamento de
   resultados conhecidos/incertos, e integrar limpeza com a política de retenção.
+
+### Quota partilhada aplicada a Activities — conjunto seguinte
+
+- Reserva atómica partilhada: pytest, commit e push confirmados pelo utilizador.
+- No runtime PostgreSQL, aplicar a reserva imediatamente antes de uma geração
+  nova em Activities. Uma interpretação válida já guardada é resolvida primeiro
+  e não reserva nem consome quota; uma regeneração explícita volta a reservá-la.
+- Usar o mesmo identificador interno na reserva e no registo factual de utilização.
+  O pedido ao fornecedor só acontece depois da admissão e nunca é repetido nesta
+  camada. O cliente Gemini terá timeout HTTP de 60 segundos e uma tentativa.
+- Uma resposta gerada só é publicada depois de o registo de utilização ser aceite
+  e a reserva ser finalizada. Falhas confirmadas antes de geração podem libertar
+  capacidade; timeouts, respostas inválidas e falhas ambíguas permanecem cobrados
+  de forma conservadora. Não expor exceções nem conteúdo parcial na interface.
+- Manter o runtime JSON/local no controlo anterior, sem dependência da tabela SQL.
+  Em PostgreSQL, aplicar primeiro as migrações até `20260904_03`; validar ainda os
+  advisory locks, transações e recuperação de falhas numa base PostgreSQL real.
+- O Daily Brief continua desativado e ainda não usa a quota. Antes de o ativar,
+  ligar o seu coordenador à mesma admissão, fechar observabilidade/retenção e
+  concluir os restantes controlos operacionais descritos neste documento.

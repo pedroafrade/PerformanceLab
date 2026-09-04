@@ -87,6 +87,9 @@ from performancelab.runtime_configuration import (
 from performancelab.storage.repository_factory import (
     build_repository_bundle,
 )
+from performancelab.storage.training_coach_quota_store import (
+    TrainingCoachQuotaStore,
+)
 
 
 # ======================================================
@@ -257,6 +260,10 @@ training_coach_provider = (
 )
 training_coach_generator = (
     GenerateActivityCoachInterpretation(
+        quota_store=(
+            TrainingCoachQuotaStore(repository_bundle.engine)
+            if repository_bundle.uses_postgresql else None
+        ),
         coordinator=(
             ActivityCoachCoordinator(
                 generation_service=(

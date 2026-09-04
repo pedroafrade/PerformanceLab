@@ -36,6 +36,9 @@ from performancelab.training_coach_usage import (
 from performancelab.training_coach_usage_limits import (
     TrainingCoachUsageLimits,
 )
+from performancelab.coaching.quota_limited_activity_generation import (
+    QuotaLimitedActivityGeneration,
+)
 
 
 def current_utc_time() -> datetime:
@@ -95,6 +98,7 @@ class GenerateActivityCoachInterpretation:
             [],
             float,
         ] = monotonic_time,
+        quota_store=None,
 
     ) -> None:
 
@@ -140,6 +144,59 @@ class GenerateActivityCoachInterpretation:
         self._usage_limits = usage_limits
         self._clock = clock
         self._timer = timer
+        self._quota_store = quota_store
+
+    def _execute_with_shared_quota(
+        self,
+        *,
+        user_id,
+        athlete,
+        workout_id,
+        payload,
+        regenerate,
+    ):
+        request_key = (user_id, str(workout_id).strip())
+        with self._active_requests_lock:
+            if request_key in self._active_requests:
+                return ActivityCoachResolutionResult(
+                    status=ActivityCoachResolutionStatus.IN_PROGRESS,
+                    error_code="generation_in_progress",
+                )
+            self._active_requests.add(request_key)
+        try:
+            # A per-call wrapper avoids storing an authenticated user's ID on
+            # the shared coordinator. resolve() checks its cache before generate().
+            generation = QuotaLimitedActivityGeneration(
+                delegate=self._coordinator.generation_service,
+                quota_store=self._quota_store,
+                usage_repository=self._usage_repository,
+                limits=self._usage_limits,
+                user_id=user_id,
+                clock=self._clock,
+                timer=self._timer,
+            )
+            coordinator = ActivityCoachCoordinator(
+                generation_service=generation,
+                now=self._coordinator.now,
+            )
+            result = coordinator.resolve(
+                athlete=athlete,
+                workout_id=workout_id,
+                payload=payload,
+                regenerate=regenerate,
+            )
+            if result.error_code in (
+                "user_daily_limit",
+                "global_daily_limit",
+            ):
+                return ActivityCoachResolutionResult(
+                    status=ActivityCoachResolutionStatus.LIMIT_REACHED,
+                    error_code=result.error_code,
+                )
+            return result
+        finally:
+            with self._active_requests_lock:
+                self._active_requests.discard(request_key)
 
 
     @staticmethod
@@ -265,6 +322,15 @@ class GenerateActivityCoachInterpretation:
                 user_id
             )
         )
+
+        if self._quota_store is not None:
+            return self._execute_with_shared_quota(
+                user_id=normalized_user_id,
+                athlete=athlete,
+                workout_id=workout_id,
+                payload=payload,
+                regenerate=regenerate,
+            )
 
         occurred_at = (
             self._validated_time(

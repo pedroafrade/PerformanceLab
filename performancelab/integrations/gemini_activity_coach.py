@@ -240,6 +240,10 @@ class GeminiActivityCoachProvider:
                         payload
                     ),
                     config={
+                        "http_options": {
+                            "timeout": 60000,
+                            "retry_options": {"attempts": 1},
+                        },
                         "response_mime_type": (
                             "application/json"
                         ),
