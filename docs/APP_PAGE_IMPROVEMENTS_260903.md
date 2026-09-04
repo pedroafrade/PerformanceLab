@@ -785,3 +785,11 @@ continuamente com o relógio.
   consentimento Training Coach e ao terminar sessão.
 - No logout, remover também o estado visual da seleção de timezone, impedindo a
   reutilização acidental de dados entre autenticações no mesmo browser.
+
+### Isolamento final de falhas Daily Brief — conjunto seguinte
+
+- Limpeza de privacidade: pytest, commit e push confirmados pelo utilizador.
+- Conter falhas ao ler a timezone, calcular o dia local ou construir/resolver o
+  coordenador. Registar apenas o erro operacional pelos mecanismos existentes.
+- Nunca bloquear a aplicação nem mostrar detalhes técnicos ao utilizador; o
+  Dashboard mantém a orientação local de Today como fallback.

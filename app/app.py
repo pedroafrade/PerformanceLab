@@ -1004,17 +1004,32 @@ training_coach_permitted = (
 )
 
 daily_brief_resolution = st.session_state.get("daily_brief_resolution")
-timezone_preference = (
-    daily_brief_timezone_store.get(user_id=current_user.user_id)
-    if daily_brief_timezone_store is not None
-    else None
-)
+try:
+    timezone_preference = (
+        daily_brief_timezone_store.get(user_id=current_user.user_id)
+        if daily_brief_timezone_store is not None
+        else None
+    )
+except Exception as error:
+    capture_exception(
+        error,
+        operation="daily_brief_timezone_lookup",
+        reporter=exception_reporter,
+    )
+    timezone_preference = None
 daily_brief_attempt_key = None
-if timezone_preference is not None:
-    local_day = datetime.now(timezone.utc).astimezone(
-        ZoneInfo(timezone_preference.timezone_name)
-    ).date()
-    daily_brief_attempt_key = f"{current_user.user_id}:{local_day.isoformat()}"
+try:
+    if timezone_preference is not None:
+        local_day = datetime.now(timezone.utc).astimezone(
+            ZoneInfo(timezone_preference.timezone_name)
+        ).date()
+        daily_brief_attempt_key = f"{current_user.user_id}:{local_day.isoformat()}"
+except Exception as error:
+    capture_exception(
+        error,
+        operation="daily_brief_local_day",
+        reporter=exception_reporter,
+    )
 if (
     daily_brief_attempt_key is not None
     and st.session_state.get("daily_brief_attempt_key") != daily_brief_attempt_key
@@ -1025,18 +1040,26 @@ if (
     and repository_bundle.engine is not None
 ):
     st.session_state.daily_brief_attempt_key = daily_brief_attempt_key
-    daily_brief_resolution = DailyBriefCoordinator(
-        store=DailyBriefStore(repository_bundle.engine),
-        authorization=athlete_authorization,
-        consent_manager=training_coach_consent_manager,
-        load_athlete=lambda authenticated_user: athlete,
-        generation_service=daily_brief_generation_service,
-    ).resolve(
-        user=current_user,
-        timezone_name=timezone_preference.timezone_name,
-        enabled=True,
-    )
-    st.session_state.daily_brief_resolution = daily_brief_resolution
+    try:
+        daily_brief_resolution = DailyBriefCoordinator(
+            store=DailyBriefStore(repository_bundle.engine),
+            authorization=athlete_authorization,
+            consent_manager=training_coach_consent_manager,
+            load_athlete=lambda authenticated_user: athlete,
+            generation_service=daily_brief_generation_service,
+        ).resolve(
+            user=current_user,
+            timezone_name=timezone_preference.timezone_name,
+            enabled=True,
+        )
+        st.session_state.daily_brief_resolution = daily_brief_resolution
+    except Exception as error:
+        capture_exception(
+            error,
+            operation="daily_brief_resolution",
+            reporter=exception_reporter,
+        )
+        daily_brief_resolution = None
 
 if (
     not training_coach_permitted
