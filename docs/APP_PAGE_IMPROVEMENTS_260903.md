@@ -262,6 +262,123 @@ Performance Status nem eliminar métricas usadas noutras páginas.
 por categoria e primeiras explicações sem publicar fórmulas ainda não verificadas.
 O inventário técnico completo continua em GUI-02/GUI-03.
 
+**Primeiro inventário verificado:** ATL e CTL documentam a média móvel
+exponencial realmente implementada, com constantes de 7 e 42 dias; TSB documenta
+`CTL − ATL`. Incluem entradas, unidades, exemplos e limitações. As restantes
+entradas continuam assinaladas como pendentes de verificação técnica.
+
+## 14. Fila futura — estado, aconselhamento e evolução do plano
+
+Os itens desta secção foram registados para planeamento posterior. Não ficam
+autorizadas alterações de fórmulas, dados clínicos ou geração automática sem a
+definição e validação indicadas em cada grupo.
+
+### MET-01 — Evolução intradiária e estado consolidado
+
+- Aplicar a noção de evolução parcial por hora, já presente em **Estimated
+  Recovery**, a métricas em que seja matematicamente válida, incluindo Training
+  Load. Verificar primeiro a fórmula e evitar apresentar uma precisão temporal
+  que os dados de entrada não suportem.
+- Reunir **Estimated Recovery**, **Training Load** e **Form** num único contentor
+  reutilizável no Dashboard e em Development.
+- Manter valor, unidade, instante de referência, estado textual e limitações de
+  cada métrica, sem depender apenas de cor.
+
+### EVT-01 — Contentor partilhado de próximo evento
+
+- Criar um único componente **Next Event / Upcoming Events**, adaptando a sua
+  dimensão e densidade às páginas Dashboard e Calendar.
+- Preservar gestão, seleção e lista de eventos no Calendar, enquanto o Dashboard
+  apresenta apenas a informação essencial do próximo evento.
+
+### SES-01 — Duração coerente de corrida contínua
+
+- Em Easy Runs e Long Runs, não destacar Warm-up e Cooldown como se fossem
+  blocos adicionais separados da sessão contínua.
+- Incluir sempre essas durações no total apresentado e garantir que Calendar,
+  Plan, Today e Dashboard usam a mesma duração estruturada.
+- Preservar blocos explícitos quando forem necessários para sessões intervaladas
+  ou quando tiverem uma prescrição distinta.
+
+### DSH-07 — Maior destaque para Daily Brief
+
+- Aumentar o espaço e a hierarquia visual de **Daily Brief** no Dashboard.
+- Compactar **Activities Summary** sem remover filtros, totais, unidades ou
+  estados vazios.
+
+### TDY-01 — Daily Brief como recomendação principal
+
+- Substituir **Today's recommendation** pelo Daily Brief na página Today,
+  reutilizando o comentário guardado e o fallback local já existentes.
+- Evitar uma segunda geração na mesma abertura e manter explícito que a
+  recomendação não altera automaticamente o plano.
+
+### TDY-02 — Planned Session Equivalents
+
+- Adicionar a Today um contentor **Planned Session Equivalents** para running,
+  cycling e swimming, seguindo as salvaguardas de ALT-01.
+- Mostrar diferenças de especificidade, impacto mecânico e dados em falta antes
+  de permitir qualquer substituição do plano.
+
+### TDY-03 — Recovery Log
+
+- Criar um contentor próprio para o histórico de lesões, dores e patologias
+  registadas pelo atleta, com data, estado e origem da informação.
+- Definir antes da implementação o modelo de dados, retenção, edição, eliminação,
+  exportação, controlo de acesso e tratamento de informação de saúde.
+- Não inferir diagnósticos nem assumir que um relato antigo permanece ativo.
+
+### TDY-04 — Strategy Adviser
+
+- Analisar histórico, plano, disponibilidade e recuperação para explicar quais
+  os dias potencialmente adequados a determinados tipos de exercício.
+- Definir primeiro os exercícios abrangidos, regras determinísticas, limites e
+  relação com o Training Coach. Não apresentar orientação clínica ou garantia
+  de segurança.
+
+### PLN-04 — Histórico e recuperação de planos
+
+- Permitir consultar e recuperar uma versão anterior do plano, mantendo um
+  histórico identificável de versões e adaptações.
+- Mostrar uma comparação antes de restaurar e preservar a possibilidade de
+  voltar à versão mais recente. Definir retenção e concorrência antes do código.
+
+### PLN-05 — Coerência das durações
+
+- Corrigir divergências de duração entre Plan e Calendar, incluindo o Long Run
+  de domingo observado com `1h00` numa página e `1h40` noutra.
+- Usar uma única fonte estruturada para duração total e testar todas as páginas
+  que apresentam a mesma sessão.
+
+### PLN-06 — Semana atual visível no Plan Weeks
+
+- Ao abrir Plan, posicionar automaticamente o scroll interno para que a semana
+  atual seja a primeira visível no contentor.
+- Manter as semanas anteriores acessíveis acima e não reposicionar o utilizador
+  enquanto este consulta ou expande manualmente outra semana.
+- Garantir acesso por teclado e comportamento previsível no móvel.
+
+### PLN-07 — Data em Latest Adaptation
+
+- Mostrar a data da sessão alterada em **Latest Adaptation**, distinguindo-a da
+  data em que a adaptação foi aplicada.
+
+### PLN-08 — Curvas original, atual e realizada
+
+- Aplicar uma curva suave à carga do plano efetivamente realizado.
+- Mostrar separadamente o plano original e o plano atual adaptado, com legenda,
+  unidades e contraste nos dois temas.
+- Definir como congelar a versão original e como tratar atividades substitutas,
+  falhadas ou fora do plano antes de comparar as curvas.
+
+### PLN-09 — Reorganização de Plan Weeks
+
+- Colocar **Latest Adaptation** à direita de **Plan Weeks**, dividindo de forma
+  equilibrada a largura atualmente ocupada pela lista semanal.
+- No espaço anterior de Latest Adaptation, colocar o componente partilhado de
+  **Next Event / Upcoming Events** definido em EVT-01.
+- Preservar scroll interno, alinhamento inferior e fluxo móvel sem sobreposição.
+
 ### GUI-02 — Inventário dos conceitos e fórmulas
 
 - [ ] Inventariar todas as métricas, coeficientes e regras efetivamente usados
