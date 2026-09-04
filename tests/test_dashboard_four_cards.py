@@ -21,6 +21,10 @@ def test_dashboard_has_exact_requested_card_order():
     assert "Local guidance from Today · Fallback" in source
     assert "TodayPresenter(athlete).build(reference_time=reference_time)" in source
     assert "show_title=False" in source
+    assert (
+        "dashboard_row((1.6, 2.1, 1.6, 1.6), gap=\"small\")"
+        in source
+    )
 
 
 def test_today_session_has_no_navigation_buttons():

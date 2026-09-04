@@ -187,7 +187,7 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
                 upcoming_events,
             )
 
-    state_col, brief_col, workout_col, summary_col = dashboard_row((2, 1.7, 1.6, 1.6), gap="small")
+    state_col, brief_col, workout_col, summary_col = dashboard_row((1.6, 2.1, 1.6, 1.6), gap="small")
 
     with state_col:
         with dashboard_widget(title="Training Load & Recovery", icon=":material/monitoring:",
