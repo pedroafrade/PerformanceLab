@@ -746,3 +746,14 @@ continuamente com o relógio.
 - A confirmação usa sempre o utilizador autenticado e regista o instante UTC.
 - Este conjunto ainda não inicia pedidos automáticos ao fornecedor. A ativação
   no primeiro acesso diário será feita apenas depois da composição completa.
+
+### Ligação segura da configuração ao runtime — conjunto seguinte
+
+- Confirmação do fuso em Settings: pytest, validação visual, commit e push
+  confirmados pelo utilizador.
+- Carregar o interruptor e a lista restrita do Daily Brief a partir do ambiente
+  ou dos secrets, falhando para desligado quando a configuração for inválida.
+- Construir as dependências PostgreSQL apenas quando o interruptor estiver
+  ligado. Este passo não chama o fornecedor nem gera ou apresenta comentários.
+- Próximo conjunto: executar a decisão no primeiro acesso diário para um
+  utilizador autorizado, com fuso confirmado, e apresentar o resultado guardado.

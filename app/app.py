@@ -54,6 +54,9 @@ from performancelab.application import (
 from performancelab.authorization import (
     AthleteAuthorizationService,
 )
+from performancelab.application.daily_brief_runtime import (
+    build_daily_brief_generation_service,
+)
 from performancelab.better_stack_reporting import (
     build_exception_reporter,
 )
@@ -72,6 +75,10 @@ from performancelab.integrations import (
     GeminiActivityCoachProvider,
 )
 from performancelab.identity import User
+from performancelab.daily_brief_runtime_settings import (
+    DAILY_BRIEF_SETTING_NAMES,
+    load_daily_brief_runtime_settings,
+)
 from performancelab.oidc_identity import (
     external_identity_from_claims,
 )
@@ -132,7 +139,8 @@ except StreamlitSecretNotFoundError:
     streamlit_secrets = {}
 
 for configuration_key in (
-    RUNTIME_CONFIGURATION_SETTING_NAMES
+    *RUNTIME_CONFIGURATION_SETTING_NAMES,
+    *DAILY_BRIEF_SETTING_NAMES,
 ):
 
     if (
@@ -148,6 +156,11 @@ for configuration_key in (
 
 runtime_configuration = (
     RuntimeConfiguration.from_mapping(
+        runtime_values
+    )
+)
+daily_brief_runtime_settings = (
+    load_daily_brief_runtime_settings(
         runtime_values
     )
 )
@@ -169,6 +182,17 @@ repository_bundle = (
             / "data"
         ),
     )
+)
+daily_brief_generation_service = (
+    build_daily_brief_generation_service(
+        repository_bundle=repository_bundle,
+        usage_limits=(
+            runtime_configuration
+            .training_coach_usage_limits
+        ),
+    )
+    if daily_brief_runtime_settings.enabled
+    else None
 )
 
 application_health = (

@@ -70,3 +70,12 @@ class DailyBriefRuntimeSettings:
         if not isinstance(user_id, str):
             return False
         return self.enabled and user_id.strip() in self.allowed_user_ids
+
+
+def load_daily_brief_runtime_settings(values: Mapping[str, object]):
+    """Fail closed when deployment values are absent or malformed."""
+
+    try:
+        return DailyBriefRuntimeSettings.from_mapping(values)
+    except (TypeError, ValueError):
+        return DailyBriefRuntimeSettings()
