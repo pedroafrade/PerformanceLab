@@ -1201,7 +1201,7 @@ class PlanPresenter:
                         .prescription_summary
                     ),
                     structure=tuple(
-                        workout.structure
+                        workout.presentation_structure
                     ),
                 )
                 for workout in planned_workouts

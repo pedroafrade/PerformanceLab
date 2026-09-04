@@ -359,7 +359,7 @@ class PlanningPresenter:
                         else None
                     ),
                     structure=(
-                        workout.structure
+                        workout.presentation_structure
                         if workout is not None
                         else ()
                     ),
@@ -471,7 +471,9 @@ class PlanningPresenter:
             description=workout.description,
             intensity=workout.intensity,
             objective=workout.objective,
-            structure=workout.structure,
+            structure=(
+                workout.presentation_structure
+            ),
             equipment=workout.equipment,
         )
 
