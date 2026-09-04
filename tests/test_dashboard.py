@@ -99,6 +99,29 @@ def test_recovery_uses_training_state():
     assert recovery.trend == training_state.training_trend
 
 
+def test_training_load_at_uses_same_instant_as_state():
+
+    athlete = Athlete(name="Pedro")
+    athlete.history.add(
+        create_workout(
+            datetime(2026, 8, 11, 7, 0),
+            timedelta(hours=1),
+            5,
+        )
+    )
+    reference_time = datetime(2026, 8, 12, 14, 0)
+
+    state = athlete.analytics.training_state_at(
+        reference_time=reference_time,
+    )
+    load = DashboardData(athlete).training_load_at(
+        reference_time=reference_time,
+    )
+
+    assert load.acute_load == state.atl
+    assert load.chronic_load == state.ctl
+
+
 # ======================================================
 
 def test_dashboard_with_training():

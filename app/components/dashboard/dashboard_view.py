@@ -115,17 +115,20 @@ def _show_dashboard_content(athlete, *, daily_brief_resolution=None):
     Displays the main athlete dashboard.
     """
 
-    dashboard_data = DashboardData(
+    dashboard = DashboardData(
         athlete,
-    ).build()
+    )
+    dashboard_data = dashboard.build()
 
     latest_activity = dashboard_data["latest_activity"]
     planning = dashboard_data["planning"]
     next_event = dashboard_data["next_event"]
     recovery = dashboard_data["recovery"]
-    training_load = dashboard_data["training_load"]
     reference_time = datetime.now().astimezone()
     current_state = athlete.analytics.training_state_at(reference_time=reference_time)
+    training_load = dashboard.training_load_at(
+        reference_time=reference_time,
+    )
 
     activity_col, planning_col, event_col = (
         dashboard_row(

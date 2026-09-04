@@ -592,6 +592,8 @@ def test_exposes_time_aware_current_state():
         result.current_form
         == state.tsb
     )
+    assert result.acute_load == state.atl
+    assert result.chronic_load == state.ctl
     assert (
         result.recovery_score
         == state.recovery_score
@@ -753,6 +755,8 @@ def test_development_falls_back_to_daily_state():
         result.current_form
         == daily_state.tsb
     )
+    assert result.acute_load == daily_state.atl
+    assert result.chronic_load == daily_state.ctl
 
 def test_aggregates_completed_volume_by_sport():
 

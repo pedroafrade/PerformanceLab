@@ -988,6 +988,35 @@ class DashboardData:
             42,
         )
 
+        return self._build_training_load(
+            acute_load=acute_load,
+            chronic_load=chronic_load,
+        )
+
+    def training_load_at(
+        self,
+        *,
+        reference_time,
+    ):
+        """Build load guidance from the state at one instant."""
+
+        state = self.analytics.training_state_at(
+            reference_time=reference_time,
+        )
+
+        return self._build_training_load(
+            acute_load=state.atl,
+            chronic_load=state.ctl,
+        )
+
+    def _build_training_load(
+        self,
+        *,
+        acute_load: float,
+        chronic_load: float,
+    ):
+        """Build one consistent training-load presentation."""
+
         if chronic_load > 0:
 
             ramp_rate = (
