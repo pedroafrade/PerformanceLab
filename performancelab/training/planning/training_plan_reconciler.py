@@ -65,6 +65,17 @@ class TrainingPlanReconciler:
             through_day=through_day,
         )
 
+        if (
+            not plan.original_workouts
+            and plan.workouts
+        ):
+            plan = replace(
+                plan,
+                original_workouts=tuple(
+                    plan.workouts
+                ),
+            )
+
         plan = (
             self._backfill_stimulus_suggestions(
                 plan=plan,

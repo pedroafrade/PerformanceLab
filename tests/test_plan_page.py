@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
 from app.components.plan_page import (
+    _actual_and_adapted_load_chart_data,
     _completed_load_chart_data,
     _current_plan_week,
     _ics_escape,
@@ -1449,7 +1450,7 @@ def test_builds_latest_adaptation_sidebar_card():
         )
     )
 
-    assert "Latest adaptation" in result
+    assert "Plan adaptation" in result
     assert "Session date · 06 Aug 2026" in result
     assert "2 days ago" not in result
     assert "LT2 Run" in result
@@ -1479,7 +1480,7 @@ def test_builds_empty_adaptation_sidebar_card():
         )
     )
 
-    assert "Latest adaptation" in result
+    assert "Plan adaptation" in result
 
     assert (
         "No adaptations or suggestions yet."
@@ -2125,6 +2126,50 @@ def test_builds_completed_load_chart_from_all_activities():
             },
         ]
     )
+
+def test_combines_completed_load_with_remaining_adapted_plan():
+
+    plan = SimpleNamespace(
+        reference_day=date(2026, 9, 7),
+        completed_load_points=(
+            SimpleNamespace(
+                day=date(2026, 9, 6),
+                title="LT2 Run",
+                completed_load=480.0,
+            ),
+        ),
+        chart_points=(
+            SimpleNamespace(
+                day=date(2026, 9, 6),
+                title="Long Run",
+                planned_load=520.0,
+                is_race=False,
+            ),
+            SimpleNamespace(
+                day=date(2026, 9, 8),
+                title="Hill Reps",
+                planned_load=300.0,
+                is_race=False,
+            ),
+        ),
+    )
+
+    assert _actual_and_adapted_load_chart_data(
+        plan
+    ) == [
+        {
+            "Date": "2026-09-06",
+            "Session": "LT2 Run",
+            "Actual or adapted load": 480.0,
+            "Source": "Completed",
+        },
+        {
+            "Date": "2026-09-08",
+            "Session": "Hill Reps",
+            "Actual or adapted load": 300.0,
+            "Source": "Adapted projection",
+        },
+    ]
 
 def test_builds_compact_plan_generation_notice():
 

@@ -728,6 +728,10 @@ def test_training_plan_metadata_round_trip():
         )
     )
 
+    athlete.training_plan.original_workouts = tuple(
+        athlete.training_plan.workouts
+    )
+
     data = athlete_to_dict(
         athlete
     )
@@ -757,6 +761,12 @@ def test_training_plan_metadata_round_trip():
 
     assert len(
         data["training_plan"]["workouts"]
+    ) == 1
+
+    assert len(
+        data["training_plan"][
+            "original_workouts"
+        ]
     ) == 1
 
     assert (
@@ -807,6 +817,16 @@ def test_training_plan_metadata_round_trip():
     assert len(
         loaded.training_plan
     ) == 1
+
+    assert len(
+        loaded.training_plan.original_workouts
+    ) == 1
+
+    assert (
+        loaded.training_plan
+        .original_workouts[0].title
+        == "Long Aerobic Run"
+    )
 
     assert (
         loaded.training_plan[0].title

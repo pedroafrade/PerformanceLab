@@ -1460,6 +1460,17 @@ def athlete_to_dict(athlete):
                 athlete.training_plan.competition_event_ids
             ),
 
+            "original_workouts": [
+
+                _planned_workout_to_dict(workout)
+
+                for workout in (
+                    athlete.training_plan
+                    .original_workouts
+                )
+
+            ],
+
             "workouts": [
 
                 _planned_workout_to_dict(workout)
@@ -1692,6 +1703,18 @@ def athlete_from_dict(data):
                 training_plan_data.get(
                     "competition_event_ids",
                     [],
+                )
+            ),
+
+            original_workouts=tuple(
+                _planned_workout_from_dict(
+                    workout_data
+                )
+                for workout_data in (
+                    training_plan_data.get(
+                        "original_workouts",
+                        [],
+                    )
                 )
             ),
 

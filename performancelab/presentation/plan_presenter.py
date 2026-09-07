@@ -1451,6 +1451,40 @@ class PlanPresenter:
             for week in weeks_data
             for workout in week.workouts
         )
+        original_chart_points = tuple(
+            PlanChartPointData(
+                day=workout.day,
+                title=(
+                    workout.title
+                    or "Planned workout"
+                ),
+                phase=workout.phase,
+                planned_load=(
+                    planned_workout_load(
+                        workout
+                    )
+                ),
+                completed_load=None,
+                distance=workout.distance,
+                elevation_gain=(
+                    workout.elevation_gain
+                ),
+                duration=workout.duration,
+                intensity=workout.intensity,
+                is_race=(
+                    str(
+                        workout.intensity
+                        or ""
+                    ).strip().lower()
+                    == "race effort"
+                ),
+                status="original",
+            )
+            for workout in (
+                self.plan.original_workouts
+                or tuple(self.plan.workouts)
+            )
+        )
         (
             target_event_title,
             target_event_date,
@@ -1462,6 +1496,9 @@ class PlanPresenter:
             reference_day=reference_day,
             weeks=weeks_data,
             chart_points=chart_points,
+            original_chart_points=(
+                original_chart_points
+            ),
             completed_load_points=(
                 self._completed_load_points(
                     reference_day=(

@@ -233,6 +233,10 @@ class TrainingPlanAdapter:
             stimulus_suggestions=(
                 merged_stimulus_suggestions
             ),
+            original_workouts=(
+                plan.original_workouts
+                or original_workouts
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),

@@ -2,11 +2,12 @@
 Tests for adaptation history in TrainingPlan.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
 from performancelab.training.planning import (
+    PlannedWorkout,
     TrainingPlan,
     TrainingPlanAdaptation,
     WorkoutOutcomeStatus,
@@ -101,4 +102,32 @@ def test_training_plan_validates_stimulus_suggestions():
             stimulus_suggestions=(
                 object(),
             ),
+        )
+
+
+def test_training_plan_validates_original_workout_snapshot():
+
+    original = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            8,
+            4,
+        ),
+        title="Easy Run",
+    )
+
+    plan = TrainingPlan(
+        original_workouts=(original,),
+    )
+
+    assert plan.original_workouts == (
+        original,
+    )
+
+    with pytest.raises(
+        TypeError,
+        match="original_workouts must be a tuple",
+    ):
+        TrainingPlan(
+            original_workouts=[original],
         )

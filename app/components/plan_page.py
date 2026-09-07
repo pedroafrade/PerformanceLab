@@ -403,6 +403,55 @@ def _completed_load_chart_data(
         for point in completed_load_points
     ]
 
+def _actual_and_adapted_load_chart_data(
+    plan,
+) -> list[dict]:
+    """Joins completed history to the remaining adapted plan."""
+
+    rows = [
+        {
+            "Date": point.day.isoformat(),
+            "Session": point.title,
+            "Actual or adapted load": float(
+                point.completed_load
+            ),
+            "Source": "Completed",
+        }
+        for point in plan.completed_load_points
+    ]
+
+    completed_days = {
+        point.day
+        for point in plan.completed_load_points
+    }
+
+    rows.extend(
+        {
+            "Date": point.day.isoformat(),
+            "Session": point.title,
+            "Actual or adapted load": float(
+                point.planned_load
+            ),
+            "Source": "Adapted projection",
+        }
+        for point in plan.chart_points
+        if (
+            point.planned_load is not None
+            and not point.is_race
+            and point.day >= plan.reference_day
+            and point.day not in completed_days
+        )
+    )
+
+    return sorted(
+        rows,
+        key=lambda row: (
+            row["Date"],
+            row["Source"],
+            row["Session"],
+        ),
+    )
+
 def _planned_load_chart_series(
     chart_points,
 ) -> tuple[
@@ -712,12 +761,20 @@ def _planned_load_chart(
         training_data,
         race_data,
     ) = _planned_load_chart_series(
-        plan.chart_points
+        getattr(
+            plan,
+            "original_chart_points",
+            plan.chart_points,
+        )
     )
 
     weekly_load_data = (
         _weekly_planned_load_curve_data(
-            plan.chart_points
+            getattr(
+                plan,
+                "original_chart_points",
+                plan.chart_points,
+            )
         )
     )
 
@@ -786,6 +843,7 @@ def _planned_load_chart(
             interpolate="monotone",
             strokeWidth=1.6,
             opacity=0.72,
+            color="#60a5fa",
         )
         .encode(
             y=alt.Y(
@@ -807,6 +865,7 @@ def _planned_load_chart(
             filled=True,
             size=42,
             opacity=0.85,
+            color="#60a5fa",
         )
         .encode(
             y=alt.Y(
@@ -823,8 +882,8 @@ def _planned_load_chart(
     )
 
     completed_rows = (
-        _completed_load_chart_data(
-            plan.completed_load_points
+        _actual_and_adapted_load_chart_data(
+            plan
         )
     )
 
@@ -853,9 +912,13 @@ def _planned_load_chart(
                     title="Activity",
                 ),
                 alt.Tooltip(
-                    "Completed load:Q",
-                    title="Completed",
+                    "Actual or adapted load:Q",
+                    title="Load (AU)",
                     format=".0f",
+                ),
+                alt.Tooltip(
+                    "Source:N",
+                    title="Source",
                 ),
             ],
         )
@@ -870,7 +933,7 @@ def _planned_load_chart(
         )
         .encode(
             y=alt.Y(
-                "Completed load:Q",
+                "Actual or adapted load:Q",
                 title="Session load (AU)",
                 axis=alt.Axis(
                     orient="left",
@@ -893,7 +956,7 @@ def _planned_load_chart(
         )
         .encode(
             y=alt.Y(
-                "Completed load:Q",
+                "Actual or adapted load:Q",
                 title="Session load (AU)",
                 axis=alt.Axis(
                     orient="left",
@@ -1097,11 +1160,11 @@ def _plan_load_legend_html() -> str:
     <div class="plan-load-legend">
         <span class="plan-load-legend-item">
             <span class="plan-load-line planned"></span>
-            Planned
+            Original plan
         </span>
         <span class="plan-load-legend-item">
             <span class="plan-load-line completed"></span>
-            Completed
+            Completed + adapted projection
         </span>
         <span class="plan-load-legend-item">
             <span class="plan-load-line weekly"></span>
@@ -2487,7 +2550,7 @@ def _sidebar_adaptation_html(
     heading_html = (
         '<div class="plan-sidebar-heading">'
         '<span class="plan-sidebar-icon">↻</span>'
-        "<span>Latest adaptation</span>"
+        "<span>Plan adaptation</span>"
         "</div>"
         if show_heading
         else ""
@@ -2902,6 +2965,7 @@ def _sidebar_styles() -> str:
 
 .plan-load-line.planned {
     opacity: 0.65;
+    background: #60a5fa;
 }
 
 .plan-load-line.completed {
@@ -4944,7 +5008,7 @@ def show_plan_page(
                     (
                         '<div class="plan-weeks-heading '
                         'plan-adaptation-heading">'
-                        "<span>Latest adaptation</span>"
+                        "<span>Plan adaptation</span>"
                         '<details class="plan-adaptation-help">'
                         '<summary aria-label="How plan adaptation works">'
                         "?"

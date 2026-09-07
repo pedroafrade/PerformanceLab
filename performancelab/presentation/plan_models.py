@@ -212,6 +212,10 @@ class CompletePlanData:
         PlanChartPointData,
         ...,
     ]
+    original_chart_points: tuple[
+        PlanChartPointData,
+        ...,
+    ]
     completed_load_points: tuple[
         PlanCompletedLoadPointData,
         ...,

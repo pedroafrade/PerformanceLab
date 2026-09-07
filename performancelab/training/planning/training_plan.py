@@ -68,6 +68,11 @@ class TrainingPlan(WorkoutCollection):
         ...,
     ] = ()
 
+    original_workouts: tuple[
+        PlannedWorkout,
+        ...,
+    ] = ()
+
     primary_event_id: str | None = None
 
     competition_event_ids: tuple[str, ...] = ()
@@ -249,6 +254,25 @@ class TrainingPlan(WorkoutCollection):
             raise TypeError(
                 "stimulus_suggestions must contain "
                 "StimulusRebalanceSuggestion objects."
+            )
+        if not isinstance(
+            self.original_workouts,
+            tuple,
+        ):
+            raise TypeError(
+                "original_workouts must be a tuple."
+            )
+
+        if not all(
+            isinstance(
+                workout,
+                PlannedWorkout,
+            )
+            for workout in self.original_workouts
+        ):
+            raise TypeError(
+                "original_workouts must contain "
+                "PlannedWorkout objects."
             )
         for event_id in self.competition_event_ids:
 

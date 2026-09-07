@@ -557,7 +557,12 @@ class Planner:
                 days=7
             )
 
-        return training_plan
+        return replace(
+            training_plan,
+            original_workouts=tuple(
+                training_plan.workouts
+            ),
+        )
 
     # ======================================================
 
