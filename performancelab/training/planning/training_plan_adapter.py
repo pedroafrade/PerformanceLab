@@ -100,7 +100,7 @@ class TrainingPlanAdapter:
             and training_state.should_reduce_volume
         ):
             workouts = (
-                self._reduce_next_demanding_workout(
+                self._reduce_future_demanding_workouts(
                     workouts=workouts,
                     reference_day=reference_day,
                     adaptation_deadline=(
@@ -147,7 +147,7 @@ class TrainingPlanAdapter:
             and training_state.can_absorb_more_volume
         ):
             workouts = (
-                self._increase_next_easy_workout(
+                self._increase_future_easy_workouts(
                     workouts=workouts,
                     reference_day=reference_day,
                     adaptation_deadline=(
@@ -477,7 +477,7 @@ class TrainingPlanAdapter:
     # ======================================================
 
     @staticmethod
-    def _reduce_next_demanding_workout(
+    def _reduce_future_demanding_workouts(
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
@@ -485,126 +485,127 @@ class TrainingPlanAdapter:
         reduction_fraction: float,
     ) -> list[PlannedWorkout]:
         """
-        Reduce the next demanding workout proportionally to excess load.
+        Reduces every eligible demanding session remaining
+        in the active block.
+
+        The same bounded response is applied consistently
+        across quality sessions before the next race. Taper,
+        competition and recovery sessions remain protected.
         """
 
         updated = list(
             workouts
         )
 
-        candidate_index = next(
-            (
-                index
-                for index, workout
-                in enumerate(updated)
-                if (
-                    workout.day
-                    > reference_day
-                    and (
-                        adaptation_deadline is None
-                        or workout.day
-                        < adaptation_deadline
-                    )
-                    and workout.duration is not None
-                    and workout.duration.total_seconds()
-                    > 0
-                    and TrainingPlanAdapter._is_demanding(
-                        workout
-                    )
-                    and not TrainingPlanAdapter._is_protected(
-                        workout
-                    )
+        candidate_indices = [
+            index
+            for index, workout
+            in enumerate(updated)
+            if (
+                workout.day > reference_day
+                and (
+                    adaptation_deadline is None
+                    or workout.day
+                    < adaptation_deadline
                 )
-            ),
-            None,
-        )
-
-        if candidate_index is None:
-            return updated
-
-        candidate = updated[
-            candidate_index
+                and workout.duration is not None
+                and workout.duration.total_seconds() > 0
+                and TrainingPlanAdapter._is_demanding(
+                    workout
+                )
+                and not TrainingPlanAdapter._is_protected(
+                    workout
+                )
+            )
         ]
 
-        adjusted_duration = (
-            candidate.duration
-            * (
-                1.0
-                - reduction_fraction
-            )
-        )
-        duration_factor = (
-            adjusted_duration.total_seconds()
-            / candidate.duration.total_seconds()
-        )
+        for candidate_index in candidate_indices:
 
-        adjusted_distance = (
-            TrainingPlanAdapter
-            ._scaled_metric(
-                candidate.distance,
-                factor=duration_factor,
-            )
-        )
+            candidate = updated[
+                candidate_index
+            ]
 
-        adjusted_elevation_gain = (
-            TrainingPlanAdapter
-            ._scaled_metric(
-                candidate.elevation_gain,
-                factor=duration_factor,
+            adjusted_duration = (
+                candidate.duration
+                * (
+                    1.0
+                    - reduction_fraction
+                )
             )
-        )
-        adjusted_minutes = max(
-            1,
-            round(
+
+            duration_factor = (
                 adjusted_duration.total_seconds()
-                / 60
-            ),
-        )
+                / candidate.duration.total_seconds()
+            )
 
-        adjusted_structure = (
-            TrainingPlanAdapter
-            ._adapted_structure(
-                workout=candidate,
-                duration=adjusted_duration,
-                main_label=(
-                    "Controlled quality work"
+            adjusted_distance = (
+                TrainingPlanAdapter
+                ._scaled_metric(
+                    candidate.distance,
+                    factor=duration_factor,
+                )
+            )
+
+            adjusted_elevation_gain = (
+                TrainingPlanAdapter
+                ._scaled_metric(
+                    candidate.elevation_gain,
+                    factor=duration_factor,
+                )
+            )
+
+            adjusted_minutes = max(
+                1,
+                round(
+                    adjusted_duration.total_seconds()
+                    / 60
                 ),
             )
-        )
 
-        interval_summary = next(
-            (
-                step
-                for step in adjusted_structure
-                if "×" in step
-            ),
-            None,
-        )
-
-        prescription_summary = (
-            (
-                f"{interval_summary} · "
-                f"{adjusted_minutes} min total"
+            adjusted_structure = (
+                TrainingPlanAdapter
+                ._adapted_structure(
+                    workout=candidate,
+                    duration=adjusted_duration,
+                    main_label=(
+                        "Controlled quality work"
+                    ),
+                )
             )
-            if interval_summary is not None
-            else (
-                "Reduced quality session · "
-                f"{adjusted_minutes} min total"
-            )
-        )
 
-        updated[candidate_index] = replace(
-            candidate,
-            duration=adjusted_duration,
-            distance=adjusted_distance,
-            elevation_gain=(
-                adjusted_elevation_gain
-            ),
-            prescription_summary=(
-                prescription_summary
-            ),
-            structure=adjusted_structure,
-        )
+            interval_summary = next(
+                (
+                    step
+                    for step in adjusted_structure
+                    if "×" in step
+                ),
+                None,
+            )
+
+            prescription_summary = (
+                (
+                    f"{interval_summary} · "
+                    f"{adjusted_minutes} min total"
+                )
+                if interval_summary is not None
+                else (
+                    "Reduced quality session · "
+                    f"{adjusted_minutes} min total"
+                )
+            )
+
+            updated[candidate_index] = replace(
+                candidate,
+                duration=adjusted_duration,
+                distance=adjusted_distance,
+                elevation_gain=(
+                    adjusted_elevation_gain
+                ),
+                prescription_summary=(
+                    prescription_summary
+                ),
+                structure=adjusted_structure,
+            )
 
         return updated
 
@@ -659,7 +660,7 @@ class TrainingPlanAdapter:
     # ======================================================
     
     @staticmethod
-    def _increase_next_easy_workout(
+    def _increase_future_easy_workouts(
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
@@ -671,10 +672,12 @@ class TrainingPlanAdapter:
         ] = (),
     ) -> list[PlannedWorkout]:
         """
-        Adds a small fraction of missing load to the next
-        unprotected easy workout.
+        Distributes a bounded part of known missing load
+        across eligible easy sessions in the active block.
 
-        The missed workout is never moved to another day.
+        Sessions from the planned sport family are preferred.
+        When missing load is unknown, only the first safe
+        session receives the conservative maximum increase.
         """
 
         updated = list(
@@ -686,16 +689,14 @@ class TrainingPlanAdapter:
             for index, workout
             in enumerate(updated)
             if (
-                workout.day
-                > reference_day
+                workout.day > reference_day
                 and (
                     adaptation_deadline is None
                     or workout.day
                     < adaptation_deadline
                 )
                 and workout.duration is not None
-                and workout.duration.total_seconds()
-                > 0
+                and workout.duration.total_seconds() > 0
                 and TrainingPlanAdapter._is_easy(
                     workout
                 )
@@ -705,118 +706,163 @@ class TrainingPlanAdapter:
             )
         ]
 
-        candidate_index = next(
-            (
-                index
-                for index in candidate_indices
-                if (
-                    TrainingPlanAdapter
-                    ._sport_family(
-                        updated[index].sport
-                    )
-                    in preferred_sport_families
+        preferred_indices = [
+            index
+            for index in candidate_indices
+            if (
+                TrainingPlanAdapter
+                ._sport_family(
+                    updated[index].sport
                 )
-            ),
-            (
-                candidate_indices[0]
-                if candidate_indices
-                else None
-            ),
-        )
+                in preferred_sport_families
+            )
+        ]
 
-        if candidate_index is None:
+        if preferred_indices:
+            candidate_indices = (
+                preferred_indices
+            )
+
+        if not candidate_indices:
             return updated
 
-        candidate = updated[
-            candidate_index
-        ]
-        increase_fraction = (
-            MAX_UNDERLOAD_DURATION_INCREASE
-        )
-
-        candidate_load = (
-            planned_workout_load(
-                candidate
-            )
-        )
-
-        if (
-            missing_load is not None
-            and candidate_load is not None
-            and candidate_load > 0
-        ):
-
-            recoverable_load = (
+        remaining_recoverable_load = (
+            (
                 missing_load
                 * UNDERLOAD_RECOVERY_FRACTION
             )
+            if missing_load is not None
+            else None
+        )
 
-            increase_fraction = min(
-                MAX_UNDERLOAD_DURATION_INCREASE,
-                recoverable_load
-                / candidate_load,
+        if remaining_recoverable_load is None:
+            candidate_indices = (
+                candidate_indices[:1]
             )
 
-        if increase_fraction <= 0:
-            return updated
-        
-        adjusted_duration = (
-            candidate.duration
-            * (
-                1.0
-                + increase_fraction
-            )
-        )
-        duration_factor = (
-            adjusted_duration.total_seconds()
-            / candidate.duration.total_seconds()
-        )
+        for candidate_index in candidate_indices:
 
-        adjusted_distance = (
-            TrainingPlanAdapter
-            ._scaled_metric(
-                candidate.distance,
-                factor=duration_factor,
-            )
-        )
+            if (
+                remaining_recoverable_load
+                is not None
+                and remaining_recoverable_load
+                <= 0
+            ):
+                break
 
-        adjusted_elevation_gain = (
-            TrainingPlanAdapter
-            ._scaled_metric(
-                candidate.elevation_gain,
-                factor=duration_factor,
-            )
-        )
-        adjusted_minutes = max(
-            1,
-            round(
-                adjusted_duration.total_seconds()
-                / 60
-            ),
-        )
+            candidate = updated[
+                candidate_index
+            ]
 
-        updated[candidate_index] = replace(
-            candidate,
-            duration=adjusted_duration,
-            distance=adjusted_distance,
-            elevation_gain=(
-                adjusted_elevation_gain
-            ),
-            prescription_summary=(
-                "Adjusted easy session · "
-                f"{adjusted_minutes} min total"
-            ),
-            structure=(
-                TrainingPlanAdapter
-                ._adapted_structure(
-                    workout=candidate,
-                    duration=adjusted_duration,
-                    main_label=(
-                        "Easy aerobic training"
+            candidate_load = (
+                planned_workout_load(
+                    candidate
+                )
+            )
+
+            if (
+                remaining_recoverable_load
+                is not None
+            ):
+
+                if (
+                    candidate_load is None
+                    or candidate_load <= 0
+                ):
+                    continue
+
+                increase_fraction = min(
+                    MAX_UNDERLOAD_DURATION_INCREASE,
+                    (
+                        remaining_recoverable_load
+                        / candidate_load
                     ),
                 )
-            ),
-        )
+
+            else:
+
+                increase_fraction = (
+                    MAX_UNDERLOAD_DURATION_INCREASE
+                )
+
+            if increase_fraction <= 0:
+                continue
+
+            adjusted_duration = (
+                candidate.duration
+                * (
+                    1.0
+                    + increase_fraction
+                )
+            )
+
+            duration_factor = (
+                adjusted_duration.total_seconds()
+                / candidate.duration.total_seconds()
+            )
+
+            adjusted_distance = (
+                TrainingPlanAdapter
+                ._scaled_metric(
+                    candidate.distance,
+                    factor=duration_factor,
+                )
+            )
+
+            adjusted_elevation_gain = (
+                TrainingPlanAdapter
+                ._scaled_metric(
+                    candidate.elevation_gain,
+                    factor=duration_factor,
+                )
+            )
+
+            adjusted_minutes = max(
+                1,
+                round(
+                    adjusted_duration.total_seconds()
+                    / 60
+                ),
+            )
+
+            updated[candidate_index] = replace(
+                candidate,
+                duration=adjusted_duration,
+                distance=adjusted_distance,
+                elevation_gain=(
+                    adjusted_elevation_gain
+                ),
+                prescription_summary=(
+                    "Adjusted easy session · "
+                    f"{adjusted_minutes} min total"
+                ),
+                structure=(
+                    TrainingPlanAdapter
+                    ._adapted_structure(
+                        workout=candidate,
+                        duration=adjusted_duration,
+                        main_label=(
+                            "Easy aerobic training"
+                        ),
+                    )
+                ),
+            )
+
+            if (
+                remaining_recoverable_load
+                is not None
+                and candidate_load is not None
+            ):
+                remaining_recoverable_load = max(
+                    0.0,
+                    (
+                        remaining_recoverable_load
+                        - (
+                            candidate_load
+                            * increase_fraction
+                        )
+                    ),
+                )
 
         return updated
 
