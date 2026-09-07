@@ -3280,9 +3280,10 @@ def _compact_plan_layout_styles(
                 flex: 1 0 auto;
             }
             .st-key-plan_summary_cards .plan-sidebar-stack {
-                flex: 1 0 auto;
+                height: auto;
+                flex: 0 0 auto;
                 gap: 0.5rem;
-                justify-content: space-between;
+                justify-content: flex-start;
             }
             .st-key-plan_summary_cards
             .plan-sidebar-card {
@@ -3740,6 +3741,10 @@ def _compact_plan_layout_styles(
                 flex: 0 0 1.25rem;
             }
 
+            .st-key-plan_lower_row {
+                margin-top: -0.6rem;
+            }
+
             .st-key-plan_lower_row
             .st-key-plan_weeks_scroll,
             .st-key-plan_latest_adaptation
@@ -3747,11 +3752,28 @@ def _compact_plan_layout_styles(
             .st-key-plan_upcoming_events
             .plan-upcoming-events-card {
                 width: 100%;
-                min-height: 220px;
-                height: 220px !important;
-                max-height: 220px;
+                min-height: 8rem;
+                height:
+                    clamp(
+                        8rem,
+                        calc(100dvh - 46rem),
+                        13.75rem
+                    ) !important;
+                max-height:
+                    clamp(
+                        8rem,
+                        calc(100dvh - 46rem),
+                        13.75rem
+                    );
                 margin: 0;
+                overflow: hidden;
                 box-sizing: border-box;
+            }
+
+            .st-key-plan_lower_row
+            .st-key-plan_weeks_scroll {
+                overflow-y: auto;
+                scrollbar-gutter: stable;
             }
 
             .st-key-plan_latest_adaptation {
@@ -3761,7 +3783,7 @@ def _compact_plan_layout_styles(
             .st-key-plan_upcoming_events
             .plan-upcoming-events-card {
                 display: flex;
-                min-height: 220px;
+                min-height: 8rem;
                 padding: 0.65rem;
                 overflow: hidden;
                 flex-direction: column;
@@ -3777,10 +3799,25 @@ def _compact_plan_layout_styles(
                 flex: 1 1 auto;
             }
 
+            .st-key-plan_page_columns
+            [data-testid="stLayoutWrapper"]:has(
+                > .st-key-plan_summary_cards
+            ),
             .st-key-plan_summary_cards,
+            .st-key-plan_summary_cards
+            [data-testid="stElementContainer"],
+            .st-key-plan_summary_cards
+            [data-testid="stHtml"],
             .st-key-plan_summary_cards
             .plan-sidebar-stack {
                 height: auto;
+                min-height: 0;
+                flex: 0 0 auto;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-stack {
+                justify-content: flex-start;
             }
 
             .st-key-plan_summary_cards

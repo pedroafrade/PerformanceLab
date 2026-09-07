@@ -100,7 +100,7 @@ def test_scroll_sizing_and_card_alignment_are_desktop_only():
     assert "calc(100dvh - 46rem)" in desktop
     assert "overflow-y: auto" in desktop
     assert "align-items: stretch" in desktop
-    assert "justify-content: space-between;" in desktop
+    assert "justify-content: flex-start;" in desktop
     assert (
         ".plan-sidebar-card:last-child"
         in desktop

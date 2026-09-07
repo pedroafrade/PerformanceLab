@@ -76,4 +76,5 @@ def test_plan_bottom_adjustment_is_scoped_to_weeks_on_desktop():
     assert "calc(100dvh - 46rem)" in desktop
     assert "plan_weeks_section" in desktop
     assert "margin-top: -0.5rem" in desktop
-    assert "justify-content: space-between" in desktop
+    assert "justify-content: flex-start" in desktop
+    assert "justify-content: space-between" not in desktop
