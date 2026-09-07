@@ -3321,6 +3321,123 @@ def _compact_plan_layout_styles(
             .st-key-plan_summary_cards .plan-sidebar-session { min-height: 1.75rem; padding: 0.25rem 0.4rem; }
             .st-key-plan_summary_cards .plan-sidebar-adaptation-context { margin-bottom: 0.4rem; }
             .st-key-plan_summary_cards .plan-sidebar-adaptation-column { padding: 0.35rem; }
+            /*
+             * Align Plan Weeks, Latest Adaptation and
+             * Upcoming Events against the same lower edge.
+             */
+            .st-key-plan_lower_row {
+                display: flex;
+                min-height: 0;
+                flex: 1 1 auto;
+            }
+
+            .st-key-plan_lower_row
+            > div[data-testid="stVerticalBlock"],
+            .st-key-plan_lower_row
+            [data-testid="stHorizontalBlock"],
+            .st-key-plan_lower_row
+            [data-testid="stColumn"] {
+                min-height: 0;
+                height: 100%;
+            }
+
+            .st-key-plan_lower_row
+            [data-testid="stColumn"]
+            > div[data-testid="stVerticalBlock"] {
+                display: flex;
+                min-height: 0;
+                height: 100%;
+                gap: 0.35rem;
+                flex-direction: column;
+            }
+
+            .st-key-plan_weeks_section,
+            .st-key-plan_latest_adaptation {
+                display: flex;
+                min-height: 0;
+                height: 100%;
+                flex: 1 1 auto;
+                flex-direction: column;
+            }
+
+            .st-key-plan_weeks_section
+            > div[data-testid="stVerticalBlock"],
+            .st-key-plan_latest_adaptation
+            > div[data-testid="stVerticalBlock"] {
+                display: flex;
+                min-height: 0;
+                height: 100%;
+                gap: 0.35rem;
+                flex-direction: column;
+            }
+
+            .st-key-plan_weeks_section
+            .plan-weeks-heading,
+            .st-key-plan_latest_adaptation
+            .plan-weeks-heading {
+                display: flex;
+                align-items: center;
+                min-height: 1.25rem;
+                margin: 0 !important;
+                padding: 0;
+                line-height: 1.25rem;
+                flex: 0 0 1.25rem;
+            }
+
+            .st-key-plan_weeks_section
+            div[data-testid="stElementContainer"]:has(
+                > .st-key-plan_weeks_scroll
+            ),
+            .st-key-plan_latest_adaptation
+            div[data-testid="stElementContainer"]:has(
+                > div[data-testid="stHtml"]
+            ) {
+                display: flex;
+                min-height: 0;
+                flex: 1 1 auto;
+            }
+
+            .st-key-plan_lower_row
+            .st-key-plan_weeks_scroll {
+                width: 100%;
+                min-height: 220px;
+                height: auto !important;
+                flex: 1 1 auto;
+            }
+
+            .st-key-plan_latest_adaptation
+            div[data-testid="stHtml"],
+            .st-key-plan_latest_adaptation
+            .plan-sidebar-card {
+                width: 100%;
+                min-height: 220px;
+                height: auto;
+                flex: 1 1 auto;
+                box-sizing: border-box;
+            }
+
+            .st-key-plan_summary_cards,
+            .st-key-plan_summary_cards
+            div[data-testid="stHtml"],
+            .st-key-plan_summary_cards
+            .plan-sidebar-stack {
+                min-height: 0;
+                height: 100%;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child {
+                min-height: 0;
+                flex: 1 1 auto;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child
+            .upcoming-events {
+                min-height: 0;
+                overflow-y: auto;
+                flex: 1 1 auto;
+            }
         }
         @media (max-width: 1099px) {
             .st-key-plan_latest_adaptation
@@ -3341,6 +3458,23 @@ def _compact_plan_layout_styles(
                 height: auto !important;
                 max-height: none !important;
                 overflow: visible !important;
+            }
+            .st-key-plan_lower_row,
+            .st-key-plan_lower_row
+            [data-testid="stHorizontalBlock"],
+            .st-key-plan_lower_row
+            [data-testid="stColumn"],
+            .st-key-plan_weeks_section,
+            .st-key-plan_latest_adaptation {
+                display: block;
+                min-height: 0;
+                height: auto;
+            }
+
+            .st-key-plan_latest_adaptation
+            .plan-sidebar-card {
+                min-height: 0;
+                height: auto;
             }
         }
 
