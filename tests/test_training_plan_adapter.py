@@ -1102,3 +1102,75 @@ def test_adapted_lt2_structure_preserves_intervals():
             "Z4 · 177–181 bpm"
         ),
     )
+
+def test_underload_does_not_cross_next_race():
+
+    plan = make_plan()
+
+    plan.workouts[1] = replace(
+        plan.workouts[1],
+        title="Race",
+        phase="Race",
+    )
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(outcome,),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == plan.workouts[2].duration
+    )
+    assert adapted.adaptations == ()
+
+
+def test_underload_does_not_change_regeneration_phase():
+
+    plan = make_plan()
+
+    plan.workouts[2] = replace(
+        plan.workouts[2],
+        phase="Regeneration",
+    )
+
+    outcome = make_outcome(
+        plan=plan,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(outcome,),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert (
+        adapted.workouts[2].duration
+        == plan.workouts[2].duration
+    )
+    assert adapted.adaptations == ()

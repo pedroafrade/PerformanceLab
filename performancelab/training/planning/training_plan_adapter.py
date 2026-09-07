@@ -68,6 +68,13 @@ class TrainingPlanAdapter:
             plan.workouts
         )
 
+        adaptation_deadline = (
+            self._adaptation_deadline(
+                workouts=workouts,
+                reference_day=reference_day,
+            )
+        )
+
         overload_outcomes = tuple(
             outcome
             for outcome in outcomes
@@ -96,6 +103,9 @@ class TrainingPlanAdapter:
                 self._reduce_next_demanding_workout(
                     workouts=workouts,
                     reference_day=reference_day,
+                    adaptation_deadline=(
+                        adaptation_deadline
+                    ),
                     reduction_fraction=(
                         overload_reduction
                     ),
@@ -140,6 +150,9 @@ class TrainingPlanAdapter:
                 self._increase_next_easy_workout(
                     workouts=workouts,
                     reference_day=reference_day,
+                    adaptation_deadline=(
+                        adaptation_deadline
+                    ),
                     missing_load=missing_load,
                     preferred_sport_families=tuple(
                         dict.fromkeys(
@@ -468,6 +481,7 @@ class TrainingPlanAdapter:
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
+        adaptation_deadline: date | None,
         reduction_fraction: float,
     ) -> list[PlannedWorkout]:
         """
@@ -486,6 +500,11 @@ class TrainingPlanAdapter:
                 if (
                     workout.day
                     > reference_day
+                    and (
+                        adaptation_deadline is None
+                        or workout.day
+                        < adaptation_deadline
+                    )
                     and workout.duration is not None
                     and workout.duration.total_seconds()
                     > 0
@@ -644,6 +663,7 @@ class TrainingPlanAdapter:
         *,
         workouts: list[PlannedWorkout],
         reference_day: date,
+        adaptation_deadline: date | None,
         missing_load: float | None,
         preferred_sport_families: tuple[
             str,
@@ -668,6 +688,11 @@ class TrainingPlanAdapter:
             if (
                 workout.day
                 > reference_day
+                and (
+                    adaptation_deadline is None
+                    or workout.day
+                    < adaptation_deadline
+                )
                 and workout.duration is not None
                 and workout.duration.total_seconds()
                 > 0
@@ -1312,7 +1337,46 @@ class TrainingPlanAdapter:
         )
 
     # ======================================================
-    
+    @staticmethod
+    def _adaptation_deadline(
+        *,
+        workouts: list[PlannedWorkout],
+        reference_day: date,
+    ) -> date | None:
+        """
+        Returns the next competition day.
+
+        An outcome from the current training block must not
+        alter taper, competition or post-race recovery in a
+        later block.
+        """
+
+        competition_days = tuple(
+            workout.day
+            for workout in workouts
+            if (
+                workout.day > reference_day
+                and (
+                    str(
+                        workout.phase or ""
+                    ).strip().lower()
+                    == "race"
+                    or str(
+                        workout.title or ""
+                    ).strip().lower()
+                    == "race"
+                )
+            )
+        )
+
+        return (
+            min(competition_days)
+            if competition_days
+            else None
+        )
+
+    # ======================================================
+
     @staticmethod
     def _is_easy(
         workout: PlannedWorkout,
@@ -1384,6 +1448,8 @@ class TrainingPlanAdapter:
         if phase in {
             "taper",
             "race",
+            "recovery",
+            "regeneration",
         }:
             return True
 
