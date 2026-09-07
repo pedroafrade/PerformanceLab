@@ -29,7 +29,10 @@ from .workout_stimulus import (
     planned_workout_stimulus,
     stimuli_are_equivalent,
 )
-
+from .stimulus_rebalancer import (
+    StimulusRebalanceSuggestion,
+    StimulusRebalancer,
+)
 
 __all__ = [
     "PlannedWorkout",
@@ -47,4 +50,6 @@ __all__ = [
     "completed_workout_stimulus",
     "planned_workout_stimulus",
     "stimuli_are_equivalent",
+    "StimulusRebalanceSuggestion",
+    "StimulusRebalancer",
 ]
