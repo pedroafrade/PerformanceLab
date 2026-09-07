@@ -3742,7 +3742,9 @@ def _compact_plan_layout_styles(
             }
 
             .st-key-plan_lower_row {
-                margin-top: -0.6rem;
+                position: relative;
+                z-index: 1;
+                margin-top: -2.5rem;
             }
 
             .st-key-plan_lower_row
@@ -3833,6 +3835,11 @@ def _compact_plan_layout_styles(
         }
 
         @media (max-width: 1099px) {
+            .st-key-plan_lower_row {
+                position: static;
+                margin-top: 0;
+            }
+
             .st-key-plan_upcoming_events
             .plan-upcoming-events-card {
                 height: auto !important;
