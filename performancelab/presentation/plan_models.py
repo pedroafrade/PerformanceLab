@@ -161,6 +161,8 @@ class PlanStimulusSuggestionData:
     recommendation: str
     rationale: str
 
+    applied: bool = False
+
 @dataclass(frozen=True)
 class PlanGenerationEventData:
     """

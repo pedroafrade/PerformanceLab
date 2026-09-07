@@ -317,8 +317,8 @@ class TrainingPlanReconciler:
 
         return adapted
     # ======================================================
-    @staticmethod
     def _backfill_stimulus_suggestions(
+        self,
         *,
         plan: TrainingPlan,
         history: History,
@@ -367,8 +367,38 @@ class TrainingPlanReconciler:
             )
         )
 
-        current_suggestions = tuple(
-            generated_suggestions
+        (
+            revised_workouts,
+            generated_suggestions,
+        ) = (
+            self.adapter
+            ._apply_stimulus_suggestions(
+                workouts=list(
+                    plan.workouts
+                ),
+                suggestions=(
+                    generated_suggestions
+                ),
+            )
+        )
+
+        applied_history = tuple(
+            suggestion
+            for suggestion
+            in plan.stimulus_suggestions
+            if getattr(
+                suggestion,
+                "applied",
+                False,
+            )
+        )
+
+        current_suggestions = (
+            self.adapter
+            ._merge_stimulus_suggestions(
+                existing=applied_history,
+                new=generated_suggestions,
+            )
         )
 
         if (
@@ -383,7 +413,7 @@ class TrainingPlanReconciler:
                 current_suggestions
             ),
             workouts=list(
-                plan.workouts
+                revised_workouts
             ),
         )
 

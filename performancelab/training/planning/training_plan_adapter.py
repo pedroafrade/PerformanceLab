@@ -182,6 +182,16 @@ class TrainingPlanAdapter:
             )
         )
 
+        (
+            workouts,
+            stimulus_suggestions,
+        ) = self._apply_stimulus_suggestions(
+            workouts=workouts,
+            suggestions=(
+                stimulus_suggestions
+            ),
+        )
+
         merged_stimulus_suggestions = (
             self._merge_stimulus_suggestions(
                 existing=(
@@ -248,30 +258,203 @@ class TrainingPlanAdapter:
 
     # ======================================================
     @staticmethod
+    def _apply_stimulus_suggestions(
+        *,
+        workouts,
+        suggestions,
+    ):
+        """
+        Applies safe stimulus substitutions to an existing
+        future quality slot.
+
+        Duration and calendar position are preserved. Long
+        sessions, taper, races and recovery are already
+        excluded by StimulusRebalancer.
+        """
+
+        revised_workouts = list(
+            workouts
+        )
+        applied_suggestions = []
+
+        stimulus_titles = {
+            "hills": "Hill Reps",
+            "threshold": "LT2 Run",
+            "tempo": "Tempo Run",
+            "vo2max": "VO2max Intervals",
+            "speed": "Speed Reps",
+        }
+
+        stimulus_intensities = {
+            "hills": "Hard",
+            "threshold": "LT2",
+            "tempo": "Tempo",
+            "vo2max": "VO2max",
+            "speed": "Fast",
+        }
+
+        for suggestion in suggestions:
+
+            candidate_index = next(
+                (
+                    index
+                    for index, workout
+                    in enumerate(
+                        revised_workouts
+                    )
+                    if (
+                        workout.day
+                        == suggestion
+                        .candidate_workout_day
+                    )
+                ),
+                None,
+            )
+
+            source_workout = next(
+                (
+                    workout
+                    for workout in workouts
+                    if (
+                        workout.day
+                        == suggestion
+                        .source_workout_day
+                    )
+                ),
+                None,
+            )
+
+            if (
+                candidate_index is None
+                or source_workout is None
+            ):
+                applied_suggestions.append(
+                    suggestion
+                )
+                continue
+
+            candidate = revised_workouts[
+                candidate_index
+            ]
+
+            stimulus_name = (
+                suggestion.missing_stimulus
+                .value
+            )
+
+            revised_title = (
+                stimulus_titles.get(
+                    stimulus_name,
+                    source_workout.title
+                    or candidate.title
+                    or "Quality session",
+                )
+            )
+
+            revised_intensity = (
+                stimulus_intensities.get(
+                    stimulus_name,
+                    source_workout.intensity
+                    or candidate.intensity,
+                )
+            )
+
+            provisional_workout = replace(
+                candidate,
+                title=revised_title,
+                description=(
+                    source_workout.description
+                    or (
+                        f"Adapted {stimulus_name} "
+                        "session"
+                    )
+                ),
+                intensity=revised_intensity,
+                objective=(
+                    source_workout.objective
+                    or (
+                        f"Restore the missed "
+                        f"{stimulus_name} stimulus."
+                    )
+                ),
+                purpose="intensity",
+                focus=stimulus_name,
+            )
+
+            revised_structure = (
+                TrainingPlanAdapter
+                ._adapted_structure(
+                    workout=(
+                        provisional_workout
+                    ),
+                    duration=(
+                        candidate.duration
+                    ),
+                    main_label=(
+                        revised_title
+                    ),
+                )
+                if candidate.duration
+                is not None
+                else candidate.structure
+            )
+
+            revised_workout = replace(
+                provisional_workout,
+                structure=(
+                    revised_structure
+                ),
+                prescription_summary=(
+                    f"{revised_title} adapted "
+                    f"from missed "
+                    f"{suggestion.source_workout_title}"
+                ),
+            )
+
+            revised_workouts[
+                candidate_index
+            ] = revised_workout
+
+            applied_suggestions.append(
+                replace(
+                    suggestion,
+                    recommendation=(
+                        f"{suggestion.candidate_workout_title} "
+                        f"on "
+                        f"{suggestion.candidate_workout_day:%d %b} "
+                        f"was changed to "
+                        f"{revised_title}."
+                    ),
+                    applied=True,
+                )
+            )
+
+        return (
+            revised_workouts,
+            tuple(
+                applied_suggestions
+            ),
+        )
+
+    @staticmethod
     def _merge_stimulus_suggestions(
         *,
         existing,
         new,
     ):
         """
-        Merges suggestions without duplicating the same
-        source, missing stimulus and candidate session.
+        Merges stimulus adaptations without duplicating the
+        same source and candidate session.
+
+        An applied version replaces an older pending version.
         """
 
-        suggestions = list(
-            existing
-        )
+        suggestions_by_key = {}
 
-        known_keys = {
-            (
-                suggestion.source_workout_day,
-                suggestion.missing_stimulus,
-                suggestion.candidate_workout_day,
-            )
-            for suggestion in suggestions
-        }
-
-        for suggestion in new:
+        for suggestion in (
+            *existing,
+            *new,
+        ):
 
             key = (
                 suggestion.source_workout_day,
@@ -279,18 +462,25 @@ class TrainingPlanAdapter:
                 suggestion.candidate_workout_day,
             )
 
-            if key in known_keys:
-                continue
+            current = (
+                suggestions_by_key.get(
+                    key
+                )
+            )
 
-            suggestions.append(
-                suggestion
-            )
-            known_keys.add(
-                key
-            )
+            if (
+                current is None
+                or (
+                    suggestion.applied
+                    and not current.applied
+                )
+            ):
+                suggestions_by_key[
+                    key
+                ] = suggestion
 
         return tuple(
-            suggestions
+            suggestions_by_key.values()
         )
 
     # ======================================================

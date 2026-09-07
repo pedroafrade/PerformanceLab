@@ -545,6 +545,7 @@ def _stimulus_suggestion_to_dict(
             suggestion.recommendation
         ),
         "rationale": suggestion.rationale,
+        "applied": suggestion.applied,
     }
 
 
@@ -608,6 +609,12 @@ def _stimulus_suggestion_from_dict(
         ),
         rationale=_repair_text_encoding(
             data.get("rationale")
+        ),
+        applied=bool(
+            data.get(
+                "applied",
+                False,
+            )
         ),
     )
 

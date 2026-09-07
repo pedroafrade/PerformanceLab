@@ -1451,3 +1451,66 @@ def test_adapter_persists_stimulus_suggestion():
         suggestion.candidate_workout_day
         == date(2026, 8, 6)
     )
+
+def test_applies_safe_stimulus_rebalancing_to_future_slot():
+
+    plan = make_plan()
+
+    plan.workouts[0] = replace(
+        plan.workouts[0],
+        title="Hill Run",
+        purpose="intensity",
+        focus="hills",
+        intensity="Hard",
+    )
+
+    plan.workouts[1] = replace(
+        plan.workouts[1],
+        title="Tempo Run",
+        purpose="intensity",
+        focus="tempo",
+        intensity="Tempo",
+    )
+
+    outcome = WorkoutOutcome(
+        planned_workout=(
+            plan.workouts[0]
+        ),
+        completed_workout=None,
+        status=(
+            WorkoutOutcomeStatus.MISSED
+        ),
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(outcome,),
+        training_state=(
+            make_training_state()
+        ),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    revised = adapted.workouts[1]
+
+    assert revised.title == "Hill Reps"
+    assert revised.focus == "hills"
+    assert revised.purpose == "intensity"
+
+    assert (
+        revised.duration
+        == plan.workouts[1].duration
+    )
+
+    assert (
+        adapted
+        .stimulus_suggestions[0]
+        .applied
+        is True
+    )

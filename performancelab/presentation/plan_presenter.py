@@ -888,6 +888,9 @@ class PlanPresenter:
             rationale=(
                 suggestion.rationale
             ),
+            applied=(
+                suggestion.applied
+            ),
         )
 
     # ======================================================

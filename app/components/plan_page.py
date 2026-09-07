@@ -2571,13 +2571,51 @@ def _stimulus_suggestion_html(
             "<span>→</span>"
             f"<span>{escape(completed_label)} completed</span>"
         )
+    is_applied = bool(
+        getattr(
+            suggestion,
+            "applied",
+            False,
+        )
+    )
 
+    status_label = (
+        "Applied"
+        if is_applied
+        else "Suggested"
+    )
+
+    candidate_heading = (
+        "Adapted future session"
+        if is_applied
+        else "Future session to reconsider"
+    )
+
+    candidate_description = (
+        f"Previously planned as "
+        f"{candidate_label}"
+        if is_applied
+        else (
+            f"Currently planned as "
+            f"{candidate_label}"
+        )
+    )
+
+    note = (
+        "The session type and prescription were updated "
+        "without adding another demanding training day."
+        if is_applied
+        else (
+            "No session type has been changed. Athlete "
+            "confirmation is required."
+        )
+    )
     return (
         '<div class="plan-stimulus-suggestion">'
         '<div class="plan-stimulus-suggestion-header">'
         "<span>Stimulus rebalancing</span>"
         '<span class="plan-stimulus-suggestion-status">'
-        "Suggested"
+        f"{escape(status_label)}"
         "</span>"
         "</div>"
         '<div class="plan-stimulus-suggestion-source">'
@@ -2588,11 +2626,10 @@ def _stimulus_suggestion_html(
         f"{gap_html}"
         "</div>"
         '<div class="plan-stimulus-suggestion-candidate">'
-        "<span>Future session to reconsider</span>"
+        f"<span>{escape(candidate_heading)}</span>"
         f"<strong>{escape(suggestion.candidate_workout_title)}</strong>"
         f"<span>{suggestion.candidate_workout_day:%d %b}</span>"
-        "<span>Currently planned as "
-        f"{escape(candidate_label)}</span>"
+        f"<span>{escape(candidate_description)}</span>"
         "</div>"
         '<p class="plan-stimulus-suggestion-recommendation">'
         f"{escape(suggestion.recommendation)}"
@@ -2601,8 +2638,7 @@ def _stimulus_suggestion_html(
         f"{escape(suggestion.rationale)}"
         "</p>"
         '<p class="plan-stimulus-suggestion-note">'
-        "No session type has been changed. Athlete confirmation "
-        "is required."
+        f"{escape(note)}"
         "</p>"
         "</div>"
     )

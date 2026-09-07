@@ -54,6 +54,8 @@ class StimulusRebalanceSuggestion:
     recommendation: str
     rationale: str
 
+    applied: bool = False
+
 
 class StimulusRebalancer:
     """
