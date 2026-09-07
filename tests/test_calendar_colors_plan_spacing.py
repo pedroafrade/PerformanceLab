@@ -74,8 +74,28 @@ def test_plan_overview_has_one_flow_and_cards_use_equal_free_space():
     css = st.markdown.call_args.args[0]
     assert ".plan-overview > * { flex-shrink: 0; }" in css
     assert ".plan-overview .weekly-phase-timeline { margin: 0; }" in css
-    assert "justify-content: flex-start;" in css
-    assert "justify-content: space-between;" not in css
+    sidebar_stack_rule = (
+        css.split(
+            (
+                ".st-key-plan_summary_cards "
+                ".plan-sidebar-stack {"
+            ),
+            1,
+        )[1]
+        .split(
+            "}",
+            1,
+        )[0]
+    )
+
+    assert (
+        "justify-content: flex-start;"
+        in sidebar_stack_rule
+    )
+    assert (
+        "justify-content: space-between;"
+        not in sidebar_stack_rule
+    )
     assert ".plan-sidebar-card:last-child { margin-top: auto; }" not in css
     tree = ast.parse((COMPONENTS / "plan_page.py").read_text(encoding="utf-8"))
     overview = [n for n in ast.walk(tree) if isinstance(n, ast.Call)

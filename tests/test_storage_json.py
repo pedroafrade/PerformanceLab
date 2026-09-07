@@ -1424,3 +1424,63 @@ def test_legacy_workout_without_sub_sport_loads_empty():
         .info.sub_sport
         == ""
     )
+
+def test_planned_workout_persists_purpose_and_focus():
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            9,
+            8,
+            0,
+        ),
+        sport="Trail Running",
+        title="Hill Run",
+        duration=timedelta(
+            minutes=50,
+        ),
+        intensity="Hard",
+        purpose="intensity",
+        focus="hills",
+    )
+
+    payload = (
+        json_storage
+        ._planned_workout_to_dict(
+            workout
+        )
+    )
+
+    restored = (
+        json_storage
+        ._planned_workout_from_dict(
+            payload
+        )
+    )
+
+    assert restored.purpose == "intensity"
+    assert restored.focus == "hills"
+
+
+def test_legacy_planned_workout_without_purpose_is_supported():
+
+    payload = {
+        "scheduled_at": (
+            "2026-09-09T08:00:00"
+        ),
+        "sport": "Trail Running",
+        "title": "Hill Run",
+        "duration": 3000.0,
+        "intensity": "Hard",
+    }
+
+    restored = (
+        json_storage
+        ._planned_workout_from_dict(
+            payload
+        )
+    )
+
+    assert restored.purpose is None
+    assert restored.focus is None

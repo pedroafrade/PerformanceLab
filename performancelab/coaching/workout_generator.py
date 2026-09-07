@@ -527,6 +527,10 @@ class WorkoutGenerator:
             ),
             intensity=template.intensity,
             objective=template.objective,
+            purpose=slot.purpose.value,
+            focus=self._template_focus(
+                template
+            ),
             structure=structure,
             equipment=template.equipment,
             phase=(

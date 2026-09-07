@@ -3861,7 +3861,84 @@ def _compact_plan_layout_styles(
                 overflow: visible;
             }
         }
+        .plan-adaptation-heading {
+            position: relative;
+            justify-content: space-between;
+            overflow: visible;
+        }
 
+        .plan-adaptation-help {
+            position: relative;
+            margin-left: auto;
+            font-size: 0.75rem;
+            font-weight: 400;
+            line-height: 1;
+        }
+
+        .plan-adaptation-help summary {
+            display: flex;
+            width: 1.25rem;
+            height: 1.25rem;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid rgba(128, 128, 128, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            list-style: none;
+            box-sizing: border-box;
+        }
+
+        .plan-adaptation-help summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .plan-adaptation-help summary:hover,
+        .plan-adaptation-help summary:focus-visible {
+            border-color: #ff4b4b;
+            color: #ff4b4b;
+            outline: none;
+        }
+
+        .plan-adaptation-help-panel {
+            position: absolute;
+            z-index: 20;
+            top: 1.6rem;
+            right: 0;
+            width: min(25rem, 75vw);
+            max-height: 20rem;
+            padding: 0.85rem;
+            border: 1px solid rgba(128, 128, 128, 0.38);
+            border-radius: 0.65rem;
+            background: rgb(14, 17, 23);
+            color: rgb(250, 250, 250);
+            box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            font-size: 0.72rem;
+            font-weight: 400;
+            line-height: 1.4;
+        }
+
+        .plan-adaptation-help-panel strong {
+            display: block;
+            margin-bottom: 0.55rem;
+            font-size: 0.78rem;
+        }
+
+        .plan-adaptation-help-panel p {
+            margin: 0 0 0.55rem 0 !important;
+        }
+
+        .plan-adaptation-help-panel p:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        @media (prefers-color-scheme: light) {
+            .plan-adaptation-help-panel {
+                background: rgb(255, 255, 255);
+                color: rgb(38, 39, 48);
+            }
+        }
         </style>
         """
         + (
@@ -4659,8 +4736,45 @@ def show_plan_page(
             ):
                 st.markdown(
                     (
-                        '<div class="plan-weeks-heading">'
-                        "Latest adaptation"
+                        '<div class="plan-weeks-heading '
+                        'plan-adaptation-heading">'
+                        "<span>Latest adaptation</span>"
+                        '<details class="plan-adaptation-help">'
+                        '<summary aria-label="How plan adaptation works">'
+                        "?"
+                        "</summary>"
+                        '<div class="plan-adaptation-help-panel" '
+                        'role="note">'
+                        "<strong>How adaptation works</strong>"
+                        "<p>"
+                        "PerformanceLab compares planned and completed "
+                        "training by load, sport, session purpose and "
+                        "physiological focus."
+                        "</p>"
+                        "<p>"
+                        "A similar load does not automatically replace a "
+                        "missing stimulus. For example, Tempo or LT2 work "
+                        "does not fully replace Hill Reps when preparing "
+                        "for a trail race."
+                        "</p>"
+                        "<p>"
+                        "Before the race, the plan prioritises event "
+                        "specificity, recovery between demanding sessions "
+                        "and the athlete's current training state."
+                        "</p>"
+                        "<p>"
+                        "Easy, long and quality sessions have different "
+                        "roles. A Long Run is not removed automatically "
+                        "to recover a missed LT2 session."
+                        "</p>"
+                        "<p>"
+                        "Changes to session type will be presented as a "
+                        "suggestion and require athlete confirmation. If "
+                        "there is no safe opportunity, the missing stimulus "
+                        "is not forced into taper or regeneration."
+                        "</p>"
+                        "</div>"
+                        "</details>"
                         "</div>"
                     ),
                     unsafe_allow_html=True,

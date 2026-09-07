@@ -1,6 +1,7 @@
 """
 Tests for the complete training-plan page.
 """
+import inspect
 
 from datetime import date, datetime, timedelta
 from types import SimpleNamespace
@@ -2159,3 +2160,26 @@ def test_builds_compact_plan_generation_notice():
 
     assert "warning" not in html.lower()
     assert "info" not in html.lower()
+
+def test_latest_adaptation_explains_adaptation_policy():
+
+    source = inspect.getsource(
+        show_plan_page
+    )
+
+    assert (
+        "How plan adaptation works"
+        in source
+    )
+    assert (
+        "physiological focus"
+        in source
+    )
+    assert (
+        "A Long Run is not removed automatically"
+        in source
+    )
+    assert (
+        "require athlete confirmation"
+        in source
+    )

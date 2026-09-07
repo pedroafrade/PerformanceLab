@@ -56,6 +56,9 @@ class PlannedWorkout:
     intensity: str | None = None
     objective: str | None = None
 
+    purpose: str | None = None
+    focus: str | None = None
+
     structure: tuple[str, ...] = ()
     equipment: tuple[str, ...] = ()
 

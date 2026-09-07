@@ -536,6 +536,10 @@ def _planned_workout_to_dict(workout):
 
         "objective": workout.objective,
 
+        "purpose": workout.purpose,
+
+        "focus": workout.focus,
+
         "structure": list(
             workout.structure
         ),
@@ -592,6 +596,14 @@ def _planned_workout_from_dict(data):
 
         objective=_repair_text_encoding(
             data.get("objective")
+        ),
+
+        purpose=_repair_text_encoding(
+            data.get("purpose")
+        ),
+
+        focus=_repair_text_encoding(
+            data.get("focus")
         ),
 
         structure=tuple(
