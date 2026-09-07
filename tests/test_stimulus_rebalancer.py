@@ -359,3 +359,77 @@ def test_legacy_intensity_slot_without_purpose_is_used():
         .candidate_stimulus
         is WorkoutStimulus.TEMPO
     )
+
+def test_later_completed_stimulus_closes_earlier_gap():
+
+    missed_lt2 = workout(
+        2,
+        title="LT2 Run",
+        purpose="intensity",
+        focus="threshold",
+    )
+
+    later_long_run = workout(
+        6,
+        title="Long Run",
+        purpose="long",
+    )
+
+    future_tempo = workout(
+        8,
+        title="Tempo Run",
+        purpose="intensity",
+        focus="tempo",
+    )
+
+    race = workout(
+        13,
+        title="Race",
+        purpose="race",
+        phase="Race",
+    )
+
+    missed_outcome = gap(
+        missed_lt2,
+        planned=(
+            WorkoutStimulus.THRESHOLD
+        ),
+        completed=(
+            WorkoutStimulus.UNKNOWN
+        ),
+    )
+
+    recovered_outcome = SimpleNamespace(
+        planned_workout=later_long_run,
+        has_stimulus_gap=True,
+        planned_stimulus=(
+            WorkoutStimulus.LONG
+        ),
+        completed_stimulus=(
+            WorkoutStimulus.THRESHOLD
+        ),
+    )
+
+    suggestions = (
+        StimulusRebalancer()
+        .suggest(
+            workouts=(
+                missed_lt2,
+                later_long_run,
+                future_tempo,
+                race,
+            ),
+            outcomes=(
+                missed_outcome,
+                recovered_outcome,
+            ),
+            training_state=ready_state(),
+            reference_day=date(
+                2026,
+                9,
+                7,
+            ),
+        )
+    )
+
+    assert suggestions == ()

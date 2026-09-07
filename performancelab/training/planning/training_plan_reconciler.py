@@ -342,39 +342,20 @@ class TrainingPlanReconciler:
             )
         )
 
-        if not generated_suggestions:
-            return plan
-
-        existing_keys = {
-            (
-                suggestion.source_workout_day,
-                suggestion.missing_stimulus,
-                suggestion.candidate_workout_day,
-            )
-            for suggestion
-            in plan.stimulus_suggestions
-        }
-
-        new_suggestions = tuple(
-            suggestion
-            for suggestion
-            in generated_suggestions
-            if (
-                suggestion.source_workout_day,
-                suggestion.missing_stimulus,
-                suggestion.candidate_workout_day,
-            )
-            not in existing_keys
+        current_suggestions = tuple(
+            generated_suggestions
         )
 
-        if not new_suggestions:
+        if (
+            current_suggestions
+            == plan.stimulus_suggestions
+        ):
             return plan
 
         return replace(
             plan,
             stimulus_suggestions=(
-                *plan.stimulus_suggestions,
-                *new_suggestions,
+                current_suggestions
             ),
             workouts=list(
                 plan.workouts

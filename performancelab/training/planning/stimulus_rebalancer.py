@@ -99,7 +99,9 @@ class StimulusRebalancer:
             False,
         ):
             return ()
-
+        outcomes = tuple(
+            outcomes
+        )
         ordered_workouts = tuple(
             sorted(
                 workouts,
@@ -138,6 +140,18 @@ class StimulusRebalancer:
             if (
                 missing_stimulus
                 not in REBALANCEABLE_STIMULI
+            ):
+                continue
+
+            if self._stimulus_was_recovered(
+                outcomes=outcomes,
+                missing_stimulus=(
+                    missing_stimulus
+                ),
+                source_day=(
+                    outcome.planned_workout.day
+                ),
+                reference_day=reference_day,
             ):
                 continue
 
@@ -234,6 +248,42 @@ class StimulusRebalancer:
 
         return tuple(
             suggestions
+        )
+
+    @staticmethod
+    def _stimulus_was_recovered(
+        *,
+        outcomes,
+        missing_stimulus: WorkoutStimulus,
+        source_day: date,
+        reference_day: date,
+    ) -> bool:
+        """
+        Returns True when the missing stimulus was completed
+        later, before or on the current reference day.
+
+        This prevents an already recovered physiological
+        stimulus from being prescribed again unnecessarily.
+        """
+
+        return any(
+            (
+                outcome.planned_workout.day
+                > source_day
+            )
+            and (
+                outcome.planned_workout.day
+                <= reference_day
+            )
+            and (
+                getattr(
+                    outcome,
+                    "completed_stimulus",
+                    WorkoutStimulus.UNKNOWN,
+                )
+                is missing_stimulus
+            )
+            for outcome in outcomes
         )
 
     @staticmethod

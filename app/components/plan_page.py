@@ -3347,6 +3347,10 @@ def _compact_plan_layout_styles(
             .plan-sidebar-card {
                 width: 100%;
                 height: 220px;
+                min-height: 0;
+                padding-bottom: 0.75rem;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
                 box-sizing: border-box;
             }
             .st-key-plan_page_columns [data-testid="stHorizontalBlock"]:has(.st-key-plan_weeks_scroll) {
@@ -4035,8 +4039,11 @@ def _compact_plan_layout_styles(
             }
         }
         .plan-sidebar-adaptation-card {
-            overflow-y: auto;
+            min-height: 0;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
             scrollbar-gutter: stable;
+            overscroll-behavior: contain;
         }
 
         .plan-stimulus-suggestion {
