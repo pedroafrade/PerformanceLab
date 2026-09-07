@@ -74,6 +74,7 @@ from .plan_models import (
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
+    PlanStimulusSuggestionData,
 )
 from .plan_presenter import (
     PlanGenerationNoticePresenter,
@@ -174,6 +175,7 @@ __all__ = [
     "PlanPresenter",
     "PlanWeekData",
     "PlanWorkoutData",
+    "PlanStimulusSuggestionData",
 
     # Today
     "TodayAdaptationData",

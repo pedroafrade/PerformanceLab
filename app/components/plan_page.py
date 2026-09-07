@@ -2386,12 +2386,82 @@ def _sidebar_adaptation_column_html(
         "</div>"
         "</div>"
     )
+def _stimulus_suggestion_html(
+    suggestion,
+) -> str:
+    """
+    Builds a non-destructive stimulus rebalancing proposal.
+    """
+
+    if suggestion is None:
+        return ""
+
+    missing_label = (
+        str(
+            suggestion.missing_stimulus
+        )
+        .replace("_", " ")
+        .title()
+    )
+
+    completed_label = (
+        str(
+            suggestion.completed_stimulus
+        )
+        .replace("_", " ")
+        .title()
+    )
+
+    candidate_label = (
+        str(
+            suggestion.candidate_stimulus
+        )
+        .replace("_", " ")
+        .title()
+    )
+
+    return (
+        '<div class="plan-stimulus-suggestion">'
+        '<div class="plan-stimulus-suggestion-header">'
+        "<span>Stimulus rebalancing</span>"
+        '<span class="plan-stimulus-suggestion-status">'
+        "Suggested"
+        "</span>"
+        "</div>"
+        '<div class="plan-stimulus-suggestion-source">'
+        f"<strong>{escape(suggestion.source_workout_title)}</strong>"
+        f" · {suggestion.source_workout_day:%d %b}"
+        "</div>"
+        '<div class="plan-stimulus-suggestion-gap">'
+        f"<span>{escape(missing_label)} planned</span>"
+        "<span>→</span>"
+        f"<span>{escape(completed_label)} completed</span>"
+        "</div>"
+        '<div class="plan-stimulus-suggestion-candidate">'
+        "<span>Proposed slot</span>"
+        f"<strong>{escape(suggestion.candidate_workout_title)}</strong>"
+        f"<span>{suggestion.candidate_workout_day:%d %b}</span>"
+        f"<span>{escape(candidate_label)}</span>"
+        "</div>"
+        '<p class="plan-stimulus-suggestion-recommendation">'
+        f"{escape(suggestion.recommendation)}"
+        "</p>"
+        '<p class="plan-stimulus-suggestion-rationale">'
+        f"{escape(suggestion.rationale)}"
+        "</p>"
+        '<p class="plan-stimulus-suggestion-note">'
+        "No session type has been changed. Athlete confirmation "
+        "is required."
+        "</p>"
+        "</div>"
+    )
 
 def _sidebar_adaptation_html(
     adaptation,
     *,
     reference_day: date,
     show_heading: bool = True,
+    stimulus_suggestion=None,
 ) -> str:
     """
     Builds the latest-adaptation sidebar card.
@@ -2405,14 +2475,28 @@ def _sidebar_adaptation_html(
         if show_heading
         else ""
     )
-
+    suggestion_html = (
+        _stimulus_suggestion_html(
+            stimulus_suggestion
+        )
+    )
     if adaptation is None:
+        empty_html = (
+            ""
+            if suggestion_html
+            else (
+                '<p class="plan-sidebar-empty">'
+                "No adaptations or suggestions yet."
+                "</p>"
+            )
+        )
+
         return (
-            '<section class="plan-sidebar-card">'
+            '<section class="plan-sidebar-card '
+            'plan-sidebar-adaptation-card">'
             f"{heading_html}"
-            '<p class="plan-sidebar-empty">'
-            "No adaptations applied yet."
-            "</p>"
+            f"{suggestion_html}"
+            f"{empty_html}"
             "</section>"
         )
 
@@ -2470,6 +2554,7 @@ def _sidebar_adaptation_html(
         '<section class="plan-sidebar-card '
         'plan-sidebar-adaptation-card">'
         f"{heading_html}"
+        f"{suggestion_html}"
         '<div class="plan-sidebar-adaptation-context">'
         f"<span>{escape(date_label)}</span>"
         "<span>·</span>"
@@ -3939,6 +4024,84 @@ def _compact_plan_layout_styles(
                 color: rgb(38, 39, 48);
             }
         }
+        .plan-sidebar-adaptation-card {
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+
+        .plan-stimulus-suggestion {
+            margin-bottom: 0.7rem;
+            padding: 0.65rem;
+            border: 1px solid rgba(255, 75, 75, 0.3);
+            border-radius: 0.55rem;
+            background: rgba(255, 75, 75, 0.035);
+        }
+
+        .plan-stimulus-suggestion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            margin-bottom: 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .plan-stimulus-suggestion-status {
+            padding: 0.15rem 0.4rem;
+            border-radius: 999px;
+            background: rgba(255, 75, 75, 0.14);
+            color: #ff4b4b;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .plan-stimulus-suggestion-source {
+            margin-bottom: 0.4rem;
+            font-size: 0.68rem;
+        }
+
+        .plan-stimulus-suggestion-gap {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.65rem;
+            opacity: 0.82;
+        }
+
+        .plan-stimulus-suggestion-candidate {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.18rem 0.55rem;
+            margin-bottom: 0.5rem;
+            padding: 0.45rem;
+            border-radius: 0.4rem;
+            background: rgba(128, 128, 128, 0.08);
+            font-size: 0.64rem;
+        }
+
+        .plan-stimulus-suggestion-recommendation,
+        .plan-stimulus-suggestion-rationale,
+        .plan-stimulus-suggestion-note {
+            margin: 0 0 0.4rem 0 !important;
+            font-size: 0.64rem;
+            line-height: 1.35;
+        }
+
+        .plan-stimulus-suggestion-recommendation {
+            font-weight: 650;
+        }
+
+        .plan-stimulus-suggestion-rationale {
+            opacity: 0.75;
+        }
+
+        .plan-stimulus-suggestion-note {
+            margin-bottom: 0 !important;
+            opacity: 0.62;
+        }
         </style>
         """
         + (
@@ -4791,6 +4954,10 @@ def show_plan_page(
                                 plan.reference_day
                             ),
                             show_heading=False,
+                            stimulus_suggestion=(
+                                plan
+                                .latest_stimulus_suggestion
+                            ),
                         )
                     )
                 )

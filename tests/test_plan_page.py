@@ -31,6 +31,7 @@ from app.components.plan_page import (
     _week_is_current,
     _week_summary_label,
      show_plan_page,
+    _stimulus_suggestion_html,
 )
 from performancelab.presentation import (
     PlanWeekData,
@@ -1481,7 +1482,7 @@ def test_builds_empty_adaptation_sidebar_card():
     assert "Latest adaptation" in result
 
     assert (
-        "No adaptations applied yet."
+        "No adaptations or suggestions yet."
         in result
     )
 
@@ -2183,3 +2184,40 @@ def test_latest_adaptation_explains_adaptation_policy():
         "require athlete confirmation"
         in source
     )
+def test_stimulus_suggestion_is_not_presented_as_applied():
+
+    suggestion = SimpleNamespace(
+        source_workout_day=date(
+            2026,
+            9,
+            2,
+        ),
+        source_workout_title="Hill Run",
+        missing_stimulus="hills",
+        completed_stimulus="tempo",
+        candidate_workout_day=date(
+            2026,
+            9,
+            7,
+        ),
+        candidate_workout_title="LT2 Run",
+        candidate_stimulus="threshold",
+        recommendation=(
+            "Consider changing LT2 Run "
+            "to Hills work."
+        ),
+        rationale=(
+            "The Long Run is preserved."
+        ),
+    )
+
+    result = _stimulus_suggestion_html(
+        suggestion
+    )
+
+    assert "Stimulus rebalancing" in result
+    assert "Suggested" in result
+    assert "Hill Run" in result
+    assert "LT2 Run" in result
+    assert "Athlete confirmation is required" in result
+    assert ">Applied<" not in result

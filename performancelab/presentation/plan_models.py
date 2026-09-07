@@ -141,6 +141,27 @@ class PlanAdaptationData:
     revised_prescription: str | None = None
 
 @dataclass(frozen=True)
+class PlanStimulusSuggestionData:
+    """
+    Presentation-ready stimulus rebalancing proposal.
+    """
+
+    created_on: date
+
+    source_workout_day: date
+    source_workout_title: str
+
+    missing_stimulus: str
+    completed_stimulus: str
+
+    candidate_workout_day: date
+    candidate_workout_title: str
+    candidate_stimulus: str
+
+    recommendation: str
+    rationale: str
+
+@dataclass(frozen=True)
 class PlanGenerationEventData:
     """
     One registered event belonging to a later cycle.
@@ -213,5 +234,10 @@ class CompletePlanData:
 
     latest_adaptation: (
         PlanAdaptationData
+        | None
+    ) = None
+
+    latest_stimulus_suggestion: (
+        PlanStimulusSuggestionData
         | None
     ) = None

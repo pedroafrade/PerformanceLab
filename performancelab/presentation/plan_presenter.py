@@ -37,6 +37,7 @@ from .plan_models import (
     PlanProgressionPointData,
     PlanWeekData,
     PlanWorkoutData,
+    PlanStimulusSuggestionData,
 )
 
 class PlanGenerationNoticePresenter:
@@ -812,6 +813,84 @@ class PlanPresenter:
             ),
         )
 
+    def _next_stimulus_suggestion_data(
+        self,
+        *,
+        reference_day: date,
+    ) -> PlanStimulusSuggestionData | None:
+        """
+        Returns the nearest still-relevant stimulus proposal.
+        """
+
+        candidates = tuple(
+            suggestion
+            for suggestion
+            in self.plan.stimulus_suggestions
+            if (
+                suggestion.candidate_workout_day
+                >= reference_day
+            )
+        )
+
+        if not candidates:
+            return None
+
+        next_candidate_day = min(
+            suggestion.candidate_workout_day
+            for suggestion in candidates
+        )
+
+        suggestion = max(
+            (
+                candidate
+                for candidate in candidates
+                if (
+                    candidate.candidate_workout_day
+                    == next_candidate_day
+                )
+            ),
+            key=lambda candidate: (
+                candidate.created_on
+            ),
+        )
+
+        return PlanStimulusSuggestionData(
+            created_on=(
+                suggestion.created_on
+            ),
+            source_workout_day=(
+                suggestion.source_workout_day
+            ),
+            source_workout_title=(
+                suggestion.source_workout_title
+            ),
+            missing_stimulus=(
+                suggestion.missing_stimulus
+                .value
+            ),
+            completed_stimulus=(
+                suggestion.completed_stimulus
+                .value
+            ),
+            candidate_workout_day=(
+                suggestion.candidate_workout_day
+            ),
+            candidate_workout_title=(
+                suggestion.candidate_workout_title
+            ),
+            candidate_stimulus=(
+                suggestion.candidate_stimulus
+                .value
+            ),
+            recommendation=(
+                suggestion.recommendation
+            ),
+            rationale=(
+                suggestion.rationale
+            ),
+        )
+
+    # ======================================================
 
     def _next_adaptation_data(
         self,
@@ -1409,6 +1488,13 @@ class PlanPresenter:
                         reference_day
                     ),
                     outcomes=outcomes,
+                )
+            ),
+            latest_stimulus_suggestion=(
+                self._next_stimulus_suggestion_data(
+                    reference_day=(
+                        reference_day
+                    )
                 )
             ),
         )

@@ -15,6 +15,9 @@ from .planned_workout import PlannedWorkout
 from .plan_adaptation import (
     TrainingPlanAdaptation,
 )
+from .stimulus_rebalancer import (
+    StimulusRebalanceSuggestion,
+)
 from .workout_collection import WorkoutCollection
 
 from .workout_outcome import (
@@ -227,7 +230,26 @@ class TrainingPlan(WorkoutCollection):
                 "adaptations must contain "
                 "TrainingPlanAdaptation objects."
             )
-        
+        if not isinstance(
+            self.stimulus_suggestions,
+            tuple,
+        ):
+            raise TypeError(
+                "stimulus_suggestions must be a tuple."
+            )
+
+        if not all(
+            isinstance(
+                suggestion,
+                StimulusRebalanceSuggestion,
+            )
+            for suggestion
+            in self.stimulus_suggestions
+        ):
+            raise TypeError(
+                "stimulus_suggestions must contain "
+                "StimulusRebalanceSuggestion objects."
+            )
         for event_id in self.competition_event_ids:
 
             if (

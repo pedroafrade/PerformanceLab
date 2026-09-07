@@ -79,3 +79,26 @@ def test_training_plan_rejects_invalid_adaptation_entry():
                 "invalid",
             ),
         )
+def test_training_plan_validates_stimulus_suggestions():
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "stimulus_suggestions must be a tuple"
+        ),
+    ):
+        TrainingPlan(
+            stimulus_suggestions=[],
+        )
+
+    with pytest.raises(
+        TypeError,
+        match=(
+            "StimulusRebalanceSuggestion objects"
+        ),
+    ):
+        TrainingPlan(
+            stimulus_suggestions=(
+                object(),
+            ),
+        )
