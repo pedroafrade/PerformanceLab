@@ -3438,6 +3438,60 @@ def _compact_plan_layout_styles(
                 overflow-y: auto;
                 flex: 1 1 auto;
             }
+            /*
+             * Final alignment of the three lower Plan
+             * containers.
+             */
+            .st-key-plan_latest_adaptation {
+                transform: translateY(-0.4rem);
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child {
+                height:
+                    calc(
+                        clamp(
+                            8rem,
+                            calc(100dvh - 46rem),
+                            16rem
+                        )
+                        + 1.6rem
+                    );
+                min-height: 0;
+                max-height:
+                    calc(
+                        clamp(
+                            8rem,
+                            calc(100dvh - 46rem),
+                            16rem
+                        )
+                        + 1.6rem
+                    );
+                margin-top: 0.4rem;
+                overflow: hidden;
+                flex:
+                    0 0
+                    calc(
+                        clamp(
+                            8rem,
+                            calc(100dvh - 46rem),
+                            16rem
+                        )
+                        + 1.6rem
+                    );
+                box-sizing: border-box;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child
+            .upcoming-events {
+                min-height: 0;
+                max-height: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
+                flex: 1 1 auto;
+                scrollbar-gutter: stable;
+            }
         }
         @media (max-width: 1099px) {
             .st-key-plan_latest_adaptation
@@ -3475,6 +3529,19 @@ def _compact_plan_layout_styles(
             .plan-sidebar-card {
                 min-height: 0;
                 height: auto;
+            }
+            .st-key-plan_latest_adaptation {
+                transform: none;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child {
+                height: auto;
+                min-height: 0;
+                max-height: none;
+                margin-top: 0;
+                overflow: visible;
+                flex: none;
             }
         }
 
