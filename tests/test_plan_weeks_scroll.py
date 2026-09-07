@@ -32,7 +32,8 @@ def test_all_weeks_and_details_are_rendered_inside_scroll_container(week_count):
     )
     labels = MagicMock(side_effect=lambda week, **kwargs: f"Week {week}")
     details = MagicMock(side_effect=lambda week: f"<div>Details {week}</div>")
-    show = load_helper("_show_plan_weeks", st=st,
+    components = MagicMock()
+    show = load_helper("_show_plan_weeks", st=st, components=components,
                        _week_summary_label=labels, _week_html=details)
     today = date(2026, 9, 3)
     show(SimpleNamespace(weeks=weeks), reference_day=today)
@@ -52,6 +53,7 @@ def test_all_weeks_and_details_are_rendered_inside_scroll_container(week_count):
 
 def test_current_week_is_first_visible_and_previous_weeks_remain_above():
     st = MagicMock()
+    components = MagicMock()
     weeks = tuple(
         SimpleNamespace(
             start_date=date(2026, 8, 24) + timedelta(weeks=index),
@@ -65,22 +67,29 @@ def test_current_week_is_first_visible_and_previous_weeks_remain_above():
     show = load_helper(
         "_show_plan_weeks",
         st=st,
+        components=components,
         _week_summary_label=labels,
         _week_html=lambda week: str(week.start_date),
     )
 
     show(SimpleNamespace(weeks=weeks), reference_day=date(2026, 9, 8))
 
-    st.popover.assert_called_once_with(
-        "Previous weeks (2)",
-        use_container_width=True,
-    )
+    st.popover.assert_not_called()
     assert st.expander.call_args_list == [
         call("2026-08-24", expanded=False),
         call("2026-08-31", expanded=False),
         call("2026-09-07", expanded=False),
         call("2026-09-14", expanded=False),
     ]
+    assert st.markdown.call_args_list[2] == call(
+        '<span class="plan-current-week-anchor"></span>',
+        unsafe_allow_html=True,
+    )
+    components.html.assert_called_once()
+    script = components.html.call_args.args[0]
+    assert ".st-key-plan_weeks_scroll" in script
+    assert ".plan-current-week-anchor" in script
+    assert "root.scrollTop" in script
 
 
 def test_scroll_sizing_and_card_alignment_are_desktop_only():
