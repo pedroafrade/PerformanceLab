@@ -1485,6 +1485,10 @@ def test_builds_empty_adaptation_sidebar_card():
         "No adaptations or suggestions yet."
         in result
     )
+    assert (
+        "No pending stimulus rebalancing suggestion."
+        in result
+    )
 
 
 def test_labels_adapted_session_date_instead_of_application_date():

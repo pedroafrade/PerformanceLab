@@ -2480,6 +2480,16 @@ def _sidebar_adaptation_html(
             stimulus_suggestion
         )
     )
+
+    suggestion_state_html = (
+        suggestion_html
+        if suggestion_html
+        else (
+            '<p class="plan-stimulus-suggestion-empty">'
+            "No pending stimulus rebalancing suggestion."
+            "</p>"
+        )
+    )
     if adaptation is None:
         empty_html = (
             ""
@@ -2495,7 +2505,7 @@ def _sidebar_adaptation_html(
             '<section class="plan-sidebar-card '
             'plan-sidebar-adaptation-card">'
             f"{heading_html}"
-            f"{suggestion_html}"
+            f"{suggestion_state_html}"
             f"{empty_html}"
             "</section>"
         )
@@ -2554,7 +2564,7 @@ def _sidebar_adaptation_html(
         '<section class="plan-sidebar-card '
         'plan-sidebar-adaptation-card">'
         f"{heading_html}"
-        f"{suggestion_html}"
+        f"{suggestion_state_html}"
         '<div class="plan-sidebar-adaptation-context">'
         f"<span>{escape(date_label)}</span>"
         "<span>·</span>"
@@ -3988,8 +3998,8 @@ def _compact_plan_layout_styles(
         .plan-adaptation-help-panel {
             position: absolute;
             z-index: 20;
-            top: 1.6rem;
             right: 0;
+            bottom: 1.6rem;
             width: min(25rem, 75vw);
             max-height: 20rem;
             padding: 0.85rem;
@@ -4101,6 +4111,15 @@ def _compact_plan_layout_styles(
         .plan-stimulus-suggestion-note {
             margin-bottom: 0 !important;
             opacity: 0.62;
+        }
+        .plan-stimulus-suggestion-empty {
+            margin: 0 0 0.55rem 0 !important;
+            padding: 0.4rem 0.5rem;
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            border-radius: 0.4rem;
+            font-size: 0.62rem;
+            line-height: 1.3;
+            opacity: 0.66;
         }
         </style>
         """
