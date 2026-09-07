@@ -18,6 +18,12 @@ from performancelab.workout import Workout
 
 from .planned_workout import PlannedWorkout
 
+from .workout_stimulus import (
+    WorkoutStimulus,
+    completed_workout_stimulus,
+    planned_workout_stimulus,
+    stimuli_are_equivalent,
+)
 
 EQUIVALENT_LOAD_TOLERANCE = 0.20
 
@@ -69,6 +75,70 @@ class WorkoutOutcome:
             - self.planned_load
         )
 
+    @property
+    def planned_stimulus(
+        self,
+    ) -> WorkoutStimulus:
+        """
+        Returns the specific stimulus requested by the plan.
+        """
+
+        return planned_workout_stimulus(
+            self.planned_workout
+        )
+
+    @property
+    def completed_stimulus(
+        self,
+    ) -> WorkoutStimulus:
+        """
+        Returns the explicitly identifiable completed
+        stimulus.
+        """
+
+        return completed_workout_stimulus(
+            self.completed_workout
+        )
+
+    @property
+    def stimulus_equivalent(
+        self,
+    ) -> bool | None:
+        """
+        Compares planned and completed stimulus independently
+        of training load.
+        """
+
+        return stimuli_are_equivalent(
+            self.planned_stimulus,
+            self.completed_stimulus,
+        )
+
+    @property
+    def has_stimulus_gap(
+        self,
+    ) -> bool:
+        """
+        Indicates a known missing or substituted stimulus.
+
+        A missed session creates a gap when its planned
+        stimulus is known. Unknown completed descriptions do
+        not create an asserted mismatch.
+        """
+
+        if (
+            self.status
+            is WorkoutOutcomeStatus.MISSED
+        ):
+            return (
+                self.planned_stimulus
+                is not WorkoutStimulus.UNKNOWN
+            )
+
+        return (
+            self.stimulus_equivalent
+            is False
+        )
 
 # ======================================================
 

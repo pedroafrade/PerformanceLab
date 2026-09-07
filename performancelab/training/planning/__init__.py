@@ -23,6 +23,12 @@ from .workout_outcome import (
     WorkoutOutcomeStatus,
     assess_workout_outcome,
 )
+from .workout_stimulus import (
+    WorkoutStimulus,
+    completed_workout_stimulus,
+    planned_workout_stimulus,
+    stimuli_are_equivalent,
+)
 
 
 __all__ = [
@@ -37,4 +43,8 @@ __all__ = [
     "WorkoutOutcome",
     "WorkoutOutcomeStatus",
     "assess_workout_outcome",
+    "WorkoutStimulus",
+    "completed_workout_stimulus",
+    "planned_workout_stimulus",
+    "stimuli_are_equivalent",
 ]
