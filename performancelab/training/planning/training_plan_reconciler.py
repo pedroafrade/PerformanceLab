@@ -19,6 +19,9 @@ from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
 )
+from .stimulus_rebalancer import (
+    StimulusRebalancer,
+)
 from .workout_outcome import (
     assess_workout_outcome,
 )
@@ -59,6 +62,15 @@ class TrainingPlanReconciler:
             history=history,
             training_state=training_state,
             through_day=through_day,
+        )
+
+        plan = (
+            self._backfill_stimulus_suggestions(
+                plan=plan,
+                history=history,
+                training_state=training_state,
+                through_day=through_day,
+            )
         )
 
         previous_boundary = (
@@ -283,6 +295,91 @@ class TrainingPlanReconciler:
         )
 
         return adapted
+    # ======================================================
+    @staticmethod
+    def _backfill_stimulus_suggestions(
+        *,
+        plan: TrainingPlan,
+        history: History,
+        training_state: TrainingState,
+        through_day: date,
+    ) -> TrainingPlan:
+        """
+        Reassesses already closed plan days for missing
+        training stimuli.
+
+        This does not repeat load or duration adaptations.
+        It only creates non-destructive stimulus suggestions.
+        """
+
+        assessment_reference_day = (
+            through_day
+            + timedelta(days=1)
+        )
+
+        closed_outcomes = tuple(
+            outcome
+            for outcome in plan.assess_outcomes(
+                history=history,
+                reference_day=(
+                    assessment_reference_day
+                ),
+            )
+            if (
+                outcome.planned_workout.day
+                <= through_day
+            )
+        )
+
+        generated_suggestions = (
+            StimulusRebalancer().suggest(
+                workouts=tuple(
+                    plan.workouts
+                ),
+                outcomes=closed_outcomes,
+                training_state=training_state,
+                reference_day=through_day,
+            )
+        )
+
+        if not generated_suggestions:
+            return plan
+
+        existing_keys = {
+            (
+                suggestion.source_workout_day,
+                suggestion.missing_stimulus,
+                suggestion.candidate_workout_day,
+            )
+            for suggestion
+            in plan.stimulus_suggestions
+        }
+
+        new_suggestions = tuple(
+            suggestion
+            for suggestion
+            in generated_suggestions
+            if (
+                suggestion.source_workout_day,
+                suggestion.missing_stimulus,
+                suggestion.candidate_workout_day,
+            )
+            not in existing_keys
+        )
+
+        if not new_suggestions:
+            return plan
+
+        return replace(
+            plan,
+            stimulus_suggestions=(
+                *plan.stimulus_suggestions,
+                *new_suggestions,
+            ),
+            workouts=list(
+                plan.workouts
+            ),
+        )
 
     # ======================================================
     def reconcile_closed_days(

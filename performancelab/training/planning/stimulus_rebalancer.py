@@ -285,12 +285,26 @@ class StimulusRebalancer:
             ):
                 continue
 
-            if (
-                str(
-                    workout.purpose or ""
-                ).strip().lower()
-                != "intensity"
-            ):
+            candidate_stimulus = (
+                planned_workout_stimulus(
+                    workout
+                )
+            )
+
+            purpose = str(
+                workout.purpose or ""
+            ).strip().lower()
+
+            is_intensity_slot = (
+                purpose == "intensity"
+                or (
+                    not purpose
+                    and candidate_stimulus
+                    in REBALANCEABLE_STIMULI
+                )
+            )
+
+            if not is_intensity_slot:
                 continue
 
             if (
@@ -309,12 +323,6 @@ class StimulusRebalancer:
                 != source_sport_family
             ):
                 continue
-
-            candidate_stimulus = (
-                planned_workout_stimulus(
-                    workout
-                )
-            )
 
             if (
                 candidate_stimulus

@@ -294,3 +294,68 @@ def test_does_not_use_slot_too_close_to_race():
     )
 
     assert suggestions == ()
+
+def test_legacy_intensity_slot_without_purpose_is_used():
+
+    source = workout(
+        2,
+        title="Hill Run",
+        purpose="intensity",
+        focus="hills",
+    )
+
+    legacy_tempo = workout(
+        7,
+        title="Tempo Run",
+        purpose=None,
+        focus=None,
+    )
+
+    race = workout(
+        13,
+        title="Race",
+        purpose="race",
+        phase="Race",
+    )
+
+    suggestions = (
+        StimulusRebalancer()
+        .suggest(
+            workouts=(
+                source,
+                legacy_tempo,
+                race,
+            ),
+            outcomes=(
+                gap(
+                    source,
+                    planned=(
+                        WorkoutStimulus.HILLS
+                    ),
+                    completed=(
+                        WorkoutStimulus.TEMPO
+                    ),
+                ),
+            ),
+            training_state=ready_state(),
+            reference_day=date(
+                2026,
+                9,
+                3,
+            ),
+        )
+    )
+
+    assert len(suggestions) == 1
+
+    assert (
+        suggestions[0]
+        .candidate_workout_day
+        == date(2026, 9, 7)
+    )
+
+    assert (
+        suggestions[0]
+        .candidate_stimulus
+        is WorkoutStimulus.TEMPO
+    )
