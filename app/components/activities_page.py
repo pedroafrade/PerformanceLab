@@ -1266,35 +1266,129 @@ def _detected_stimulus_label(
             )
         )
 
-    labels = {
-        WorkoutStimulus.THRESHOLD: (
-            "LT2 Run"
-        ),
-        WorkoutStimulus.TEMPO: (
-            "Tempo Run"
-        ),
-        WorkoutStimulus.HILLS: (
-            "Hill Reps"
-        ),
-        WorkoutStimulus.VO2MAX: (
-            "VO₂max Intervals"
-        ),
-        WorkoutStimulus.SPEED: (
-            "Speed Reps"
-        ),
-        WorkoutStimulus.LONG: (
-            "Long Run"
-        ),
-        WorkoutStimulus.EASY: (
-            "Easy Run"
-        ),
-        WorkoutStimulus.RECOVERY: (
-            "Recovery Run"
-        ),
-        WorkoutStimulus.RACE: (
-            "Race"
-        ),
-    }
+    workout_info = getattr(
+        workout,
+        "info",
+        None,
+    )
+
+    sport = str(
+        getattr(
+            workout_info,
+            "sport",
+            None,
+        )
+        or ""
+    ).strip().lower()
+
+    is_cycling = any(
+        token in sport
+        for token in (
+            "cycl",
+            "bike",
+            "bicycle",
+        )
+    )
+
+    is_swimming = (
+        "swim" in sport
+    )
+
+    if is_cycling:
+
+        labels = {
+            WorkoutStimulus.THRESHOLD: (
+                "LT2 Ride"
+            ),
+            WorkoutStimulus.TEMPO: (
+                "Tempo Ride"
+            ),
+            WorkoutStimulus.HILLS: (
+                "Hill Repeats"
+            ),
+            WorkoutStimulus.VO2MAX: (
+                "VO₂max Intervals"
+            ),
+            WorkoutStimulus.SPEED: (
+                "Sprint Intervals"
+            ),
+            WorkoutStimulus.LONG: (
+                "Long Ride"
+            ),
+            WorkoutStimulus.EASY: (
+                "Easy Ride"
+            ),
+            WorkoutStimulus.RECOVERY: (
+                "Recovery Ride"
+            ),
+            WorkoutStimulus.RACE: (
+                "Cycling Race"
+            ),
+        }
+
+    elif is_swimming:
+
+        labels = {
+            WorkoutStimulus.THRESHOLD: (
+                "Threshold Swim"
+            ),
+            WorkoutStimulus.TEMPO: (
+                "Tempo Swim"
+            ),
+            WorkoutStimulus.HILLS: (
+                "Strength Swim"
+            ),
+            WorkoutStimulus.VO2MAX: (
+                "VO₂max Swim"
+            ),
+            WorkoutStimulus.SPEED: (
+                "Sprint Swim"
+            ),
+            WorkoutStimulus.LONG: (
+                "Long Swim"
+            ),
+            WorkoutStimulus.EASY: (
+                "Easy Swim"
+            ),
+            WorkoutStimulus.RECOVERY: (
+                "Recovery Swim"
+            ),
+            WorkoutStimulus.RACE: (
+                "Swimming Race"
+            ),
+        }
+
+    else:
+
+        labels = {
+            WorkoutStimulus.THRESHOLD: (
+                "LT2 Run"
+            ),
+            WorkoutStimulus.TEMPO: (
+                "Tempo Run"
+            ),
+            WorkoutStimulus.HILLS: (
+                "Hill Reps"
+            ),
+            WorkoutStimulus.VO2MAX: (
+                "VO₂max Intervals"
+            ),
+            WorkoutStimulus.SPEED: (
+                "Speed Reps"
+            ),
+            WorkoutStimulus.LONG: (
+                "Long Run"
+            ),
+            WorkoutStimulus.EASY: (
+                "Easy Run"
+            ),
+            WorkoutStimulus.RECOVERY: (
+                "Recovery Run"
+            ),
+            WorkoutStimulus.RACE: (
+                "Race"
+            ),
+        }
 
     if stimulus in labels:
         return labels[stimulus]
@@ -1303,12 +1397,12 @@ def _detected_stimulus_label(
         str(value or "")
         for value in (
             getattr(
-                workout.info,
+                workout_info,
                 "title",
                 None,
             ),
             getattr(
-                workout.info,
+                workout_info,
                 "sport",
                 None,
             ),

@@ -1189,3 +1189,56 @@ def test_unknown_trail_activity_uses_trail_run_designation(
     )
 
     assert result == "Trail Run"
+
+def test_long_cycling_stimulus_is_labelled_long_ride(
+    monkeypatch,
+):
+
+    workout = SimpleNamespace(
+        info=SimpleNamespace(
+            title="T91_Bike_Z3",
+            sport="Cycling",
+        )
+    )
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "metric_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.LONG
+        ),
+    )
+
+    result = _detected_stimulus_label(
+        workout=workout,
+        heart_rate_profile=None,
+    )
+
+    assert result == "Long Ride"
+    assert "Run" not in result
+
+def test_long_running_stimulus_is_labelled_long_run(
+    monkeypatch,
+):
+
+    workout = SimpleNamespace(
+        info=SimpleNamespace(
+            title="Sunday endurance",
+            sport="Trail Running",
+        )
+    )
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "metric_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.LONG
+        ),
+    )
+
+    result = _detected_stimulus_label(
+        workout=workout,
+        heart_rate_profile=None,
+    )
+
+    assert result == "Long Run"
