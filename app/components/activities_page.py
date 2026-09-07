@@ -21,7 +21,13 @@ from performancelab import (
 from performancelab.coaching import (
     ActivityCoachResolutionStatus,
 )
-
+from performancelab.training.planning import (
+    WorkoutStimulus,
+    completed_workout_stimulus,
+)
+from performancelab.training.planning.metric_stimulus import (
+    metric_workout_stimulus,
+)
 from performancelab.presentation import (
     ActivitiesPresenter,
     ActivityFilters,
@@ -1227,6 +1233,62 @@ def _compact_activity_metrics_html(
         f"{content}"
         "</div>"
     )
+def _detected_stimulus_label(
+    *,
+    workout,
+    heart_rate_profile,
+) -> str:
+    """
+    Returns the detected completed stimulus and identifies
+    whether it came from metrics or descriptive text.
+    """
+
+    metric_stimulus = (
+        metric_workout_stimulus(
+            workout,
+            heart_rate_profile=(
+                heart_rate_profile
+            ),
+        )
+    )
+
+    if (
+        metric_stimulus
+        is not WorkoutStimulus.UNKNOWN
+    ):
+        stimulus = metric_stimulus
+        evidence = "workout metrics"
+
+    else:
+        stimulus = (
+            completed_workout_stimulus(
+                workout,
+                heart_rate_profile=None,
+            )
+        )
+
+        evidence = (
+            "name or description"
+            if stimulus
+            is not WorkoutStimulus.UNKNOWN
+            else "insufficient evidence"
+        )
+
+    stimulus_label = (
+        stimulus.value
+        .replace("_", " ")
+        .upper()
+        if stimulus
+        is not WorkoutStimulus.UNKNOWN
+        else "UNKNOWN"
+    )
+
+    return (
+        f"Detected stimulus · "
+        f"{stimulus_label} · "
+        f"Evidence: {evidence}"
+    )
+
 
 def _show_selected_activity_dashboard(
     *,
@@ -1245,6 +1307,17 @@ def _show_selected_activity_dashboard(
         athlete.vo2max_observations
         .find_for_workout(
             workout.workout_id
+        )
+    )
+
+    st.caption(
+        _detected_stimulus_label(
+            workout=workout,
+            heart_rate_profile=(
+                athlete
+                .analytics
+                .heart_rate_profile
+            ),
         )
     )
 

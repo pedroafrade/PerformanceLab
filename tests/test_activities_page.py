@@ -20,6 +20,7 @@ from app.components.activities_page import (
     _activity_row_html,
     _analysis_available,
     _compact_activity_metrics_html,
+    _detected_stimulus_label,
     _format_load,
     _outcome_filter_value,
     _outcome_label,
@@ -45,6 +46,9 @@ from performancelab import (
 )
 from app.components.workout_table import (
     format_workout_start_time,
+)
+from performancelab.training.planning import (
+    WorkoutStimulus,
 )
 
 
@@ -1096,4 +1100,64 @@ def test_explains_training_coach_provider_errors(
         in _training_coach_error_message(
             error_code
         )
+    )
+
+def test_detected_stimulus_reports_metric_evidence(
+    monkeypatch,
+):
+
+    workout = object()
+    profile = object()
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "metric_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.THRESHOLD
+        ),
+    )
+
+    result = _detected_stimulus_label(
+        workout=workout,
+        heart_rate_profile=profile,
+    )
+
+    assert result == (
+        "Detected stimulus · "
+        "THRESHOLD · "
+        "Evidence: workout metrics"
+    )
+
+
+def test_detected_stimulus_reports_text_fallback(
+    monkeypatch,
+):
+
+    workout = object()
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "metric_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.UNKNOWN
+        ),
+    )
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "completed_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.THRESHOLD
+        ),
+    )
+
+    result = _detected_stimulus_label(
+        workout=workout,
+        heart_rate_profile=None,
+    )
+
+    assert result == (
+        "Detected stimulus · "
+        "THRESHOLD · "
+        "Evidence: name or description"
     )
