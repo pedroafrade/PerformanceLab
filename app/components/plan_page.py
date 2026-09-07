@@ -3215,6 +3215,42 @@ def _compact_plan_layout_styles(
 
         /* Scope sizing to Plan; never change the application sidebar. */
         @media (min-width: 1100px) {
+            .st-key-plan_lower_row
+            > div[data-testid="stVerticalBlock"] {
+                gap: 0;
+            }
+
+            .st-key-plan_lower_row
+            [data-testid="stHorizontalBlock"] {
+                align-items: stretch;
+            }
+
+            .st-key-plan_lower_row
+            [data-testid="stColumn"]
+            > div[data-testid="stVerticalBlock"] {
+                height: 100%;
+            }
+
+            .st-key-plan_weeks_section,
+            .st-key-plan_latest_adaptation {
+                display: flex;
+                height: 100%;
+                flex-direction: column;
+            }
+
+            .st-key-plan_latest_adaptation
+            [data-testid="stHtml"] {
+                display: flex;
+                flex: 1 1 auto;
+                min-height: 0;
+            }
+
+            .st-key-plan_latest_adaptation
+            .plan-sidebar-card {
+                width: 100%;
+                height: 220px;
+                box-sizing: border-box;
+            }
             .st-key-plan_page_columns [data-testid="stHorizontalBlock"]:has(.st-key-plan_weeks_scroll) {
                 align-items: stretch;
             }
@@ -3248,8 +3284,31 @@ def _compact_plan_layout_styles(
                 gap: 0.5rem;
                 justify-content: space-between;
             }
-            .st-key-plan_summary_cards .plan-sidebar-card { flex-shrink: 0; padding: 0.65rem; }
-            .st-key-plan_summary_cards .plan-sidebar-card:last-child { margin-top: 0; }
+            .st-key-plan_summary_cards
+            .plan-sidebar-card {
+                flex-shrink: 0;
+                padding: 0.65rem;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child {
+                display: flex;
+                min-height: 0;
+                margin-top: 0;
+                overflow: hidden;
+                flex: 1 1 0;
+                flex-direction: column;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child
+            .upcoming-events {
+                min-height: 0;
+                padding-right: 0.2rem;
+                overflow-y: auto;
+                scrollbar-gutter: stable;
+                flex: 1 1 auto;
+            }
             .st-key-plan_summary_cards .plan-sidebar-heading { margin-bottom: 0.45rem; }
             .st-key-plan_summary_cards .plan-sidebar-phase-name { font-size: 1.35rem; margin-bottom: 0.25rem; }
             .st-key-plan_summary_cards .plan-sidebar-date-range,
@@ -3264,6 +3323,20 @@ def _compact_plan_layout_styles(
             .st-key-plan_summary_cards .plan-sidebar-adaptation-column { padding: 0.35rem; }
         }
         @media (max-width: 1099px) {
+            .st-key-plan_latest_adaptation
+            .plan-sidebar-card {
+                height: auto;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child,
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child
+            .upcoming-events {
+                height: auto;
+                max-height: none;
+                overflow: visible;
+            }
             .st-key-plan_weeks_scroll {
                 height: auto !important;
                 max-height: none !important;
@@ -4146,24 +4219,64 @@ def show_plan_page(
         )
 
         _plan_styles()
-        weeks_column, adaptation_column = st.columns(
-            [1, 1],
-            gap="medium",
-        )
-        with weeks_column:
-            with st.container(key="plan_weeks_section"):
-                st.markdown('<div class="plan-weeks-heading">Plan weeks</div>', unsafe_allow_html=True)
-                _show_plan_weeks(plan, reference_day=today)
-        with adaptation_column:
-            st.markdown('<div class="plan-weeks-heading">Latest adaptation</div>', unsafe_allow_html=True)
-            st.html(
-                "<style>" + _sidebar_styles() + "</style>"
-                + _sidebar_adaptation_html(
-                    plan.latest_adaptation,
-                    reference_day=plan.reference_day,
-                    show_heading=False,
-                )
+
+        with st.container(
+            key="plan_lower_row",
+        ):
+            (
+                weeks_column,
+                adaptation_column,
+            ) = st.columns(
+                [1, 1],
+                gap="medium",
+                vertical_alignment="top",
             )
+
+            with weeks_column:
+                with st.container(
+                    key="plan_weeks_section",
+                ):
+                    st.markdown(
+                        (
+                            '<div class="plan-weeks-heading">'
+                            "Plan weeks"
+                            "</div>"
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                    _show_plan_weeks(
+                        plan,
+                        reference_day=today,
+                    )
+
+            with adaptation_column:
+                with st.container(
+                    key="plan_latest_adaptation",
+                ):
+                    st.markdown(
+                        (
+                            '<div class="plan-weeks-heading">'
+                            "Latest adaptation"
+                            "</div>"
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                    st.html(
+                        (
+                            "<style>"
+                            + _sidebar_styles()
+                            + "</style>"
+                            + _sidebar_adaptation_html(
+                                plan.latest_adaptation,
+                                reference_day=(
+                                    plan.reference_day
+                                ),
+                                show_heading=False,
+                            )
+                        )
+                    )
 
     with sidebar_column:
 

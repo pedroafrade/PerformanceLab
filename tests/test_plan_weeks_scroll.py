@@ -101,9 +101,37 @@ def test_scroll_sizing_and_card_alignment_are_desktop_only():
     assert "overflow-y: auto" in desktop
     assert "align-items: stretch" in desktop
     assert "justify-content: space-between;" in desktop
-    assert ".plan-sidebar-card:last-child { margin-top: 0; }" in desktop
+    assert (
+        ".plan-sidebar-card:last-child"
+        in desktop
+    )
+    assert "margin-top: 0;" in desktop
+    assert "flex: 1 1 0;" in desktop
     assert "flex-shrink: 0" in desktop
-    assert "overflow: hidden" not in desktop
+    plan_weeks_rule = (
+        desktop
+        .split(
+            ".st-key-plan_weeks_scroll {",
+            1,
+        )[1]
+        .split(
+            "}",
+            1,
+        )[0]
+    )
+
+    assert (
+        "overflow: hidden"
+        not in plan_weeks_rule
+    )
+
+    assert (
+        ".plan-sidebar-card:last-child"
+        in desktop
+    )
+    assert "overflow: hidden;" in desktop
+    assert ".upcoming-events" in desktop
+    assert "overflow-y: auto;" in desktop
     mobile = css.split("@media (max-width: 1099px)", 1)[1].split(".plan-page-header", 1)[0]
     assert "height: auto !important" in mobile
     assert "overflow: visible !important" in mobile
@@ -118,5 +146,45 @@ def test_plan_uses_one_weeks_helper_and_scoped_column_container():
             if k.arg == "key" and isinstance(k.value, ast.Constant)]
     assert "plan_page_columns" in keys and "plan_summary_cards" in keys
     source = PLAN_PATH.read_text(encoding="utf-8")
-    assert "weeks_column, adaptation_column = st.columns(" in source
+    equal_lower_columns = [
+        node
+        for node in calls
+        if (
+            isinstance(
+                node.func,
+                ast.Attribute,
+            )
+            and node.func.attr == "columns"
+            and node.args
+            and isinstance(
+                node.args[0],
+                ast.List,
+            )
+            and ast.literal_eval(
+                node.args[0]
+            )
+            == [1, 1]
+        )
+    ]
+
+    assert len(equal_lower_columns) == 1
     assert "upcoming_events_html(upcoming_events)" in source
+    assert "plan_lower_row" in keys
+    assert "plan_latest_adaptation" in keys
+
+    assert (
+        'vertical_alignment="top"'
+        in source
+    )
+
+    assert (
+        ".st-key-plan_latest_adaptation"
+        in source
+    )
+
+    assert (
+        ".upcoming-events"
+        in source
+    )
+
+    assert "overflow-y: auto" in source
