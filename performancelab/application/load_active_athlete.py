@@ -102,6 +102,11 @@ class LoadActiveAthlete:
                     .analytics
                     .training_state
                 ),
+                heart_rate_profile=(
+                    athlete
+                    .analytics
+                    .heart_rate_profile
+                ),
                 today=today,
             )
         )

@@ -396,6 +396,7 @@ class TrainingPlan(WorkoutCollection):
         *,
         history: History,
         reference_day: date,
+        heart_rate_profile=None,
     ) -> tuple[WorkoutOutcome, ...]:
         """
         Compares every planned workout with the activity
@@ -457,6 +458,9 @@ class TrainingPlan(WorkoutCollection):
                     )
                 ),
                 reference_day=reference_day,
+                heart_rate_profile=(
+                    heart_rate_profile
+                ),
             )
             for planned_workout in self.workouts
         )

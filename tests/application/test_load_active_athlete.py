@@ -79,6 +79,7 @@ class FakeReconciler:
         plan,
         history,
         training_state,
+        heart_rate_profile=None,
         today=None,
     ):
 
@@ -87,6 +88,9 @@ class FakeReconciler:
             "history": history,
             "training_state": (
                 training_state
+            ),
+            "heart_rate_profile": (
+                heart_rate_profile
             ),
             "today": today,
         }
@@ -98,7 +102,6 @@ class FakeReconciler:
             return self.replacement_plan
 
         return plan
-
 
 def athlete_user(
     athlete,
@@ -279,7 +282,17 @@ def test_passes_loaded_domain_state_to_reconciler(
         ]
         is not None
     )
-
+    assert (
+        reconciler.call[
+            "heart_rate_profile"
+        ]
+        is (
+            result
+            .athlete
+            .analytics
+            .heart_rate_profile
+        )
+    )
 
 def test_does_not_save_when_plan_is_unchanged(
     tmp_path,

@@ -51,6 +51,7 @@ class TrainingPlanReconciler:
         history: History,
         training_state: TrainingState,
         through_day: date,
+        heart_rate_profile=None,
     ) -> TrainingPlan:
         """
         Reconciles new plan days and completed workouts
@@ -70,6 +71,9 @@ class TrainingPlanReconciler:
                 history=history,
                 training_state=training_state,
                 through_day=through_day,
+                heart_rate_profile=(
+                    heart_rate_profile
+                ),
             )
         )
 
@@ -205,6 +209,9 @@ class TrainingPlanReconciler:
                 reference_day=(
                     assessment_reference_day
                 ),
+                heart_rate_profile=(
+                    heart_rate_profile
+                ),
             )
             if (
                 outcome.planned_workout.day
@@ -229,6 +236,9 @@ class TrainingPlanReconciler:
                 ),
                 reference_day=(
                     assessment_reference_day
+                ),
+                heart_rate_profile=(
+                    heart_rate_profile
                 ),
             )
         )
@@ -303,6 +313,7 @@ class TrainingPlanReconciler:
         history: History,
         training_state: TrainingState,
         through_day: date,
+        heart_rate_profile=None,
     ) -> TrainingPlan:
         """
         Reassesses already closed plan days for missing
@@ -323,6 +334,9 @@ class TrainingPlanReconciler:
                 history=history,
                 reference_day=(
                     assessment_reference_day
+                ),
+                heart_rate_profile=(
+                    heart_rate_profile
                 ),
             )
             if (
@@ -369,6 +383,7 @@ class TrainingPlanReconciler:
         plan: TrainingPlan,
         history: History,
         training_state: TrainingState,
+        heart_rate_profile=None,
         today: date | None = None,
     ) -> TrainingPlan:
         """
@@ -405,6 +420,9 @@ class TrainingPlanReconciler:
                 reference_day
                 - timedelta(days=1)
             ),
+            heart_rate_profile=(
+                heart_rate_profile
+            ),
         )
 
     # ======================================================
@@ -417,6 +435,7 @@ class TrainingPlanReconciler:
         workout_ids: tuple[str, ...],
         previous_boundary: date | None,
         reference_day: date,
+        heart_rate_profile=None,
     ):
         """
         Assesses each new or revised workout belonging to
@@ -476,6 +495,9 @@ class TrainingPlanReconciler:
                     completed_workout=workout,
                     reference_day=(
                         reference_day
+                    ),
+                    heart_rate_profile=(
+                        heart_rate_profile
                     ),
                 )
             )

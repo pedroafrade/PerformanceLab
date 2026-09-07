@@ -53,6 +53,7 @@ class WorkoutOutcome:
 
     planned_load: float | None
     completed_load: float | None
+    heart_rate_profile: object | None = None
 
     # ======================================================
 
@@ -97,7 +98,10 @@ class WorkoutOutcome:
         """
 
         return completed_workout_stimulus(
-            self.completed_workout
+            self.completed_workout,
+            heart_rate_profile=(
+                self.heart_rate_profile
+            ),
         )
 
     @property
@@ -187,6 +191,7 @@ def assess_workout_outcome(
     planned_workout: PlannedWorkout,
     completed_workout: Workout | None,
     reference_day: date,
+    heart_rate_profile=None,
 ) -> WorkoutOutcome:
     """
     Compares one planned workout with the activity performed

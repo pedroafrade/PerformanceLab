@@ -206,6 +206,8 @@ def planned_workout_stimulus(
 
 def completed_workout_stimulus(
     workout,
+    *,
+    heart_rate_profile=None,
 ) -> WorkoutStimulus:
     """
     Classifies a completed workout from explicit descriptive
@@ -217,7 +219,24 @@ def completed_workout_stimulus(
 
     if workout is None:
         return WorkoutStimulus.UNKNOWN
+    from .metric_stimulus import (
+        metric_workout_stimulus,
+    )
 
+    metric_stimulus = (
+        metric_workout_stimulus(
+            workout,
+            heart_rate_profile=(
+                heart_rate_profile
+            ),
+        )
+    )
+
+    if (
+        metric_stimulus
+        is not WorkoutStimulus.UNKNOWN
+    ):
+        return metric_stimulus
     info = getattr(
         workout,
         "info",
