@@ -117,3 +117,6 @@ def test_plan_uses_one_weeks_helper_and_scoped_column_container():
     keys = [k.value.value for n in calls for k in n.keywords
             if k.arg == "key" and isinstance(k.value, ast.Constant)]
     assert "plan_page_columns" in keys and "plan_summary_cards" in keys
+    source = PLAN_PATH.read_text(encoding="utf-8")
+    assert "weeks_column, adaptation_column = st.columns(" in source
+    assert "upcoming_events_html(upcoming_events)" in source

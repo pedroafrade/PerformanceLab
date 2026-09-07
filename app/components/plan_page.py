@@ -12,6 +12,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from performancelab.presentation import (
+    CalendarPresenter,
     PlanGenerationNoticePresenter,
     PlanPresenter,
 )
@@ -28,6 +29,10 @@ from .summary_cards import (
 )
 from .workout_table import (
     format_duration,
+)
+from .upcoming_events import (
+    upcoming_events_html,
+    upcoming_events_styles,
 )
 
 
@@ -2386,38 +2391,35 @@ def _sidebar_adaptation_html(
     adaptation,
     *,
     reference_day: date,
+    show_heading: bool = True,
 ) -> str:
     """
     Builds the latest-adaptation sidebar card.
     """
 
+    heading_html = (
+        '<div class="plan-sidebar-heading">'
+        '<span class="plan-sidebar-icon">↻</span>'
+        "<span>Latest adaptation</span>"
+        "</div>"
+        if show_heading
+        else ""
+    )
+
     if adaptation is None:
         return (
             '<section class="plan-sidebar-card">'
-            '<div class="plan-sidebar-heading">'
-            '<span class="plan-sidebar-icon">↻</span>'
-            "<span>Latest adaptation</span>"
-            "</div>"
+            f"{heading_html}"
             '<p class="plan-sidebar-empty">'
             "No adaptations applied yet."
             "</p>"
             "</section>"
         )
 
-    days_ago = max(
-        0,
-        (
-            reference_day
-            - adaptation.reconciled_on
-        ).days,
+    date_label = (
+        "Session date · "
+        f"{adaptation.workout_day:%d %b %Y}"
     )
-
-    if days_ago == 0:
-        date_label = "Today"
-    elif days_ago == 1:
-        date_label = "1 day ago"
-    else:
-        date_label = f"{days_ago} days ago"
 
     reason = escape(
         str(
@@ -2467,10 +2469,7 @@ def _sidebar_adaptation_html(
     return (
         '<section class="plan-sidebar-card '
         'plan-sidebar-adaptation-card">'
-        '<div class="plan-sidebar-heading">'
-        '<span class="plan-sidebar-icon">↻</span>'
-        "<span>Latest adaptation</span>"
-        "</div>"
+        f"{heading_html}"
         '<div class="plan-sidebar-adaptation-context">'
         f"<span>{escape(date_label)}</span>"
         "<span>·</span>"
@@ -4025,6 +4024,13 @@ def show_plan_page(
             reference_day=today,
         )
     )
+    upcoming_events = CalendarPresenter(
+        history=athlete.history,
+        training_plan=athlete.training_plan,
+        events=athlete.events,
+    ).upcoming_events(
+        reference_day=today,
+    )
 
     with main_column:
 
@@ -4140,9 +4146,24 @@ def show_plan_page(
         )
 
         _plan_styles()
-        with st.container(key="plan_weeks_section"):
-            st.markdown('<div class="plan-weeks-heading">Plan weeks</div>', unsafe_allow_html=True)
-            _show_plan_weeks(plan, reference_day=today)
+        weeks_column, adaptation_column = st.columns(
+            [1, 1],
+            gap="medium",
+        )
+        with weeks_column:
+            with st.container(key="plan_weeks_section"):
+                st.markdown('<div class="plan-weeks-heading">Plan weeks</div>', unsafe_allow_html=True)
+                _show_plan_weeks(plan, reference_day=today)
+        with adaptation_column:
+            st.markdown('<div class="plan-weeks-heading">Latest adaptation</div>', unsafe_allow_html=True)
+            st.html(
+                "<style>" + _sidebar_styles() + "</style>"
+                + _sidebar_adaptation_html(
+                    plan.latest_adaptation,
+                    reference_day=plan.reference_day,
+                    show_heading=False,
+                )
+            )
 
     with sidebar_column:
 
@@ -4154,12 +4175,18 @@ def show_plan_page(
             + _sidebar_week_html(
                 current_week
             )
-            + _sidebar_adaptation_html(
-                plan.latest_adaptation,
-                reference_day=plan.reference_day,
-            )
+            + '<section class="plan-sidebar-card">'
+            + '<div class="plan-sidebar-heading">'
+            + '<span class="plan-sidebar-icon">◇</span>'
+            + "<span>Upcoming events</span></div>"
+            + upcoming_events_html(upcoming_events)
+            + "</section>"
             + "</div>"
         )
 
         with st.container(key="plan_summary_cards"):
-            st.html("<style>" + _sidebar_styles() + "</style>" + sidebar_html)
+            st.html(
+                "<style>" + _sidebar_styles()
+                + upcoming_events_styles() + "</style>"
+                + sidebar_html
+            )

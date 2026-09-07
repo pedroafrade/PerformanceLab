@@ -1448,7 +1448,8 @@ def test_builds_latest_adaptation_sidebar_card():
     )
 
     assert "Latest adaptation" in result
-    assert "2 days ago" in result
+    assert "Session date · 06 Aug 2026" in result
+    assert "2 days ago" not in result
     assert "LT2 Run" in result
     assert "Planned session" in result
     assert "Adjusted session" in result
@@ -1484,7 +1485,7 @@ def test_builds_empty_adaptation_sidebar_card():
     )
 
 
-def test_labels_today_adaptation():
+def test_labels_adapted_session_date_instead_of_application_date():
 
     adaptation = SimpleNamespace(
         reconciled_on=date(
@@ -1516,7 +1517,8 @@ def test_labels_today_adaptation():
         )
     )
 
-    assert "Today" in result
+    assert "Session date · 08 Aug 2026" in result
+    assert "Today" not in result
 
 def test_builds_week_session_without_planned_load():
 

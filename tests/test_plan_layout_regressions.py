@@ -80,8 +80,15 @@ def test_actions_and_cards_share_the_same_column():
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "columns"
     ]
-    assert len(column_calls) == 1
-    assert ast.literal_eval(column_calls[0].args[0]) == [3.4, 1]
+    assert len(column_calls) == 2
+    column_widths = {
+        tuple(ast.literal_eval(call.args[0]))
+        for call in column_calls
+    }
+    assert column_widths == {
+        (3.4, 1),
+        (1, 1),
+    }
 
     right_blocks = [
         node for node in show.body
