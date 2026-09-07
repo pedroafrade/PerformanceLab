@@ -2420,6 +2420,24 @@ def _stimulus_suggestion_html(
         .title()
     )
 
+    if (
+        str(
+            suggestion.completed_stimulus
+        ).strip().lower()
+        == "unknown"
+    ):
+        gap_html = (
+            "<span>Planned stimulus not completed</span>"
+            "<span>·</span>"
+            "<strong>Missed session</strong>"
+        )
+    else:
+        gap_html = (
+            f"<span>{escape(missing_label)} planned</span>"
+            "<span>→</span>"
+            f"<span>{escape(completed_label)} completed</span>"
+        )
+
     return (
         '<div class="plan-stimulus-suggestion">'
         '<div class="plan-stimulus-suggestion-header">'
@@ -2433,15 +2451,14 @@ def _stimulus_suggestion_html(
         f" · {suggestion.source_workout_day:%d %b}"
         "</div>"
         '<div class="plan-stimulus-suggestion-gap">'
-        f"<span>{escape(missing_label)} planned</span>"
-        "<span>→</span>"
-        f"<span>{escape(completed_label)} completed</span>"
+        f"{gap_html}"
         "</div>"
         '<div class="plan-stimulus-suggestion-candidate">'
-        "<span>Proposed slot</span>"
+        "<span>Future session to reconsider</span>"
         f"<strong>{escape(suggestion.candidate_workout_title)}</strong>"
         f"<span>{suggestion.candidate_workout_day:%d %b}</span>"
-        f"<span>{escape(candidate_label)}</span>"
+        "<span>Currently planned as "
+        f"{escape(candidate_label)}</span>"
         "</div>"
         '<p class="plan-stimulus-suggestion-recommendation">'
         f"{escape(suggestion.recommendation)}"

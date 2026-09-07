@@ -909,9 +909,21 @@ class PlanPresenter:
 
         candidates = []
 
+        (
+            _,
+            target_event_date,
+        ) = self._target_event_data()
+
         for adaptation in (
             self.plan.adaptations
         ):
+
+            if (
+                target_event_date is not None
+                and adaptation.workout_day
+                > target_event_date
+            ):
+                continue
 
             if (
                 adaptation.workout_day

@@ -508,13 +508,30 @@ class StimulusRebalancer:
         Explains the detected gap and protected constraints.
         """
 
-        completed_label = (
-            completed_stimulus.value
-            .replace(
-                "_",
-                " ",
+        if (
+            completed_stimulus
+            is WorkoutStimulus.UNKNOWN
+        ):
+            gap_explanation = (
+                f"The planned "
+                f"{missing_stimulus.value} session "
+                "was not completed."
             )
-        )
+        else:
+            completed_label = (
+                completed_stimulus.value
+                .replace(
+                    "_",
+                    " ",
+                )
+            )
+
+            gap_explanation = (
+                f"The planned "
+                f"{missing_stimulus.value} stimulus "
+                f"was replaced by "
+                f"{completed_label}."
+            )
 
         candidate_label = (
             candidate_stimulus.value
@@ -536,12 +553,11 @@ class StimulusRebalancer:
         )
 
         return (
-            f"The planned {missing_stimulus.value} stimulus "
-            f"was replaced by {completed_label}. "
-            f"An existing {candidate_label} intensity slot "
-            "can be reconsidered without adding another "
-            "demanding training day. The Long Run is "
-            "preserved."
+            f"{gap_explanation} "
+            f"A future {candidate_label} intensity session "
+            "can be reconsidered to recover the missing "
+            "stimulus without adding another demanding "
+            "training day. The Long Run is preserved."
             f"{race_context}"
         )
 
