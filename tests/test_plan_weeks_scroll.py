@@ -1,6 +1,6 @@
 """Plan weeks remain accessible while desktop columns share a lower edge."""
 import ast
-from datetime import date
+from datetime import date, timedelta
 from html import escape
 from pathlib import Path
 from types import SimpleNamespace
@@ -23,7 +23,13 @@ def load_helper(name, **namespace):
 @pytest.mark.parametrize("week_count", [0, 1, 8, 52])
 def test_all_weeks_and_details_are_rendered_inside_scroll_container(week_count):
     st = MagicMock()
-    weeks = tuple(range(week_count))
+    weeks = tuple(
+        SimpleNamespace(
+            start_date=date(2026, 9, 7) + timedelta(weeks=index),
+            end_date=date(2026, 9, 13) + timedelta(weeks=index),
+        )
+        for index in range(week_count)
+    )
     labels = MagicMock(side_effect=lambda week, **kwargs: f"Week {week}")
     details = MagicMock(side_effect=lambda week: f"<div>Details {week}</div>")
     show = load_helper("_show_plan_weeks", st=st,
@@ -42,6 +48,39 @@ def test_all_weeks_and_details_are_rendered_inside_scroll_container(week_count):
     if weeks:
         assert events.index("container().__enter__") < events.index("expander")
         assert max(i for i, e in enumerate(events) if e == "markdown") < events.index("container().__exit__")
+
+
+def test_current_week_is_first_visible_and_previous_weeks_remain_above():
+    st = MagicMock()
+    weeks = tuple(
+        SimpleNamespace(
+            start_date=date(2026, 8, 24) + timedelta(weeks=index),
+            end_date=date(2026, 8, 30) + timedelta(weeks=index),
+        )
+        for index in range(4)
+    )
+    labels = MagicMock(
+        side_effect=lambda week, **kwargs: week.start_date.isoformat()
+    )
+    show = load_helper(
+        "_show_plan_weeks",
+        st=st,
+        _week_summary_label=labels,
+        _week_html=lambda week: str(week.start_date),
+    )
+
+    show(SimpleNamespace(weeks=weeks), reference_day=date(2026, 9, 8))
+
+    st.popover.assert_called_once_with(
+        "Previous weeks (2)",
+        use_container_width=True,
+    )
+    assert st.expander.call_args_list == [
+        call("2026-08-24", expanded=False),
+        call("2026-08-31", expanded=False),
+        call("2026-09-07", expanded=False),
+        call("2026-09-14", expanded=False),
+    ]
 
 
 def test_scroll_sizing_and_card_alignment_are_desktop_only():

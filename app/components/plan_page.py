@@ -3916,14 +3916,47 @@ def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
 
 
 def _show_plan_weeks(plan, *, reference_day: date) -> None:
-    """Keep every week and expanded details inside one scrollable region."""
+    """Open the list at the current week while retaining earlier weeks."""
+
+    weeks = tuple(plan.weeks)
+    current_index = next(
+        (
+            index
+            for index, week in enumerate(weeks)
+            if week.start_date <= reference_day <= week.end_date
+        ),
+        None,
+    )
+
+    previous_weeks = (
+        weeks[:current_index]
+        if current_index is not None
+        else ()
+    )
+    visible_weeks = (
+        weeks[current_index:]
+        if current_index is not None
+        else weeks
+    )
+
+    def show_week(week) -> None:
+        with st.expander(
+            _week_summary_label(week, reference_day=reference_day),
+            expanded=False,
+        ):
+            st.markdown(_week_html(week), unsafe_allow_html=True)
+
     with st.container(height=220, border=True, key="plan_weeks_scroll"):
-        for week in plan.weeks:
-            with st.expander(
-                _week_summary_label(week, reference_day=reference_day),
-                expanded=False,
+        if previous_weeks:
+            with st.popover(
+                f"Previous weeks ({len(previous_weeks)})",
+                use_container_width=True,
             ):
-                st.markdown(_week_html(week), unsafe_allow_html=True)
+                for week in previous_weeks:
+                    show_week(week)
+
+        for week in visible_weeks:
+            show_week(week)
 
 
 def show_plan_page(
