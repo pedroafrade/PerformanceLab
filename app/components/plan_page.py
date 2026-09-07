@@ -3688,6 +3688,127 @@ def _compact_plan_layout_styles(
         section[data-testid="stMain"] div[data-testid="stExpander"] summary p:first-letter {
             color: #ff4b4b;
         }
+        /*
+         * The three lower cards share one Streamlit row.
+         * These final rules supersede the former
+         * cross-column alignment adjustments.
+         */
+        @media (min-width: 1100px) {
+            .st-key-plan_lower_row
+            [data-testid="stHorizontalBlock"] {
+                align-items: stretch;
+            }
+
+            .st-key-plan_lower_row
+            [data-testid="stColumn"]
+            > div[data-testid="stVerticalBlock"] {
+                display: flex;
+                height: 100%;
+                gap: 0.35rem;
+                flex-direction: column;
+            }
+
+            .st-key-plan_weeks_section,
+            .st-key-plan_latest_adaptation,
+            .st-key-plan_upcoming_events {
+                display: flex;
+                height: 100%;
+                flex-direction: column;
+            }
+
+            .st-key-plan_weeks_section
+            > div[data-testid="stVerticalBlock"],
+            .st-key-plan_latest_adaptation
+            > div[data-testid="stVerticalBlock"],
+            .st-key-plan_upcoming_events
+            > div[data-testid="stVerticalBlock"] {
+                display: flex;
+                height: 100%;
+                gap: 0.35rem;
+                flex-direction: column;
+            }
+
+            .st-key-plan_lower_row
+            .plan-weeks-heading {
+                display: flex;
+                align-items: center;
+                min-height: 1.25rem;
+                height: 1.25rem;
+                margin: 0 !important;
+                padding: 0;
+                line-height: 1.25rem;
+                flex: 0 0 1.25rem;
+            }
+
+            .st-key-plan_lower_row
+            .st-key-plan_weeks_scroll,
+            .st-key-plan_latest_adaptation
+            .plan-sidebar-card,
+            .st-key-plan_upcoming_events
+            .plan-upcoming-events-card {
+                width: 100%;
+                min-height: 220px;
+                height: 220px !important;
+                max-height: 220px;
+                margin: 0;
+                box-sizing: border-box;
+            }
+
+            .st-key-plan_latest_adaptation {
+                transform: none;
+            }
+
+            .st-key-plan_upcoming_events
+            .plan-upcoming-events-card {
+                display: flex;
+                min-height: 220px;
+                padding: 0.65rem;
+                overflow: hidden;
+                flex-direction: column;
+            }
+
+            .st-key-plan_upcoming_events
+            .upcoming-events {
+                min-height: 0;
+                padding-right: 0.2rem;
+                overflow-x: hidden;
+                overflow-y: auto;
+                scrollbar-gutter: stable;
+                flex: 1 1 auto;
+            }
+
+            .st-key-plan_summary_cards,
+            .st-key-plan_summary_cards
+            .plan-sidebar-stack {
+                height: auto;
+            }
+
+            .st-key-plan_summary_cards
+            .plan-sidebar-card:last-child {
+                display: block;
+                height: auto;
+                min-height: 0;
+                max-height: none;
+                margin-top: 0;
+                overflow: visible;
+                flex: none;
+            }
+        }
+
+        @media (max-width: 1099px) {
+            .st-key-plan_upcoming_events
+            .plan-upcoming-events-card {
+                height: auto !important;
+                min-height: 0;
+                max-height: none;
+                overflow: visible;
+            }
+
+            .st-key-plan_upcoming_events
+            .upcoming-events {
+                overflow: visible;
+            }
+        }
 
         </style>
         """
@@ -4274,7 +4395,11 @@ def show_plan_page(
         )
 
     with sidebar_column:
-        _show_plan_actions(plan, athlete, on_generate_plan)
+        _show_plan_actions(
+            plan,
+            athlete,
+            on_generate_plan,
+        )
 
     if not plan.weeks:
 
@@ -4286,18 +4411,13 @@ def show_plan_page(
 
         return
 
-    summary = (
-        _plan_summary_metrics(
-            plan
-        )
+    summary = _plan_summary_metrics(plan)
+
+    current_week = _current_plan_week(
+        plan.weeks,
+        reference_day=today,
     )
 
-    current_week = (
-        _current_plan_week(
-            plan.weeks,
-            reference_day=today,
-        )
-    )
     upcoming_events = CalendarPresenter(
         history=athlete.history,
         training_plan=athlete.training_plan,
@@ -4333,36 +4453,42 @@ def show_plan_page(
             )
         )
 
-        summary_html = (
-            summary_cards_html(
+        summary_html = summary_cards_html(
+            (
                 (
-                    (
-                        "calendar_month",
-                        "Horizon",
-                        summary["Horizon"],
-                    ),
-                    (
-                        "monitoring",
-                        "Planned load",
-                        summary["Planned load"],
-                    ),
-                    (
-                        "route",
-                        "Max distance",
-                        summary["Max distance"],
-                    ),
-                    (
-                        "terrain",
-                        "Max elevation",
-                        summary["Max elevation"],
-                    ),
-                )
+                    "calendar_month",
+                    "Horizon",
+                    summary["Horizon"],
+                ),
+                (
+                    "monitoring",
+                    "Planned load",
+                    summary["Planned load"],
+                ),
+                (
+                    "route",
+                    "Max distance",
+                    summary["Max distance"],
+                ),
+                (
+                    "terrain",
+                    "Max elevation",
+                    summary["Max elevation"],
+                ),
             )
         )
 
         st.markdown(
-            "<style>" + phase_timeline_styles() + summary_cards_styles() + "</style>"
-            + '<div class="plan-overview">' + (timeline_html or "") + summary_html + '</div>',
+            (
+                "<style>"
+                + phase_timeline_styles()
+                + summary_cards_styles()
+                + "</style>"
+                + '<div class="plan-overview">'
+                + (timeline_html or "")
+                + summary_html
+                + "</div>"
+            ),
             unsafe_allow_html=True,
         )
 
@@ -4390,14 +4516,14 @@ def show_plan_page(
         )
 
         st.altair_chart(
-            _planned_load_chart(
-                plan
-            ),
+            _planned_load_chart(plan),
             use_container_width=True,
         )
+
         st.html(
             _plan_load_legend_html()
         )
+
         st.markdown(
             (
                 '<div class="plan-chart-block">'
@@ -4413,71 +4539,11 @@ def show_plan_page(
         )
 
         st.altair_chart(
-            _distance_elevation_chart(
-                plan
-            ),
+            _distance_elevation_chart(plan),
             use_container_width=True,
         )
 
         _plan_styles()
-
-        with st.container(
-            key="plan_lower_row",
-        ):
-            (
-                weeks_column,
-                adaptation_column,
-            ) = st.columns(
-                [1, 1],
-                gap="medium",
-                vertical_alignment="top",
-            )
-
-            with weeks_column:
-                with st.container(
-                    key="plan_weeks_section",
-                ):
-                    st.markdown(
-                        (
-                            '<div class="plan-weeks-heading">'
-                            "Plan weeks"
-                            "</div>"
-                        ),
-                        unsafe_allow_html=True,
-                    )
-
-                    _show_plan_weeks(
-                        plan,
-                        reference_day=today,
-                    )
-
-            with adaptation_column:
-                with st.container(
-                    key="plan_latest_adaptation",
-                ):
-                    st.markdown(
-                        (
-                            '<div class="plan-weeks-heading">'
-                            "Latest adaptation"
-                            "</div>"
-                        ),
-                        unsafe_allow_html=True,
-                    )
-
-                    st.html(
-                        (
-                            "<style>"
-                            + _sidebar_styles()
-                            + "</style>"
-                            + _sidebar_adaptation_html(
-                                plan.latest_adaptation,
-                                reference_day=(
-                                    plan.reference_day
-                                ),
-                                show_heading=False,
-                            )
-                        )
-                    )
 
     with sidebar_column:
 
@@ -4489,18 +4555,104 @@ def show_plan_page(
             + _sidebar_week_html(
                 current_week
             )
-            + '<section class="plan-sidebar-card">'
-            + '<div class="plan-sidebar-heading">'
-            + '<span class="plan-sidebar-icon">◇</span>'
-            + "<span>Upcoming events</span></div>"
-            + upcoming_events_html(upcoming_events)
-            + "</section>"
             + "</div>"
         )
 
-        with st.container(key="plan_summary_cards"):
+        with st.container(
+            key="plan_summary_cards",
+        ):
             st.html(
-                "<style>" + _sidebar_styles()
-                + upcoming_events_styles() + "</style>"
-                + sidebar_html
+                (
+                    "<style>"
+                    + _sidebar_styles()
+                    + "</style>"
+                    + sidebar_html
+                )
             )
+
+    with st.container(
+        key="plan_lower_row",
+    ):
+        (
+            weeks_column,
+            adaptation_column,
+            events_column,
+        ) = st.columns(
+            [1.7, 1.7, 1],
+            gap="medium",
+            vertical_alignment="top",
+        )
+
+        with weeks_column:
+            with st.container(
+                key="plan_weeks_section",
+            ):
+                st.markdown(
+                    (
+                        '<div class="plan-weeks-heading">'
+                        "Plan weeks"
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+                _show_plan_weeks(
+                    plan,
+                    reference_day=today,
+                )
+
+        with adaptation_column:
+            with st.container(
+                key="plan_latest_adaptation",
+            ):
+                st.markdown(
+                    (
+                        '<div class="plan-weeks-heading">'
+                        "Latest adaptation"
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+                st.html(
+                    (
+                        "<style>"
+                        + _sidebar_styles()
+                        + "</style>"
+                        + _sidebar_adaptation_html(
+                            plan.latest_adaptation,
+                            reference_day=(
+                                plan.reference_day
+                            ),
+                            show_heading=False,
+                        )
+                    )
+                )
+
+        with events_column:
+            with st.container(
+                key="plan_upcoming_events",
+            ):
+                st.markdown(
+                    (
+                        '<div class="plan-weeks-heading">'
+                        "Upcoming events"
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+                st.html(
+                    (
+                        "<style>"
+                        + _sidebar_styles()
+                        + upcoming_events_styles()
+                        + "</style>"
+                        + (
+                            '<section class="plan-sidebar-card '
+                            'plan-upcoming-events-card">'
+                        )
+                        + upcoming_events_html(upcoming_events)
+                        + "</section>"
+                    )
+                )

@@ -163,7 +163,7 @@ def test_plan_uses_one_weeks_helper_and_scoped_column_container():
             and ast.literal_eval(
                 node.args[0]
             )
-            == [1, 1]
+            == [1.7, 1.7, 1]
         )
     ]
 

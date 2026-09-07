@@ -87,7 +87,7 @@ def test_actions_and_cards_share_the_same_column():
     }
     assert column_widths == {
         (3.4, 1),
-        (1, 1),
+        (1.7, 1.7, 1),
     }
 
     right_blocks = [
