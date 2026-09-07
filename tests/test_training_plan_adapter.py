@@ -16,6 +16,11 @@ from performancelab.training.planning import (
     TrainingPlanAdapter,
     WorkoutOutcome,
     WorkoutOutcomeStatus,
+    WorkoutStimulus,
+)
+from performancelab.workout import (
+    Workout,
+    WorkoutInfo,
 )
 
 
@@ -1370,3 +1375,79 @@ def test_overload_reduces_quality_block_before_race():
     assert len(
         adapted.adaptations
     ) == 2
+
+def test_adapter_persists_stimulus_suggestion():
+
+    plan = make_plan()
+
+    plan.workouts[0] = replace(
+        plan.workouts[0],
+        purpose="intensity",
+        focus="hills",
+        title="Hill Run",
+    )
+
+    plan.workouts[1] = replace(
+        plan.workouts[1],
+        purpose="intensity",
+        focus="threshold",
+        title="LT2 Run",
+    )
+
+    completed = Workout(
+        info=WorkoutInfo(
+            date=datetime(
+                2026,
+                8,
+                4,
+                8,
+                0,
+            ),
+            sport="Running",
+            title="Tempo Run",
+            duration=timedelta(
+                minutes=60,
+            ),
+        )
+    )
+
+    outcome = WorkoutOutcome(
+        planned_workout=(
+            plan.workouts[0]
+        ),
+        completed_workout=completed,
+        status=(
+            WorkoutOutcomeStatus.MODIFIED
+        ),
+        planned_load=180.0,
+        completed_load=180.0,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(outcome,),
+        training_state=make_training_state(),
+        reference_day=date(
+            2026,
+            8,
+            5,
+        ),
+    )
+
+    assert len(
+        adapted.stimulus_suggestions
+    ) == 1
+
+    suggestion = (
+        adapted
+        .stimulus_suggestions[0]
+    )
+
+    assert (
+        suggestion.missing_stimulus
+        is WorkoutStimulus.HILLS
+    )
+    assert (
+        suggestion.candidate_workout_day
+        == date(2026, 8, 6)
+    )

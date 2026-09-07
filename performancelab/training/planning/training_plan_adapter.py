@@ -25,6 +25,9 @@ from .workout_outcome import (
     WorkoutOutcome,
     WorkoutOutcomeStatus,
 )
+from .stimulus_rebalancer import (
+    StimulusRebalancer,
+)
 
 
 MAX_OVERLOAD_DURATION_REDUCTION = 0.20
@@ -167,6 +170,28 @@ class TrainingPlanAdapter:
                     ),
                 )
             )
+        stimulus_suggestions = (
+            StimulusRebalancer()
+            .suggest(
+                workouts=tuple(
+                    workouts
+                ),
+                outcomes=outcomes,
+                training_state=training_state,
+                reference_day=reference_day,
+            )
+        )
+
+        merged_stimulus_suggestions = (
+            self._merge_stimulus_suggestions(
+                existing=(
+                    plan.stimulus_suggestions
+                ),
+                new=(
+                    stimulus_suggestions
+                ),
+            )
+        )
 
         adaptation_records = (
             self._adaptation_records(
@@ -205,6 +230,9 @@ class TrainingPlanAdapter:
                 plan.adaptations
                 + adaptation_records
             ),
+            stimulus_suggestions=(
+                merged_stimulus_suggestions
+            ),
             primary_event_id=(
                 plan.primary_event_id
             ),
@@ -215,6 +243,54 @@ class TrainingPlanAdapter:
         )
 
     # ======================================================
+    @staticmethod
+    def _merge_stimulus_suggestions(
+        *,
+        existing,
+        new,
+    ):
+        """
+        Merges suggestions without duplicating the same
+        source, missing stimulus and candidate session.
+        """
+
+        suggestions = list(
+            existing
+        )
+
+        known_keys = {
+            (
+                suggestion.source_workout_day,
+                suggestion.missing_stimulus,
+                suggestion.candidate_workout_day,
+            )
+            for suggestion in suggestions
+        }
+
+        for suggestion in new:
+
+            key = (
+                suggestion.source_workout_day,
+                suggestion.missing_stimulus,
+                suggestion.candidate_workout_day,
+            )
+
+            if key in known_keys:
+                continue
+
+            suggestions.append(
+                suggestion
+            )
+            known_keys.add(
+                key
+            )
+
+        return tuple(
+            suggestions
+        )
+
+    # ======================================================
+
     @staticmethod
     def _scaled_metric(
         value: float | None,

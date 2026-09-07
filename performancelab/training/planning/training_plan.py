@@ -60,6 +60,11 @@ class TrainingPlan(WorkoutCollection):
         ...,
     ] = ()
 
+    stimulus_suggestions: tuple[
+        StimulusRebalanceSuggestion,
+        ...,
+    ] = ()
+
     primary_event_id: str | None = None
 
     competition_event_ids: tuple[str, ...] = ()

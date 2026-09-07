@@ -43,6 +43,8 @@ from performancelab.training.planning import (
     TrainingPlan,
     TrainingPlanAdaptation,
     WorkoutOutcomeStatus,
+    StimulusRebalanceSuggestion,
+    WorkoutStimulus,
 )
 
 # ======================================================
@@ -1484,3 +1486,62 @@ def test_legacy_planned_workout_without_purpose_is_supported():
 
     assert restored.purpose is None
     assert restored.focus is None
+def test_training_plan_stimulus_suggestions_round_trip():
+
+    suggestion = (
+        StimulusRebalanceSuggestion(
+            created_on=date(
+                2026,
+                9,
+                3,
+            ),
+            source_workout_day=date(
+                2026,
+                9,
+                2,
+            ),
+            source_workout_title=(
+                "Hill Run"
+            ),
+            missing_stimulus=(
+                WorkoutStimulus.HILLS
+            ),
+            completed_stimulus=(
+                WorkoutStimulus.TEMPO
+            ),
+            candidate_workout_day=date(
+                2026,
+                9,
+                7,
+            ),
+            candidate_workout_title=(
+                "LT2 Run"
+            ),
+            candidate_stimulus=(
+                WorkoutStimulus.THRESHOLD
+            ),
+            recommendation=(
+                "Consider changing LT2 Run "
+                "to Hills work."
+            ),
+            rationale=(
+                "Hill stimulus remains missing."
+            ),
+        )
+    )
+
+    payload = (
+        json_storage
+        ._stimulus_suggestion_to_dict(
+            suggestion
+        )
+    )
+
+    restored = (
+        json_storage
+        ._stimulus_suggestion_from_dict(
+            payload
+        )
+    )
+
+    assert restored == suggestion

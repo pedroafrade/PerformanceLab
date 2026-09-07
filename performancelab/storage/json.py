@@ -47,7 +47,12 @@ from performancelab.training.planning.plan_adaptation import (
 from performancelab.training.planning.workout_outcome import (
     WorkoutOutcomeStatus,
 )
-
+from performancelab.training.planning.stimulus_rebalancer import (
+    StimulusRebalanceSuggestion,
+)
+from performancelab.training.planning.workout_stimulus import (
+    WorkoutStimulus,
+)
 from uuid import uuid4
 
 
@@ -502,6 +507,111 @@ def _workout_from_dict(data):
 
 # ======================================================
 # Planned Workout
+# ======================================================
+def _stimulus_suggestion_to_dict(
+    suggestion,
+):
+
+    return {
+        "created_on": _serialize_date(
+            suggestion.created_on
+        ),
+        "source_workout_day": (
+            _serialize_date(
+                suggestion.source_workout_day
+            )
+        ),
+        "source_workout_title": (
+            suggestion.source_workout_title
+        ),
+        "missing_stimulus": (
+            suggestion.missing_stimulus.value
+        ),
+        "completed_stimulus": (
+            suggestion.completed_stimulus.value
+        ),
+        "candidate_workout_day": (
+            _serialize_date(
+                suggestion.candidate_workout_day
+            )
+        ),
+        "candidate_workout_title": (
+            suggestion.candidate_workout_title
+        ),
+        "candidate_stimulus": (
+            suggestion.candidate_stimulus.value
+        ),
+        "recommendation": (
+            suggestion.recommendation
+        ),
+        "rationale": suggestion.rationale,
+    }
+
+
+def _stimulus_suggestion_from_dict(
+    data,
+):
+
+    return StimulusRebalanceSuggestion(
+        created_on=_deserialize_date(
+            data.get("created_on")
+        ),
+        source_workout_day=(
+            _deserialize_date(
+                data.get(
+                    "source_workout_day"
+                )
+            )
+        ),
+        source_workout_title=(
+            _repair_text_encoding(
+                data.get(
+                    "source_workout_title"
+                )
+            )
+        ),
+        missing_stimulus=WorkoutStimulus(
+            data.get(
+                "missing_stimulus"
+            )
+        ),
+        completed_stimulus=WorkoutStimulus(
+            data.get(
+                "completed_stimulus"
+            )
+        ),
+        candidate_workout_day=(
+            _deserialize_date(
+                data.get(
+                    "candidate_workout_day"
+                )
+            )
+        ),
+        candidate_workout_title=(
+            _repair_text_encoding(
+                data.get(
+                    "candidate_workout_title"
+                )
+            )
+        ),
+        candidate_stimulus=WorkoutStimulus(
+            data.get(
+                "candidate_stimulus"
+            )
+        ),
+        recommendation=(
+            _repair_text_encoding(
+                data.get(
+                    "recommendation"
+                )
+            )
+        ),
+        rationale=_repair_text_encoding(
+            data.get("rationale")
+        ),
+    )
+
+
 # ======================================================
 
 def _planned_workout_to_dict(workout):
@@ -1332,6 +1442,16 @@ def athlete_to_dict(athlete):
                 )
             ],
 
+            "stimulus_suggestions": [
+                _stimulus_suggestion_to_dict(
+                    suggestion
+                )
+                for suggestion in (
+                    athlete.training_plan
+                    .stimulus_suggestions
+                )
+            ],
+
             "primary_event_id": (
                 athlete.training_plan.primary_event_id
             ),
@@ -1545,6 +1665,18 @@ def athlete_from_dict(data):
                 for adaptation_data in (
                     training_plan_data.get(
                         "adaptations",
+                        [],
+                    )
+                )
+            ),
+
+            stimulus_suggestions=tuple(
+                _stimulus_suggestion_from_dict(
+                    suggestion_data
+                )
+                for suggestion_data in (
+                    training_plan_data.get(
+                        "stimulus_suggestions",
                         [],
                     )
                 )
