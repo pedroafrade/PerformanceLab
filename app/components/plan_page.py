@@ -926,6 +926,10 @@ def _planned_load_chart(
 
     completed_line = (
         completed_base
+        .transform_filter(
+            alt.datum.Source
+            == "Completed"
+        )
         .mark_line(
             interpolate="linear",
             strokeWidth=2.4,
@@ -947,12 +951,73 @@ def _planned_load_chart(
 
     completed_points = (
         completed_base
+        .transform_filter(
+            alt.datum.Source
+            == "Completed"
+        )
         .mark_point(
             filled=True,
             size=64,
             color="#16a34a",
             stroke="white",
             strokeWidth=0.6,
+        )
+        .encode(
+            y=alt.Y(
+                "Actual or adapted load:Q",
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    adapted_projection_line = (
+        completed_base
+        .transform_filter(
+            alt.datum.Source
+            == "Adapted projection"
+        )
+        .mark_line(
+            interpolate="linear",
+            strokeWidth=2.2,
+            strokeDash=[
+                6,
+                4,
+            ],
+            color="#16a34a",
+            opacity=0.9,
+        )
+        .encode(
+            y=alt.Y(
+                "Actual or adapted load:Q",
+                title="Session load (AU)",
+                axis=alt.Axis(
+                    orient="left",
+                ),
+                scale=alt.Scale(
+                    zero=True
+                ),
+            ),
+        )
+    )
+
+    adapted_projection_points = (
+        completed_base
+        .transform_filter(
+            alt.datum.Source
+            == "Adapted projection"
+        )
+        .mark_point(
+            filled=False,
+            size=54,
+            color="#16a34a",
+            strokeWidth=1.5,
+            opacity=0.9,
         )
         .encode(
             y=alt.Y(
@@ -1116,6 +1181,8 @@ def _planned_load_chart(
             training_points,
             completed_line,
             completed_points,
+            adapted_projection_line,
+            adapted_projection_points,
             race_rules,
             race_points,
         )
@@ -1164,7 +1231,11 @@ def _plan_load_legend_html() -> str:
         </span>
         <span class="plan-load-legend-item">
             <span class="plan-load-line completed"></span>
-            Completed + adapted projection
+            Completed
+        </span>
+        <span class="plan-load-legend-item">
+            <span class="plan-load-line projection"></span>
+            Adapted projection
         </span>
         <span class="plan-load-legend-item">
             <span class="plan-load-line weekly"></span>
@@ -2971,6 +3042,12 @@ def _sidebar_styles() -> str:
 .plan-load-line.completed {
     height: 3px;
     background: #16a34a;
+}
+
+.plan-load-line.projection {
+    height: 0;
+    border-top: 2px dashed #16a34a;
+    background: transparent;
 }
 
 .plan-load-line.weekly {
