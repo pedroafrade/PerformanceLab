@@ -3215,6 +3215,9 @@ def _compact_plan_layout_styles(
 
         /* Scope sizing to Plan; never change the application sidebar. */
         @media (min-width: 1100px) {
+            section[data-testid="stMain"] {
+                overflow-y: hidden;
+            }
             .st-key-plan_lower_row
             > div[data-testid="stVerticalBlock"] {
                 gap: 0;
@@ -3745,6 +3748,7 @@ def _compact_plan_layout_styles(
                 position: relative;
                 z-index: 1;
                 margin-top: -2.5rem;
+                margin-bottom: -1rem;
             }
 
             .st-key-plan_lower_row
@@ -3835,9 +3839,13 @@ def _compact_plan_layout_styles(
         }
 
         @media (max-width: 1099px) {
+            section[data-testid="stMain"] {
+                overflow-y: auto;
+            }
             .st-key-plan_lower_row {
                 position: static;
                 margin-top: 0;
+                margin-bottom: 0;
             }
 
             .st-key-plan_upcoming_events
