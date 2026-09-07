@@ -1070,6 +1070,7 @@ def _compact_activity_metrics_html(
     *,
     activity,
     workout,
+    heart_rate_profile=None,
     vo2max_observation=None,
 ) -> str:
     """
@@ -1101,6 +1102,14 @@ def _compact_activity_metrics_html(
 
     environment = workout.environment
 
+    detected_stimulus = (
+        _detected_stimulus_label(
+            workout=workout,
+            heart_rate_profile=(
+                heart_rate_profile
+            ),
+        )
+    )
     metrics = (
         (
             "Start time",
@@ -1193,11 +1202,8 @@ def _compact_activity_metrics_html(
             ),
         ),
         (
-            "Terrain",
-            (
-                environment.terrain
-                or "—"
-            ),
+            "Detected stimulus",
+            detected_stimulus,
         ),
         (
             "Plan result",
@@ -1233,33 +1239,26 @@ def _compact_activity_metrics_html(
         f"{content}"
         "</div>"
     )
+
 def _detected_stimulus_label(
     *,
     workout,
     heart_rate_profile,
 ) -> str:
     """
-    Returns the detected completed stimulus and identifies
-    whether it came from metrics or descriptive text.
+    Returns the concise workout designation detected from
+    metrics first and descriptive information second.
     """
 
-    metric_stimulus = (
-        metric_workout_stimulus(
-            workout,
-            heart_rate_profile=(
-                heart_rate_profile
-            ),
-        )
+    stimulus = metric_workout_stimulus(
+        workout,
+        heart_rate_profile=(
+            heart_rate_profile
+        ),
     )
 
-    if (
-        metric_stimulus
-        is not WorkoutStimulus.UNKNOWN
-    ):
-        stimulus = metric_stimulus
-        evidence = "workout metrics"
+    if stimulus is WorkoutStimulus.UNKNOWN:
 
-    else:
         stimulus = (
             completed_workout_stimulus(
                 workout,
@@ -1267,27 +1266,62 @@ def _detected_stimulus_label(
             )
         )
 
-        evidence = (
-            "name or description"
-            if stimulus
-            is not WorkoutStimulus.UNKNOWN
-            else "insufficient evidence"
+    labels = {
+        WorkoutStimulus.THRESHOLD: (
+            "LT2 Run"
+        ),
+        WorkoutStimulus.TEMPO: (
+            "Tempo Run"
+        ),
+        WorkoutStimulus.HILLS: (
+            "Hill Reps"
+        ),
+        WorkoutStimulus.VO2MAX: (
+            "VO₂max Intervals"
+        ),
+        WorkoutStimulus.SPEED: (
+            "Speed Reps"
+        ),
+        WorkoutStimulus.LONG: (
+            "Long Run"
+        ),
+        WorkoutStimulus.EASY: (
+            "Easy Run"
+        ),
+        WorkoutStimulus.RECOVERY: (
+            "Recovery Run"
+        ),
+        WorkoutStimulus.RACE: (
+            "Race"
+        ),
+    }
+
+    if stimulus in labels:
+        return labels[stimulus]
+
+    descriptive_text = " ".join(
+        str(value or "")
+        for value in (
+            getattr(
+                workout.info,
+                "title",
+                None,
+            ),
+            getattr(
+                workout.info,
+                "sport",
+                None,
+            ),
         )
+    ).replace(
+        "_",
+        " ",
+    ).strip().lower()
 
-    stimulus_label = (
-        stimulus.value
-        .replace("_", " ")
-        .upper()
-        if stimulus
-        is not WorkoutStimulus.UNKNOWN
-        else "UNKNOWN"
-    )
+    if "trail" in descriptive_text:
+        return "Trail Run"
 
-    return (
-        f"Detected stimulus · "
-        f"{stimulus_label} · "
-        f"Evidence: {evidence}"
-    )
+    return "Unknown"
 
 
 def _show_selected_activity_dashboard(
@@ -1310,21 +1344,15 @@ def _show_selected_activity_dashboard(
         )
     )
 
-    st.caption(
-        _detected_stimulus_label(
+    st.html(
+        _compact_activity_metrics_html(
+            activity=activity,
             workout=workout,
             heart_rate_profile=(
                 athlete
                 .analytics
                 .heart_rate_profile
             ),
-        )
-    )
-
-    st.html(
-        _compact_activity_metrics_html(
-            activity=activity,
-            workout=workout,
             vo2max_observation=(
                 vo2max_observation
             ),

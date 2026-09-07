@@ -50,7 +50,7 @@ from app.components.workout_table import (
 from performancelab.training.planning import (
     WorkoutStimulus,
 )
-
+from types import SimpleNamespace
 
 def create_activity(
     *,
@@ -766,7 +766,9 @@ def test_builds_unified_activity_metrics():
     assert "1140 AU" in html
     assert "Air temperature" in html
     assert "Humidity" in html
-    assert "Terrain" in html
+    assert "Detected stimulus" in html
+    assert "Unknown" in html
+    assert "Terrain" not in html
     assert "Plan result" in html
     assert "Outside Plan" in html
     assert "VO₂max" in html
@@ -1122,11 +1124,7 @@ def test_detected_stimulus_reports_metric_evidence(
         heart_rate_profile=profile,
     )
 
-    assert result == (
-        "Detected stimulus · "
-        "THRESHOLD · "
-        "Evidence: workout metrics"
-    )
+    assert result == "LT2 Run"
 
 
 def test_detected_stimulus_reports_text_fallback(
@@ -1156,8 +1154,38 @@ def test_detected_stimulus_reports_text_fallback(
         heart_rate_profile=None,
     )
 
-    assert result == (
-        "Detected stimulus · "
-        "THRESHOLD · "
-        "Evidence: name or description"
+    assert result == "LT2 Run"
+
+def test_unknown_trail_activity_uses_trail_run_designation(
+    monkeypatch,
+):
+
+    workout = SimpleNamespace(
+        info=SimpleNamespace(
+            title="T93_Trail_Monsanto",
+            sport="Running",
+        )
     )
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "metric_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.UNKNOWN
+        ),
+    )
+
+    monkeypatch.setattr(
+        "app.components.activities_page."
+        "completed_workout_stimulus",
+        lambda workout, heart_rate_profile: (
+            WorkoutStimulus.UNKNOWN
+        ),
+    )
+
+    result = _detected_stimulus_label(
+        workout=workout,
+        heart_rate_profile=None,
+    )
+
+    assert result == "Trail Run"
