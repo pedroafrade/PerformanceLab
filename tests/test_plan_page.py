@@ -2270,8 +2270,9 @@ def test_stimulus_suggestion_is_not_presented_as_applied():
     assert "LT2 Run" in result
     assert "Athlete confirmation is required" in result
     assert ">Applied<" not in result
-    assert "Future session to reconsider" in result
-    assert "Currently planned as Threshold" in result
+    assert "Planned session" in result
+    assert "Proposed session" in result
+    assert "Threshold" in result
 
 def test_missed_stimulus_is_not_described_as_completed():
 
@@ -2311,4 +2312,50 @@ def test_missed_stimulus_is_not_described_as_completed():
         in result
     )
     assert "Unknown completed" not in result
-    assert "Future session to reconsider" in result
+    assert "Planned session" in result
+    assert "Proposed session" in result
+
+def test_applied_stimulus_uses_before_after_cards():
+
+    suggestion = SimpleNamespace(
+        source_workout_day=date(
+            2026,
+            9,
+            1,
+        ),
+        source_workout_title="Hill Run",
+        missing_stimulus="hills",
+        completed_stimulus="unknown",
+        candidate_workout_day=date(
+            2026,
+            9,
+            8,
+        ),
+        candidate_workout_title="Tempo Run",
+        candidate_stimulus="tempo",
+        recommendation=(
+            "Tempo Run on 08 Sep was changed "
+            "to Hill Reps."
+        ),
+        rationale=(
+            "The planned hills session was not "
+            "completed. The Long Run is preserved."
+        ),
+        applied=True,
+    )
+
+    result = _stimulus_suggestion_html(
+        suggestion
+    )
+
+    assert "Planned session" in result
+    assert "Adjusted session" in result
+    assert "Tempo Run" in result
+    assert "Hill Reps" in result
+    assert "→" in result
+    assert "Applied" in result
+
+    assert (
+        "plan-stimulus-suggestion-candidate"
+        not in result
+    )

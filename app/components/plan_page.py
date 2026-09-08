@@ -2524,7 +2524,7 @@ def _stimulus_suggestion_html(
     suggestion,
 ) -> str:
     """
-    Builds a non-destructive stimulus rebalancing proposal.
+    Builds a transparent before/after stimulus adaptation.
     """
 
     if suggestion is None:
@@ -2554,6 +2554,43 @@ def _stimulus_suggestion_html(
         .title()
     )
 
+    is_applied = bool(
+        getattr(
+            suggestion,
+            "applied",
+            False,
+        )
+    )
+
+    status_label = (
+        "Applied"
+        if is_applied
+        else "Suggested"
+    )
+
+    adjusted_titles = {
+        "hills": "Hill Reps",
+        "threshold": "LT2 Run",
+        "tempo": "Tempo Run",
+        "vo2max": "VO2max Intervals",
+        "speed": "Speed Reps",
+    }
+
+    stimulus_key = (
+        str(
+            suggestion.missing_stimulus
+        )
+        .strip()
+        .lower()
+    )
+
+    adjusted_title = (
+        adjusted_titles.get(
+            stimulus_key,
+            missing_label,
+        )
+    )
+
     if (
         str(
             suggestion.completed_stimulus
@@ -2571,33 +2608,43 @@ def _stimulus_suggestion_html(
             "<span>→</span>"
             f"<span>{escape(completed_label)} completed</span>"
         )
-    is_applied = bool(
-        getattr(
-            suggestion,
-            "applied",
-            False,
+
+    planned_html = (
+        _sidebar_adaptation_column_html(
+            label="Planned session",
+            title=(
+                suggestion
+                .candidate_workout_title
+            ),
+            rows=(
+                candidate_label,
+                (
+                    suggestion
+                    .candidate_workout_day
+                    .strftime("%d %b")
+                ),
+            ),
+            adjusted=False,
         )
     )
 
-    status_label = (
-        "Applied"
-        if is_applied
-        else "Suggested"
-    )
-
-    candidate_heading = (
-        "Adapted future session"
-        if is_applied
-        else "Future session to reconsider"
-    )
-
-    candidate_description = (
-        f"Previously planned as "
-        f"{candidate_label}"
-        if is_applied
-        else (
-            f"Currently planned as "
-            f"{candidate_label}"
+    adjusted_html = (
+        _sidebar_adaptation_column_html(
+            label=(
+                "Adjusted session"
+                if is_applied
+                else "Proposed session"
+            ),
+            title=adjusted_title,
+            rows=(
+                missing_label,
+                (
+                    suggestion
+                    .candidate_workout_day
+                    .strftime("%d %b")
+                ),
+            ),
+            adjusted=True,
         )
     )
 
@@ -2610,6 +2657,7 @@ def _stimulus_suggestion_html(
             "confirmation is required."
         )
     )
+
     return (
         '<div class="plan-stimulus-suggestion">'
         '<div class="plan-stimulus-suggestion-header">'
@@ -2618,6 +2666,8 @@ def _stimulus_suggestion_html(
         f"{escape(status_label)}"
         "</span>"
         "</div>"
+
+        '<div class="plan-stimulus-suggestion-summary">'
         '<div class="plan-stimulus-suggestion-source">'
         f"<strong>{escape(suggestion.source_workout_title)}</strong>"
         f" · {suggestion.source_workout_day:%d %b}"
@@ -2625,12 +2675,18 @@ def _stimulus_suggestion_html(
         '<div class="plan-stimulus-suggestion-gap">'
         f"{gap_html}"
         "</div>"
-        '<div class="plan-stimulus-suggestion-candidate">'
-        f"<span>{escape(candidate_heading)}</span>"
-        f"<strong>{escape(suggestion.candidate_workout_title)}</strong>"
-        f"<span>{suggestion.candidate_workout_day:%d %b}</span>"
-        f"<span>{escape(candidate_description)}</span>"
         "</div>"
+
+        '<div class="plan-sidebar-adaptation-comparison '
+        'plan-stimulus-suggestion-comparison">'
+        f"{planned_html}"
+        '<div class="plan-sidebar-adaptation-arrow">'
+        "→"
+        "</div>"
+        f"{adjusted_html}"
+        "</div>"
+
+        '<div class="plan-stimulus-suggestion-explanation">'
         '<p class="plan-stimulus-suggestion-recommendation">'
         f"{escape(suggestion.recommendation)}"
         "</p>"
@@ -2640,6 +2696,7 @@ def _stimulus_suggestion_html(
         '<p class="plan-stimulus-suggestion-note">'
         f"{escape(note)}"
         "</p>"
+        "</div>"
         "</div>"
     )
 
@@ -4241,11 +4298,11 @@ def _compact_plan_layout_styles(
         }
 
         .plan-stimulus-suggestion {
-            margin-bottom: 0.7rem;
-            padding: 0.65rem;
-            border: 1px solid rgba(255, 75, 75, 0.3);
-            border-radius: 0.55rem;
-            background: rgba(255, 75, 75, 0.035);
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
         }
 
         .plan-stimulus-suggestion-header {
@@ -4253,7 +4310,7 @@ def _compact_plan_layout_styles(
             align-items: center;
             justify-content: space-between;
             gap: 0.5rem;
-            margin-bottom: 0.45rem;
+            margin-bottom: 0.5rem;
             font-size: 0.72rem;
             font-weight: 700;
         }
@@ -4261,44 +4318,82 @@ def _compact_plan_layout_styles(
         .plan-stimulus-suggestion-status {
             padding: 0.15rem 0.4rem;
             border-radius: 999px;
-            background: rgba(255, 75, 75, 0.14);
-            color: #ff4b4b;
+            background: rgba(57, 169, 107, 0.12);
+            color: #39a96b;
             font-size: 0.58rem;
             text-transform: uppercase;
             letter-spacing: 0.04em;
         }
 
+        .plan-stimulus-suggestion-summary {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.6rem;
+        }
+
         .plan-stimulus-suggestion-source {
-            margin-bottom: 0.4rem;
+            min-width: 0;
+            margin: 0;
             font-size: 0.68rem;
+            white-space: nowrap;
         }
 
         .plan-stimulus-suggestion-gap {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            margin-bottom: 0.5rem;
+            justify-content: flex-end;
+            gap: 0.35rem;
+            min-width: 0;
+            margin: 0;
             font-size: 0.65rem;
+            line-height: 1.25;
+            text-align: right;
             opacity: 0.82;
         }
 
-        .plan-stimulus-suggestion-candidate {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0.18rem 0.55rem;
-            margin-bottom: 0.5rem;
-            padding: 0.45rem;
-            border-radius: 0.4rem;
-            background: rgba(128, 128, 128, 0.08);
-            font-size: 0.64rem;
+        .plan-stimulus-suggestion-comparison {
+            margin-bottom: 0.65rem;
+        }
+
+        .plan-stimulus-suggestion-explanation {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
         }
 
         .plan-stimulus-suggestion-recommendation,
         .plan-stimulus-suggestion-rationale,
         .plan-stimulus-suggestion-note {
-            margin: 0 0 0.4rem 0 !important;
+            margin: 0 !important;
             font-size: 0.64rem;
-            line-height: 1.35;
+            line-height: 1.4;
+        }
+
+        .plan-stimulus-suggestion-recommendation {
+            font-weight: 650;
+        }
+
+        .plan-stimulus-suggestion-rationale {
+            opacity: 0.75;
+        }
+
+        .plan-stimulus-suggestion-note {
+            opacity: 0.62;
+        }
+
+        @media (max-width: 700px) {
+            .plan-stimulus-suggestion-summary {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .plan-stimulus-suggestion-gap {
+                justify-content: flex-start;
+                text-align: left;
+            }
         }
 
         .plan-stimulus-suggestion-recommendation {
