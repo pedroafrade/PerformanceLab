@@ -2499,5 +2499,10 @@ def test_plan_builder_uses_movable_week_structure():
     assert "st.rerun()" not in source
     assert "reference_day" in source
     assert "target_day < reference_day" in source
-    assert "Past days cannot be changed." in source
-    assert "workout.day >= reference_day" in source
+    assert "grid_start" in source
+    assert "plan_start.weekday()" in source
+    assert "grid_end" in source
+    assert "week_count" in source
+    assert '"__WEEK_COUNT__"' in source
+    assert "source_day < reference_day" in source
+    assert "Completed or past plan days cannot be changed." in source

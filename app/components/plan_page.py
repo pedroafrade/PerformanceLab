@@ -4894,34 +4894,62 @@ def _show_plan_builder_drag_board(
 
         return draft
 
-    days = tuple(
+    grid_start = (
         plan_start
+        - timedelta(
+            days=plan_start.weekday()
+        )
+    )
+
+    grid_end = (
+        plan_end
+        + timedelta(
+            days=(
+                6
+                - plan_end.weekday()
+            )
+        )
+    )
+
+    days = tuple(
+        grid_start
         + timedelta(days=offset)
         for offset in range(
             (
-                plan_end
-                - plan_start
+                grid_end
+                - grid_start
             ).days
             + 1
         )
     )
 
-    editable_workouts = tuple(
-        workout
-        for workout in workouts
-        if workout.day >= reference_day
+    week_count = (
+        len(days)
+        // 7
     )
 
-    token_to_workout = {
-        _plan_builder_workout_token(
-            workout,
-            index=index,
-        ): workout
-        for index, workout
-        in enumerate(
-            editable_workouts
+    token_to_workout = {}
+
+    for index, workout in enumerate(
+        workouts
+    ):
+
+        token = (
+            _plan_builder_workout_token(
+                workout,
+                index=index,
+            )
         )
-    }
+
+        if workout.day < reference_day:
+
+            token = (
+                f"🔒 {token}"
+            )
+
+        token_to_workout[
+            token
+        ] = workout
 
     original_day_by_token = {
         token: workout.day
@@ -4958,125 +4986,215 @@ def _show_plan_builder_drag_board(
 
     custom_style = """
     .sortable-component {
-        display: grid;
-        grid-auto-flow: column;
+        display: grid !important;
+        grid-auto-flow: column !important;
         grid-template-rows:
-            repeat(7, 34px);
-        grid-auto-columns:
-            minmax(0, 1fr);
-        gap: 4px;
-        width: 100%;
-        padding: 0;
-        overflow: hidden;
-        background: transparent;
-        box-sizing: border-box;
+            repeat(7, 40px) !important;
+        grid-template-columns:
+            repeat(
+                __WEEK_COUNT__,
+                minmax(0, 1fr)
+            ) !important;
+        gap: 4px !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: transparent !important;
+        box-sizing: border-box !important;
     }
 
     .sortable-container {
-        display: grid;
+        display: grid !important;
         grid-template-columns:
-            minmax(48px, 0.42fr)
-            minmax(0, 1fr);
-        gap: 4px;
-        align-items: center;
-        min-width: 0;
-        height: 34px;
-        min-height: 34px;
-        padding: 2px 3px;
+            4.2rem minmax(0, 1fr) !important;
+        gap: 3px !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: 40px !important;
+        min-height: 40px !important;
+        margin: 0 !important;
+        padding: 3px !important;
+        overflow: hidden !important;
         border:
-            1px solid rgba(49, 51, 63, 0.14);
-        border-radius: 5px;
+            1px solid rgba(
+                49,
+                51,
+                63,
+                0.14
+            ) !important;
+        border-radius: 5px !important;
         background:
-            rgba(49, 51, 63, 0.018);
-        box-sizing: border-box;
+            rgba(
+                49,
+                51,
+                63,
+                0.018
+            ) !important;
+        box-sizing: border-box !important;
     }
 
     .sortable-container-header {
-        min-width: 0;
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        color: rgba(49, 51, 63, 0.62);
-        background: transparent;
-        font-size: 9px;
-        font-weight: 650;
-        line-height: 1.1;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 2px !important;
+        overflow: hidden !important;
+        color:
+            rgba(
+                49,
+                51,
+                63,
+                0.62
+            ) !important;
+        background: transparent !important;
+        font-size: 8px !important;
+        font-weight: 650 !important;
+        line-height: 1.1 !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
     }
 
     .sortable-container-body {
-        min-width: 0;
-        min-height: 25px;
-        margin: 0;
-        padding: 0;
-        background: transparent;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: transparent !important;
+        box-sizing: border-box !important;
     }
 
     .sortable-item {
-        min-width: 0;
-        margin: 0;
-        padding: 4px 5px;
-        overflow: hidden;
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: 28px !important;
+        margin: 0 !important;
+        padding: 6px 5px !important;
+        overflow: hidden !important;
         border:
-            1px solid rgba(49, 51, 63, 0.17);
-        border-radius: 5px;
-        color: rgb(49, 51, 63);
+            1px solid rgba(
+                49,
+                51,
+                63,
+                0.17
+            ) !important;
+        border-radius: 4px !important;
+        color:
+            rgb(
+                49,
+                51,
+                63
+            ) !important;
         background:
-            rgba(49, 51, 63, 0.035);
-        font-size: 8px;
-        font-weight: 650;
-        line-height: 1.15;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        cursor: grab;
-        box-sizing: border-box;
+            rgba(
+                49,
+                51,
+                63,
+                0.035
+            ) !important;
+        font-size: 8px !important;
+        font-weight: 650 !important;
+        line-height: 1.1 !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        cursor: grab !important;
+        box-sizing: border-box !important;
     }
 
     .sortable-item:hover {
         border-color:
-            rgba(49, 51, 63, 0.36);
+            rgba(
+                49,
+                51,
+                63,
+                0.36
+            ) !important;
         background:
-            rgba(49, 51, 63, 0.07);
+            rgba(
+                49,
+                51,
+                63,
+                0.07
+            ) !important;
     }
 
     .sortable-item:active {
-        cursor: grabbing;
+        cursor: grabbing !important;
     }
 
     .sortable-item.sortable-ghost {
-        opacity: 0.35;
+        opacity: 0.35 !important;
     }
 
     @media (prefers-color-scheme: dark) {
         .sortable-container {
             border-color:
-                rgba(250, 250, 250, 0.15);
+                rgba(
+                    250,
+                    250,
+                    250,
+                    0.15
+                ) !important;
             background:
-                rgba(250, 250, 250, 0.018);
+                rgba(
+                    250,
+                    250,
+                    250,
+                    0.018
+                ) !important;
         }
 
         .sortable-container-header {
             color:
-                rgba(250, 250, 250, 0.62);
+                rgba(
+                    250,
+                    250,
+                    250,
+                    0.62
+                ) !important;
         }
 
         .sortable-item {
             border-color:
-                rgba(250, 250, 250, 0.17);
-            color: rgb(250, 250, 250);
+                rgba(
+                    250,
+                    250,
+                    250,
+                    0.17
+                ) !important;
+            color:
+                rgb(
+                    250,
+                    250,
+                    250
+                ) !important;
             background:
-                rgba(250, 250, 250, 0.045);
-        }
-
-        .sortable-item:hover {
-            border-color:
-                rgba(250, 250, 250, 0.36);
-            background:
-                rgba(250, 250, 250, 0.08);
+                rgba(
+                    250,
+                    250,
+                    250,
+                    0.045
+                ) !important;
         }
     }
-    """
+    """.replace(
+        "__WEEK_COUNT__",
+        str(week_count),
+    )
 
     result = sort_items(
         containers,
@@ -5141,10 +5259,13 @@ def _show_plan_builder_drag_board(
         ]
     )
 
-    if target_day < reference_day:
+    if (
+        source_day < reference_day
+        or target_day < reference_day
+    ):
 
         st.error(
-            "Past days cannot be changed."
+            "Completed or past plan days cannot be changed."
         )
 
         return draft
@@ -5414,6 +5535,39 @@ div[role="dialog"] [data-testid="stAlert"] {
 
         .st-key-confirm-plan-generation button {
             font-weight: 700;
+        }
+
+        div[data-testid="stDialog"]
+        [role="dialog"]
+        [data-testid="stVerticalBlock"] {
+            gap: 0.35rem !important;
+        }
+
+        div[data-testid="stDialog"]
+        [role="dialog"]
+        h4 {
+            margin-top: 0.15rem !important;
+            margin-bottom: 0.15rem !important;
+        }
+
+        div[data-testid="stDialog"]
+        [role="dialog"]
+        [data-testid="stCaptionContainer"] {
+            margin: 0 !important;
+        }
+
+        div[data-testid="stDialog"]
+        [role="dialog"]
+        [data-testid="stAltairChart"] {
+            height: 125px !important;
+            min-height: 125px !important;
+            margin: 0 !important;
+        }
+
+        div[data-testid="stDialog"]
+        [role="dialog"]
+        [data-testid="stButton"] {
+            margin-top: 0 !important;
         }
         </style>
         """,
