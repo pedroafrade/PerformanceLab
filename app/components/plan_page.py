@@ -4766,7 +4766,10 @@ def _plan_builder_workspace_html(plan) -> str:
     )
 
 
-@st.dialog("Plan Builder")
+@st.dialog(
+    "Plan Builder",
+    width="large",
+)
 def _show_plan_generation_confirmation(
     athlete,
     on_generate_plan,
@@ -4793,7 +4796,39 @@ def _show_plan_generation_confirmation(
     st.markdown(
         """
         <style>
-        div[role="dialog"] { width: 94vw !important; max-width: 1500px !important; }
+div[data-testid="stDialog"] [role="dialog"],
+div[role="dialog"] {
+    width: 94vw !important;
+    min-width: 94vw !important;
+    max-width: 1500px !important;
+}
+
+div[data-testid="stDialog"] [role="dialog"] > div,
+div[role="dialog"] > div {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box;
+}
+
+div[role="dialog"] [data-testid="stVerticalBlock"] {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+div[role="dialog"] [data-testid="stHorizontalBlock"] {
+    width: 100% !important;
+}
+
+div[role="dialog"] .plan-builder-weeks {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+div[role="dialog"] .plan-builder-library {
+    max-width: 100%;
+    overflow: hidden;
+}
         .plan-builder-workspace { margin: .45rem 0; color: #000; }
         .plan-builder-workspace h4 { margin: .5rem 0 .25rem; font-size: .72rem; }
         .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
@@ -4905,17 +4940,117 @@ def _show_plan_generation_confirmation(
         """
         <script>
         const resizePlanBuilder = () => {
-            const dialogs = Array.from(
-                window.parent.document.querySelectorAll('[role="dialog"]')
+            const documentRoot = (
+                window.parent.document
             );
+
+            const dialogs = Array.from(
+                documentRoot.querySelectorAll(
+                    '[role="dialog"]'
+                )
+            );
+
             const dialog = dialogs.at(-1);
-            if (!dialog) return;
-            dialog.style.setProperty('width', '94vw', 'important');
-            dialog.style.setProperty('max-width', '1500px', 'important');
+
+            if (!dialog) {
+                return;
+            }
+
+            const dialogParent = (
+                dialog.parentElement
+            );
+
+            const dialogContent = (
+                dialog.querySelector(
+                    '[data-testid="stVerticalBlock"]'
+                )
+            );
+
+            const targets = [
+                dialogParent,
+                dialog,
+            ].filter(Boolean);
+
+            targets.forEach((target) => {
+                target.style.setProperty(
+                    'width',
+                    '94vw',
+                    'important'
+                );
+
+                target.style.setProperty(
+                    'min-width',
+                    '94vw',
+                    'important'
+                );
+
+                target.style.setProperty(
+                    'max-width',
+                    '1500px',
+                    'important'
+                );
+            });
+
+            dialog.style.setProperty(
+                'overflow-x',
+                'hidden',
+                'important'
+            );
+
+            if (dialogContent) {
+                dialogContent.style.setProperty(
+                    'width',
+                    '100%',
+                    'important'
+                );
+
+                dialogContent.style.setProperty(
+                    'max-width',
+                    'none',
+                    'important'
+                );
+            }
         };
+
         resizePlanBuilder();
-        requestAnimationFrame(resizePlanBuilder);
-        setTimeout(resizePlanBuilder, 50);
+
+        let resizeAttempts = 0;
+
+        const resizeInterval = window.setInterval(
+            () => {
+                resizePlanBuilder();
+                resizeAttempts += 1;
+
+                if (resizeAttempts >= 40) {
+                    window.clearInterval(
+                        resizeInterval
+                    );
+                }
+            },
+            50
+        );
+
+        const observer = new MutationObserver(
+            resizePlanBuilder
+        );
+
+        observer.observe(
+            window.parent.document.body,
+            {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [
+                    'style',
+                    'class',
+                ],
+            }
+        );
+
+        window.setTimeout(
+            () => observer.disconnect(),
+            4000
+        );
         </script>
         """,
         height=0,
