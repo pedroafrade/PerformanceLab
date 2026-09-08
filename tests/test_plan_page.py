@@ -19,6 +19,7 @@ from app.components.plan_page import (
     _plan_summary_metrics,
     _weekly_planned_load_curve_data,
     _plan_generation_notice_html,
+    _plan_builder_workspace_html,
     _plan_today_marker_data,
     _planned_load_chart_series,
     _sidebar_adaptation_html,
@@ -2440,3 +2441,30 @@ def test_applied_stimulus_uses_before_after_cards():
         "plan-stimulus-suggestion-candidate"
         not in result
     )
+
+
+def test_plan_builder_centres_complete_load_timeline():
+    workout = SimpleNamespace(
+        scheduled_at=datetime(2026, 9, 8, 8),
+        title="Hill Reps",
+    )
+    plan = SimpleNamespace(
+        weeks=(
+            SimpleNamespace(
+                start_date=date(2026, 9, 7),
+                end_date=date(2026, 9, 13),
+                phase="Peak",
+                planned_load=1015.0,
+                workouts=(workout,),
+            ),
+        ),
+    )
+
+    result = _plan_builder_workspace_html(plan)
+
+    assert "Complete plan timeline" in result
+    assert "polyline" in result
+    assert "1015 AU" in result
+    assert "Plan structure by week" in result
+    assert "Hill Reps" in result
+    assert "Session library" in result

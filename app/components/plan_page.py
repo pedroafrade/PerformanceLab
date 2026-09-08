@@ -4733,6 +4733,60 @@ def _plan_generation_notice_html(
         "</div>"
     )
 
+def _plan_builder_workspace_html(plan) -> str:
+    """Builds the full-horizon load curve and weekly structure."""
+    weeks = tuple(plan.weeks)
+    if not weeks:
+        return '<p class="plan-builder-empty">Generate a plan to populate the timeline.</p>'
+
+    loads = tuple(float(week.planned_load or 0) for week in weeks)
+    maximum = max(loads, default=1) or 1
+    divisor = max(1, len(weeks) - 1)
+    points = tuple(
+        (18 + 864 * index / divisor, 110 - 92 * load / maximum)
+        for index, load in enumerate(loads)
+    )
+    polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
+    dots = "".join(
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" />'
+        for x, y in points
+    )
+    labels = "".join(
+        '<div><strong>' + week.start_date.strftime("%d %b") + '</strong>'
+        f'<span>{escape(week.phase or "Unassigned")}</span>'
+        f'<span>{round(loads[index])} AU</span></div>'
+        for index, week in enumerate(weeks)
+    )
+    cards = []
+    titles = []
+    for week in weeks:
+        sessions = []
+        for workout in week.workouts:
+            title = workout.title or "Rest day"
+            if workout.title and title not in titles:
+                titles.append(title)
+            sessions.append(
+                f'<div><span>{workout.scheduled_at:%a %d}</span>'
+                f'<strong>{escape(title)}</strong></div>'
+            )
+        cards.append(
+            f'<article><header>{week.start_date:%d %b} – {week.end_date:%d %b}</header>'
+            + "".join(sessions) + '</article>'
+        )
+    library = "".join(f'<span>{escape(title)}</span>' for title in titles)
+    return (
+        '<section class="plan-builder-workspace"><h4>Complete plan timeline</h4>'
+        '<div class="plan-builder-chart"><svg viewBox="0 0 900 128" preserveAspectRatio="none">'
+        '<line x1="18" y1="110" x2="882" y2="110" />'
+        f'<polyline points="{polyline}" />{dots}</svg></div>'
+        f'<div class="plan-builder-labels" style="--weeks:{len(weeks)}">{labels}</div>'
+        '<h4>Plan structure by week</h4>'
+        f'<div class="plan-builder-weeks">{"".join(cards)}</div>'
+        '<h4>Session library</h4>'
+        f'<div class="plan-builder-library">{library}</div></section>'
+    )
+
+
 @st.dialog("Plan Builder")
 def _show_plan_generation_confirmation(
     athlete,
@@ -4752,9 +4806,32 @@ def _show_plan_generation_confirmation(
         )
     )
 
+    builder_plan = PlanPresenter(
+        plan=athlete.training_plan,
+        history=athlete.history,
+    ).build(reference_day=date.today())
+
     st.markdown(
         """
         <style>
+        div[data-testid="stDialog"] div[role="dialog"] { width: min(92vw, 1120px) !important; max-width: 1120px !important; }
+        .plan-builder-workspace { margin: 1rem 0; color: #000; }
+        .plan-builder-workspace h4 { margin: .9rem 0 .4rem; font-size: .78rem; }
+        .plan-builder-chart { height: 8rem; border: 1px solid rgba(0,0,0,.16); border-radius: .55rem; }
+        .plan-builder-chart svg { width: 100%; height: 100%; }
+        .plan-builder-chart line { stroke: rgba(0,0,0,.18); }
+        .plan-builder-chart polyline { fill: none; stroke: #ff4b4b; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+        .plan-builder-chart circle { fill: #ff4b4b; }
+        .plan-builder-labels { display: grid; grid-template-columns: repeat(var(--weeks), minmax(5.5rem,1fr)); gap: .3rem; overflow-x: auto; }
+        .plan-builder-labels div { display: flex; flex-direction: column; font-size: .58rem; }
+        .plan-builder-labels span { opacity: .65; }
+        .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
+        .plan-builder-weeks article { flex: 0 0 12rem; padding: .5rem; border: 1px solid rgba(0,0,0,.16); border-radius: .5rem; }
+        .plan-builder-weeks header { margin-bottom: .3rem; font-size: .64rem; font-weight: 700; }
+        .plan-builder-weeks article div { display: grid; grid-template-columns: 3.2rem 1fr; gap: .3rem; padding: .2rem 0; border-top: 1px solid rgba(0,0,0,.08); font-size: .58rem; }
+        .plan-builder-library { display: flex; flex-wrap: wrap; gap: .4rem; }
+        .plan-builder-library span { padding: .35rem .55rem; border: 1px solid rgba(0,0,0,.2); border-radius: .4rem; font-size: .62rem; font-weight: 650; }
+        .plan-builder-empty { font-size: .7rem; opacity: .65; }
         .plan-generation-notice {
             color: #000;
             font-size: 0.84rem;
@@ -4856,6 +4933,12 @@ def _show_plan_generation_confirmation(
     st.html(
         _plan_generation_notice_html(
             notice
+        )
+    )
+
+    st.html(
+        _plan_builder_workspace_html(
+            builder_plan
         )
     )
 
