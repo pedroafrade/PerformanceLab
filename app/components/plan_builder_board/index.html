@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:transparent;color:var(--text);font-family:var(--font);overflow:hidden}
+#board{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,38px);gap:4px;width:100%}
+.day{display:grid;grid-template-columns:4.2rem minmax(0,1fr);align-items:center;gap:4px;padding:3px;border:1px solid var(--border);border-radius:5px;background:transparent;min-width:0}
+.day.past{opacity:.5;pointer-events:none}.date{font-size:10px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sessions{display:flex;gap:3px;min-width:0;height:30px;align-items:center}.session{position:relative;flex:1;min-width:0;height:28px;padding:6px 22px 6px 8px;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:4px;background:var(--secondary);color:var(--text);font-size:10px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:grab}
+.session:hover{border-color:var(--muted)}.day.empty{cursor:pointer}.day.empty:hover{border-color:var(--muted)}
+.menu{position:absolute;right:3px;top:3px;width:20px;height:20px;border:0;background:transparent;color:inherit;cursor:pointer;padding:0;font-size:15px}
+#popover{position:fixed;z-index:20;min-width:220px;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--background);box-shadow:0 5px 24px rgba(0,0,0,.2)}
+#popover[hidden],#editor[hidden]{display:none}.actions{display:flex;gap:5px}.actions button,.templates button{border:1px solid var(--border);background:var(--secondary);color:var(--text);border-radius:5px;padding:6px 9px;cursor:pointer}
+.templates{display:flex;flex-wrap:wrap;gap:5px}.templates button{border-left:4px solid var(--accent)}
+#editor{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.35);display:grid;place-items:center}
+.panel{width:min(680px,94vw);max-height:88vh;overflow:auto;padding:14px;border:1px solid var(--border);border-radius:10px;background:var(--background)}
+.fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.wide{grid-column:1/-1}label{display:grid;gap:3px;font-size:11px;font-weight:650}input,textarea{width:100%;padding:7px;border:1px solid var(--border);border-radius:5px;background:var(--secondary);color:var(--text)}textarea{min-height:62px}.footer{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}.footer button{padding:7px 14px;border:1px solid var(--border);border-radius:5px;background:var(--secondary);color:var(--text);cursor:pointer}
+</style>
+</head>
+<body>
+<div id="board"></div><div id="popover" hidden></div>
+<div id="editor" hidden><form class="panel" id="form"><h3 id="editor-title">Edit session</h3><div class="fields">
+<label>Title<input name="title" required></label><label>Duration (min)<input name="duration" type="number" min="0"></label><label>Distance (km)<input name="distance" type="number" min="0" step=".1"></label>
+<label>Elevation gain (m)<input name="elevation" type="number" min="0" step="1"></label><label>Target pace / BPM / zone<input name="intensity"></label><label>Objective<input name="objective"></label>
+<label class="wide">Prescription<input name="prescription"></label><label class="wide">Structure (one step per line)<textarea name="structure"></textarea></label>
+</div><div class="footer"><button type="button" id="close">Cancel</button><button type="submit">Save</button></div></form></div>
+<script>
+let args={days:[],workouts:[],templates:[]}, selected=null, editMode="edit", targetDay=null;
+const board=document.querySelector("#board"), pop=document.querySelector("#popover"), editor=document.querySelector("#editor"), form=document.querySelector("#form");
+const colors=t=>{const s=(t||"").toLowerCase();if(s.includes("race")||s.includes("pre-race"))return"#e34b70";if(s.includes("tempo")||s.includes("lt2")||s.includes("threshold")||s.includes("interval"))return"#e8ac22";if(s.includes("hill"))return"#23864b";if(s.includes("long"))return"#8a55d7";if(s.includes("easy")||s.includes("recovery")||s.includes("shakeout"))return"#73cf91";return"#8b96a5"};
+function send(value){window.parent.postMessage({isStreamlitMessage:true,type:"streamlit:setComponentValue",value:{...value,nonce:Date.now()+"-"+Math.random()}},"*")}
+function height(){window.parent.postMessage({isStreamlitMessage:true,type:"streamlit:setFrameHeight",height:board.scrollHeight+4},"*")}
+function openEditor(workout,mode,day){selected=workout;editMode=mode;targetDay=day;document.querySelector("#editor-title").textContent=mode==="add"?"Add session":"Edit session";for(const key of ["title","duration","distance","elevation","intensity","objective","prescription","structure"])form.elements[key].value=workout?.[key]??"";editor.hidden=false;pop.hidden=true}
+function openMenu(event,w){event.stopPropagation();selected=w;const r=event.currentTarget.getBoundingClientRect();pop.style.left=Math.min(r.left,innerWidth-230)+"px";pop.style.top=Math.min(r.bottom+4,innerHeight-60)+"px";pop.innerHTML='<div class="actions"><button data-a="add" title="Add session">＋</button><button data-a="edit" title="Edit session">✎</button><button data-a="delete" title="Remove session">🗑</button></div>';pop.hidden=false;pop.querySelector('[data-a="add"]').onclick=()=>openTemplates(w.day);pop.querySelector('[data-a="edit"]').onclick=()=>openEditor(w,"edit",w.day);pop.querySelector('[data-a="delete"]').onclick=()=>send({action:"delete",workout_id:w.id})}
+function openTemplates(day){targetDay=day;pop.innerHTML='<div class="templates"></div>';const box=pop.firstChild;args.templates.forEach(t=>{const b=document.createElement("button");b.textContent=t.title;b.style.setProperty("--accent",colors(t.title));b.onclick=()=>openEditor(t,"add",day);box.appendChild(b)});pop.hidden=false}
+function render(){board.innerHTML="";const weeks=Math.ceil(args.days.length/7);board.style.gridTemplateColumns=`repeat(${weeks},minmax(0,1fr))`;args.days.forEach(d=>{const cell=document.createElement("div");cell.className="day"+(d.past?" past":"");const items=args.workouts.filter(w=>w.day===d.day);if(!items.length)cell.classList.add("empty");cell.innerHTML='<span class="date">'+d.label+'</span><div class="sessions"></div>';cell.onclick=()=>{if(!d.past&&!items.length){const r=cell.getBoundingClientRect();pop.style.left=Math.min(r.left,innerWidth-230)+"px";pop.style.top=Math.min(r.bottom+4,innerHeight-100)+"px";openTemplates(d.day)}};cell.ondragover=e=>{if(!d.past)e.preventDefault()};cell.ondrop=e=>{e.preventDefault();send({action:"move",workout_id:e.dataTransfer.getData("text/plain"),target_day:d.day})};const sessions=cell.querySelector(".sessions");items.forEach(w=>{const item=document.createElement("div");item.className="session";item.draggable=!d.past&&!w.race;item.style.setProperty("--accent",colors(w.title));item.textContent=w.title;item.ondragstart=e=>e.dataTransfer.setData("text/plain",w.id);const menu=document.createElement("button");menu.className="menu";menu.textContent="⋯";menu.onclick=e=>openMenu(e,w);item.appendChild(menu);sessions.appendChild(item)});board.appendChild(cell)});height()}
+form.onsubmit=e=>{e.preventDefault();const values=Object.fromEntries(new FormData(form).entries());if(editMode==="add")send({action:"add",template:selected.title,target_day:targetDay,values});else send({action:"edit",workout_id:selected.id,values});editor.hidden=true};
+document.querySelector("#close").onclick=()=>editor.hidden=true;document.addEventListener("click",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!e.target.closest(".menu")&&!e.target.closest(".day.empty"))pop.hidden=true});
+window.addEventListener("message",event=>{if(event.data?.type!=="streamlit:render")return;args=event.data.args;const theme=event.data.theme||{};const root=document.documentElement.style;root.setProperty("--text",theme.textColor||"#31333f");root.setProperty("--background",theme.backgroundColor||"#fff");root.setProperty("--secondary",theme.secondaryBackgroundColor||"#f0f2f6");root.setProperty("--border",theme.borderColor||"color-mix(in srgb,var(--text) 25%,transparent)");root.setProperty("--muted","color-mix(in srgb,var(--text) 55%,transparent)");root.setProperty("--font",theme.font||"sans-serif");render()});
+window.parent.postMessage({isStreamlitMessage:true,type:"streamlit:componentReady",apiVersion:1},"*");
+</script>
+</body>
+</html>

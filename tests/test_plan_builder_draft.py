@@ -238,3 +238,52 @@ def test_planned_workout_identity_survives_move():
         moved.workouts[0].planned_workout_id
         == planned.planned_workout_id
     )
+
+
+def test_edits_and_deletes_one_identified_session():
+    first = workout(8, "Tempo Run")
+    second = workout(8, "Easy Run")
+    draft = PlanBuilderDraft(
+        source_plan_id="plan-1",
+        source_revision_id=None,
+        workouts=(first, second),
+        baseline_workouts=(first, second),
+    )
+
+    edited = draft.update_workout(
+        workout_id=first.planned_workout_id,
+        title="Tempo Reps",
+        duration_minutes=55,
+        distance=9.5,
+        elevation_gain=120,
+        intensity="Z4",
+        prescription_summary="4 x 8 min",
+        objective="Threshold",
+        structure=("Warm up", "4 x 8 min", "Cool down"),
+    )
+    assert edited.workouts[0].title == "Tempo Reps"
+    assert edited.workouts[1] == second
+
+    deleted = edited.delete_workout(
+        workout_id=first.planned_workout_id,
+    )
+    assert deleted.workouts == (second,)
+
+
+def test_adds_a_second_session_to_an_occupied_day():
+    first = workout(8, "Tempo Run")
+    template = workout(10, "Easy Run")
+    draft = PlanBuilderDraft(
+        source_plan_id="plan-1",
+        source_revision_id=None,
+        workouts=(first,),
+        baseline_workouts=(first, template),
+    )
+
+    added = draft.add_workout(
+        template=template,
+        workout_day=date(2026, 9, 8),
+        allow_occupied=True,
+    )
+    assert len(added.workouts) == 2
+    assert added.workouts[1].planned_workout_id != template.planned_workout_id

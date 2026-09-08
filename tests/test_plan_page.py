@@ -24,6 +24,7 @@ from app.components.plan_page import (
     _plan_today_marker_data,
     _planned_load_chart_series,
     _show_plan_builder_drag_board,
+    _show_plan_builder_interactive_board,
     _sidebar_adaptation_html,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -2517,3 +2518,14 @@ def test_plan_builder_uses_movable_week_structure():
     assert "st.toast" in source
     assert "duration=3000" in source
     assert "🔒" not in source
+
+
+def test_plan_builder_uses_clickable_cell_component():
+    source = inspect.getsource(_show_plan_builder_interactive_board)
+    assert "_plan_builder_board_component" in source
+    assert 'kind == "move"' in source
+    assert 'kind == "add"' in source
+    assert 'kind == "edit"' in source
+    assert 'kind == "delete"' in source
+    assert "allow_occupied=True" in source
+    assert "draft.update_workout" in source

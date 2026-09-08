@@ -6,6 +6,7 @@ Complete training-plan page.
 
 from datetime import date, timedelta
 from html import escape
+from pathlib import Path
 
 from dataclasses import replace
 
@@ -42,6 +43,11 @@ from .upcoming_events import (
 )
 from performancelab.training.planning import (
     PlanBuilderDraft,
+)
+
+_plan_builder_board_component = components.declare_component(
+    "plan_builder_board",
+    path=str(Path(__file__).with_name("plan_builder_board")),
 )
 
 def _status_label(
@@ -5297,6 +5303,125 @@ def _plan_builder_is_race(workout) -> bool:
     )
 
 
+def _optional_float(value):
+    return float(value) if value not in (None, "") else None
+
+
+def _optional_int(value):
+    return int(value) if value not in (None, "") else None
+
+
+def _show_plan_builder_interactive_board(
+    *, draft, draft_key: str, plan_start: date,
+    plan_end: date, reference_day: date,
+):
+    """Renders the clickable and draggable Plan Builder board."""
+    grid_start = plan_start - timedelta(days=plan_start.weekday())
+    grid_end = plan_end + timedelta(days=6 - plan_end.weekday())
+    days = tuple(
+        grid_start + timedelta(days=offset)
+        for offset in range((grid_end - grid_start).days + 1)
+    )
+    workouts = tuple(sorted(draft.workouts, key=lambda item: item.scheduled_at))
+    templates = {}
+    for workout in draft.baseline_workouts:
+        if workout.title and not _plan_builder_is_race(workout):
+            templates.setdefault(workout.title, workout)
+
+    def payload(workout):
+        return {
+            "id": workout.planned_workout_id,
+            "day": workout.day.isoformat(),
+            "title": workout.title or "Planned workout",
+            "duration": round(workout.duration.total_seconds() / 60) if workout.duration else None,
+            "distance": workout.distance,
+            "elevation": workout.elevation_gain,
+            "intensity": workout.intensity or "",
+            "prescription": workout.prescription_summary or "",
+            "objective": workout.objective or "",
+            "structure": "\n".join(workout.structure),
+            "race": _plan_builder_is_race(workout),
+        }
+
+    action = _plan_builder_board_component(
+        days=[{"day": day.isoformat(), "label": day.strftime("%a %d %b"), "past": day < reference_day} for day in days],
+        workouts=[payload(workout) for workout in workouts],
+        templates=[payload(workout) for workout in templates.values()],
+        key="plan-builder-interactive-board",
+        default=None,
+    )
+    if not action:
+        return draft
+    nonce = action.get("nonce")
+    handled_key = "plan-builder-board-handled-action"
+    if not nonce or st.session_state.get(handled_key) == nonce:
+        return draft
+    st.session_state[handled_key] = nonce
+    kind = action.get("action")
+    workout_id = action.get("workout_id")
+    workout = next((item for item in workouts if item.planned_workout_id == workout_id), None)
+    try:
+        if kind == "move":
+            target_day = date.fromisoformat(action["target_day"])
+            if workout is None or workout.day < reference_day or target_day < reference_day:
+                raise ValueError("Completed or past plan days cannot be changed.")
+            if _plan_builder_is_race(workout):
+                raise ValueError("Race dates must be changed in Events.")
+            draft = draft.move_workout_id(workout_id=workout_id, target_day=target_day)
+        elif kind == "delete":
+            if workout is None or workout.day < reference_day:
+                raise ValueError("Completed or past plan days cannot be changed.")
+            if _plan_builder_is_race(workout):
+                raise ValueError("Races must be removed in Events.")
+            draft = draft.delete_workout(workout_id=workout_id)
+        elif kind == "add":
+            target_day = date.fromisoformat(action["target_day"])
+            template = templates.get(action.get("template"))
+            if target_day < reference_day:
+                raise ValueError("Completed or past plan days cannot be changed.")
+            if template is None:
+                raise LookupError("The selected session template is unavailable.")
+            values = action.get("values", {})
+            configured_template = replace(
+                template,
+                title=str(values.get("title") or template.title or ""),
+                duration=(
+                    timedelta(minutes=_optional_int(values.get("duration")))
+                    if _optional_int(values.get("duration")) is not None
+                    else None
+                ),
+                distance=_optional_float(values.get("distance")),
+                elevation_gain=_optional_float(values.get("elevation")),
+                intensity=str(values.get("intensity") or "") or None,
+                prescription_summary=str(values.get("prescription") or "") or None,
+                objective=str(values.get("objective") or "") or None,
+                structure=tuple(line.strip() for line in str(values.get("structure") or "").splitlines() if line.strip()),
+            )
+            draft = draft.add_workout(template=configured_template, workout_day=target_day, allow_occupied=True)
+        elif kind == "edit":
+            if workout is None or workout.day < reference_day:
+                raise ValueError("Completed or past plan days cannot be changed.")
+            if _plan_builder_is_race(workout):
+                raise ValueError("Races must be edited in Events.")
+            values = action.get("values", {})
+            draft = draft.update_workout(
+                workout_id=workout_id,
+                title=str(values.get("title") or workout.title or ""),
+                duration_minutes=_optional_int(values.get("duration")),
+                distance=_optional_float(values.get("distance")),
+                elevation_gain=_optional_float(values.get("elevation")),
+                intensity=str(values.get("intensity") or ""),
+                prescription_summary=str(values.get("prescription") or ""),
+                objective=str(values.get("objective") or ""),
+                structure=tuple(line.strip() for line in str(values.get("structure") or "").splitlines() if line.strip()),
+            )
+    except (KeyError, LookupError, TypeError, ValueError) as error:
+        st.toast(str(error), icon="⚠️", duration=3000)
+        return draft
+    st.session_state[draft_key] = draft
+    return draft
+
+
 def _show_plan_builder_session_actions(
     *,
     draft,
@@ -5516,7 +5641,7 @@ div[role="dialog"] {
 }
 div[data-testid="stDialog"] [role="dialog"] {
     height: auto !important;
-    max-height: 92vh !important;
+    max-height: 90vh !important;
     overflow: hidden !important;
 }
 
@@ -5678,11 +5803,7 @@ div[role="dialog"] [data-testid="stAlert"] {
             color: var(--text-color) !important;
             background: transparent !important;
             border-color:
-                color-mix(
-                    in srgb,
-                    var(--text-color) 48%,
-                    transparent
-                ) !important;
+                #9aa0aa !important;
             box-shadow: none !important;
         }
 
@@ -5692,11 +5813,7 @@ div[role="dialog"] [data-testid="stAlert"] {
             background:
                 rgba(0, 0, 0, 0.035) !important;
             border-color:
-                color-mix(
-                    in srgb,
-                    var(--text-color) 76%,
-                    transparent
-                ) !important;
+                #747b86 !important;
         }
 
         .st-key-confirm-plan-generation button {
@@ -5741,11 +5858,7 @@ div[role="dialog"] [data-testid="stAlert"] {
         .st-key-confirm-plan-generation button {
             color: var(--text-color) !important;
             border-color:
-                color-mix(
-                    in srgb,
-                    var(--text-color) 48%,
-                    transparent
-                ) !important;
+                #9aa0aa !important;
         }
         </style>
         """,
@@ -5771,6 +5884,17 @@ div[role="dialog"] [data-testid="stAlert"] {
             if (!dialog) {
                 return;
             }
+
+            documentRoot.documentElement.style.setProperty(
+                'overflow',
+                'hidden',
+                'important'
+            );
+            documentRoot.body.style.setProperty(
+                'overflow',
+                'hidden',
+                'important'
+            );
 
             const dialogParent = (
                 dialog.parentElement
@@ -5829,6 +5953,15 @@ div[role="dialog"] [data-testid="stAlert"] {
         };
 
         resizePlanBuilder();
+
+        const unlockPlanBuilderPage = () => {
+            const documentRoot = window.parent.document;
+            documentRoot.documentElement.style.removeProperty('overflow');
+            documentRoot.body.style.removeProperty('overflow');
+        };
+
+        window.addEventListener('pagehide', unlockPlanBuilderPage);
+        window.addEventListener('beforeunload', unlockPlanBuilderPage);
 
         let resizeAttempts = 0;
 
@@ -5917,7 +6050,7 @@ div[role="dialog"] [data-testid="stAlert"] {
         )
 
         builder_draft = (
-            _show_plan_builder_drag_board(
+            _show_plan_builder_interactive_board(
                 draft=builder_draft,
                 draft_key=draft_key,
                 plan_start=(
@@ -5927,15 +6060,6 @@ div[role="dialog"] [data-testid="stAlert"] {
                     active_plan.end_date
                 ),
                 reference_day=date.today(),
-            )
-        )
-
-        builder_draft = (
-            _show_plan_builder_session_actions(
-                draft=builder_draft,
-                draft_key=draft_key,
-                reference_day=date.today(),
-                plan_end=active_plan.end_date,
             )
         )
 

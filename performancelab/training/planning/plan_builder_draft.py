@@ -8,6 +8,8 @@ An isolated, non-persistent training-plan workspace.
 
 from dataclasses import dataclass, replace
 from datetime import date, datetime
+from datetime import timedelta
+from uuid import uuid4
 
 from .planned_workout import PlannedWorkout
 
@@ -71,17 +73,24 @@ class PlanBuilderDraft:
     def delete_workout(
         self,
         *,
-        workout_day: date,
+        workout_day: date | None = None,
+        workout_id: str | None = None,
     ) -> "PlanBuilderDraft":
 
-        self._validate_day(
-            workout_day
-        )
+        if workout_day is not None:
+            self._validate_day(workout_day)
+
+        if workout_day is None and workout_id is None:
+            raise ValueError("A workout day or id is required.")
 
         revised = tuple(
             workout
             for workout in self.workouts
-            if workout.day != workout_day
+            if not (
+                workout.planned_workout_id == workout_id
+                if workout_id is not None
+                else workout.day == workout_day
+            )
         )
 
         if revised == self.workouts:
@@ -99,6 +108,7 @@ class PlanBuilderDraft:
         *,
         template: PlannedWorkout,
         workout_day: date,
+        allow_occupied: bool = False,
     ) -> "PlanBuilderDraft":
 
         if not isinstance(
@@ -113,7 +123,7 @@ class PlanBuilderDraft:
             workout_day
         )
 
-        if any(
+        if not allow_occupied and any(
             workout.day == workout_day
             for workout in self.workouts
         ):
@@ -129,6 +139,7 @@ class PlanBuilderDraft:
         added = replace(
             template,
             scheduled_at=scheduled_at,
+            planned_workout_id=str(uuid4()),
         )
 
         return replace(
@@ -144,6 +155,75 @@ class PlanBuilderDraft:
                     ),
                 )
             ),
+        )
+
+    def update_workout(
+        self,
+        *,
+        workout_id: str,
+        title: str,
+        duration_minutes: int | None,
+        distance: float | None,
+        elevation_gain: float | None,
+        intensity: str | None,
+        prescription_summary: str | None,
+        objective: str | None,
+        structure: tuple[str, ...],
+    ) -> "PlanBuilderDraft":
+        """Updates one identified workout in the draft."""
+
+        current = self._workout_with_id(workout_id)
+        if current is None:
+            raise LookupError("The selected workout no longer exists.")
+
+        updated = replace(
+            current,
+            title=title.strip() or current.title,
+            duration=(
+                timedelta(minutes=duration_minutes)
+                if duration_minutes is not None
+                else None
+            ),
+            distance=distance,
+            elevation_gain=elevation_gain,
+            intensity=intensity or None,
+            prescription_summary=prescription_summary or None,
+            objective=objective or None,
+            structure=structure,
+        )
+        return replace(
+            self,
+            workouts=tuple(
+                updated if workout is current else workout
+                for workout in self.workouts
+            ),
+        )
+
+    def move_workout_id(
+        self,
+        *,
+        workout_id: str,
+        target_day: date,
+    ) -> "PlanBuilderDraft":
+        """Moves one identified workout without affecting companions."""
+
+        self._validate_day(target_day)
+        current = self._workout_with_id(workout_id)
+        if current is None:
+            raise LookupError("The selected workout no longer exists.")
+        moved = replace(
+            current,
+            scheduled_at=datetime.combine(
+                target_day,
+                current.scheduled_at.time(),
+            ),
+        )
+        return replace(
+            self,
+            workouts=tuple(sorted(
+                (moved if workout is current else workout for workout in self.workouts),
+                key=lambda workout: workout.scheduled_at,
+            )),
         )
 
     def move_workout(
@@ -250,6 +330,16 @@ class PlanBuilderDraft:
                 workout
                 for workout in self.workouts
                 if workout.day == workout_day
+            ),
+            None,
+        )
+
+    def _workout_with_id(self, workout_id: str) -> PlannedWorkout | None:
+        return next(
+            (
+                workout
+                for workout in self.workouts
+                if workout.planned_workout_id == workout_id
             ),
             None,
         )
