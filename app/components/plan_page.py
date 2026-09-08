@@ -4769,6 +4769,343 @@ def _plan_builder_workspace_html(plan) -> str:
         f'<div class="plan-builder-library">{library}</div></section>'
     )
 
+def _show_plan_builder_editor(
+    *,
+    draft,
+    draft_key: str,
+) -> None:
+    """
+    Edits only the isolated Plan Builder draft.
+
+    Every operation replaces the immutable draft stored in
+    session state and then refreshes the load projection.
+    """
+
+    workouts = tuple(
+        draft.workouts
+    )
+
+    feedback = st.session_state.pop(
+        "plan_builder_feedback",
+        None,
+    )
+
+    if feedback:
+
+        level, message = feedback
+
+        if level == "success":
+            st.success(message)
+
+        elif level == "warning":
+            st.warning(message)
+
+        else:
+            st.info(message)
+
+    st.markdown("#### Edit draft")
+
+    if not workouts:
+
+        st.info(
+            "The draft does not contain any sessions."
+        )
+
+        if st.button(
+            "Reset draft",
+            key="plan-builder-reset-empty",
+        ):
+            st.session_state[
+                draft_key
+            ] = draft.reset()
+
+            st.rerun()
+
+        return
+
+    workout_options = {
+        (
+            f"{workout.day:%d %b} · "
+            f"{workout.title or 'Planned workout'}"
+        ): workout
+        for workout in workouts
+    }
+
+    selected_label = st.selectbox(
+        "Session",
+        options=tuple(
+            workout_options
+        ),
+        key="plan-builder-selected-session",
+    )
+
+    selected_workout = (
+        workout_options[
+            selected_label
+        ]
+    )
+
+    move_column, remove_column = st.columns(
+        [3, 1],
+        gap="small",
+    )
+
+    with move_column:
+
+        target_day = st.date_input(
+            "Move or swap with",
+            value=selected_workout.day,
+            min_value=(
+                min(
+                    workout.day
+                    for workout in workouts
+                )
+            ),
+            max_value=(
+                max(
+                    workout.day
+                    for workout in workouts
+                )
+            ),
+            key="plan-builder-target-day",
+        )
+
+        if st.button(
+            "Move / swap session",
+            use_container_width=True,
+            key="plan-builder-move-session",
+            disabled=(
+                target_day
+                == selected_workout.day
+            ),
+        ):
+
+            revised_draft = (
+                draft.move_workout(
+                    source_day=(
+                        selected_workout.day
+                    ),
+                    target_day=target_day,
+                )
+            )
+
+            st.session_state[
+                draft_key
+            ] = revised_draft
+
+            st.session_state[
+                "plan_builder_feedback"
+            ] = (
+                "success",
+                (
+                    f"{selected_workout.title} moved "
+                    f"from {selected_workout.day:%d %b} "
+                    f"to {target_day:%d %b}. "
+                    "The load curve was recalculated."
+                ),
+            )
+
+            st.rerun()
+
+    with remove_column:
+
+        st.write("")
+
+        st.write("")
+
+        if st.button(
+            "Remove",
+            use_container_width=True,
+            key="plan-builder-remove-session",
+        ):
+
+            st.session_state[
+                draft_key
+            ] = (
+                draft.delete_workout(
+                    workout_day=(
+                        selected_workout.day
+                    ),
+                )
+            )
+
+            st.session_state[
+                "plan_builder_feedback"
+            ] = (
+                "warning",
+                (
+                    f"{selected_workout.title} was removed "
+                    "from the draft. Review the resulting "
+                    "weekly load and stimulus balance."
+                ),
+            )
+
+            st.rerun()
+
+    st.markdown("##### Add from session library")
+
+    templates_by_title = {}
+
+    for workout in (
+        draft.baseline_workouts
+    ):
+
+        title = str(
+            workout.title
+            or ""
+        ).strip()
+
+        if (
+            title
+            and title not in templates_by_title
+        ):
+            templates_by_title[
+                title
+            ] = workout
+
+    if not templates_by_title:
+
+        st.caption(
+            "No session templates are available."
+        )
+
+    else:
+
+        template_column, day_column = (
+            st.columns(
+                [2, 1],
+                gap="small",
+            )
+        )
+
+        with template_column:
+
+            template_title = st.selectbox(
+                "Session type",
+                options=tuple(
+                    templates_by_title
+                ),
+                key=(
+                    "plan-builder-template"
+                ),
+            )
+
+        with day_column:
+
+            new_workout_day = st.date_input(
+                "Target day",
+                value=selected_workout.day,
+                min_value=(
+                    min(
+                        workout.day
+                        for workout
+                        in draft.baseline_workouts
+                    )
+                ),
+                max_value=(
+                    max(
+                        workout.day
+                        for workout
+                        in draft.baseline_workouts
+                    )
+                ),
+                key=(
+                    "plan-builder-new-day"
+                ),
+            )
+
+        target_occupied = any(
+            workout.day
+            == new_workout_day
+            for workout in workouts
+        )
+
+        if target_occupied:
+
+            st.caption(
+                "The selected day already contains a "
+                "session. Move or remove it first."
+            )
+
+        if st.button(
+            "Add session",
+            use_container_width=True,
+            key="plan-builder-add-session",
+            disabled=target_occupied,
+        ):
+
+            st.session_state[
+                draft_key
+            ] = (
+                draft.add_workout(
+                    template=(
+                        templates_by_title[
+                            template_title
+                        ]
+                    ),
+                    workout_day=(
+                        new_workout_day
+                    ),
+                )
+            )
+
+            st.session_state[
+                "plan_builder_feedback"
+            ] = (
+                "warning",
+                (
+                    f"{template_title} was added on "
+                    f"{new_workout_day:%d %b}. "
+                    "Confirm that recovery and weekly "
+                    "load remain appropriate."
+                ),
+            )
+
+            st.rerun()
+
+    reset_column, state_column = st.columns(
+        [1, 3],
+        gap="small",
+    )
+
+    with reset_column:
+
+        if st.button(
+            "Reset draft",
+            use_container_width=True,
+            key="plan-builder-reset-draft",
+            disabled=(
+                not draft.has_changes
+            ),
+        ):
+
+            st.session_state[
+                draft_key
+            ] = draft.reset()
+
+            st.session_state[
+                "plan_builder_feedback"
+            ] = (
+                "info",
+                "Draft restored to the active plan.",
+            )
+
+            st.rerun()
+
+    with state_column:
+
+        if draft.has_changes:
+
+            st.warning(
+                "Unsaved draft changes. The active plan "
+                "has not been modified."
+            )
+
+        else:
+
+            st.caption(
+                "The draft currently matches the active plan."
+            )
 
 @st.dialog(
     "Plan Builder",
@@ -4862,13 +5199,27 @@ div[role="dialog"] .plan-builder-weeks {
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
+    scrollbar-width: thin;
 }
 
 div[role="dialog"] .plan-builder-library {
     max-width: 100%;
     overflow: hidden;
 }
-        .plan-builder-workspace { margin: .45rem 0; color: #000; }
+
+div[role="dialog"] .stSelectbox label,
+div[role="dialog"] .stDateInput label {
+    font-size: 0.68rem;
+}
+
+div[role="dialog"] [data-testid="stAlert"] {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.68rem;
+}
+        .plan-builder-workspace {
+            margin: 0.45rem 0 0.25rem;
+            color: #000;
+        }
         .plan-builder-workspace h4 { margin: .5rem 0 .25rem; font-size: .72rem; }
         .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
         .plan-builder-weeks article { flex: 0 0 10rem; max-height: 7rem; overflow: hidden; padding: .4rem; border: 1px solid rgba(0,0,0,.16); border-radius: .45rem; }
@@ -5131,6 +5482,11 @@ div[role="dialog"] .plan-builder-library {
             _plan_builder_workspace_html(
                 builder_plan
             )
+        )
+
+        _show_plan_builder_editor(
+            draft=builder_draft,
+            draft_key=draft_key,
         )
 
         cancel_column, generate_column = st.columns(
