@@ -3529,6 +3529,7 @@ def _plan_styles() -> None:
         """,
         unsafe_allow_html=True,
     )
+
 def _compact_plan_layout_styles(
     subtitle: str,
 ) -> None:
@@ -4734,29 +4735,11 @@ def _plan_generation_notice_html(
     )
 
 def _plan_builder_workspace_html(plan) -> str:
-    """Builds the full-horizon load curve and weekly structure."""
+    """Builds the weekly structure below the shared load chart."""
     weeks = tuple(plan.weeks)
     if not weeks:
         return '<p class="plan-builder-empty">Generate a plan to populate the timeline.</p>'
 
-    loads = tuple(float(week.planned_load or 0) for week in weeks)
-    maximum = max(loads, default=1) or 1
-    divisor = max(1, len(weeks) - 1)
-    points = tuple(
-        (18 + 864 * index / divisor, 110 - 92 * load / maximum)
-        for index, load in enumerate(loads)
-    )
-    polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
-    dots = "".join(
-        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="#ff4b4b" />'
-        for x, y in points
-    )
-    labels = "".join(
-        '<div><strong>' + week.start_date.strftime("%d %b") + '</strong>'
-        f'<span>{escape(week.phase or "Unassigned")}</span>'
-        f'<span>{round(loads[index])} AU</span></div>'
-        for index, week in enumerate(weeks)
-    )
     cards = []
     titles = []
     for week in weeks:
@@ -4775,12 +4758,7 @@ def _plan_builder_workspace_html(plan) -> str:
         )
     library = "".join(f'<span>{escape(title)}</span>' for title in titles)
     return (
-        '<section class="plan-builder-workspace"><h4>Complete plan timeline</h4>'
-        '<div class="plan-builder-chart"><svg viewBox="0 0 900 128" preserveAspectRatio="none">'
-        '<line x1="18" y1="110" x2="882" y2="110" stroke="#b8b8b8" />'
-        f'<polyline points="{polyline}" fill="none" stroke="#ff4b4b" '
-        f'stroke-width="3" vector-effect="non-scaling-stroke" />{dots}</svg></div>'
-        f'<div class="plan-builder-labels" style="--weeks:{len(weeks)}">{labels}</div>'
+        '<section class="plan-builder-workspace">'
         '<h4>Plan structure by week</h4>'
         f'<div class="plan-builder-weeks">{"".join(cards)}</div>'
         '<h4>Session library</h4>'
@@ -4815,18 +4793,9 @@ def _show_plan_generation_confirmation(
     st.markdown(
         """
         <style>
-        div[role="dialog"] { width: min(94vw, 1500px) !important; max-width: min(94vw, 1500px) !important; }
-        div[role="dialog"] [data-testid="stDialogContent"] { padding-top: .25rem; }
+        div[role="dialog"] { width: 94vw !important; max-width: 1500px !important; }
         .plan-builder-workspace { margin: .45rem 0; color: #000; }
         .plan-builder-workspace h4 { margin: .5rem 0 .25rem; font-size: .72rem; }
-        .plan-builder-chart { height: 5.2rem; border: 1px solid rgba(0,0,0,.16); border-radius: .45rem; }
-        .plan-builder-chart svg { width: 100%; height: 100%; }
-        .plan-builder-chart line { stroke: rgba(0,0,0,.18); }
-        .plan-builder-chart polyline { fill: none; stroke: #ff4b4b; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
-        .plan-builder-chart circle { fill: #ff4b4b; }
-        .plan-builder-labels { display: grid; grid-template-columns: repeat(var(--weeks), minmax(5.5rem,1fr)); gap: .3rem; overflow-x: auto; }
-        .plan-builder-labels div { display: flex; flex-direction: column; font-size: .58rem; }
-        .plan-builder-labels span { opacity: .65; }
         .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
         .plan-builder-weeks article { flex: 0 0 10rem; max-height: 7rem; overflow: hidden; padding: .4rem; border: 1px solid rgba(0,0,0,.16); border-radius: .45rem; }
         .plan-builder-weeks header { margin-bottom: .3rem; font-size: .64rem; font-weight: 700; }
@@ -4932,6 +4901,27 @@ def _show_plan_generation_confirmation(
         unsafe_allow_html=True,
     )
 
+    components.html(
+        """
+        <script>
+        const resizePlanBuilder = () => {
+            const dialogs = Array.from(
+                window.parent.document.querySelectorAll('[role="dialog"]')
+            );
+            const dialog = dialogs.at(-1);
+            if (!dialog) return;
+            dialog.style.setProperty('width', '94vw', 'important');
+            dialog.style.setProperty('max-width', '1500px', 'important');
+        };
+        resizePlanBuilder();
+        requestAnimationFrame(resizePlanBuilder);
+        setTimeout(resizePlanBuilder, 50);
+        </script>
+        """,
+        height=0,
+        width=0,
+    )
+
     revisions = tuple(
         reversed(
             tuple(
@@ -4948,22 +4938,26 @@ def _show_plan_generation_confirmation(
     )
 
     with build_tab:
-        top_left, top_right = st.columns(
-            [1.05, 1.95],
-            gap="medium",
-        )
-        with top_left:
+        with st.expander(
+            "Plan horizon",
+            expanded=False,
+        ):
             st.html(
                 _plan_generation_notice_html(
                     notice
                 )
             )
-        with top_right:
-            st.html(
-                _plan_builder_workspace_html(
-                    builder_plan
-                )
+
+        st.markdown("#### Complete plan timeline")
+        st.altair_chart(
+            _planned_load_chart(builder_plan),
+            use_container_width=True,
+        )
+        st.html(
+            _plan_builder_workspace_html(
+                builder_plan
             )
+        )
 
         cancel_column, generate_column = st.columns(
             [1, 1],

@@ -2463,10 +2463,6 @@ def test_plan_builder_centres_complete_load_timeline():
 
     result = _plan_builder_workspace_html(plan)
 
-    assert "Complete plan timeline" in result
-    assert "polyline" in result
-    assert 'stroke="#ff4b4b"' in result
-    assert "1015 AU" in result
     assert "Plan structure by week" in result
     assert "Hill Reps" in result
     assert "Session library" in result
@@ -2481,4 +2477,7 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "st.tabs" in source
     assert "with build_tab" in source
     assert "with recovery_tab" in source
-    assert "min(94vw, 1500px)" in source
+    assert "'94vw'" in source
+    assert "'1500px'" in source
+    assert "_planned_load_chart(builder_plan)" in source
+    assert "resizePlanBuilder" in source
