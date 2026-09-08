@@ -51,6 +51,7 @@ from performancelab.application import (
     ManageAlphaParticipationConsent,
     ManageTrainingCoachConsent,
     ProvisionInvitedUser,
+    RestoreTrainingPlanRevision,
     UpdateWorkout,
 )
 from performancelab.authorization import (
@@ -368,6 +369,21 @@ def regenerate_weekly_plan() -> None:
     st.session_state.persisted_notice = (
         "Training plan generated."
     )
+
+
+def restore_training_plan_revision(
+    revision_id: str,
+) -> None:
+    result = RestoreTrainingPlanRevision(
+        repository=athlete_repository
+    ).execute(
+        st.session_state.athlete.athlete_id,
+        revision_id,
+        today=date.today(),
+    )
+    st.session_state.athlete = result.athlete
+    st.session_state.notice = "Training plan revision restored."
+    invalidate_daily_brief()
 
 def import_completed_activities(
     workouts,
@@ -1152,6 +1168,9 @@ elif page == "training":
         athlete,
         on_generate_plan=(
             regenerate_weekly_plan
+        ),
+        on_restore_revision=(
+            restore_training_plan_revision
         ),
     )
 elif page == "activities":

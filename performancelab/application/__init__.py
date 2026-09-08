@@ -23,6 +23,10 @@ from .generate_training_plan import (
     GenerateTrainingPlan,
     GenerateTrainingPlanResult,
 )
+from .restore_training_plan_revision import (
+    RestoreTrainingPlanRevision,
+    RestoreTrainingPlanRevisionResult,
+)
 from .import_activities import (
     ImportActivities,
     ImportActivitiesResult,
@@ -58,6 +62,8 @@ __all__ = [
     "GenerateActivityCoachInterpretation",
     "GenerateTrainingPlan",
     "GenerateTrainingPlanResult",
+    "RestoreTrainingPlanRevision",
+    "RestoreTrainingPlanRevisionResult",
     "ImportActivities",
     "ImportActivitiesResult",
     "ImportedActivityOutcome",

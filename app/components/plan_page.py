@@ -4733,12 +4733,11 @@ def _plan_generation_notice_html(
         "</div>"
     )
 
-@st.dialog(
-    "Generate training plan"
-)
+@st.dialog("Plan Builder")
 def _show_plan_generation_confirmation(
     athlete,
     on_generate_plan,
+    on_restore_revision=None,
 ) -> None:
     """
     Confirms the factual plan horizon before replacing the
@@ -4860,6 +4859,42 @@ def _show_plan_generation_confirmation(
         )
     )
 
+    revisions = tuple(
+        reversed(
+            tuple(
+                revision
+                for revision in athlete.training_plan.revisions
+                if revision.revision_id
+                != athlete.training_plan.active_revision_id
+            )
+        )
+    )
+
+    if revisions:
+        st.markdown("#### Plan recovery")
+        st.caption(
+            "Restore an earlier plan version without "
+            "deleting the current revision."
+        )
+
+        for revision in revisions:
+            label = (
+                f"{revision.created_on:%d %b %Y} · "
+                f"{revision.source.replace('_', ' ').title()}"
+            )
+            left, right = st.columns([3, 1], gap="small")
+            with left:
+                st.caption(label)
+            with right:
+                if st.button(
+                    "Restore",
+                    key=f"restore-plan-{revision.revision_id}",
+                    use_container_width=True,
+                    disabled=(on_restore_revision is None),
+                ):
+                    on_restore_revision(revision.revision_id)
+                    st.rerun()
+
     cancel_column, generate_column = (
         st.columns(
             2,
@@ -4888,7 +4923,12 @@ def _show_plan_generation_confirmation(
             on_generate_plan()
             st.rerun()
 
-def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
+def _show_plan_actions(
+    plan,
+    athlete,
+    on_generate_plan,
+    on_restore_revision=None,
+) -> None:
     """Render plan generation in the plan's right column."""
     generate_plan_requested = (
         st.button(
@@ -4909,6 +4949,7 @@ def _show_plan_actions(plan, athlete, on_generate_plan) -> None:
         _show_plan_generation_confirmation(
             athlete,
             on_generate_plan,
+            on_restore_revision,
         )
 
 
@@ -4972,6 +5013,7 @@ def show_plan_page(
     athlete,
     *,
     on_generate_plan=None,
+    on_restore_revision=None,
 ) -> None:
     """
     Displays the athlete's complete persistent plan.
@@ -5001,6 +5043,7 @@ def show_plan_page(
             plan,
             athlete,
             on_generate_plan,
+            on_restore_revision,
         )
 
     if not plan.weeks:
