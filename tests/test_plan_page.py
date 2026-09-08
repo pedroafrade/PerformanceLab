@@ -20,6 +20,7 @@ from app.components.plan_page import (
     _weekly_planned_load_curve_data,
     _plan_generation_notice_html,
     _plan_builder_workspace_html,
+    _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart_series,
     _sidebar_adaptation_html,
@@ -2464,7 +2465,20 @@ def test_plan_builder_centres_complete_load_timeline():
 
     assert "Complete plan timeline" in result
     assert "polyline" in result
+    assert 'stroke="#ff4b4b"' in result
     assert "1015 AU" in result
     assert "Plan structure by week" in result
     assert "Hill Reps" in result
     assert "Session library" in result
+
+
+def test_plan_builder_separates_build_and_recovery_tabs():
+    source = inspect.getsource(
+        _show_plan_generation_confirmation
+    )
+
+    assert '"Build plan", "Plan recovery"' in source
+    assert "st.tabs" in source
+    assert "with build_tab" in source
+    assert "with recovery_tab" in source
+    assert "min(94vw, 1500px)" in source

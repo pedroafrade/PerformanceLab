@@ -4748,7 +4748,7 @@ def _plan_builder_workspace_html(plan) -> str:
     )
     polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in points)
     dots = "".join(
-        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" />'
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3" fill="#ff4b4b" />'
         for x, y in points
     )
     labels = "".join(
@@ -4777,8 +4777,9 @@ def _plan_builder_workspace_html(plan) -> str:
     return (
         '<section class="plan-builder-workspace"><h4>Complete plan timeline</h4>'
         '<div class="plan-builder-chart"><svg viewBox="0 0 900 128" preserveAspectRatio="none">'
-        '<line x1="18" y1="110" x2="882" y2="110" />'
-        f'<polyline points="{polyline}" />{dots}</svg></div>'
+        '<line x1="18" y1="110" x2="882" y2="110" stroke="#b8b8b8" />'
+        f'<polyline points="{polyline}" fill="none" stroke="#ff4b4b" '
+        f'stroke-width="3" vector-effect="non-scaling-stroke" />{dots}</svg></div>'
         f'<div class="plan-builder-labels" style="--weeks:{len(weeks)}">{labels}</div>'
         '<h4>Plan structure by week</h4>'
         f'<div class="plan-builder-weeks">{"".join(cards)}</div>'
@@ -4814,10 +4815,11 @@ def _show_plan_generation_confirmation(
     st.markdown(
         """
         <style>
-        div[data-testid="stDialog"] div[role="dialog"] { width: min(92vw, 1120px) !important; max-width: 1120px !important; }
-        .plan-builder-workspace { margin: 1rem 0; color: #000; }
-        .plan-builder-workspace h4 { margin: .9rem 0 .4rem; font-size: .78rem; }
-        .plan-builder-chart { height: 8rem; border: 1px solid rgba(0,0,0,.16); border-radius: .55rem; }
+        div[role="dialog"] { width: min(94vw, 1500px) !important; max-width: min(94vw, 1500px) !important; }
+        div[role="dialog"] [data-testid="stDialogContent"] { padding-top: .25rem; }
+        .plan-builder-workspace { margin: .45rem 0; color: #000; }
+        .plan-builder-workspace h4 { margin: .5rem 0 .25rem; font-size: .72rem; }
+        .plan-builder-chart { height: 5.2rem; border: 1px solid rgba(0,0,0,.16); border-radius: .45rem; }
         .plan-builder-chart svg { width: 100%; height: 100%; }
         .plan-builder-chart line { stroke: rgba(0,0,0,.18); }
         .plan-builder-chart polyline { fill: none; stroke: #ff4b4b; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
@@ -4826,7 +4828,7 @@ def _show_plan_generation_confirmation(
         .plan-builder-labels div { display: flex; flex-direction: column; font-size: .58rem; }
         .plan-builder-labels span { opacity: .65; }
         .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
-        .plan-builder-weeks article { flex: 0 0 12rem; padding: .5rem; border: 1px solid rgba(0,0,0,.16); border-radius: .5rem; }
+        .plan-builder-weeks article { flex: 0 0 10rem; max-height: 7rem; overflow: hidden; padding: .4rem; border: 1px solid rgba(0,0,0,.16); border-radius: .45rem; }
         .plan-builder-weeks header { margin-bottom: .3rem; font-size: .64rem; font-weight: 700; }
         .plan-builder-weeks article div { display: grid; grid-template-columns: 3.2rem 1fr; gap: .3rem; padding: .2rem 0; border-top: 1px solid rgba(0,0,0,.08); font-size: .58rem; }
         .plan-builder-library { display: flex; flex-wrap: wrap; gap: .4rem; }
@@ -4835,11 +4837,11 @@ def _show_plan_generation_confirmation(
         .plan-generation-notice {
             color: #000;
             font-size: 0.84rem;
-            line-height: 1.4;
+            line-height: 1.25;
         }
 
         .plan-generation-intro {
-            margin: 0 0 1rem 0;
+            margin: 0 0 0.4rem 0;
             color: #000;
         }
 
@@ -4864,7 +4866,7 @@ def _show_plan_generation_confirmation(
                 minmax(0, 1.4fr);
             gap: 1rem;
             align-items: baseline;
-            padding: 0.42rem 0;
+            padding: 0.22rem 0;
             border-bottom:
                 1px solid rgba(0, 0, 0, 0.1);
         }
@@ -4886,7 +4888,7 @@ def _show_plan_generation_confirmation(
         }
 
         .plan-generation-later {
-            margin-top: 1rem;
+            margin-top: 0.4rem;
         }
 
         .plan-generation-copy {
@@ -4930,18 +4932,6 @@ def _show_plan_generation_confirmation(
         unsafe_allow_html=True,
     )
 
-    st.html(
-        _plan_generation_notice_html(
-            notice
-        )
-    )
-
-    st.html(
-        _plan_builder_workspace_html(
-            builder_plan
-        )
-    )
-
     revisions = tuple(
         reversed(
             tuple(
@@ -4953,19 +4943,63 @@ def _show_plan_generation_confirmation(
         )
     )
 
-    if revisions:
-        st.markdown("#### Plan recovery")
+    build_tab, recovery_tab = st.tabs(
+        ["Build plan", "Plan recovery"]
+    )
+
+    with build_tab:
+        top_left, top_right = st.columns(
+            [1.05, 1.95],
+            gap="medium",
+        )
+        with top_left:
+            st.html(
+                _plan_generation_notice_html(
+                    notice
+                )
+            )
+        with top_right:
+            st.html(
+                _plan_builder_workspace_html(
+                    builder_plan
+                )
+            )
+
+        cancel_column, generate_column = st.columns(
+            [1, 1],
+            gap="small",
+        )
+        with cancel_column:
+            if st.button(
+                "Cancel",
+                use_container_width=True,
+                key="cancel-plan-generation",
+            ):
+                st.rerun()
+        with generate_column:
+            if st.button(
+                "Generate plan",
+                use_container_width=True,
+                key="confirm-plan-generation",
+            ):
+                on_generate_plan()
+                st.rerun()
+
+    with recovery_tab:
         st.caption(
             "Restore an earlier plan version without "
             "deleting the current revision."
         )
+
+        if not revisions:
+            st.info("No earlier plan revisions are available.")
 
         for revision in revisions:
             label = (
                 f"{revision.created_on:%d %b %Y} · "
                 f"{revision.source.replace('_', ' ').title()}"
             )
-            left, right = st.columns([3, 1], gap="small")
+            left, right = st.columns([4, 1], gap="small")
             with left:
                 st.caption(label)
             with right:
@@ -4977,34 +5011,6 @@ def _show_plan_generation_confirmation(
                 ):
                     on_restore_revision(revision.revision_id)
                     st.rerun()
-
-    cancel_column, generate_column = (
-        st.columns(
-            2,
-            gap="small",
-        )
-    )
-
-    with cancel_column:
-        if st.button(
-            "Cancel",
-            use_container_width=True,
-            key=(
-                "cancel-plan-generation"
-            ),
-        ):
-            st.rerun()
-
-    with generate_column:
-        if st.button(
-            "Generate plan",
-            use_container_width=True,
-            key=(
-                "confirm-plan-generation"
-            ),
-        ):
-            on_generate_plan()
-            st.rerun()
 
 def _show_plan_actions(
     plan,
