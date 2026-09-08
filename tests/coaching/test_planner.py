@@ -353,8 +353,8 @@ def test_builds_training_plan_for_competition_block(
     first_workout = PlannedWorkout(
         scheduled_at=datetime(
             2026,
-            7,
-            29,
+            8,
+            3,
             18,
             0,
         ),
@@ -401,8 +401,8 @@ def test_builds_training_plan_for_competition_block(
 
     assert plan.start_date == date(
         2026,
-        7,
-        29,
+        8,
+        3,
     )
 
     assert plan.end_date == date(
@@ -456,14 +456,14 @@ def test_training_plan_without_event_uses_week_horizon(
 
     assert plan.start_date == date(
         2026,
-        7,
-        29,
+        8,
+        3,
     )
 
     assert plan.end_date == date(
         2026,
         8,
-        2,
+        9,
     )
 
     assert plan.primary_event_id is None
@@ -548,8 +548,8 @@ def test_training_plan_includes_post_event_recovery_week(
 
     assert plan.start_date == date(
         2026,
-        7,
-        29,
+        8,
+        3,
     )
 
     assert plan.end_date == date(
@@ -558,12 +558,12 @@ def test_training_plan_includes_post_event_recovery_week(
         4,
     )
 
-    assert len(plan) == 10
+    assert len(plan) == 9
 
     assert plan.first.day == date(
         2026,
-        7,
-        29,
+        8,
+        5,
     )
 
     assert plan.last.day == date(
@@ -1788,3 +1788,38 @@ def test_rejects_invalid_previous_planned_phase(
             constraints=default_constraints,
             previous_planned_phase="",
         )
+def test_training_plan_starts_on_first_monday_after_generation(
+    athlete,
+    full_availability,
+    default_preferences,
+    default_constraints,
+):
+
+    structure_generator = Mock()
+    workout_generator = Mock()
+
+    structure_generator.generate.return_value = ()
+    workout_generator.generate.return_value = ()
+
+    planner = Planner(
+        structure_generator=structure_generator,
+        workout_generator=workout_generator,
+    )
+
+    plan = planner.build_training_plan(
+        athlete=athlete,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+        today=date(
+            2026,
+            8,
+            15,
+        ),
+    )
+
+    assert plan.start_date == date(
+        2026,
+        8,
+        17,
+    )

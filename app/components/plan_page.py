@@ -4773,18 +4773,88 @@ def _plan_builder_workspace_html(plan) -> str:
         f'<div class="plan-builder-library">{library}</div></section>'
     )
 
+def _plan_builder_session_marker(
+    title: str | None,
+) -> str:
+    """
+    Returns the Calendar colour marker for a session type.
+    """
+
+    normalized = str(
+        title or ""
+    ).strip().lower()
+
+    if any(
+        value in normalized
+        for value in (
+            "race",
+            "trail pé firme",
+        )
+    ):
+        return "🟥"
+
+    if any(
+        value in normalized
+        for value in (
+            "hill",
+            "hills",
+        )
+    ):
+        return "🟩"
+
+    if any(
+        value in normalized
+        for value in (
+            "tempo",
+            "lt2",
+            "threshold",
+            "interval",
+        )
+    ):
+        return "🟨"
+
+    if "long" in normalized:
+        return "🟪"
+
+    if any(
+        value in normalized
+        for value in (
+            "easy",
+            "recovery",
+            "shakeout",
+        )
+    ):
+        return "🟢"
+
+    return "⬜"
+
 def _plan_builder_workout_token(
     workout,
     *,
     index: int,
 ) -> str:
     """
-    Returns a unique but readable drag-and-drop label.
+    Returns a unique label without displaying its identifier.
     """
 
+    marker = (
+        _plan_builder_session_marker(
+            workout.title
+        )
+    )
+
+    invisible_identifier = (
+        "\u2063"
+        * (
+            index
+            + 1
+        )
+    )
+
     return (
-        f"{index + 1:02d} · "
+        f"{marker} "
         f"{workout.title or 'Planned workout'}"
+        f"{invisible_identifier}"
     )
 
 
@@ -4794,12 +4864,13 @@ def _show_plan_builder_drag_board(
     draft_key: str,
     plan_start: date,
     plan_end: date,
-) -> None:
+    reference_day: date,
+):
     """
-    Displays every plan day as a movable table cell.
+    Displays the plan as seven-day columns.
 
-    A workout can be dragged to an empty day or onto another
-    workout to exchange their calendar positions.
+    Returns the possibly revised draft and feedback without
+    forcing a page rerun, keeping Plan Builder open.
     """
 
     workouts = tuple(
@@ -4820,7 +4891,8 @@ def _show_plan_builder_drag_board(
             "A valid plan horizon is required "
             "before editing sessions."
         )
-        return
+
+        return draft
 
     days = tuple(
         plan_start
@@ -4834,13 +4906,21 @@ def _show_plan_builder_drag_board(
         )
     )
 
+    editable_workouts = tuple(
+        workout
+        for workout in workouts
+        if workout.day >= reference_day
+    )
+
     token_to_workout = {
         _plan_builder_workout_token(
             workout,
             index=index,
         ): workout
         for index, workout
-        in enumerate(workouts)
+        in enumerate(
+            editable_workouts
+        )
     }
 
     original_day_by_token = {
@@ -4879,46 +4959,85 @@ def _show_plan_builder_drag_board(
     custom_style = """
     .sortable-component {
         display: grid;
-        grid-template-columns:
-            repeat(7, minmax(0, 1fr));
-        gap: 6px;
+        grid-auto-flow: column;
+        grid-template-rows:
+            repeat(7, 34px);
+        grid-auto-columns:
+            minmax(0, 1fr);
+        gap: 4px;
+        width: 100%;
         padding: 0;
+        overflow: hidden;
         background: transparent;
+        box-sizing: border-box;
     }
 
     .sortable-container {
+        display: grid;
+        grid-template-columns:
+            minmax(48px, 0.42fr)
+            minmax(0, 1fr);
+        gap: 4px;
+        align-items: center;
         min-width: 0;
-        min-height: 74px;
-        padding: 5px;
-        border: 1px solid rgba(49, 51, 63, 0.18);
-        border-radius: 7px;
-        background: rgba(49, 51, 63, 0.018);
+        height: 34px;
+        min-height: 34px;
+        padding: 2px 3px;
+        border:
+            1px solid rgba(49, 51, 63, 0.14);
+        border-radius: 5px;
+        background:
+            rgba(49, 51, 63, 0.018);
         box-sizing: border-box;
     }
 
     .sortable-container-header {
-        margin-bottom: 5px;
+        min-width: 0;
+        margin: 0;
         padding: 0;
+        overflow: hidden;
         color: rgba(49, 51, 63, 0.62);
         background: transparent;
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 650;
-        line-height: 1.2;
+        line-height: 1.1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sortable-container-body {
+        min-width: 0;
+        min-height: 25px;
+        margin: 0;
+        padding: 0;
+        background: transparent;
     }
 
     .sortable-item {
+        min-width: 0;
         margin: 0;
-        padding: 6px 7px;
-        border: 1px solid rgba(49, 51, 63, 0.18);
-        border-left: 3px solid #ff4b4b;
+        padding: 4px 5px;
+        overflow: hidden;
+        border:
+            1px solid rgba(49, 51, 63, 0.17);
         border-radius: 5px;
         color: rgb(49, 51, 63);
-        background: rgba(255, 75, 75, 0.055);
-        font-size: 10px;
+        background:
+            rgba(49, 51, 63, 0.035);
+        font-size: 8px;
         font-weight: 650;
-        line-height: 1.2;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         cursor: grab;
         box-sizing: border-box;
+    }
+
+    .sortable-item:hover {
+        border-color:
+            rgba(49, 51, 63, 0.36);
+        background:
+            rgba(49, 51, 63, 0.07);
     }
 
     .sortable-item:active {
@@ -4931,19 +5050,30 @@ def _show_plan_builder_drag_board(
 
     @media (prefers-color-scheme: dark) {
         .sortable-container {
-            border-color: rgba(250, 250, 250, 0.17);
-            background: rgba(250, 250, 250, 0.018);
+            border-color:
+                rgba(250, 250, 250, 0.15);
+            background:
+                rgba(250, 250, 250, 0.018);
         }
 
         .sortable-container-header {
-            color: rgba(250, 250, 250, 0.62);
+            color:
+                rgba(250, 250, 250, 0.62);
         }
 
         .sortable-item {
-            border-color: rgba(250, 250, 250, 0.17);
-            border-left-color: #ff4b4b;
+            border-color:
+                rgba(250, 250, 250, 0.17);
             color: rgb(250, 250, 250);
-            background: rgba(255, 75, 75, 0.08);
+            background:
+                rgba(250, 250, 250, 0.045);
+        }
+
+        .sortable-item:hover {
+            border-color:
+                rgba(250, 250, 250, 0.36);
+            background:
+                rgba(250, 250, 250, 0.08);
         }
     }
     """
@@ -4955,7 +5085,7 @@ def _show_plan_builder_drag_board(
     )
 
     if not result:
-        return
+        return draft
 
     resulting_day_by_token = {}
 
@@ -4995,7 +5125,7 @@ def _show_plan_builder_drag_board(
     )
 
     if not moved_tokens:
-        return
+        return draft
 
     moved_token = moved_tokens[0]
 
@@ -5010,6 +5140,14 @@ def _show_plan_builder_drag_board(
             moved_token
         ]
     )
+
+    if target_day < reference_day:
+
+        st.error(
+            "Past days cannot be changed."
+        )
+
+        return draft
 
     try:
 
@@ -5026,58 +5164,17 @@ def _show_plan_builder_drag_board(
         TypeError,
     ) as error:
 
-        st.session_state[
-            "plan_builder_drag_feedback"
-        ] = (
-            "warning",
-            str(error),
+        st.error(
+            str(error)
         )
 
-        st.rerun()
+        return draft
 
     st.session_state[
         draft_key
     ] = revised_draft
 
-    moved_workout = (
-        token_to_workout[
-            moved_token
-        ]
-    )
-
-    target_workout = next(
-        (
-            workout
-            for workout in workouts
-            if workout.day == target_day
-        ),
-        None,
-    )
-
-    if target_workout is None:
-
-        message = (
-            f"{moved_workout.title} moved from "
-            f"{source_day:%d %b} to "
-            f"{target_day:%d %b}."
-        )
-
-    else:
-
-        message = (
-            f"{moved_workout.title} and "
-            f"{target_workout.title} exchanged days."
-        )
-
-    st.session_state[
-        "plan_builder_drag_feedback"
-    ] = (
-        "success",
-        message
-        + " The load curve was recalculated.",
-    )
-
-    st.rerun()
+    return revised_draft
 
 @st.dialog(
     "Plan Builder",
@@ -5149,6 +5246,31 @@ div[role="dialog"] {
     width: 94vw !important;
     min-width: 94vw !important;
     max-width: 1500px !important;
+}
+div[data-testid="stDialog"] [role="dialog"] {
+    height: 94vh !important;
+    max-height: 94vh !important;
+    overflow: hidden !important;
+}
+
+div[data-testid="stDialog"]
+[role="dialog"]
+> div {
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+}
+
+div[data-testid="stDialog"]
+[role="dialog"]
+[data-testid="stVerticalBlock"] {
+    min-height: 0;
+}
+
+div[data-testid="stDialog"]
+[role="dialog"]
+[data-testid="stAltairChart"] {
+    margin-bottom: 0.15rem;
 }
 
 div[data-testid="stDialog"] [role="dialog"] > div,
@@ -5435,6 +5557,7 @@ div[role="dialog"] [data-testid="stAlert"] {
     )
 
     with build_tab:
+
         with st.expander(
             "Plan horizon",
             expanded=False,
@@ -5445,113 +5568,119 @@ div[role="dialog"] [data-testid="stAlert"] {
                 )
             )
 
-        st.markdown("#### Complete plan timeline")
-        st.altair_chart(
-            _planned_load_chart(builder_plan),
-            use_container_width=True,
+        st.markdown(
+            "#### Complete plan timeline"
         )
 
-        drag_feedback = (
-            st.session_state.pop(
-                "plan_builder_drag_feedback",
-                None,
-            )
-        )
-
-        if drag_feedback:
-
-            feedback_level, feedback_text = (
-                drag_feedback
-            )
-
-            if feedback_level == "success":
-
-                st.success(
-                    feedback_text
-                )
-
-            else:
-
-                st.warning(
-                    feedback_text
-                )
+        timeline_slot = st.empty()
 
         st.markdown(
             "#### Plan structure by week"
         )
 
         st.caption(
+            "Each column represents one week. "
             "Drag a session to an empty day to move it, "
             "or onto another session to exchange their days."
         )
 
-        _show_plan_builder_drag_board(
-            draft=builder_draft,
-            draft_key=draft_key,
-            plan_start=active_plan.start_date,
-            plan_end=active_plan.end_date,
+        builder_draft = (
+            _show_plan_builder_drag_board(
+                draft=builder_draft,
+                draft_key=draft_key,
+                plan_start=(
+                    active_plan.start_date
+                ),
+                plan_end=(
+                    active_plan.end_date
+                ),
+                reference_day=date.today(),
+            )
         )
 
-        cancel_column, generate_column = st.columns(
-            [1, 1],
+        saved_plan = PlanPresenter(
+            plan=active_plan,
+            history=athlete.history,
+        ).build(
+            reference_day=date.today()
+        )
+
+        draft_plan = replace(
+            active_plan,
+            workouts=list(
+                builder_draft.workouts
+            ),
+        )
+
+        builder_plan = PlanPresenter(
+            plan=draft_plan,
+            history=athlete.history,
+        ).build(
+            reference_day=date.today()
+        )
+
+        builder_chart_plan = replace(
+            builder_plan,
+            original_chart_points=tuple(
+                saved_plan.chart_points
+            ),
+        )
+
+        timeline_slot.altair_chart(
+            _planned_load_chart(
+                builder_chart_plan
+            ),
+            use_container_width=True,
+        )
+
+
+        (
+            reset_column,
+            cancel_column,
+            generate_column,
+        ) = st.columns(
+            [1, 1, 1],
             gap="small",
         )
 
-        if builder_draft.has_changes:
+        with reset_column:
 
-            reset_column, state_column = (
-                st.columns(
-                    [1, 4],
-                    gap="small",
-                )
-            )
+            if st.button(
+                "Reset changes",
+                key="plan-builder-reset-drag",
+                use_container_width=True,
+                disabled=(
+                    not builder_draft.has_changes
+                ),
+            ):
 
-            with reset_column:
-
-                if st.button(
-                    "Reset changes",
-                    key="plan-builder-reset-drag",
-                    use_container_width=True,
-                ):
-
-                    st.session_state[
-                        draft_key
-                    ] = (
-                        builder_draft.reset()
-                    )
-
-                    st.rerun()
-
-            with state_column:
-
-                st.warning(
-                    "Draft changes are not yet saved "
-                    "to the active plan."
+                st.session_state[
+                    draft_key
+                ] = (
+                    builder_draft.reset()
                 )
 
         with cancel_column:
+
             if st.button(
                 "Cancel",
-                use_container_width=True,
                 key="cancel-plan-generation",
+                use_container_width=True,
             ):
-                st.session_state.pop(
-                    draft_key,
-                    None,
-                )
-                st.rerun()
+
+                return
+
         with generate_column:
+
             if st.button(
                 "Generate plan",
-                use_container_width=True,
                 key="confirm-plan-generation",
+                use_container_width=True,
             ):
-                st.session_state.pop(
-                    draft_key,
-                    None,
+
+                on_generate_plan(
+                    athlete
                 )
-                on_generate_plan()
-                st.rerun()
 
     with recovery_tab:
         st.caption(

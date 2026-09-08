@@ -377,8 +377,10 @@ class Planner:
             today=reference_day,
         )
 
-        first_week_start = self._week_start(
-            reference_day
+        first_week_start = (
+            self._next_week_start(
+                reference_day
+            )
         )
 
         default_end_date = (
@@ -402,7 +404,7 @@ class Planner:
             plan_end_date = default_end_date
 
         training_plan = TrainingPlan(
-            start_date=reference_day,
+            start_date=first_week_start,
             end_date=plan_end_date,
             primary_event_id=(
                 context.primary_event_id
@@ -420,11 +422,7 @@ class Planner:
 
         while week_start <= plan_end_date:
 
-            planning_day = (
-                reference_day
-                if week_start == first_week_start
-                else week_start
-            )
+            planning_day = week_start
 
             is_partial_week = (
                 self._is_partial_week(
@@ -2555,6 +2553,22 @@ class Planner:
             ),
         )
 
+    @staticmethod
+    def _next_week_start(
+        day: date,
+    ) -> date:
+        """
+        Returns the first Monday strictly after ``day``.
+        """
+
+        days_until_monday = (
+            7
+            - day.weekday()
+        )
+
+        return day + timedelta(
+            days=days_until_monday,
+        )
 
     @staticmethod
     def _week_start(

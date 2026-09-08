@@ -2480,7 +2480,8 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "with recovery_tab" in source
     assert "'94vw'" in source
     assert "'1500px'" in source
-    assert "_planned_load_chart(builder_plan)" in source
+    assert "_planned_load_chart(" in source
+    assert "builder_plan" in source
     assert "resizePlanBuilder" in source
 
 def test_plan_builder_uses_movable_week_structure():
@@ -2492,5 +2493,11 @@ def test_plan_builder_uses_movable_week_structure():
     assert "sort_items" in source
     assert "multi_containers=True" in source
     assert "draft.move_workout" in source
+    assert "grid-auto-flow: column" in source
     assert "repeat(7" in source
-    assert "The load curve was recalculated" in source
+    assert "return revised_draft" in source
+    assert "st.rerun()" not in source
+    assert "reference_day" in source
+    assert "target_day < reference_day" in source
+    assert "Past days cannot be changed." in source
+    assert "workout.day >= reference_day" in source
