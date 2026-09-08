@@ -4946,11 +4946,21 @@ def _show_plan_actions(
     )
 
     if generate_plan_requested:
-        _show_plan_generation_confirmation(
-            athlete,
-            on_generate_plan,
-            on_restore_revision,
-        )
+
+        if on_restore_revision is None:
+
+            _show_plan_generation_confirmation(
+                athlete,
+                on_generate_plan,
+            )
+
+        else:
+
+            _show_plan_generation_confirmation(
+                athlete,
+                on_generate_plan,
+                on_restore_revision,
+            )
 
 
 def _show_plan_weeks(plan, *, reference_day: date) -> None:
