@@ -675,6 +675,103 @@ def _show_latest_adaptation(
     .plan-sidebar-adaptation-status {
         font-size: 0.58rem;
     }
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-status {
+        padding: 0.15rem 0.4rem;
+        border-radius: 999px;
+        background: rgba(57, 169, 107, 0.12);
+        color: #39a96b;
+        font-size: 0.58rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-summary {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-source {
+        min-width: 0;
+        margin: 0;
+        font-size: 0.68rem;
+        white-space: nowrap;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-gap {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.35rem;
+        min-width: 0;
+        margin: 0;
+        font-size: 0.65rem;
+        line-height: 1.25;
+        text-align: right;
+        opacity: 0.82;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-comparison {
+        margin-bottom: 0.65rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-explanation {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-recommendation,
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-rationale,
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-note {
+        margin: 0 !important;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-recommendation {
+        font-weight: 650;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-rationale {
+        opacity: 0.75;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-note {
+        opacity: 0.62;
+    }
     """
 
     adaptation_html = (

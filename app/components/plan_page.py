@@ -2725,32 +2725,28 @@ def _sidebar_adaptation_html(
         )
     )
 
-    suggestion_state_html = (
-        suggestion_html
-        if suggestion_html
-        else (
-            '<p class="plan-stimulus-suggestion-empty">'
-            "No pending stimulus rebalancing suggestion."
-            "</p>"
-        )
-    )
-    if adaptation is None:
-        empty_html = (
-            ""
-            if suggestion_html
-            else (
-                '<p class="plan-sidebar-empty">'
-                "No adaptations or suggestions yet."
-                "</p>"
-            )
-        )
+    if suggestion_html:
 
         return (
             '<section class="plan-sidebar-card '
             'plan-sidebar-adaptation-card">'
             f"{heading_html}"
-            f"{suggestion_state_html}"
-            f"{empty_html}"
+            f"{suggestion_html}"
+            "</section>"
+        )
+
+    if adaptation is None:
+
+        return (
+            '<section class="plan-sidebar-card '
+            'plan-sidebar-adaptation-card">'
+            f"{heading_html}"
+            '<p class="plan-stimulus-suggestion-empty">'
+            "No pending stimulus rebalancing suggestion."
+            "</p>"
+            '<p class="plan-sidebar-empty">'
+            "No adaptations or suggestions yet."
+            "</p>"
             "</section>"
         )
 
@@ -2808,7 +2804,6 @@ def _sidebar_adaptation_html(
         '<section class="plan-sidebar-card '
         'plan-sidebar-adaptation-card">'
         f"{heading_html}"
-        f"{suggestion_state_html}"
         '<div class="plan-sidebar-adaptation-context">'
         f"<span>{escape(date_label)}</span>"
         "<span>·</span>"

@@ -523,4 +523,16 @@ def test_today_reuses_plan_adaptation_container(
     assert "Adjusted session" in html
     assert "Tempo Run" in html
     assert "Hill Reps" in html
-    assert "4×3 min uphill" in html
+    assert (
+        "Tempo Run on 08 Sep was changed "
+        "to Hill Reps."
+        in html
+    )
+
+    assert "4×3 min uphill" not in html
+
+    assert (
+        "A missed session changed "
+        "future training."
+        not in html
+    )

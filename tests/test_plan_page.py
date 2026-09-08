@@ -1491,6 +1491,87 @@ def test_builds_empty_adaptation_sidebar_card():
         in result
     )
 
+def test_stimulus_suggestion_hides_older_adaptation():
+
+    adaptation = SimpleNamespace(
+        reconciled_on=date(
+            2026,
+            10,
+            2,
+        ),
+        workout_day=date(
+            2026,
+            10,
+            2,
+        ),
+        workout_title="Easy Run",
+        previous_minutes=63,
+        revised_minutes=66,
+        reason=(
+            "A missed session changed "
+            "future training."
+        ),
+        previous_distance=10.7,
+        revised_distance=11.2,
+        previous_elevation_gain=None,
+        revised_elevation_gain=None,
+        previous_prescription=(
+            "Adjusted easy session"
+        ),
+        revised_prescription=(
+            "Adjusted easy session"
+        ),
+    )
+
+    suggestion = SimpleNamespace(
+        source_workout_day=date(
+            2026,
+            9,
+            1,
+        ),
+        source_workout_title="Hill Run",
+        missing_stimulus="hills",
+        completed_stimulus="unknown",
+        candidate_workout_day=date(
+            2026,
+            9,
+            8,
+        ),
+        candidate_workout_title="Tempo Run",
+        candidate_stimulus="tempo",
+        recommendation=(
+            "Tempo Run on 08 Sep was changed "
+            "to Hill Reps."
+        ),
+        rationale=(
+            "The planned hills session was not "
+            "completed. The Long Run is preserved."
+        ),
+        applied=True,
+    )
+
+    result = _sidebar_adaptation_html(
+        adaptation,
+        reference_day=date(
+            2026,
+            9,
+            8,
+        ),
+        stimulus_suggestion=suggestion,
+    )
+
+    assert "Stimulus rebalancing" in result
+    assert "Tempo Run" in result
+    assert "Hill Reps" in result
+
+    assert (
+        "A missed session changed "
+        "future training."
+        not in result
+    )
+
+    assert "02 Oct 2026" not in result
+    assert "Easy Run" not in result
 
 def test_labels_adapted_session_date_instead_of_application_date():
 
