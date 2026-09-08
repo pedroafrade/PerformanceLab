@@ -7,6 +7,8 @@ Complete training-plan page.
 from datetime import date, timedelta
 from html import escape
 
+from dataclasses import replace
+
 import altair as alt
 import streamlit as st
 import streamlit.components.v1 as components
@@ -34,7 +36,9 @@ from .upcoming_events import (
     upcoming_events_html,
     upcoming_events_styles,
 )
-
+from performancelab.training.planning import (
+    PlanBuilderDraft,
+)
 
 def _status_label(
     status: str,
@@ -4788,10 +4792,45 @@ def _show_plan_generation_confirmation(
         )
     )
 
+    active_plan = (
+        athlete.training_plan
+    )
+
+    draft_key = (
+        "plan_builder_draft:"
+        f"{active_plan.plan_id}:"
+        f"{active_plan.active_revision_id or 'current'}"
+    )
+
+    if draft_key not in st.session_state:
+
+        st.session_state[
+            draft_key
+        ] = (
+            PlanBuilderDraft.from_plan(
+                active_plan
+            )
+        )
+
+    builder_draft = (
+        st.session_state[
+            draft_key
+        ]
+    )
+
+    draft_plan = replace(
+        active_plan,
+        workouts=list(
+            builder_draft.workouts
+        ),
+    )
+
     builder_plan = PlanPresenter(
-        plan=athlete.training_plan,
+        plan=draft_plan,
         history=athlete.history,
-    ).build(reference_day=date.today())
+    ).build(
+        reference_day=date.today()
+    )
 
     st.markdown(
         """
@@ -5104,6 +5143,10 @@ div[role="dialog"] .plan-builder-library {
                 use_container_width=True,
                 key="cancel-plan-generation",
             ):
+                st.session_state.pop(
+                    draft_key,
+                    None,
+                )
                 st.rerun()
         with generate_column:
             if st.button(
@@ -5111,6 +5154,10 @@ div[role="dialog"] .plan-builder-library {
                 use_container_width=True,
                 key="confirm-plan-generation",
             ):
+                st.session_state.pop(
+                    draft_key,
+                    None,
+                )
                 on_generate_plan()
                 st.rerun()
 
