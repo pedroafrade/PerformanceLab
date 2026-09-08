@@ -13,6 +13,10 @@ import altair as alt
 import streamlit as st
 import streamlit.components.v1 as components
 
+from streamlit_sortables import (
+    sort_items,
+)
+
 from performancelab.presentation import (
     CalendarPresenter,
     PlanGenerationNoticePresenter,
@@ -4769,343 +4773,311 @@ def _plan_builder_workspace_html(plan) -> str:
         f'<div class="plan-builder-library">{library}</div></section>'
     )
 
-def _show_plan_builder_editor(
+def _plan_builder_workout_token(
+    workout,
+    *,
+    index: int,
+) -> str:
+    """
+    Returns a unique but readable drag-and-drop label.
+    """
+
+    return (
+        f"{index + 1:02d} · "
+        f"{workout.title or 'Planned workout'}"
+    )
+
+
+def _show_plan_builder_drag_board(
     *,
     draft,
     draft_key: str,
+    plan_start: date,
+    plan_end: date,
 ) -> None:
     """
-    Edits only the isolated Plan Builder draft.
+    Displays every plan day as a movable table cell.
 
-    Every operation replaces the immutable draft stored in
-    session state and then refreshes the load projection.
+    A workout can be dragged to an empty day or onto another
+    workout to exchange their calendar positions.
     """
 
     workouts = tuple(
-        draft.workouts
-    )
-
-    feedback = st.session_state.pop(
-        "plan_builder_feedback",
-        None,
-    )
-
-    if feedback:
-
-        level, message = feedback
-
-        if level == "success":
-            st.success(message)
-
-        elif level == "warning":
-            st.warning(message)
-
-        else:
-            st.info(message)
-
-    st.markdown("#### Edit draft")
-
-    if not workouts:
-
-        st.info(
-            "The draft does not contain any sessions."
+        sorted(
+            draft.workouts,
+            key=lambda workout: (
+                workout.scheduled_at
+            ),
         )
+    )
 
-        if st.button(
-            "Reset draft",
-            key="plan-builder-reset-empty",
-        ):
-            st.session_state[
-                draft_key
-            ] = draft.reset()
-
-            st.rerun()
-
+    if (
+        plan_start is None
+        or plan_end is None
+        or plan_end < plan_start
+    ):
+        st.info(
+            "A valid plan horizon is required "
+            "before editing sessions."
+        )
         return
 
-    workout_options = {
-        (
-            f"{workout.day:%d %b} · "
-            f"{workout.title or 'Planned workout'}"
-        ): workout
-        for workout in workouts
-    }
-
-    selected_label = st.selectbox(
-        "Session",
-        options=tuple(
-            workout_options
-        ),
-        key="plan-builder-selected-session",
+    days = tuple(
+        plan_start
+        + timedelta(days=offset)
+        for offset in range(
+            (
+                plan_end
+                - plan_start
+            ).days
+            + 1
+        )
     )
 
-    selected_workout = (
-        workout_options[
-            selected_label
+    token_to_workout = {
+        _plan_builder_workout_token(
+            workout,
+            index=index,
+        ): workout
+        for index, workout
+        in enumerate(workouts)
+    }
+
+    original_day_by_token = {
+        token: workout.day
+        for token, workout
+        in token_to_workout.items()
+    }
+
+    day_by_header = {
+        day.strftime(
+            "%a %d %b"
+        ): day
+        for day in days
+    }
+
+    containers = []
+
+    for day in days:
+
+        day_tokens = [
+            token
+            for token, workout
+            in token_to_workout.items()
+            if workout.day == day
+        ]
+
+        containers.append(
+            {
+                "header": day.strftime(
+                    "%a %d %b"
+                ),
+                "items": day_tokens,
+            }
+        )
+
+    custom_style = """
+    .sortable-component {
+        display: grid;
+        grid-template-columns:
+            repeat(7, minmax(0, 1fr));
+        gap: 6px;
+        padding: 0;
+        background: transparent;
+    }
+
+    .sortable-container {
+        min-width: 0;
+        min-height: 74px;
+        padding: 5px;
+        border: 1px solid rgba(49, 51, 63, 0.18);
+        border-radius: 7px;
+        background: rgba(49, 51, 63, 0.018);
+        box-sizing: border-box;
+    }
+
+    .sortable-container-header {
+        margin-bottom: 5px;
+        padding: 0;
+        color: rgba(49, 51, 63, 0.62);
+        background: transparent;
+        font-size: 10px;
+        font-weight: 650;
+        line-height: 1.2;
+    }
+
+    .sortable-item {
+        margin: 0;
+        padding: 6px 7px;
+        border: 1px solid rgba(49, 51, 63, 0.18);
+        border-left: 3px solid #ff4b4b;
+        border-radius: 5px;
+        color: rgb(49, 51, 63);
+        background: rgba(255, 75, 75, 0.055);
+        font-size: 10px;
+        font-weight: 650;
+        line-height: 1.2;
+        cursor: grab;
+        box-sizing: border-box;
+    }
+
+    .sortable-item:active {
+        cursor: grabbing;
+    }
+
+    .sortable-item.sortable-ghost {
+        opacity: 0.35;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .sortable-container {
+            border-color: rgba(250, 250, 250, 0.17);
+            background: rgba(250, 250, 250, 0.018);
+        }
+
+        .sortable-container-header {
+            color: rgba(250, 250, 250, 0.62);
+        }
+
+        .sortable-item {
+            border-color: rgba(250, 250, 250, 0.17);
+            border-left-color: #ff4b4b;
+            color: rgb(250, 250, 250);
+            background: rgba(255, 75, 75, 0.08);
+        }
+    }
+    """
+
+    result = sort_items(
+        containers,
+        multi_containers=True,
+        custom_style=custom_style,
+    )
+
+    if not result:
+        return
+
+    resulting_day_by_token = {}
+
+    for container in result:
+
+        target_day = (
+            day_by_header.get(
+                container.get(
+                    "header",
+                    "",
+                )
+            )
+        )
+
+        if target_day is None:
+            continue
+
+        for token in container.get(
+            "items",
+            [],
+        ):
+            resulting_day_by_token[
+                token
+            ] = target_day
+
+    moved_tokens = tuple(
+        token
+        for token, original_day
+        in original_day_by_token.items()
+        if (
+            resulting_day_by_token.get(
+                token,
+                original_day,
+            )
+            != original_day
+        )
+    )
+
+    if not moved_tokens:
+        return
+
+    moved_token = moved_tokens[0]
+
+    source_day = (
+        original_day_by_token[
+            moved_token
         ]
     )
 
-    move_column, remove_column = st.columns(
-        [3, 1],
-        gap="small",
+    target_day = (
+        resulting_day_by_token[
+            moved_token
+        ]
     )
 
-    with move_column:
+    try:
 
-        target_day = st.date_input(
-            "Move or swap with",
-            value=selected_workout.day,
-            min_value=(
-                min(
-                    workout.day
-                    for workout in workouts
-                )
-            ),
-            max_value=(
-                max(
-                    workout.day
-                    for workout in workouts
-                )
-            ),
-            key="plan-builder-target-day",
+        revised_draft = (
+            draft.move_workout(
+                source_day=source_day,
+                target_day=target_day,
+            )
         )
 
-        if st.button(
-            "Move / swap session",
-            use_container_width=True,
-            key="plan-builder-move-session",
-            disabled=(
-                target_day
-                == selected_workout.day
-            ),
-        ):
+    except (
+        LookupError,
+        ValueError,
+        TypeError,
+    ) as error:
 
-            revised_draft = (
-                draft.move_workout(
-                    source_day=(
-                        selected_workout.day
-                    ),
-                    target_day=target_day,
-                )
-            )
+        st.session_state[
+            "plan_builder_drag_feedback"
+        ] = (
+            "warning",
+            str(error),
+        )
 
-            st.session_state[
-                draft_key
-            ] = revised_draft
+        st.rerun()
 
-            st.session_state[
-                "plan_builder_feedback"
-            ] = (
-                "success",
-                (
-                    f"{selected_workout.title} moved "
-                    f"from {selected_workout.day:%d %b} "
-                    f"to {target_day:%d %b}. "
-                    "The load curve was recalculated."
-                ),
-            )
+    st.session_state[
+        draft_key
+    ] = revised_draft
 
-            st.rerun()
+    moved_workout = (
+        token_to_workout[
+            moved_token
+        ]
+    )
 
-    with remove_column:
+    target_workout = next(
+        (
+            workout
+            for workout in workouts
+            if workout.day == target_day
+        ),
+        None,
+    )
 
-        st.write("")
+    if target_workout is None:
 
-        st.write("")
-
-        if st.button(
-            "Remove",
-            use_container_width=True,
-            key="plan-builder-remove-session",
-        ):
-
-            st.session_state[
-                draft_key
-            ] = (
-                draft.delete_workout(
-                    workout_day=(
-                        selected_workout.day
-                    ),
-                )
-            )
-
-            st.session_state[
-                "plan_builder_feedback"
-            ] = (
-                "warning",
-                (
-                    f"{selected_workout.title} was removed "
-                    "from the draft. Review the resulting "
-                    "weekly load and stimulus balance."
-                ),
-            )
-
-            st.rerun()
-
-    st.markdown("##### Add from session library")
-
-    templates_by_title = {}
-
-    for workout in (
-        draft.baseline_workouts
-    ):
-
-        title = str(
-            workout.title
-            or ""
-        ).strip()
-
-        if (
-            title
-            and title not in templates_by_title
-        ):
-            templates_by_title[
-                title
-            ] = workout
-
-    if not templates_by_title:
-
-        st.caption(
-            "No session templates are available."
+        message = (
+            f"{moved_workout.title} moved from "
+            f"{source_day:%d %b} to "
+            f"{target_day:%d %b}."
         )
 
     else:
 
-        template_column, day_column = (
-            st.columns(
-                [2, 1],
-                gap="small",
-            )
+        message = (
+            f"{moved_workout.title} and "
+            f"{target_workout.title} exchanged days."
         )
 
-        with template_column:
-
-            template_title = st.selectbox(
-                "Session type",
-                options=tuple(
-                    templates_by_title
-                ),
-                key=(
-                    "plan-builder-template"
-                ),
-            )
-
-        with day_column:
-
-            new_workout_day = st.date_input(
-                "Target day",
-                value=selected_workout.day,
-                min_value=(
-                    min(
-                        workout.day
-                        for workout
-                        in draft.baseline_workouts
-                    )
-                ),
-                max_value=(
-                    max(
-                        workout.day
-                        for workout
-                        in draft.baseline_workouts
-                    )
-                ),
-                key=(
-                    "plan-builder-new-day"
-                ),
-            )
-
-        target_occupied = any(
-            workout.day
-            == new_workout_day
-            for workout in workouts
-        )
-
-        if target_occupied:
-
-            st.caption(
-                "The selected day already contains a "
-                "session. Move or remove it first."
-            )
-
-        if st.button(
-            "Add session",
-            use_container_width=True,
-            key="plan-builder-add-session",
-            disabled=target_occupied,
-        ):
-
-            st.session_state[
-                draft_key
-            ] = (
-                draft.add_workout(
-                    template=(
-                        templates_by_title[
-                            template_title
-                        ]
-                    ),
-                    workout_day=(
-                        new_workout_day
-                    ),
-                )
-            )
-
-            st.session_state[
-                "plan_builder_feedback"
-            ] = (
-                "warning",
-                (
-                    f"{template_title} was added on "
-                    f"{new_workout_day:%d %b}. "
-                    "Confirm that recovery and weekly "
-                    "load remain appropriate."
-                ),
-            )
-
-            st.rerun()
-
-    reset_column, state_column = st.columns(
-        [1, 3],
-        gap="small",
+    st.session_state[
+        "plan_builder_drag_feedback"
+    ] = (
+        "success",
+        message
+        + " The load curve was recalculated.",
     )
 
-    with reset_column:
-
-        if st.button(
-            "Reset draft",
-            use_container_width=True,
-            key="plan-builder-reset-draft",
-            disabled=(
-                not draft.has_changes
-            ),
-        ):
-
-            st.session_state[
-                draft_key
-            ] = draft.reset()
-
-            st.session_state[
-                "plan_builder_feedback"
-            ] = (
-                "info",
-                "Draft restored to the active plan.",
-            )
-
-            st.rerun()
-
-    with state_column:
-
-        if draft.has_changes:
-
-            st.warning(
-                "Unsaved draft changes. The active plan "
-                "has not been modified."
-            )
-
-        else:
-
-            st.caption(
-                "The draft currently matches the active plan."
-            )
+    st.rerun()
 
 @st.dialog(
     "Plan Builder",
@@ -5478,21 +5450,85 @@ div[role="dialog"] [data-testid="stAlert"] {
             _planned_load_chart(builder_plan),
             use_container_width=True,
         )
-        st.html(
-            _plan_builder_workspace_html(
-                builder_plan
+
+        drag_feedback = (
+            st.session_state.pop(
+                "plan_builder_drag_feedback",
+                None,
             )
         )
 
-        _show_plan_builder_editor(
+        if drag_feedback:
+
+            feedback_level, feedback_text = (
+                drag_feedback
+            )
+
+            if feedback_level == "success":
+
+                st.success(
+                    feedback_text
+                )
+
+            else:
+
+                st.warning(
+                    feedback_text
+                )
+
+        st.markdown(
+            "#### Plan structure by week"
+        )
+
+        st.caption(
+            "Drag a session to an empty day to move it, "
+            "or onto another session to exchange their days."
+        )
+
+        _show_plan_builder_drag_board(
             draft=builder_draft,
             draft_key=draft_key,
+            plan_start=active_plan.start_date,
+            plan_end=active_plan.end_date,
         )
 
         cancel_column, generate_column = st.columns(
             [1, 1],
             gap="small",
         )
+
+        if builder_draft.has_changes:
+
+            reset_column, state_column = (
+                st.columns(
+                    [1, 4],
+                    gap="small",
+                )
+            )
+
+            with reset_column:
+
+                if st.button(
+                    "Reset changes",
+                    key="plan-builder-reset-drag",
+                    use_container_width=True,
+                ):
+
+                    st.session_state[
+                        draft_key
+                    ] = (
+                        builder_draft.reset()
+                    )
+
+                    st.rerun()
+
+            with state_column:
+
+                st.warning(
+                    "Draft changes are not yet saved "
+                    "to the active plan."
+                )
+
         with cancel_column:
             if st.button(
                 "Cancel",

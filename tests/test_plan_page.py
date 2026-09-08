@@ -23,6 +23,7 @@ from app.components.plan_page import (
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart_series,
+    _show_plan_builder_drag_board,
     _sidebar_adaptation_html,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -2481,3 +2482,15 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "'1500px'" in source
     assert "_planned_load_chart(builder_plan)" in source
     assert "resizePlanBuilder" in source
+
+def test_plan_builder_uses_movable_week_structure():
+
+    source = inspect.getsource(
+        _show_plan_builder_drag_board
+    )
+
+    assert "sort_items" in source
+    assert "multi_containers=True" in source
+    assert "draft.move_workout" in source
+    assert "repeat(7" in source
+    assert "The load curve was recalculated" in source
