@@ -834,6 +834,11 @@ def test_training_plan_metadata_round_trip():
     )
 
     assert (
+        loaded.training_plan[0].planned_workout_id
+        == athlete.training_plan[0].planned_workout_id
+    )
+
+    assert (
         loaded.training_plan[0].phase
         == "Build"
     )

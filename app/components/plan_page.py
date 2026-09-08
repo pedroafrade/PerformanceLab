@@ -4843,12 +4843,11 @@ def _plan_builder_workout_token(
         )
     )
 
-    invisible_identifier = (
-        "\u2063"
-        * (
-            index
-            + 1
-        )
+    identifier = workout.planned_workout_id
+    invisible_identifier = "".join(
+        "\u200b" if bit == "0" else "\u200c"
+        for character in identifier.encode("utf-8")
+        for bit in f"{character:08b}"
     )
 
     return (
@@ -5300,6 +5299,30 @@ def _show_plan_builder_drag_board(
 
         return draft
 
+    moved_workout = token_to_workout[moved_token]
+    target_workout = next(
+        (
+            workout
+            for workout in workouts
+            if workout.day == target_day
+        ),
+        None,
+    )
+
+    if (
+        _plan_builder_is_race(moved_workout)
+        or (
+            target_workout is not None
+            and _plan_builder_is_race(target_workout)
+        )
+    ):
+        st.toast(
+            "Race dates must be changed in Events.",
+            icon="⚠️",
+            duration=3000,
+        )
+        return draft
+
     try:
 
         revised_draft = (
@@ -5328,6 +5351,163 @@ def _show_plan_builder_drag_board(
     ] = revised_draft
 
     return revised_draft
+
+
+def _plan_builder_is_race(workout) -> bool:
+    """Returns whether a planned item represents an event."""
+
+    return (
+        str(workout.intensity or "").strip().lower()
+        == "race effort"
+        or "race" in str(workout.title or "").strip().lower()
+    )
+
+
+def _show_plan_builder_session_actions(
+    *,
+    draft,
+    draft_key: str,
+    reference_day: date,
+    plan_end: date,
+):
+    """Adds or removes non-race sessions in the isolated draft."""
+
+    future_sessions = tuple(
+        workout
+        for workout in draft.workouts
+        if (
+            workout.day >= reference_day
+            and not _plan_builder_is_race(workout)
+        )
+    )
+
+    templates_by_title = {
+        workout.title: workout
+        for workout in draft.baseline_workouts
+        if (
+            workout.title
+            and not _plan_builder_is_race(workout)
+        )
+    }
+
+    add_column, remove_column = st.columns(2, gap="small")
+
+    with add_column:
+        with st.popover(
+            "Add session",
+            use_container_width=True,
+        ):
+            if not templates_by_title:
+                st.caption("No reusable session templates are available.")
+            else:
+                template_title = st.selectbox(
+                    "Session type",
+                    tuple(sorted(templates_by_title)),
+                    key="plan-builder-add-template",
+                )
+                target_day = st.date_input(
+                    "Target day",
+                    value=reference_day,
+                    min_value=reference_day,
+                    max_value=plan_end,
+                    key="plan-builder-add-day",
+                )
+                if st.button(
+                    "Add to draft",
+                    key="plan-builder-add-confirm",
+                    use_container_width=True,
+                ):
+                    try:
+                        draft = draft.add_workout(
+                            template=templates_by_title[template_title],
+                            workout_day=target_day,
+                        )
+                    except (LookupError, TypeError, ValueError) as error:
+                        st.toast(str(error), icon="⚠️", duration=3000)
+                    else:
+                        st.session_state[draft_key] = draft
+
+    with remove_column:
+        with st.popover(
+            "Remove session",
+            use_container_width=True,
+        ):
+            sessions_by_label = {
+                f"{workout.day:%d %b} · {workout.title}": workout
+                for workout in future_sessions
+            }
+            selected_label = (
+                st.selectbox(
+                    "Session",
+                    tuple(sessions_by_label),
+                    key="plan-builder-remove-session",
+                )
+                if sessions_by_label
+                else None
+            )
+            if not sessions_by_label:
+                st.caption("No future training session can be removed.")
+            if st.button(
+                "Remove from draft",
+                key="plan-builder-remove-confirm",
+                use_container_width=True,
+                disabled=not sessions_by_label,
+            ):
+                selected = sessions_by_label[selected_label]
+                draft = draft.delete_workout(
+                    workout_day=selected.day,
+                )
+                st.session_state[draft_key] = draft
+
+    return draft
+
+
+def _plan_builder_recommendation(
+    draft,
+    *,
+    reference_day: date,
+) -> str | None:
+    """Warns when draft edits compress demanding recovery."""
+
+    demanding_tokens = (
+        "tempo",
+        "threshold",
+        "lt2",
+        "hill",
+        "interval",
+        "race",
+    )
+    demanding = tuple(
+        sorted(
+            (
+                workout
+                for workout in draft.workouts
+                if (
+                    workout.day >= reference_day
+                    and any(
+                        token in " ".join(
+                            (
+                                str(workout.title or ""),
+                                str(workout.intensity or ""),
+                                str(workout.focus or ""),
+                            )
+                        ).lower()
+                        for token in demanding_tokens
+                    )
+                )
+            ),
+            key=lambda workout: workout.scheduled_at,
+        )
+    )
+    for previous, following in zip(demanding, demanding[1:]):
+        if (following.day - previous.day).days < 2:
+            return (
+                f"{previous.title} on {previous.day:%d %b} and "
+                f"{following.title} on {following.day:%d %b} leave "
+                "less than 48 hours of recovery. Consider moving one "
+                "session or reducing the later session."
+            )
+    return None
 
 @st.dialog(
     "Plan Builder",
@@ -5465,7 +5645,7 @@ div[role="dialog"] [data-testid="stAlert"] {
 }
         .plan-builder-workspace {
             margin: 0.45rem 0 0.25rem;
-            color: #000;
+            color: var(--text-color);
         }
         .plan-builder-workspace h4 { margin: .5rem 0 .25rem; font-size: .72rem; }
         .plan-builder-weeks { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .35rem; }
@@ -5476,28 +5656,36 @@ div[role="dialog"] [data-testid="stAlert"] {
         .plan-builder-library span { padding: .35rem .55rem; border: 1px solid rgba(0,0,0,.2); border-radius: .4rem; font-size: .62rem; font-weight: 650; }
         .plan-builder-empty { font-size: .7rem; opacity: .65; }
         .plan-generation-notice {
-            color: #000;
+            color: var(--text-color);
             font-size: 0.84rem;
             line-height: 1.25;
         }
 
         .plan-generation-intro {
             margin: 0 0 0.4rem 0;
-            color: #000;
+            color: var(--text-color);
         }
 
         .plan-generation-section-title {
             margin: 0 0 0.42rem 0;
-            color: #000;
+            color: var(--text-color);
             font-size: 0.78rem;
             font-weight: 700;
         }
 
         .plan-generation-facts {
             border-top:
-                1px solid rgba(0, 0, 0, 0.18);
+                1px solid color-mix(
+                    in srgb,
+                    var(--text-color) 22%,
+                    transparent
+                );
             border-bottom:
-                1px solid rgba(0, 0, 0, 0.18);
+                1px solid color-mix(
+                    in srgb,
+                    var(--text-color) 22%,
+                    transparent
+                );
         }
 
         .plan-generation-row {
@@ -5509,7 +5697,11 @@ div[role="dialog"] [data-testid="stAlert"] {
             align-items: baseline;
             padding: 0.22rem 0;
             border-bottom:
-                1px solid rgba(0, 0, 0, 0.1);
+                1px solid color-mix(
+                    in srgb,
+                    var(--text-color) 12%,
+                    transparent
+                );
         }
 
         .plan-generation-row:last-child {
@@ -5517,12 +5709,12 @@ div[role="dialog"] [data-testid="stAlert"] {
         }
 
         .plan-generation-label {
-            color: #000;
+            color: var(--text-color);
             font-size: 0.7rem;
         }
 
         .plan-generation-value {
-            color: #000;
+            color: var(--text-color);
             font-size: 0.76rem;
             font-weight: 650;
             text-align: right;
@@ -5534,14 +5726,14 @@ div[role="dialog"] [data-testid="stAlert"] {
 
         .plan-generation-copy {
             margin: 0;
-            color: #000;
+            color: var(--text-color);
             font-size: 0.76rem;
             line-height: 1.42;
         }
 
         .plan-generation-note {
             margin: 0.5rem 0 0 0;
-            color: #000;
+            color: var(--text-color);
             font-size: 0.68rem;
             line-height: 1.35;
         }
@@ -5549,7 +5741,7 @@ div[role="dialog"] [data-testid="stAlert"] {
         .st-key-cancel-plan-generation button,
         .st-key-confirm-plan-generation button {
             min-height: 2.4rem;
-            color: #000 !important;
+            color: var(--text-color) !important;
             background: transparent !important;
             border-color:
                 rgba(0, 0, 0, 0.32) !important;
@@ -5558,7 +5750,7 @@ div[role="dialog"] [data-testid="stAlert"] {
 
         .st-key-cancel-plan-generation button:hover,
         .st-key-confirm-plan-generation button:hover {
-            color: #000 !important;
+            color: var(--text-color) !important;
             background:
                 rgba(0, 0, 0, 0.035) !important;
             border-color:
@@ -5600,6 +5792,12 @@ div[role="dialog"] [data-testid="stAlert"] {
         [role="dialog"]
         [data-testid="stButton"] {
             margin-top: 0 !important;
+        }
+
+        .st-key-plan-builder-reset-drag button,
+        .st-key-cancel-plan-generation button,
+        .st-key-confirm-plan-generation button {
+            color: var(--text-color) !important;
         }
         </style>
         """,
@@ -5783,6 +5981,25 @@ div[role="dialog"] [data-testid="stAlert"] {
                 reference_day=date.today(),
             )
         )
+
+        builder_draft = (
+            _show_plan_builder_session_actions(
+                draft=builder_draft,
+                draft_key=draft_key,
+                reference_day=date.today(),
+                plan_end=active_plan.end_date,
+            )
+        )
+
+        draft_recommendation = (
+            _plan_builder_recommendation(
+                builder_draft,
+                reference_day=date.today(),
+            )
+        )
+
+        if draft_recommendation:
+            st.warning(draft_recommendation)
 
         saved_plan = PlanPresenter(
             plan=active_plan,

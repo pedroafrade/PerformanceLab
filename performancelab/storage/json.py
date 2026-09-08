@@ -10,6 +10,7 @@ import json as json_module
 
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 from performancelab import (
     Athlete,
@@ -629,6 +630,10 @@ def _planned_workout_to_dict(workout):
 
     return {
 
+        "planned_workout_id": (
+            workout.planned_workout_id
+        ),
+
         "scheduled_at": _serialize_date(
             workout.scheduled_at
         ),
@@ -676,6 +681,11 @@ def _planned_workout_to_dict(workout):
 def _planned_workout_from_dict(data):
 
     return PlannedWorkout(
+
+        planned_workout_id=(
+            data.get("planned_workout_id")
+            or str(uuid4())
+        ),
 
         scheduled_at=_deserialize_date(
             data.get("scheduled_at")

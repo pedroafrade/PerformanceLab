@@ -6,9 +6,10 @@ Planned Workout
 Represents one planned workout.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import re
+from uuid import uuid4
 
 
 _LEGACY_CONTINUOUS_RUN_STEP = re.compile(
@@ -63,6 +64,11 @@ class PlannedWorkout:
     equipment: tuple[str, ...] = ()
 
     phase: str | None = None
+
+    planned_workout_id: str = field(
+        default_factory=lambda: str(uuid4()),
+        compare=False,
+    )
     
     # ======================================================
 

@@ -213,3 +213,28 @@ def test_rejects_duplicate_target_day():
                 8,
             ),
         )
+
+
+def test_planned_workout_identity_survives_move():
+
+    planned = workout(
+        8,
+        "Tempo Run",
+    )
+
+    draft = PlanBuilderDraft(
+        source_plan_id="plan-1",
+        source_revision_id=None,
+        workouts=(planned,),
+        baseline_workouts=(planned,),
+    )
+
+    moved = draft.move_workout(
+        source_day=date(2026, 9, 8),
+        target_day=date(2026, 9, 9),
+    )
+
+    assert (
+        moved.workouts[0].planned_workout_id
+        == planned.planned_workout_id
+    )
