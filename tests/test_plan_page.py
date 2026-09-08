@@ -2483,6 +2483,9 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "_planned_load_chart(" in source
     assert "builder_plan" in source
     assert "resizePlanBuilder" in source
+    assert "chart_revision" in source
+    assert "plan-builder-timeline-" in source
+    assert "saved_plan.chart_points" in source
 
 def test_plan_builder_uses_movable_week_structure():
 
@@ -2505,4 +2508,12 @@ def test_plan_builder_uses_movable_week_structure():
     assert "week_count" in source
     assert '"__WEEK_COUNT__"' in source
     assert "source_day < reference_day" in source
-    assert "Completed or past plan days cannot be changed." in source
+    assert "Completed or past plan days " in source
+    assert "cannot be changed." in source
+    assert "past_day_count" in source
+    assert "past_day_selectors" in source
+    assert "opacity: 0.5" in source
+    assert "pointer-events: none" in source
+    assert "st.toast" in source
+    assert "duration=3000" in source
+    assert "🔒" not in source

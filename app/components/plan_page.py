@@ -992,7 +992,7 @@ def _planned_load_chart(
         )
         .mark_line(
             interpolate="linear",
-            strokeWidth=2.2,
+            strokeWidth=2.6,
             strokeDash=[
                 6,
                 4,
@@ -1022,7 +1022,7 @@ def _planned_load_chart(
         )
         .mark_point(
             filled=False,
-            size=54,
+            size=68,
             color="#16a34a",
             strokeWidth=1.5,
             opacity=0.9,
@@ -4927,29 +4927,50 @@ def _show_plan_builder_drag_board(
         len(days)
         // 7
     )
+    past_day_count = max(
+        0,
+        min(
+            len(days),
+            (
+                reference_day
+                - grid_start
+            ).days,
+        ),
+    )
 
-    token_to_workout = {}
+    past_day_selectors = ",\n".join(
+        (
+            ".sortable-component "
+            f"> .sortable-container:nth-child({index})"
+        )
+        for index in range(
+            1,
+            past_day_count + 1,
+        )
+    )
 
-    for index, workout in enumerate(
-        workouts
-    ):
+    if past_day_selectors:
 
-        token = (
-            _plan_builder_workout_token(
-                workout,
-                index=index,
-            )
+        past_day_style = (
+            f"{past_day_selectors} {{"
+            "opacity: 0.5 !important;"
+            "pointer-events: none !important;"
+            "cursor: not-allowed !important;"
+            "}"
         )
 
-        if workout.day < reference_day:
+    else:
 
-            token = (
-                f"🔒 {token}"
-            )
+        past_day_style = ""
 
-        token_to_workout[
-            token
-        ] = workout
+    token_to_workout = {
+        _plan_builder_workout_token(
+            workout,
+            index=index,
+        ): workout
+        for index, workout
+        in enumerate(workouts)
+    }
 
     original_day_by_token = {
         token: workout.day
@@ -5010,7 +5031,7 @@ def _show_plan_builder_drag_board(
     .sortable-container {
         display: grid !important;
         grid-template-columns:
-            4.2rem minmax(0, 1fr) !important;
+            3.8rem minmax(0, 1fr) !important;
         gap: 3px !important;
         align-items: center !important;
         width: 100% !important;
@@ -5053,7 +5074,7 @@ def _show_plan_builder_drag_board(
                 0.62
             ) !important;
         background: transparent !important;
-        font-size: 8px !important;
+        font-size: 9px !important;
         font-weight: 650 !important;
         line-height: 1.1 !important;
         text-overflow: ellipsis !important;
@@ -5106,7 +5127,7 @@ def _show_plan_builder_drag_board(
                 63,
                 0.035
             ) !important;
-        font-size: 8px !important;
+        font-size: 9px !important;
         font-weight: 650 !important;
         line-height: 1.1 !important;
         text-overflow: ellipsis !important;
@@ -5191,9 +5212,13 @@ def _show_plan_builder_drag_board(
                 ) !important;
         }
     }
+    __PAST_DAY_STYLE__
     """.replace(
         "__WEEK_COUNT__",
         str(week_count),
+    ).replace(
+        "__PAST_DAY_STYLE__",
+        past_day_style,
     )
 
     result = sort_items(
@@ -5264,8 +5289,13 @@ def _show_plan_builder_drag_board(
         or target_day < reference_day
     ):
 
-        st.error(
-            "Completed or past plan days cannot be changed."
+        st.toast(
+            (
+                "Completed or past plan days "
+                "cannot be changed."
+            ),
+            icon="⚠️",
+            duration=3000,
         )
 
         return draft
@@ -5285,8 +5315,10 @@ def _show_plan_builder_drag_board(
         TypeError,
     ) as error:
 
-        st.error(
-            str(error)
+        st.toast(
+            str(error),
+            icon="⚠️",
+            duration=3000,
         )
 
         return draft
@@ -5780,11 +5812,38 @@ div[role="dialog"] [data-testid="stAlert"] {
             ),
         )
 
+        chart_revision = abs(
+            hash(
+                tuple(
+                    (
+                        index,
+                        workout.scheduled_at.isoformat(),
+                        workout.title,
+                        (
+                            workout.duration.total_seconds()
+                            if workout.duration is not None
+                            else None
+                        ),
+                        workout.distance,
+                        workout.elevation_gain,
+                    )
+                    for index, workout
+                    in enumerate(
+                        builder_draft.workouts
+                    )
+                )
+            )
+        )
+
         timeline_slot.altair_chart(
             _planned_load_chart(
                 builder_chart_plan
             ),
             use_container_width=True,
+            key=(
+                "plan-builder-timeline-"
+                f"{chart_revision}"
+            ),
         )
 
 
