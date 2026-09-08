@@ -367,21 +367,6 @@ class TrainingPlanReconciler:
             )
         )
 
-        (
-            revised_workouts,
-            generated_suggestions,
-        ) = (
-            self.adapter
-            ._apply_stimulus_suggestions(
-                workouts=list(
-                    plan.workouts
-                ),
-                suggestions=(
-                    generated_suggestions
-                ),
-            )
-        )
-
         applied_history = tuple(
             suggestion
             for suggestion
@@ -393,7 +378,7 @@ class TrainingPlanReconciler:
             )
         )
 
-        current_suggestions = (
+        suggestions_to_apply = (
             self.adapter
             ._merge_stimulus_suggestions(
                 existing=applied_history,
@@ -401,9 +386,34 @@ class TrainingPlanReconciler:
             )
         )
 
-        if (
+        (
+            revised_workouts,
+            current_suggestions,
+        ) = (
+            self.adapter
+            ._apply_stimulus_suggestions(
+                workouts=list(
+                    plan.workouts
+                ),
+                suggestions=(
+                    suggestions_to_apply
+                ),
+            )
+        )
+
+        suggestions_unchanged = (
             current_suggestions
             == plan.stimulus_suggestions
+        )
+
+        workouts_unchanged = (
+            tuple(revised_workouts)
+            == tuple(plan.workouts)
+        )
+
+        if (
+            suggestions_unchanged
+            and workouts_unchanged
         ):
             return plan
 

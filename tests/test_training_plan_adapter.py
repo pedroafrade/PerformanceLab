@@ -12,6 +12,7 @@ from performancelab.analysis.training_state import (
 )
 from performancelab.training.planning import (
     PlannedWorkout,
+    StimulusRebalanceSuggestion,
     TrainingPlan,
     TrainingPlanAdapter,
     WorkoutOutcome,
@@ -1562,4 +1563,126 @@ def test_hill_rebalancing_preserves_original_interval_dose():
     assert not any(
         "6×3 min uphill" in step
         for step in result
+    )
+
+def test_reapplies_persisted_hill_adaptation_with_original_dose():
+
+    source = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            1,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Hill Reps",
+        duration=timedelta(
+            minutes=45,
+        ),
+        purpose="intensity",
+        focus="hills",
+        structure=(
+            "Warm up 12 min",
+            "4×3 min uphill",
+            (
+                "Recover 2 min easy downhill "
+                "between repetitions"
+            ),
+            "Cool down 7 min",
+        ),
+    )
+
+    incorrectly_adapted = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            8,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Hill Reps",
+        duration=timedelta(
+            minutes=60,
+        ),
+        purpose="intensity",
+        focus="hills",
+        structure=(
+            "Warm up 20 min",
+            "6×3 min uphill",
+            (
+                "Recover 2 min easy downhill "
+                "between repetitions"
+            ),
+            "Cool down 5 min",
+        ),
+    )
+
+    suggestion = StimulusRebalanceSuggestion(
+        created_on=date(
+            2026,
+            9,
+            7,
+        ),
+        source_workout_day=date(
+            2026,
+            9,
+            1,
+        ),
+        source_workout_title="Hill Reps",
+        missing_stimulus=(
+            WorkoutStimulus.HILLS
+        ),
+        completed_stimulus=(
+            WorkoutStimulus.UNKNOWN
+        ),
+        candidate_workout_day=date(
+            2026,
+            9,
+            8,
+        ),
+        candidate_workout_title="Tempo Run",
+        candidate_stimulus=(
+            WorkoutStimulus.TEMPO
+        ),
+        recommendation=(
+            "Tempo Run was changed to Hill Reps."
+        ),
+        rationale=(
+            "Restores the missed climbing stimulus."
+        ),
+        applied=True,
+    )
+
+    (
+        revised_workouts,
+        revised_suggestions,
+    ) = (
+        TrainingPlanAdapter
+        ._apply_stimulus_suggestions(
+            workouts=[
+                source,
+                incorrectly_adapted,
+            ],
+            suggestions=(
+                suggestion,
+            ),
+        )
+    )
+
+    repaired = revised_workouts[1]
+
+    assert "4×3 min uphill" in (
+        repaired.structure
+    )
+
+    assert not any(
+        "6×3 min uphill" in step
+        for step in repaired.structure
+    )
+
+    assert (
+        revised_suggestions[0].applied
+        is True
     )
