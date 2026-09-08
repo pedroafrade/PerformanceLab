@@ -706,6 +706,18 @@ def test_exposes_latest_plan_adaptation():
             "than planned."
         )
     )
+    assert (
+        result.latest_adaptation
+        .reconciled_on
+        == adaptation.reconciled_on
+    )
+
+    assert (
+        result.latest_adaptation
+        .workout_day
+        == adaptation.workout_day
+    )
+
 def test_presents_recovery_as_planned_decision():
 
     assert (

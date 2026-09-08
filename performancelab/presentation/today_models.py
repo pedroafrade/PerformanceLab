@@ -19,7 +19,9 @@ from .dashboard_models import (
     TrainingLoadCardData,
     WeeklyPlanDayData,
 )
-
+from .plan_models import (
+    PlanStimulusSuggestionData,
+)
 
 @dataclass(frozen=True)
 class TodayReadinessData:
@@ -83,7 +85,8 @@ class TodayAdaptationData:
     """
     Presentation-ready before/after plan adaptation.
     """
-
+    reconciled_on: date
+    workout_day: date
     workout_title: str
 
     previous_minutes: int
@@ -142,6 +145,10 @@ class TodayData:
     guidance: TodayGuidanceData
     latest_adaptation: (
         TodayAdaptationData
+        | None
+    )
+    latest_stimulus_suggestion: (
+        PlanStimulusSuggestionData
         | None
     )
 

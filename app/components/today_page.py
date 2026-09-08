@@ -27,6 +27,11 @@ from .workout_table import (
     format_workout_start_time,
 )
 
+from .plan_page import (
+    _sidebar_adaptation_html,
+    _sidebar_styles,
+)
+
 def _navigate_to(
     page: str,
 ) -> None:
@@ -687,70 +692,120 @@ def _adaptation_column_html(
 
 def _show_latest_adaptation(
     adaptation,
+    *,
+    reference_day,
+    stimulus_suggestion=None,
 ) -> None:
     """
-    Displays the latest persisted plan adaptation.
+    Displays the Plan adaptation container on Today.
     """
 
-    if adaptation is None:
+    if (
+        adaptation is None
+        and stimulus_suggestion is None
+    ):
         return
 
-    planned_rows = (
-        _adaptation_metric_rows(
+    today_adaptation_css = """
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-card {
+        width: 100%;
+        height: 11rem !important;
+        min-height: 11rem !important;
+        max-height: 11rem !important;
+        margin: 0;
+        padding: 0.75rem;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        scrollbar-gutter: stable;
+        overscroll-behavior: contain;
+        box-sizing: border-box;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-heading {
+        margin-bottom: 0.7rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-header {
+        font-size: 0.72rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-source {
+        font-size: 0.68rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-gap {
+        font-size: 0.65rem;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-column-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.52rem;
+        line-height: 1.15;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-column-title {
+        margin-bottom: 0.28rem;
+        font-size: 0.69rem;
+        line-height: 1.15;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-metric {
+        font-size: 0.61rem;
+        line-height: 1.2;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-recommendation,
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-rationale,
+    .st-key-today_adaptation_card
+    .plan-stimulus-suggestion-note {
+        font-size: 0.64rem;
+        line-height: 1.4;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-context {
+        font-size: 0.68rem;
+        line-height: 1.35;
+    }
+
+    .st-key-today_adaptation_card
+    .plan-sidebar-adaptation-status {
+        font-size: 0.58rem;
+    }
+    """
+
+    adaptation_html = (
+        "<style>"
+        + _sidebar_styles()
+        + today_adaptation_css
+        + "</style>"
+        + _sidebar_adaptation_html(
             adaptation,
-            adjusted=False,
-        )
-    )
-
-    adjusted_rows = (
-        _adaptation_metric_rows(
-            adaptation,
-            adjusted=True,
-        )
-    )
-
-    planned_html = (
-        _adaptation_column_html(
-            label="Planned session",
-            title=(
-                adaptation.workout_title
-                or "Planned workout"
+            reference_day=reference_day,
+            stimulus_suggestion=(
+                stimulus_suggestion
             ),
-            rows=planned_rows,
-            adjusted=False,
         )
-    )
-
-    adjusted_html = (
-        _adaptation_column_html(
-            label="Adjusted session",
-            title=(
-                adaptation.workout_title
-                or "Adjusted workout"
-            ),
-            rows=adjusted_rows,
-            adjusted=True,
-        )
-    )
-
-    comparison_html = (
-        '<div class="today-adaptation-comparison">'
-        f"{planned_html}"
-        '<div class="today-adaptation-arrow">'
-        "&rarr;"
-        "</div>"
-        f"{adjusted_html}"
-        "</div>"
     )
 
     with st.container(
-        border=True,
-        key="today_adaptation_card",
+         key="today_adaptation_card",
     ):
         st.html(
-            '<div class="today-guidance-heading">Latest plan adaptation</div>'
-            '<div class="today-adaptation-reason">'
-            + escape(adaptation.reason or "") + '</div>' + comparison_html
+            adaptation_html
         )
 
 def _show_guidance_card(
@@ -1335,9 +1390,15 @@ def show_today_page(
             )
 
             _show_latest_adaptation(
-                today.latest_adaptation
+                today.latest_adaptation,
+                reference_day=(
+                    today.reference_day
+                ),
+                stimulus_suggestion=(
+                    today
+                    .latest_stimulus_suggestion
+                ),
             )
-
 
     if today_workout is not None:
         show_activity_analysis(

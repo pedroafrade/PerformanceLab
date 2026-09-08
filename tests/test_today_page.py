@@ -27,6 +27,7 @@ from app.components.today_page import (
     _today_session_status,
     _today_session_title,
     show_today_page,
+    _show_latest_adaptation,
 )
 
 import app.components.today_page as today_page
@@ -415,3 +416,111 @@ def test_temporary_adjustment_renderer_exists():
     assert callable(
         _show_temporary_adjustment
     )
+
+def test_today_reuses_plan_adaptation_container(
+    monkeypatch,
+):
+
+    rendered = []
+
+    class Container:
+
+        def __enter__(self):
+            return self
+
+        def __exit__(
+            self,
+            exc_type,
+            exc_value,
+            traceback,
+        ):
+            return False
+
+    monkeypatch.setattr(
+        today_page.st,
+        "container",
+        lambda **kwargs: Container(),
+    )
+
+    monkeypatch.setattr(
+        today_page.st,
+        "html",
+        rendered.append,
+    )
+
+    adaptation = SimpleNamespace(
+        reconciled_on=datetime(
+            2026,
+            9,
+            7,
+        ).date(),
+        workout_day=datetime(
+            2026,
+            9,
+            8,
+        ).date(),
+        workout_title="Hill Reps",
+        previous_minutes=60,
+        revised_minutes=60,
+        reason=(
+            "A missed session changed "
+            "future training."
+        ),
+        previous_distance=None,
+        revised_distance=None,
+        previous_elevation_gain=None,
+        revised_elevation_gain=None,
+        previous_prescription="Tempo",
+        revised_prescription=(
+            "4×3 min uphill"
+        ),
+    )
+
+    suggestion = SimpleNamespace(
+        source_workout_day=datetime(
+            2026,
+            9,
+            1,
+        ).date(),
+        source_workout_title="Hill Run",
+        missing_stimulus="hills",
+        completed_stimulus="unknown",
+        candidate_workout_day=datetime(
+            2026,
+            9,
+            8,
+        ).date(),
+        candidate_workout_title="Tempo Run",
+        candidate_stimulus="tempo",
+        recommendation=(
+            "Tempo Run on 08 Sep was changed "
+            "to Hill Reps."
+        ),
+        rationale=(
+            "The planned hills session was "
+            "not completed. The Long Run is "
+            "preserved."
+        ),
+        applied=True,
+    )
+
+    _show_latest_adaptation(
+        adaptation,
+        reference_day=datetime(
+            2026,
+            9,
+            8,
+        ).date(),
+        stimulus_suggestion=(
+            suggestion
+        ),
+    )
+
+    html = rendered[0]
+
+    assert "Plan adaptation" in html
+    assert "Planned session" in html
+    assert "Adjusted session" in html
+    assert "Tempo Run" in html
+    assert "Hill Reps" in html
+    assert "4×3 min uphill" in html

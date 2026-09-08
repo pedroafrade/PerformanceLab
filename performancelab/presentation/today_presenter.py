@@ -40,7 +40,9 @@ from .today_models import (
     TodaySessionCardData,
     TodayTemporaryAdjustmentData,
 )
-
+from .plan_presenter import (
+    PlanPresenter,
+)
 
 class TodayPresenter:
     """
@@ -202,6 +204,23 @@ class TodayPresenter:
             else None
         )
 
+        latest_stimulus_suggestion = (
+            PlanPresenter(
+                plan=(
+                    self.athlete
+                    .training_plan
+                ),
+                history=(
+                    self.athlete.history
+                ),
+            )
+            ._next_stimulus_suggestion_data(
+                reference_day=(
+                    reference_day
+                )
+            )
+        )
+
         return TodayData(
             reference_day=reference_day,
             today_session=today_session,
@@ -288,6 +307,9 @@ class TodayPresenter:
                 if latest_adaptation
                 is not None
                 else None
+            ),
+            latest_stimulus_suggestion=(
+                latest_stimulus_suggestion
             ),
             latest_activity=(
                 dashboard.latest_activity
@@ -675,6 +697,12 @@ class TodayPresenter:
         )
 
         return TodayAdaptationData(
+            reconciled_on=(
+                adaptation.reconciled_on
+            ),
+            workout_day=(
+                adaptation.workout_day
+            ),
             workout_title=(
                 adaptation.workout_title
             ),
