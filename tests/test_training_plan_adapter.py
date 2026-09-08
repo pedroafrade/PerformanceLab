@@ -1514,3 +1514,52 @@ def test_applies_safe_stimulus_rebalancing_to_future_slot():
         .applied
         is True
     )
+
+def test_hill_rebalancing_preserves_original_interval_dose():
+
+    source = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            1,
+            8,
+            0,
+        ),
+        sport="Running",
+        title="Hill Reps",
+        duration=timedelta(
+            minutes=45,
+        ),
+        purpose="intensity",
+        focus="hills",
+        structure=(
+            "Warm up 12 min",
+            "4×3 min uphill",
+            (
+                "Recover 2 min easy downhill "
+                "between repetitions"
+            ),
+            "Cool down 7 min",
+        ),
+    )
+
+    result = (
+        TrainingPlanAdapter
+        ._adapted_hill_structure(
+            workout=source,
+            total_minutes=60,
+        )
+    )
+
+    assert "4×3 min uphill" in result
+
+    assert (
+        "Recover 2 min easy downhill "
+        "between repetitions"
+        in result
+    )
+
+    assert not any(
+        "6×3 min uphill" in step
+        for step in result
+    )

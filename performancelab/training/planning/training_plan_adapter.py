@@ -361,6 +361,10 @@ class TrainingPlanAdapter:
 
             provisional_workout = replace(
                 candidate,
+                structure=(
+                    source_workout.structure
+                    or candidate.structure
+                ),
                 title=revised_title,
                 description=(
                     source_workout.description
@@ -1220,8 +1224,12 @@ class TrainingPlanAdapter:
         total_minutes: int,
     ) -> tuple[str, ...]:
         """
-        Preserves an explicit hill-repetition prescription
-        when a hill session is shortened.
+        Transfers the explicit hill-repetition dose from the
+        missed session.
+
+        Repetitions, work duration and recovery duration are
+        preserved whenever they fit safely in the new slot.
+        Only preparation and cool-down time are adjusted.
         """
 
         original_structure = tuple(
@@ -1230,6 +1238,7 @@ class TrainingPlanAdapter:
             if str(step).strip()
         )
 
+        explicit_repetitions = None
         repetition_minutes = 3
         recovery_minutes = 2
 
@@ -1243,10 +1252,34 @@ class TrainingPlanAdapter:
             ):
 
                 try:
+                    repetitions_part = (
+                        normalized
+                        .split("×", 1)[0]
+                        .strip()
+                        .split()[-1]
+                    )
+
+                    explicit_repetitions = max(
+                        1,
+                        int(
+                            repetitions_part
+                        ),
+                    )
+
+                except (
+                    ValueError,
+                    IndexError,
+                ):
+                    explicit_repetitions = None
+
+                try:
                     interval_part = (
                         normalized
                         .split("×", 1)[1]
-                        .split("min uphill", 1)[0]
+                        .split(
+                            "min uphill",
+                            1,
+                        )[0]
                         .strip()
                     )
 
@@ -1293,18 +1326,10 @@ class TrainingPlanAdapter:
                 ):
                     pass
 
-        warm_up_minutes = min(
-            10,
-            max(
-                7,
-                total_minutes // 4,
-            ),
-        )
-
         cool_down_minutes = min(
-            5,
+            8,
             max(
-                4,
+                5,
                 total_minutes // 8,
             ),
         )
@@ -1313,50 +1338,65 @@ class TrainingPlanAdapter:
             1,
             (
                 total_minutes
-                - warm_up_minutes
                 - cool_down_minutes
+                - 5
             ),
         )
 
-        repetition_block = (
-            repetition_minutes
-            + recovery_minutes
-        )
+        if explicit_repetitions is not None:
 
-        repetitions = max(
-            3,
-            (
-                available_minutes
+            repetitions = (
+                explicit_repetitions
+            )
+
+        else:
+
+            repetition_block = (
+                repetition_minutes
                 + recovery_minutes
             )
-            // repetition_block,
-        )
 
-        while (
-            repetitions > 3
-            and (
-                repetitions
+            repetitions = max(
+                3,
+                (
+                    available_minutes
+                    + recovery_minutes
+                )
+                // repetition_block,
+            )
+
+        def main_block_minutes(
+            repetition_count,
+        ):
+
+            return (
+                repetition_count
                 * repetition_minutes
                 + (
-                    repetitions - 1
+                    repetition_count - 1
                 )
                 * recovery_minutes
+            )
+
+        # Reduce the dose only when the original prescription
+        # cannot physically fit in the future session.
+        while (
+            repetitions > 1
+            and main_block_minutes(
+                repetitions
             )
             > available_minutes
         ):
             repetitions -= 1
 
         prescribed_main_minutes = (
-            repetitions
-            * repetition_minutes
-            + (
-                repetitions - 1
+            main_block_minutes(
+                repetitions
             )
-            * recovery_minutes
         )
 
-        remaining_minutes = max(
-            0,
+        warm_up_minutes = max(
+            5,
             (
                 total_minutes
                 - prescribed_main_minutes
@@ -1364,13 +1404,11 @@ class TrainingPlanAdapter:
             ),
         )
 
-        warm_up_minutes = max(
-            5,
-            remaining_minutes,
-        )
-
         return (
-            f"Warm up {warm_up_minutes} min",
+            (
+                f"Warm up "
+                f"{warm_up_minutes} min"
+            ),
             (
                 f"{repetitions}×"
                 f"{repetition_minutes} min uphill"
@@ -1379,7 +1417,10 @@ class TrainingPlanAdapter:
                 f"Recover {recovery_minutes} min "
                 "easy downhill between repetitions"
             ),
-            f"Cool down {cool_down_minutes} min",
+            (
+                f"Cool down "
+                f"{cool_down_minutes} min"
+            ),
         )
 
 
