@@ -388,6 +388,17 @@ def test_builds_training_plan_for_competition_block(
         TrainingPlan,
     )
 
+    assert len(plan.revisions) == 1
+    assert plan.revisions[0].source == "generated"
+    assert (
+        plan.active_revision_id
+        == plan.revisions[0].revision_id
+    )
+    assert (
+        plan.revisions[0].workouts
+        == tuple(plan.workouts)
+    )
+
     assert plan.start_date == date(
         2026,
         7,

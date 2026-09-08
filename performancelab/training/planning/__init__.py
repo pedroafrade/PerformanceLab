@@ -8,6 +8,7 @@ from .planned_workout import PlannedWorkout
 from .plan_adaptation import (
     TrainingPlanAdaptation,
 )
+from .plan_revision import TrainingPlanRevision
 from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
@@ -37,6 +38,7 @@ from .stimulus_rebalancer import (
 __all__ = [
     "PlannedWorkout",
     "TrainingPlanAdaptation",
+    "TrainingPlanRevision",
     "TrainingPlan",
     "TrainingPlanAdapter",
     "TrainingPlanReconciler",

@@ -44,6 +44,9 @@ from performancelab.training.planning.training_plan import (
 from performancelab.training.planning.plan_adaptation import (
     TrainingPlanAdaptation,
 )
+from performancelab.training.planning.plan_revision import (
+    TrainingPlanRevision,
+)
 from performancelab.training.planning.workout_outcome import (
     WorkoutOutcomeStatus,
 )
@@ -871,6 +874,55 @@ def _training_plan_adaptation_from_dict(
         ),
     )
 
+
+# ======================================================
+
+def _training_plan_revision_to_dict(
+    revision,
+):
+
+    return {
+        "revision_id": revision.revision_id,
+        "created_on": _serialize_date(
+            revision.created_on
+        ),
+        "source": revision.source,
+        "reason": revision.reason,
+        "parent_revision_id": (
+            revision.parent_revision_id
+        ),
+        "workouts": [
+            _planned_workout_to_dict(workout)
+            for workout in revision.workouts
+        ],
+    }
+
+
+# ======================================================
+
+def _training_plan_revision_from_dict(
+    data,
+):
+
+    return TrainingPlanRevision(
+        revision_id=data.get("revision_id"),
+        created_on=_deserialize_date(
+            data.get("created_on")
+        ),
+        source=data.get("source"),
+        reason=data.get("reason", ""),
+        parent_revision_id=data.get(
+            "parent_revision_id"
+        ),
+        workouts=tuple(
+            _planned_workout_from_dict(workout_data)
+            for workout_data in data.get(
+                "workouts",
+                [],
+            )
+        ),
+    )
+
 # ======================================================
 # Goal
 # ======================================================
@@ -1478,6 +1530,19 @@ def athlete_to_dict(athlete):
 
             ],
 
+            "revisions": [
+                _training_plan_revision_to_dict(
+                    revision
+                )
+                for revision in (
+                    athlete.training_plan.revisions
+                )
+            ],
+
+            "active_revision_id": (
+                athlete.training_plan.active_revision_id
+            ),
+
             "workouts": [
 
                 _planned_workout_to_dict(workout)
@@ -1722,6 +1787,24 @@ def athlete_from_dict(data):
                         "original_workouts",
                         [],
                     )
+                )
+            ),
+
+            revisions=tuple(
+                _training_plan_revision_from_dict(
+                    revision_data
+                )
+                for revision_data in (
+                    training_plan_data.get(
+                        "revisions",
+                        [],
+                    )
+                )
+            ),
+
+            active_revision_id=(
+                training_plan_data.get(
+                    "active_revision_id"
                 )
             ),
 

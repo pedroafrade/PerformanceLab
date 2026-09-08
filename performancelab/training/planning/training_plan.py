@@ -18,6 +18,7 @@ from .plan_adaptation import (
 from .stimulus_rebalancer import (
     StimulusRebalanceSuggestion,
 )
+from .plan_revision import TrainingPlanRevision
 from .workout_collection import WorkoutCollection
 
 from .workout_outcome import (
@@ -72,6 +73,13 @@ class TrainingPlan(WorkoutCollection):
         PlannedWorkout,
         ...,
     ] = ()
+
+    revisions: tuple[
+        TrainingPlanRevision,
+        ...,
+    ] = ()
+
+    active_revision_id: str | None = None
 
     primary_event_id: str | None = None
 
@@ -273,6 +281,37 @@ class TrainingPlan(WorkoutCollection):
             raise TypeError(
                 "original_workouts must contain "
                 "PlannedWorkout objects."
+            )
+
+        if not isinstance(self.revisions, tuple):
+            raise TypeError("revisions must be a tuple.")
+
+        if not all(
+            isinstance(revision, TrainingPlanRevision)
+            for revision in self.revisions
+        ):
+            raise TypeError(
+                "revisions must contain TrainingPlanRevision "
+                "objects."
+            )
+
+        revision_ids = tuple(
+            revision.revision_id
+            for revision in self.revisions
+        )
+
+        if len(set(revision_ids)) != len(revision_ids):
+            raise ValueError(
+                "revisions cannot contain duplicate IDs."
+            )
+
+        if (
+            self.active_revision_id is not None
+            and self.active_revision_id not in revision_ids
+        ):
+            raise ValueError(
+                "active_revision_id must identify a stored "
+                "revision."
             )
         for event_id in self.competition_event_ids:
 

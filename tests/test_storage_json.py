@@ -1565,3 +1565,47 @@ def test_training_plan_stimulus_suggestions_round_trip():
     )
 
     assert restored == suggestion
+
+
+def test_training_plan_revision_round_trip():
+
+    from performancelab.training.planning import (
+        TrainingPlanRevision,
+    )
+
+    planned = PlannedWorkout(
+        scheduled_at=datetime(
+            2026,
+            9,
+            8,
+            8,
+        ),
+        sport="Running",
+        title="Hill Reps",
+        duration=timedelta(minutes=45),
+    )
+
+    revision = TrainingPlanRevision(
+        revision_id="revision-1",
+        created_on=date(2026, 9, 7),
+        source="automatic_adaptation",
+        workouts=(planned,),
+        reason="Recovered missing hills stimulus.",
+        parent_revision_id="revision-0",
+    )
+
+    payload = (
+        json_storage
+        ._training_plan_revision_to_dict(
+            revision
+        )
+    )
+
+    restored = (
+        json_storage
+        ._training_plan_revision_from_dict(
+            payload
+        )
+    )
+
+    assert restored == revision

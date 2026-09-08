@@ -1516,6 +1516,78 @@ def test_applies_safe_stimulus_rebalancing_to_future_slot():
         is True
     )
 
+
+def test_rechecks_remaining_quality_recovery_and_records_revision():
+
+    plan = make_plan()
+
+    plan.workouts[0] = replace(
+        plan.workouts[0],
+        title="Hill Run",
+        purpose="intensity",
+        focus="hills",
+        intensity="Hard",
+    )
+
+    plan.workouts[1] = replace(
+        plan.workouts[1],
+        title="Tempo Run",
+        purpose="intensity",
+        focus="tempo",
+        intensity="Tempo",
+    )
+
+    plan.workouts[2] = replace(
+        plan.workouts[2],
+        title="LT2 Run",
+        purpose="intensity",
+        focus="threshold",
+        intensity="LT2",
+    )
+
+    outcome = WorkoutOutcome(
+        planned_workout=plan.workouts[0],
+        completed_workout=None,
+        status=WorkoutOutcomeStatus.MISSED,
+        planned_load=180.0,
+        completed_load=None,
+    )
+
+    adapted = TrainingPlanAdapter().adapt(
+        plan=plan,
+        outcomes=(outcome,),
+        training_state=make_training_state(),
+        reference_day=date(2026, 8, 5),
+    )
+
+    assert adapted.workouts[1].title == "Hill Reps"
+    assert (
+        adapted.workouts[2].duration
+        == timedelta(minutes=51)
+    )
+    assert (
+        adapted.workouts[2].prescription_summary
+        == (
+            "Reduced to protect recovery after "
+            "stimulus rebalancing."
+        )
+    )
+
+    assert len(adapted.revisions) == 2
+    assert adapted.revisions[0].source == "generated"
+    assert (
+        adapted.revisions[1].source
+        == "automatic_adaptation"
+    )
+    assert (
+        adapted.active_revision_id
+        == adapted.revisions[1].revision_id
+    )
+    assert (
+        adapted.revisions[0].workouts
+        == tuple(plan.workouts)
+    )
+
 def test_hill_rebalancing_preserves_original_interval_dose():
 
     source = PlannedWorkout(

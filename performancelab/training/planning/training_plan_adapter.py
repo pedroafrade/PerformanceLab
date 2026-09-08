@@ -28,12 +28,15 @@ from .workout_outcome import (
 from .stimulus_rebalancer import (
     StimulusRebalancer,
 )
+from .plan_revision import TrainingPlanRevision
 
 
 MAX_OVERLOAD_DURATION_REDUCTION = 0.20
 OVERLOAD_RESPONSE_FRACTION = 0.25
 MAX_UNDERLOAD_DURATION_INCREASE = 0.05
 UNDERLOAD_RECOVERY_FRACTION = 0.25
+STIMULUS_RECOVERY_REDUCTION = 0.15
+MINIMUM_QUALITY_RECOVERY_DAYS = 3
 
 
 class TrainingPlanAdapter:
@@ -192,6 +195,16 @@ class TrainingPlanAdapter:
             ),
         )
 
+        workouts = (
+            self._rebalance_recovery_after_stimulus(
+                workouts=workouts,
+                suggestions=stimulus_suggestions,
+                adaptation_deadline=(
+                    adaptation_deadline
+                ),
+            )
+        )
+
         merged_stimulus_suggestions = (
             self._merge_stimulus_suggestions(
                 existing=(
@@ -223,6 +236,15 @@ class TrainingPlanAdapter:
             )
         )
 
+        revisions, active_revision_id = (
+            self._revision_history(
+                plan=plan,
+                original_workouts=original_workouts,
+                revised_workouts=tuple(workouts),
+                reference_day=reference_day,
+            )
+        )
+
         return TrainingPlan(
             plan_id=plan.plan_id,
             start_date=plan.start_date,
@@ -247,6 +269,8 @@ class TrainingPlanAdapter:
                 plan.original_workouts
                 or original_workouts
             ),
+            revisions=revisions,
+            active_revision_id=active_revision_id,
             primary_event_id=(
                 plan.primary_event_id
             ),
@@ -255,6 +279,158 @@ class TrainingPlanAdapter:
             ),
             workouts=workouts,
         )
+
+    # ======================================================
+    @staticmethod
+    def _revision_history(
+        *,
+        plan: TrainingPlan,
+        original_workouts,
+        revised_workouts,
+        reference_day: date,
+    ):
+        """Records complete recoverable plan snapshots."""
+
+        existing = plan.revisions
+
+        if tuple(original_workouts) == tuple(revised_workouts):
+            return existing, plan.active_revision_id
+
+        if existing:
+            parent_revision_id = (
+                plan.active_revision_id
+                or existing[-1].revision_id
+            )
+            revisions = existing
+        else:
+            baseline = TrainingPlanRevision(
+                created_on=(
+                    plan.start_date
+                    or reference_day
+                ),
+                source="generated",
+                workouts=tuple(original_workouts),
+                reason="Initial generated plan.",
+            )
+            parent_revision_id = baseline.revision_id
+            revisions = (baseline,)
+
+        adapted_revision = TrainingPlanRevision(
+            created_on=reference_day,
+            source="automatic_adaptation",
+            workouts=tuple(revised_workouts),
+            reason=(
+                "Training outcomes changed the remaining "
+                "plan before the next race."
+            ),
+            parent_revision_id=parent_revision_id,
+        )
+
+        return (
+            (*revisions, adapted_revision),
+            adapted_revision.revision_id,
+        )
+
+    # ======================================================
+    @staticmethod
+    def _rebalance_recovery_after_stimulus(
+        *,
+        workouts,
+        suggestions,
+        adaptation_deadline,
+    ):
+        """
+        Rechecks the remaining quality sequence after an
+        applied stimulus substitution.
+
+        A later unprotected quality session less than three
+        calendar days away is shortened conservatively.
+        Long runs, taper, races and recovery remain intact.
+        """
+
+        applied_days = tuple(
+            sorted(
+                suggestion.candidate_workout_day
+                for suggestion in suggestions
+                if suggestion.applied
+            )
+        )
+
+        if not applied_days:
+            return list(workouts)
+
+        updated = list(workouts)
+
+        for applied_day in applied_days:
+            next_quality_index = next(
+                (
+                    index
+                    for index, workout
+                    in enumerate(updated)
+                    if (
+                        workout.day > applied_day
+                        and (
+                            adaptation_deadline is None
+                            or workout.day < adaptation_deadline
+                        )
+                        and (
+                            workout.day - applied_day
+                        ).days
+                        < MINIMUM_QUALITY_RECOVERY_DAYS
+                        and workout.duration is not None
+                        and TrainingPlanAdapter._is_demanding(
+                            workout
+                        )
+                        and not TrainingPlanAdapter._is_protected(
+                            workout
+                        )
+                    )
+                ),
+                None,
+            )
+
+            if next_quality_index is None:
+                continue
+
+            candidate = updated[next_quality_index]
+            revised_duration = (
+                candidate.duration
+                * (1.0 - STIMULUS_RECOVERY_REDUCTION)
+            )
+            factor = (
+                revised_duration.total_seconds()
+                / candidate.duration.total_seconds()
+            )
+
+            updated[next_quality_index] = replace(
+                candidate,
+                duration=revised_duration,
+                distance=(
+                    TrainingPlanAdapter._scaled_metric(
+                        candidate.distance,
+                        factor=factor,
+                    )
+                ),
+                elevation_gain=(
+                    TrainingPlanAdapter._scaled_metric(
+                        candidate.elevation_gain,
+                        factor=factor,
+                    )
+                ),
+                structure=(
+                    TrainingPlanAdapter._adapted_structure(
+                        workout=candidate,
+                        duration=revised_duration,
+                        main_label="Controlled quality work",
+                    )
+                ),
+                prescription_summary=(
+                    "Reduced to protect recovery after "
+                    "stimulus rebalancing."
+                ),
+            )
+
+        return updated
 
     # ======================================================
     @staticmethod
@@ -601,6 +777,12 @@ class TrainingPlanAdapter:
             else:
                 candidates = (
                     underload_outcomes
+                )
+
+            if not candidates:
+                candidates = (
+                    overload_outcomes
+                    + underload_outcomes
                 )
 
             trigger = max(

@@ -40,6 +40,7 @@ from performancelab.training.load import (
 from .weekly_plan import WeeklyPlan
 from .weekly_plan_builder import WeeklyPlanBuilder
 from .training_plan import TrainingPlan
+from .plan_revision import TrainingPlanRevision
 
 if TYPE_CHECKING:
     from performancelab.athlete import Athlete
@@ -557,10 +558,23 @@ class Planner:
                 days=7
             )
 
+        original_workouts = tuple(
+            training_plan.workouts
+        )
+
+        initial_revision = TrainingPlanRevision(
+            created_on=reference_day,
+            source="generated",
+            workouts=original_workouts,
+            reason="Initial generated plan.",
+        )
+
         return replace(
             training_plan,
-            original_workouts=tuple(
-                training_plan.workouts
+            original_workouts=original_workouts,
+            revisions=(initial_revision,),
+            active_revision_id=(
+                initial_revision.revision_id
             ),
         )
 
