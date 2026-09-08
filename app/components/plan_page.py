@@ -5042,19 +5042,17 @@ def _show_plan_builder_drag_board(
         padding: 3px !important;
         overflow: hidden !important;
         border:
-            1px solid rgba(
-                49,
-                51,
-                63,
-                0.14
+            1px solid color-mix(
+                in srgb,
+                var(--text-color) 24%,
+                transparent
             ) !important;
         border-radius: 5px !important;
         background:
-            rgba(
-                49,
-                51,
-                63,
-                0.018
+            color-mix(
+                in srgb,
+                var(--secondary-background-color) 88%,
+                var(--background-color)
             ) !important;
         box-sizing: border-box !important;
     }
@@ -5066,11 +5064,10 @@ def _show_plan_builder_drag_board(
         padding: 0 2px !important;
         overflow: hidden !important;
         color:
-            rgba(
-                49,
-                51,
-                63,
-                0.62
+            color-mix(
+                in srgb,
+                var(--text-color) 78%,
+                transparent
             ) !important;
         background: transparent !important;
         font-size: 9px !important;
@@ -5106,26 +5103,16 @@ def _show_plan_builder_drag_board(
         padding: 6px 5px !important;
         overflow: hidden !important;
         border:
-            1px solid rgba(
-                49,
-                51,
-                63,
-                0.17
+            1px solid color-mix(
+                in srgb,
+                var(--text-color) 30%,
+                transparent
             ) !important;
         border-radius: 4px !important;
         color:
-            rgb(
-                49,
-                51,
-                63
-            ) !important;
+            var(--text-color) !important;
         background:
-            rgba(
-                49,
-                51,
-                63,
-                0.035
-            ) !important;
+            var(--secondary-background-color) !important;
         font-size: 9px !important;
         font-weight: 650 !important;
         line-height: 1.1 !important;
@@ -5137,18 +5124,16 @@ def _show_plan_builder_drag_board(
 
     .sortable-item:hover {
         border-color:
-            rgba(
-                49,
-                51,
-                63,
-                0.36
+            color-mix(
+                in srgb,
+                var(--text-color) 55%,
+                transparent
             ) !important;
         background:
-            rgba(
-                49,
-                51,
-                63,
-                0.07
+            color-mix(
+                in srgb,
+                var(--secondary-background-color) 82%,
+                var(--text-color) 18%
             ) !important;
     }
 
@@ -5160,57 +5145,6 @@ def _show_plan_builder_drag_board(
         opacity: 0.35 !important;
     }
 
-    @media (prefers-color-scheme: dark) {
-        .sortable-container {
-            border-color:
-                rgba(
-                    250,
-                    250,
-                    250,
-                    0.15
-                ) !important;
-            background:
-                rgba(
-                    250,
-                    250,
-                    250,
-                    0.018
-                ) !important;
-        }
-
-        .sortable-container-header {
-            color:
-                rgba(
-                    250,
-                    250,
-                    250,
-                    0.62
-                ) !important;
-        }
-
-        .sortable-item {
-            border-color:
-                rgba(
-                    250,
-                    250,
-                    250,
-                    0.17
-                ) !important;
-            color:
-                rgb(
-                    250,
-                    250,
-                    250
-                ) !important;
-            background:
-                rgba(
-                    250,
-                    250,
-                    250,
-                    0.045
-                ) !important;
-        }
-    }
     __PAST_DAY_STYLE__
     """.replace(
         "__WEEK_COUNT__",
@@ -5581,8 +5515,8 @@ div[role="dialog"] {
     max-width: 1500px !important;
 }
 div[data-testid="stDialog"] [role="dialog"] {
-    height: 94vh !important;
-    max-height: 94vh !important;
+    height: auto !important;
+    max-height: 92vh !important;
     overflow: hidden !important;
 }
 
@@ -5744,7 +5678,11 @@ div[role="dialog"] [data-testid="stAlert"] {
             color: var(--text-color) !important;
             background: transparent !important;
             border-color:
-                rgba(0, 0, 0, 0.32) !important;
+                color-mix(
+                    in srgb,
+                    var(--text-color) 48%,
+                    transparent
+                ) !important;
             box-shadow: none !important;
         }
 
@@ -5754,7 +5692,11 @@ div[role="dialog"] [data-testid="stAlert"] {
             background:
                 rgba(0, 0, 0, 0.035) !important;
             border-color:
-                rgba(0, 0, 0, 0.6) !important;
+                color-mix(
+                    in srgb,
+                    var(--text-color) 76%,
+                    transparent
+                ) !important;
         }
 
         .st-key-confirm-plan-generation button {
@@ -5798,6 +5740,12 @@ div[role="dialog"] [data-testid="stAlert"] {
         .st-key-cancel-plan-generation button,
         .st-key-confirm-plan-generation button {
             color: var(--text-color) !important;
+            border-color:
+                color-mix(
+                    in srgb,
+                    var(--text-color) 48%,
+                    transparent
+                ) !important;
         }
         </style>
         """,
