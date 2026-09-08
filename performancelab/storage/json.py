@@ -46,6 +46,7 @@ from performancelab.training.planning.plan_adaptation import (
 )
 from performancelab.training.planning.plan_revision import (
     TrainingPlanRevision,
+    ensure_plan_revision_history,
 )
 from performancelab.training.planning.workout_outcome import (
     WorkoutOutcomeStatus,
@@ -1864,6 +1865,12 @@ def athlete_from_dict(data):
             )
 
         )
+
+    athlete.training_plan = (
+        ensure_plan_revision_history(
+            athlete.training_plan
+        )
+    )
 
     return athlete
 

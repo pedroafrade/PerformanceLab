@@ -4,9 +4,7 @@ PerformanceLab
 Generate training plan application use case.
 """
 
-from dataclasses import (
-    dataclass,
-)
+from dataclasses import dataclass, replace
 from datetime import (
     date,
 )
@@ -22,6 +20,7 @@ from performancelab.storage.athlete_repository import (
 )
 from performancelab.training.planning import (
     TrainingPlan,
+    ensure_plan_revision_history,
 )
 
 
@@ -75,9 +74,11 @@ class GenerateTrainingPlan:
             athlete_id
         )
 
-        previous_plan_id = (
-            athlete.training_plan.plan_id
+        previous_plan = ensure_plan_revision_history(
+            athlete.training_plan,
+            created_on=today,
         )
+        previous_plan_id = previous_plan.plan_id
 
         generated_plan = (
             self._coach.build_training_plan(
@@ -92,6 +93,21 @@ class GenerateTrainingPlan:
         ):
             raise TypeError(
                 "Coach must return a TrainingPlan."
+            )
+
+        generated_plan = ensure_plan_revision_history(
+            generated_plan,
+            created_on=today,
+        )
+
+        if previous_plan.revisions:
+            generated_plan = replace(
+                generated_plan,
+                revisions=(
+                    *previous_plan.revisions,
+                    *generated_plan.revisions,
+                ),
+                workouts=list(generated_plan.workouts),
             )
 
         athlete.training_plan = (

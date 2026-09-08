@@ -8,7 +8,10 @@ from .planned_workout import PlannedWorkout
 from .plan_adaptation import (
     TrainingPlanAdaptation,
 )
-from .plan_revision import TrainingPlanRevision
+from .plan_revision import (
+    TrainingPlanRevision,
+    ensure_plan_revision_history,
+)
 from .training_plan import TrainingPlan
 from .training_plan_adapter import (
     TrainingPlanAdapter,
@@ -39,6 +42,7 @@ __all__ = [
     "PlannedWorkout",
     "TrainingPlanAdaptation",
     "TrainingPlanRevision",
+    "ensure_plan_revision_history",
     "TrainingPlan",
     "TrainingPlanAdapter",
     "TrainingPlanReconciler",

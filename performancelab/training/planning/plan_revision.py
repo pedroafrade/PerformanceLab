@@ -4,9 +4,9 @@ PerformanceLab
 Immutable training-plan revision snapshots.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from .planned_workout import PlannedWorkout
 
@@ -83,3 +83,66 @@ class TrainingPlanRevision:
                 "parent_revision_id must be a non-empty "
                 "string or None."
             )
+
+
+def ensure_plan_revision_history(
+    plan,
+    *,
+    created_on: date | None = None,
+):
+    """Backfills deterministic revisions for legacy plans."""
+
+    if plan.revisions or not plan.workouts:
+        return plan
+
+    revision_day = (
+        created_on
+        or plan.reconciled_through
+        or plan.start_date
+        or date.today()
+    )
+    original_workouts = (
+        plan.original_workouts
+        or tuple(plan.workouts)
+    )
+    original_id = str(
+        uuid5(
+            NAMESPACE_URL,
+            f"performancelab:{plan.plan_id}:original",
+        )
+    )
+    original = TrainingPlanRevision(
+        revision_id=original_id,
+        created_on=plan.start_date or revision_day,
+        source="generated",
+        workouts=tuple(original_workouts),
+        reason="Initial generated plan.",
+    )
+
+    if tuple(plan.workouts) == tuple(original_workouts):
+        revisions = (original,)
+        active_revision_id = original_id
+    else:
+        current = TrainingPlanRevision(
+            revision_id=str(
+                uuid5(
+                    NAMESPACE_URL,
+                    f"performancelab:{plan.plan_id}:current",
+                )
+            ),
+            created_on=revision_day,
+            source="automatic_adaptation",
+            workouts=tuple(plan.workouts),
+            reason="Migrated current adapted plan.",
+            parent_revision_id=original_id,
+        )
+        revisions = (original, current)
+        active_revision_id = current.revision_id
+
+    return replace(
+        plan,
+        original_workouts=tuple(original_workouts),
+        revisions=revisions,
+        active_revision_id=active_revision_id,
+        workouts=list(plan.workouts),
+    )

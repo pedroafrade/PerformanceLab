@@ -14,8 +14,10 @@ from performancelab.storage.in_memory_athlete_repository import (
     InMemoryAthleteRepository,
 )
 from performancelab.training.planning import (
+    PlannedWorkout,
     TrainingPlan,
 )
+from datetime import datetime, timedelta
 
 
 class RecordingAthleteRepository(
@@ -181,6 +183,51 @@ def test_reports_replaced_plan_identifier():
         == "new-plan"
     )
     assert repository.save_calls == 1
+
+
+def test_generation_preserves_previous_plan_for_recovery():
+    athlete = Athlete(name="Pedro")
+    previous_workout = PlannedWorkout(
+        scheduled_at=datetime(2026, 8, 16, 8),
+        sport="Running",
+        title="Previous Easy Run",
+        duration=timedelta(minutes=45),
+    )
+    athlete.training_plan = TrainingPlan(
+        plan_id="previous-plan",
+        start_date=date(2026, 8, 15),
+        end_date=date(2026, 8, 21),
+        original_workouts=(previous_workout,),
+        workouts=[previous_workout],
+    )
+    generated_workout = PlannedWorkout(
+        scheduled_at=datetime(2026, 8, 16, 8),
+        sport="Running",
+        title="Generated Tempo Run",
+        duration=timedelta(minutes=50),
+    )
+    generated_plan = TrainingPlan(
+        plan_id="new-plan",
+        start_date=date(2026, 8, 15),
+        end_date=date(2026, 8, 21),
+        original_workouts=(generated_workout,),
+        workouts=[generated_workout],
+    )
+    repository = RecordingAthleteRepository((athlete,))
+
+    result = GenerateTrainingPlan(
+        repository=repository,
+        coach=FakeCoach(generated_plan=generated_plan),
+    ).execute(
+        athlete.athlete_id,
+        today=date(2026, 8, 15),
+    )
+
+    revisions = result.training_plan.revisions
+    assert len(revisions) == 2
+    assert revisions[0].workouts == (previous_workout,)
+    assert revisions[1].workouts == (generated_workout,)
+    assert result.training_plan.active_revision_id == revisions[1].revision_id
 
 
 def test_generation_failure_does_not_persist():
