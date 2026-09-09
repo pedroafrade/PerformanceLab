@@ -34,9 +34,13 @@ class RestoreTrainingPlanRevision:
         detail = " ".join(
             str(value or "")
             for value in (
+                workout.title,
                 workout.description,
                 workout.prescription_summary,
                 workout.objective,
+                workout.purpose,
+                workout.focus,
+                *workout.structure,
             )
         )
         patterns = (
@@ -52,6 +56,38 @@ class RestoreTrainingPlanRevision:
             if match is not None and match.group(1).strip():
                 return match.group(1).strip()
         return str(workout.title or "Recovered race")
+
+    @classmethod
+    def _remove_workout_events(cls, events, workouts):
+        """Removes events accidentally created from ordinary plan sessions."""
+        workouts_by_day = {}
+        for workout in workouts:
+            workouts_by_day.setdefault(workout.day, []).append(workout)
+
+        cleaned = []
+        for entry in events:
+            event = entry.event
+            same_day = workouts_by_day.get(event.date, ())
+            event_name = str(event.name or "").strip().lower()
+            remove = False
+            for workout in same_day:
+                workout_name = str(workout.title or "").strip().lower()
+                if cls._is_race_workout(workout):
+                    remove = event_name in {
+                        "race",
+                        "competition",
+                        "event",
+                    }
+                elif (
+                    event_name == workout_name
+                    or event_name.startswith("pre-race ")
+                ):
+                    remove = True
+                if remove:
+                    break
+            if not remove:
+                cleaned.append(entry)
+        return cleaned
 
     def __init__(self, *, repository: AthleteRepository) -> None:
         self._repository = repository
@@ -104,6 +140,10 @@ class RestoreTrainingPlanRevision:
             else list(deepcopy(tuple(athlete.events)))
         )
         if target.events is None:
+            restored_events = self._remove_workout_events(
+                restored_events,
+                target.workouts,
+            )
             existing_days = {
                 entry.event.date
                 for entry in restored_events

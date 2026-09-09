@@ -203,6 +203,26 @@ def test_restore_does_not_turn_pre_race_session_into_event():
         workouts=(pre_race, race),
     )
     athlete = Athlete(name="Pedro")
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="Race",
+                date=date(2026, 9, 13),
+                sport="Road Running",
+            ),
+            priority="A",
+        )
+    )
+    athlete.events.add(
+        EventEntry(
+            event=Event(
+                name="Pre-Race Easy Run",
+                date=date(2026, 9, 12),
+                sport="Running",
+            ),
+            priority="A",
+        )
+    )
     athlete.training_plan = TrainingPlan(
         revisions=(revision,),
         active_revision_id=revision.revision_id,
