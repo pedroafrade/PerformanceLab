@@ -902,6 +902,15 @@ def _training_plan_revision_to_dict(
         "parent_revision_id": (
             revision.parent_revision_id
         ),
+        "start_date": _serialize_date(revision.start_date),
+        "end_date": _serialize_date(revision.end_date),
+        "events": (
+            [_event_entry_to_dict(entry) for entry in revision.events]
+            if revision.events is not None
+            else None
+        ),
+        "primary_event_id": revision.primary_event_id,
+        "competition_event_ids": list(revision.competition_event_ids),
         "workouts": [
             _planned_workout_to_dict(workout)
             for workout in revision.workouts
@@ -925,6 +934,15 @@ def _training_plan_revision_from_dict(
         parent_revision_id=data.get(
             "parent_revision_id"
         ),
+        start_date=_deserialize_date(data.get("start_date")),
+        end_date=_deserialize_date(data.get("end_date")),
+        events=(
+            tuple(_event_entry_from_dict(entry) for entry in data["events"])
+            if data.get("events") is not None
+            else None
+        ),
+        primary_event_id=data.get("primary_event_id"),
+        competition_event_ids=tuple(data.get("competition_event_ids", [])),
         workouts=tuple(
             _planned_workout_from_dict(workout_data)
             for workout_data in data.get(

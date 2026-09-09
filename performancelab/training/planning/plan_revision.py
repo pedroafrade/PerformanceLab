@@ -9,6 +9,7 @@ from datetime import date, datetime
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from .planned_workout import PlannedWorkout
+from performancelab.race.entry import EventEntry
 
 
 PLAN_REVISION_SOURCES = {
@@ -35,6 +36,11 @@ class TrainingPlanRevision:
 
     reason: str = ""
     parent_revision_id: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    events: tuple[EventEntry, ...] | None = None
+    primary_event_id: str | None = None
+    competition_event_ids: tuple[str, ...] = ()
     revision_id: str = field(
         default_factory=lambda: str(uuid4()),
     )
@@ -63,6 +69,15 @@ class TrainingPlanRevision:
             raise TypeError(
                 "workouts must contain PlannedWorkout objects."
             )
+
+        if (self.start_date is None) != (self.end_date is None):
+            raise ValueError("Revision horizon requires both start and end dates.")
+        if self.start_date is not None and self.end_date < self.start_date:
+            raise ValueError("Revision end_date cannot precede start_date.")
+        if self.events is not None and not all(
+            isinstance(entry, EventEntry) for entry in self.events
+        ):
+            raise TypeError("events must contain EventEntry objects or be None.")
 
         if (
             not isinstance(self.revision_id, str)
@@ -117,6 +132,10 @@ def ensure_plan_revision_history(
         source="generated",
         workouts=tuple(original_workouts),
         reason="Initial generated plan.",
+        start_date=plan.start_date,
+        end_date=plan.end_date,
+        primary_event_id=plan.primary_event_id,
+        competition_event_ids=plan.competition_event_ids,
     )
 
     if tuple(plan.workouts) == tuple(original_workouts):
@@ -135,6 +154,10 @@ def ensure_plan_revision_history(
             workouts=tuple(plan.workouts),
             reason="Migrated current adapted plan.",
             parent_revision_id=original_id,
+            start_date=plan.start_date,
+            end_date=plan.end_date,
+            primary_event_id=plan.primary_event_id,
+            competition_event_ids=plan.competition_event_ids,
         )
         revisions = (original, current)
         active_revision_id = current.revision_id

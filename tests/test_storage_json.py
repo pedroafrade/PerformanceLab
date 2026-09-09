@@ -1597,6 +1597,22 @@ def test_training_plan_revision_round_trip():
         workouts=(planned,),
         reason="Recovered missing hills stimulus.",
         parent_revision_id="revision-0",
+        start_date=date(2026, 9, 7),
+        end_date=date(2026, 9, 13),
+        events=(
+            EventEntry(
+                event=Event(
+                    event_id="race-13",
+                    name="Sealand",
+                    date=date(2026, 9, 13),
+                    sport="Road Running",
+                    distance=10,
+                ),
+                priority="A",
+            ),
+        ),
+        primary_event_id="race-13",
+        competition_event_ids=("race-13",),
     )
 
     payload = (

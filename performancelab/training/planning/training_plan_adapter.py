@@ -311,6 +311,10 @@ class TrainingPlanAdapter:
                 source="generated",
                 workouts=tuple(original_workouts),
                 reason="Initial generated plan.",
+                start_date=plan.start_date,
+                end_date=plan.end_date,
+                primary_event_id=plan.primary_event_id,
+                competition_event_ids=plan.competition_event_ids,
             )
             parent_revision_id = baseline.revision_id
             revisions = (baseline,)
@@ -324,6 +328,20 @@ class TrainingPlanAdapter:
                 "plan before the next race."
             ),
             parent_revision_id=parent_revision_id,
+            start_date=plan.start_date,
+            end_date=plan.end_date,
+            events=(
+                next(
+                    (
+                        revision.events
+                        for revision in reversed(revisions)
+                        if revision.events is not None
+                    ),
+                    None,
+                )
+            ),
+            primary_event_id=plan.primary_event_id,
+            competition_event_ids=plan.competition_event_ids,
         )
 
         return (

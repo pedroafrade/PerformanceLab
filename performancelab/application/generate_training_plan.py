@@ -4,6 +4,7 @@ PerformanceLab
 Generate training plan application use case.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import (
     date,
@@ -106,6 +107,32 @@ class GenerateTrainingPlan:
                 revisions=(
                     *previous_plan.revisions,
                     *generated_plan.revisions,
+                ),
+                workouts=list(generated_plan.workouts),
+            )
+
+        active_revision = next(
+            (
+                revision
+                for revision in generated_plan.revisions
+                if revision.revision_id == generated_plan.active_revision_id
+            ),
+            None,
+        )
+        if active_revision is not None:
+            snapshot = replace(
+                active_revision,
+                start_date=generated_plan.start_date,
+                end_date=generated_plan.end_date,
+                events=tuple(deepcopy(tuple(athlete.events))),
+                primary_event_id=generated_plan.primary_event_id,
+                competition_event_ids=generated_plan.competition_event_ids,
+            )
+            generated_plan = replace(
+                generated_plan,
+                revisions=tuple(
+                    snapshot if revision.revision_id == snapshot.revision_id else revision
+                    for revision in generated_plan.revisions
                 ),
                 workouts=list(generated_plan.workouts),
             )

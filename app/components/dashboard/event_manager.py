@@ -5,6 +5,7 @@ Athlete event manager.
 """
 
 import streamlit as st
+from copy import deepcopy
 
 from performancelab.race.entry import EventEntry
 from performancelab.race.event import Event
@@ -209,9 +210,13 @@ def _delete_event(
     Deletes an event.
     """
 
+    st.session_state.event_plan_removed_entry = deepcopy(entry)
+
     athlete.events.remove(
         entry
     )
+
+    st.session_state.event_plan_refresh_requested = True
 
     st.session_state.event_to_delete = None
     st.session_state.selected_event = None
@@ -388,6 +393,8 @@ def _show_add_event_form(
                 athlete.events.add(
                     entry
                 )
+
+            st.session_state.event_plan_refresh_requested = True
 
             st.session_state.selected_event = None
             st.session_state.show_add_event_form = False

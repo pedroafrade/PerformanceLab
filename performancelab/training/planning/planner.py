@@ -565,6 +565,10 @@ class Planner:
             source="generated",
             workouts=original_workouts,
             reason="Initial generated plan.",
+            start_date=training_plan.start_date,
+            end_date=training_plan.end_date,
+            primary_event_id=training_plan.primary_event_id,
+            competition_event_ids=training_plan.competition_event_ids,
         )
 
         return replace(

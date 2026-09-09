@@ -5,11 +5,13 @@ Streamlit application.
 """
 
 import os
+from copy import deepcopy
 from dataclasses import replace
 
 from datetime import (
     date,
     datetime,
+    timedelta,
     timezone,
 )
 from pathlib import Path
@@ -351,6 +353,11 @@ def regenerate_weekly_plan(
             workouts=tuple(draft.workouts),
             reason="Plan Builder changes applied by the athlete.",
             parent_revision_id=plan.active_revision_id,
+            start_date=plan.start_date,
+            end_date=plan.end_date,
+            events=tuple(deepcopy(tuple(athlete.events))),
+            primary_event_id=plan.primary_event_id,
+            competition_event_ids=plan.competition_event_ids,
         )
         athlete.training_plan = replace(
             plan,
@@ -362,6 +369,7 @@ def regenerate_weekly_plan(
         st.session_state.athlete = athlete
         invalidate_daily_brief()
         st.session_state.persisted_notice = "Plan changes saved."
+        st.rerun()
         return
 
     try:
@@ -1040,6 +1048,72 @@ if "athlete" not in st.session_state:
         st.stop()
 
 athlete: Athlete = st.session_state.athlete
+
+if st.session_state.pop("event_plan_refresh_requested", False):
+    try:
+        previous_plan = athlete.training_plan
+        removed_entry = st.session_state.pop(
+            "event_plan_removed_entry",
+            None,
+        )
+        snapshot_events = list(deepcopy(tuple(athlete.events)))
+        if removed_entry is not None:
+            snapshot_events.append(deepcopy(removed_entry))
+        active_revision = next(
+            (
+                revision
+                for revision in previous_plan.revisions
+                if revision.revision_id == previous_plan.active_revision_id
+            ),
+            None,
+        )
+        if active_revision is not None and active_revision.events is None:
+            enriched_revision = replace(
+                active_revision,
+                start_date=previous_plan.start_date,
+                end_date=previous_plan.end_date,
+                events=tuple(snapshot_events),
+                primary_event_id=previous_plan.primary_event_id,
+                competition_event_ids=previous_plan.competition_event_ids,
+            )
+            athlete.training_plan = replace(
+                previous_plan,
+                revisions=tuple(
+                    enriched_revision
+                    if revision.revision_id == enriched_revision.revision_id
+                    else revision
+                    for revision in previous_plan.revisions
+                ),
+                workouts=list(previous_plan.workouts),
+            )
+        athlete_repository.save(athlete)
+        result = GenerateTrainingPlan(
+            repository=athlete_repository
+        ).execute(
+            athlete.athlete_id,
+            today=(
+                previous_plan.start_date
+                - timedelta(days=1)
+                if previous_plan.start_date is not None
+                else date.today()
+            ),
+        )
+    except Exception as error:
+        capture_exception(
+            error,
+            operation="regenerate_plan_after_event_change",
+            reporter=exception_reporter,
+        )
+        st.session_state.plan_error = (
+            "Training plan regeneration after the event change failed."
+        )
+    else:
+        athlete = result.athlete
+        st.session_state.athlete = athlete
+        invalidate_daily_brief()
+        st.session_state.persisted_notice = (
+            "Events and training plan updated."
+        )
 
 training_coach_permitted = (
     training_coach_consent_manager
