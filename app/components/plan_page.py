@@ -5817,8 +5817,14 @@ div[role="dialog"] {
 }
 div[data-testid="stDialog"] [role="dialog"] {
     height: auto !important;
-    max-height: 90vh !important;
+    max-height: calc(100dvh - 2.5rem) !important;
     overflow: hidden !important;
+}
+
+section[data-testid="stMain"]:has(
+    div[data-testid="stDialog"] [role="dialog"]
+) {
+    overflow-y: hidden !important;
 }
 
 div[data-testid="stDialog"]
@@ -5975,7 +5981,7 @@ div[role="dialog"] [data-testid="stAlert"] {
 
         .st-key-cancel-plan-generation button,
         .st-key-confirm-plan-generation button {
-            min-height: 2.4rem;
+            min-height: 2.2rem;
             color: var(--text-color) !important;
             background: transparent !important;
             border-color:
@@ -6035,6 +6041,7 @@ div[role="dialog"] [data-testid="stAlert"] {
             color: var(--text-color) !important;
             border-color:
                 #9aa0aa !important;
+            margin-bottom: 0.35rem !important;
         }
         </style>
         """,

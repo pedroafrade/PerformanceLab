@@ -2515,6 +2515,9 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "chart_revision" in source
     assert "plan-builder-timeline-" in source
     assert "saved_plan.chart_points" in source
+    assert "calc(100dvh - 2.5rem)" in source
+    assert "overflow-y: hidden" in source
+    assert "margin-bottom: 0.35rem" in source
 
 def test_plan_builder_uses_movable_week_structure():
 
