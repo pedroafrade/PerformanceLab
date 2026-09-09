@@ -5313,7 +5313,7 @@ def _optional_int(value):
 
 def _show_plan_builder_interactive_board(
     *, draft, draft_key: str, plan_start: date,
-    plan_end: date, reference_day: date,
+    plan_end: date, reference_day: date, history=None,
 ):
     """Renders the clickable and draggable Plan Builder board."""
     grid_start = plan_start - timedelta(days=plan_start.weekday())
@@ -5326,7 +5326,24 @@ def _show_plan_builder_interactive_board(
     templates = {}
     for workout in draft.baseline_workouts:
         if workout.title and not _plan_builder_is_race(workout):
-            templates.setdefault(workout.title, workout)
+            template_title = "Trail Run" if workout.title == "Hill Run" else workout.title
+            templates.setdefault(template_title, replace(workout, title=template_title))
+
+    completed_workouts = []
+    if history is not None:
+        for completed in history:
+            completed_day = completed.date
+            if hasattr(completed_day, "date"):
+                completed_day = completed_day.date()
+            if completed_day is None or completed_day >= reference_day:
+                continue
+            completed_workouts.append({
+                "id": f"completed-{completed.workout_id}",
+                "day": completed_day.isoformat(),
+                "title": completed.info.title or completed.sport or "Completed activity",
+                "completed": True,
+                "race": False,
+            })
 
     def payload(workout):
         return {
@@ -5345,7 +5362,10 @@ def _show_plan_builder_interactive_board(
 
     action = _plan_builder_board_component(
         days=[{"day": day.isoformat(), "label": day.strftime("%a %d %b"), "past": day < reference_day} for day in days],
-        workouts=[payload(workout) for workout in workouts],
+        workouts=[
+            *completed_workouts,
+            *[payload(workout) for workout in workouts if workout.day >= reference_day],
+        ],
         templates=[payload(workout) for workout in templates.values()],
         key="plan-builder-interactive-board",
         default=None,
@@ -6060,6 +6080,7 @@ div[role="dialog"] [data-testid="stAlert"] {
                     active_plan.end_date
                 ),
                 reference_day=date.today(),
+                history=athlete.history,
             )
         )
 
