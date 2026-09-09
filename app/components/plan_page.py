@@ -44,6 +44,9 @@ from .upcoming_events import (
 from performancelab.training.planning import (
     PlanBuilderDraft,
 )
+from performancelab.training.load import (
+    planned_workout_load,
+)
 
 _plan_builder_board_component = components.declare_component(
     "plan_builder_board",
@@ -5311,6 +5314,17 @@ def _optional_int(value):
     return int(value) if value not in (None, "") else None
 
 
+def _plan_builder_prescription(values, fallback=""):
+    prescription = str(values.get("prescription") or fallback or "").strip()
+    target = str(values.get("target_value") or "").strip()
+    method = str(values.get("target_method") or "Target").strip()
+    if target:
+        target_line = f"{method}: {target}"
+        if target_line.lower() not in prescription.lower():
+            prescription = " · ".join(part for part in (prescription, target_line) if part)
+    return prescription or None
+
+
 def _show_plan_builder_interactive_board(
     *, draft, draft_key: str, plan_start: date,
     plan_end: date, reference_day: date, history=None,
@@ -5358,6 +5372,7 @@ def _show_plan_builder_interactive_board(
             "objective": workout.objective or "",
             "structure": "\n".join(workout.structure),
             "race": _plan_builder_is_race(workout),
+            "load": planned_workout_load(workout),
         }
 
     action = _plan_builder_board_component(
@@ -5413,7 +5428,10 @@ def _show_plan_builder_interactive_board(
                 distance=_optional_float(values.get("distance")),
                 elevation_gain=_optional_float(values.get("elevation")),
                 intensity=str(values.get("intensity") or "") or None,
-                prescription_summary=str(values.get("prescription") or "") or None,
+                prescription_summary=_plan_builder_prescription(
+                    values,
+                    template.prescription_summary,
+                ),
                 objective=str(values.get("objective") or "") or None,
                 structure=tuple(line.strip() for line in str(values.get("structure") or "").splitlines() if line.strip()),
             )
@@ -5431,7 +5449,10 @@ def _show_plan_builder_interactive_board(
                 distance=_optional_float(values.get("distance")),
                 elevation_gain=_optional_float(values.get("elevation")),
                 intensity=str(values.get("intensity") or ""),
-                prescription_summary=str(values.get("prescription") or ""),
+                prescription_summary=_plan_builder_prescription(
+                    values,
+                    workout.prescription_summary,
+                ),
                 objective=str(values.get("objective") or ""),
                 structure=tuple(line.strip() for line in str(values.get("structure") or "").splitlines() if line.strip()),
             )

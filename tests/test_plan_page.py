@@ -20,6 +20,7 @@ from app.components.plan_page import (
     _weekly_planned_load_curve_data,
     _plan_generation_notice_html,
     _plan_builder_workspace_html,
+    _plan_builder_prescription,
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart_series,
@@ -2529,3 +2530,14 @@ def test_plan_builder_uses_clickable_cell_component():
     assert 'kind == "delete"' in source
     assert "allow_occupied=True" in source
     assert "draft.update_workout" in source
+
+
+def test_plan_builder_preserves_structured_target_in_prescription():
+    result = _plan_builder_prescription(
+        {
+            "prescription": "4 x 8 min",
+            "target_method": "Heart rate",
+            "target_value": "165–175 bpm",
+        }
+    )
+    assert result == "4 x 8 min · Heart rate: 165–175 bpm"
