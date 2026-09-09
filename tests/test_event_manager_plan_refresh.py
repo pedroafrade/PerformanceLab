@@ -25,3 +25,10 @@ def test_event_addition_and_edit_request_plan_regeneration():
     assert "athlete.events._sort()" in form_body
     assert "athlete.events.add" in form_body
     assert "event_plan_refresh_requested" in form_body
+
+
+def test_event_deletion_confirmation_uses_popup():
+    source = EVENT_MANAGER_PATH.read_text(encoding="utf-8")
+    assert 'with st.popover(' in source
+    assert 'f\'Delete "{event.name}"?\'' in source
+    assert 'st.warning("Delete this event?")' not in source

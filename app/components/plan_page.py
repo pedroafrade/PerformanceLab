@@ -41,6 +41,9 @@ from .upcoming_events import (
     upcoming_events_html,
     upcoming_events_styles,
 )
+from .dashboard.event_manager import (
+    open_event_manager,
+)
 from performancelab.training.planning import (
     PlanBuilderDraft,
 )
@@ -4286,6 +4289,34 @@ def _compact_plan_layout_styles(
             overflow: visible;
         }
 
+        .st-key-plan_upcoming_events {
+            position: relative;
+        }
+
+        .st-key-plan_manage_events {
+            position: absolute;
+            z-index: 2;
+            top: 0;
+            right: 0;
+        }
+
+        .st-key-plan_manage_events button {
+            width: 1.7rem;
+            min-width: 1.7rem;
+            height: 1.7rem;
+            min-height: 1.7rem;
+            padding: 0;
+            border-color: rgba(128, 128, 128, 0.5);
+            border-radius: 50%;
+            line-height: 1;
+        }
+
+        .st-key-plan_manage_events button:hover,
+        .st-key-plan_manage_events button:focus-visible {
+            border-color: #ff4b4b;
+            color: #ff4b4b;
+        }
+
         .plan-adaptation-help {
             position: relative;
             margin-left: auto;
@@ -6753,6 +6784,13 @@ def show_plan_page(
                         "</div>"
                     ),
                     unsafe_allow_html=True,
+                )
+                st.button(
+                    "✎",
+                    key="plan_manage_events",
+                    help="Manage Events",
+                    on_click=open_event_manager,
+                    args=(athlete,),
                 )
 
                 st.html(

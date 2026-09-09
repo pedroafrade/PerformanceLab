@@ -460,6 +460,13 @@ def test_show_plan_page_exists():
     )
 
 
+def test_plan_page_opens_shared_event_manager():
+    source = inspect.getsource(show_plan_page)
+    assert 'key="plan_manage_events"' in source
+    assert 'help="Manage Events"' in source
+    assert "on_click=open_event_manager" in source
+
+
 def test_identifies_current_week():
 
     week = create_week()

@@ -122,45 +122,30 @@ def show_event_manager(
                 )
 
             with delete_col:
-
-                st.button(
+                with st.popover(
                     "Delete",
-                    key=f"delete-{id(entry)}",
                     use_container_width=True,
-                    on_click=_confirm_delete_event,
-                    args=(entry,),
-                )
+                ):
+                    st.warning(
+                        f'Delete "{event.name}"?'
+                    )
+                    yes_col, no_col = st.columns(2)
+                    with yes_col:
+                        if st.button(
+                            "Yes",
+                            key=f"confirm-delete-{id(entry)}",
+                            use_container_width=True,
+                        ):
+                            _delete_event(athlete, entry)
+                    with no_col:
+                        if st.button(
+                            "No",
+                            key=f"cancel-delete-{id(entry)}",
+                            use_container_width=True,
+                        ):
+                            st.rerun()
 
             st.divider()
-    if st.session_state.event_to_delete is not None:
-
-        st.warning("Delete this event?")
-
-        yes_col, no_col = st.columns(2)
-
-        with yes_col:
-
-            if st.button(
-                "Yes",
-                key="confirm-delete-event",
-                use_container_width=True,
-            ):
-
-                _delete_event(
-                    athlete,
-                    st.session_state.event_to_delete,
-                )
-
-        with no_col:
-
-            if st.button(
-                "No",
-                key="cancel-delete-event",
-                use_container_width=True,
-            ):
-
-                st.session_state.event_to_delete = None
-                st.rerun()
 
     st.button(
         "Add Event",
@@ -224,13 +209,6 @@ def _delete_event(
 
     st.rerun()
 
-
-def _confirm_delete_event(entry) -> None:
-    """
-    Opens the delete confirmation.
-    """
-
-    st.session_state.event_to_delete = entry
 
 def _show_add_event_form(
     athlete,
