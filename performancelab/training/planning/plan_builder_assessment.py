@@ -1,0 +1,121 @@
+"""Central safety assessment for Plan Builder draft changes."""
+
+from dataclasses import dataclass
+from datetime import date, timedelta
+
+from performancelab.training.load import planned_workout_load
+
+
+@dataclass(frozen=True, slots=True)
+class PlanBuilderAssessment:
+    status: str
+    messages: tuple[str, ...]
+    changed_sessions: int
+    load_difference: float
+
+    @property
+    def blocked(self) -> bool:
+        return self.status == "blocked"
+
+
+def _is_demanding(workout) -> bool:
+    text = " ".join(
+        str(value or "")
+        for value in (
+            workout.title,
+            workout.intensity,
+            workout.focus,
+        )
+    ).lower()
+    return any(
+        token in text
+        for token in (
+            "tempo",
+            "threshold",
+            "lt2",
+            "hill",
+            "interval",
+            "vo2",
+            "speed",
+            "hard",
+        )
+    )
+
+
+def _is_race(workout) -> bool:
+    return str(workout.intensity or "").strip().lower() == "race effort"
+
+
+def _load(workouts) -> float:
+    return sum(float(planned_workout_load(item) or 0.0) for item in workouts)
+
+
+def assess_plan_builder_change(
+    *,
+    baseline_workouts,
+    revised_workouts,
+    reference_day: date,
+) -> PlanBuilderAssessment:
+    """Classifies one complete draft as safe, warning or blocked."""
+    baseline = tuple(baseline_workouts)
+    revised = tuple(revised_workouts)
+    baseline_by_id = {item.planned_workout_id: item for item in baseline}
+    revised_by_id = {item.planned_workout_id: item for item in revised}
+    changed_ids = {
+        workout_id
+        for workout_id in baseline_by_id.keys() | revised_by_id.keys()
+        if baseline_by_id.get(workout_id) != revised_by_id.get(workout_id)
+    }
+
+    warnings = []
+    blockers = []
+    future = tuple(item for item in revised if item.day >= reference_day)
+    demanding = tuple(sorted(
+        (item for item in future if _is_demanding(item) and not _is_race(item)),
+        key=lambda item: item.scheduled_at,
+    ))
+    for previous, following in zip(demanding, demanding[1:]):
+        if (following.day - previous.day).days < 2:
+            warnings.append(
+                f"{previous.title} and {following.title} leave less than "
+                "48 hours of recovery."
+            )
+
+    race_days = tuple(item.day for item in future if _is_race(item))
+    for workout in demanding:
+        if any(timedelta(0) < race_day - workout.day <= timedelta(days=1) for race_day in race_days):
+            blockers.append(
+                f"{workout.title} is too close to a race and would compromise taper."
+            )
+
+    baseline_weeks = {}
+    revised_weeks = {}
+    for collection, totals in ((baseline, baseline_weeks), (revised, revised_weeks)):
+        for workout in collection:
+            if workout.day < reference_day or _is_race(workout):
+                continue
+            week = workout.day - timedelta(days=workout.day.weekday())
+            totals[week] = totals.get(week, 0.0) + float(
+                planned_workout_load(workout) or 0.0
+            )
+    for week, revised_load in revised_weeks.items():
+        baseline_load = baseline_weeks.get(week, 0.0)
+        if baseline_load <= 0:
+            continue
+        growth = (revised_load - baseline_load) / baseline_load
+        if growth > 0.35:
+            blockers.append(
+                f"Weekly load from {week:%d %b} increases by more than 35%."
+            )
+        elif growth > 0.20:
+            warnings.append(
+                f"Weekly load from {week:%d %b} increases by more than 20%."
+            )
+
+    status = "blocked" if blockers else "warning" if warnings else "safe"
+    return PlanBuilderAssessment(
+        status=status,
+        messages=tuple(dict.fromkeys((*blockers, *warnings))),
+        changed_sessions=len(changed_ids),
+        load_difference=_load(revised) - _load(baseline),
+    )

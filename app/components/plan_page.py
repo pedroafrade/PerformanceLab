@@ -46,6 +46,7 @@ from .dashboard.event_manager import (
 )
 from performancelab.training.planning import (
     PlanBuilderDraft,
+    assess_plan_builder_change,
 )
 from performancelab.training.load import (
     planned_workout_load,
@@ -5496,6 +5497,18 @@ def _show_plan_builder_interactive_board(
             "load": planned_workout_load(workout),
         }
 
+    board_revision = abs(hash(tuple(
+        (
+            item.planned_workout_id,
+            item.scheduled_at.isoformat(),
+            item.title,
+            item.duration,
+            item.distance,
+            item.elevation_gain,
+            item.intensity,
+        )
+        for item in workouts
+    )))
     action = _plan_builder_board_component(
         days=[{"day": day.isoformat(), "label": day.strftime("%a %d %b"), "past": day < reference_day} for day in days],
         workouts=[
@@ -5503,7 +5516,7 @@ def _show_plan_builder_interactive_board(
             *[payload(workout) for workout in workouts if workout.day >= reference_day],
         ],
         templates=[payload(workout) for workout in templates.values()],
-        key="plan-builder-interactive-board",
+        key=f"plan-builder-interactive-board-{board_revision}",
         default=None,
     )
     if not action:
@@ -5513,6 +5526,7 @@ def _show_plan_builder_interactive_board(
     if not nonce or st.session_state.get(handled_key) == nonce:
         return draft
     st.session_state[handled_key] = nonce
+    current_draft = draft
     kind = action.get("action")
     workout_id = action.get("workout_id")
     workout = next((item for item in workouts if item.planned_workout_id == workout_id), None)
@@ -5579,7 +5593,20 @@ def _show_plan_builder_interactive_board(
             )
     except (KeyError, LookupError, TypeError, ValueError) as error:
         st.toast(str(error), icon="⚠️", duration=3000)
-        return draft
+        return current_draft
+
+    assessment = assess_plan_builder_change(
+        baseline_workouts=draft.baseline_workouts,
+        revised_workouts=draft.workouts,
+        reference_day=reference_day,
+    )
+    if assessment.blocked:
+        st.toast(
+            assessment.messages[0],
+            icon="⛔",
+            duration=3000,
+        )
+        return current_draft
     st.session_state[draft_key] = draft
     st.rerun(scope="fragment")
     return draft
@@ -5691,45 +5718,31 @@ def _plan_builder_recommendation(
 ) -> str | None:
     """Warns when draft edits compress demanding recovery."""
 
-    demanding_tokens = (
-        "tempo",
-        "threshold",
-        "lt2",
-        "hill",
-        "interval",
-        "race",
+    assessment = assess_plan_builder_change(
+        baseline_workouts=draft.baseline_workouts,
+        revised_workouts=draft.workouts,
+        reference_day=reference_day,
     )
-    demanding = tuple(
-        sorted(
-            (
-                workout
-                for workout in draft.workouts
-                if (
-                    workout.day >= reference_day
-                    and any(
-                        token in " ".join(
-                            (
-                                str(workout.title or ""),
-                                str(workout.intensity or ""),
-                                str(workout.focus or ""),
-                            )
-                        ).lower()
-                        for token in demanding_tokens
-                    )
-                )
-            ),
-            key=lambda workout: workout.scheduled_at,
-        )
+    return assessment.messages[0] if assessment.messages else None
+
+
+def _revision_change_summary(revision, previous_revision=None) -> str:
+    """Builds a concise, factual revision comparison."""
+    previous = tuple(previous_revision.workouts) if previous_revision else ()
+    current = tuple(revision.workouts)
+    previous_by_id = {item.planned_workout_id: item for item in previous}
+    current_by_id = {item.planned_workout_id: item for item in current}
+    changed = sum(
+        previous_by_id.get(workout_id) != current_by_id.get(workout_id)
+        for workout_id in previous_by_id.keys() | current_by_id.keys()
     )
-    for previous, following in zip(demanding, demanding[1:]):
-        if (following.day - previous.day).days < 2:
-            return (
-                f"{previous.title} on {previous.day:%d %b} and "
-                f"{following.title} on {following.day:%d %b} leave "
-                "less than 48 hours of recovery. Consider moving one "
-                "session or reducing the later session."
-            )
-    return None
+    previous_load = sum(float(planned_workout_load(item) or 0.0) for item in previous)
+    current_load = sum(float(planned_workout_load(item) or 0.0) for item in current)
+    event_count = len(revision.events or ())
+    return (
+        f"{len(current)} sessions · {changed} changed · "
+        f"{current_load - previous_load:+.0f} AU · {event_count} events"
+    )
 
 @st.dialog(
     "Plan Builder",
@@ -6237,6 +6250,17 @@ div[role="dialog"] [data-testid="stAlert"] {
         if draft_recommendation:
             st.warning(draft_recommendation)
 
+        draft_assessment = assess_plan_builder_change(
+            baseline_workouts=builder_draft.baseline_workouts,
+            revised_workouts=builder_draft.workouts,
+            reference_day=date.today(),
+        )
+        if builder_draft.has_changes:
+            st.caption(
+                f"Unsaved draft · {draft_assessment.changed_sessions} "
+                f"sessions changed · {draft_assessment.load_difference:+.0f} AU"
+            )
+
         saved_plan = PlanPresenter(
             plan=active_plan,
             history=athlete.history,
@@ -6348,14 +6372,25 @@ div[role="dialog"] [data-testid="stAlert"] {
 
     with recovery_tab:
         st.caption(
-            "Restore an earlier plan version without "
-            "deleting the current revision."
+            "Review an earlier version before restoring it. "
+            "Versions created after it will be removed."
         )
 
         if not revisions:
             st.info("No earlier plan revisions are available.")
 
         for revision in revisions:
+            revision_index = next(
+                index
+                for index, item in enumerate(active_plan.revisions)
+                if item.revision_id == revision.revision_id
+            )
+            previous_revision = (
+                active_plan.revisions[revision_index - 1]
+                if revision_index > 0
+                else None
+            )
+            later_count = len(active_plan.revisions) - revision_index - 1
             label = (
                 f"{revision.created_on:%d %b %Y} · "
                 f"{revision.source.replace('_', ' ').title()}"
@@ -6363,15 +6398,36 @@ div[role="dialog"] [data-testid="stAlert"] {
             left, right = st.columns([4, 1], gap="small")
             with left:
                 st.caption(label)
+                st.caption(
+                    _revision_change_summary(
+                        revision,
+                        previous_revision,
+                    )
+                )
             with right:
-                if st.button(
+                with st.popover(
                     "Restore",
-                    key=f"restore-plan-{revision.revision_id}",
                     use_container_width=True,
-                    disabled=(on_restore_revision is None),
                 ):
-                    on_restore_revision(revision.revision_id)
-                    st.rerun()
+                    st.markdown("**Restore this plan version?**")
+                    st.caption(
+                        f"{later_count} later version"
+                        f"{'s' if later_count != 1 else ''} will be removed."
+                    )
+                    st.caption(
+                        _revision_change_summary(
+                            revision,
+                            previous_revision,
+                        )
+                    )
+                    if st.button(
+                        "Confirm restore",
+                        key=f"restore-plan-{revision.revision_id}",
+                        use_container_width=True,
+                        disabled=(on_restore_revision is None),
+                    ):
+                        on_restore_revision(revision.revision_id)
+                        st.rerun()
 
 def _show_plan_actions(
     plan,

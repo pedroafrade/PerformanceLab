@@ -40,6 +40,10 @@ from .stimulus_rebalancer import (
 from .plan_builder_draft import (
     PlanBuilderDraft,
 )
+from .plan_builder_assessment import (
+    PlanBuilderAssessment,
+    assess_plan_builder_change,
+)
 
 __all__ = [
     "PlannedWorkout",
@@ -58,6 +62,8 @@ __all__ = [
     "WorkoutStimulus",
     "completed_workout_stimulus",
     "PlanBuilderDraft",
+    "PlanBuilderAssessment",
+    "assess_plan_builder_change",
     "planned_workout_stimulus",
     "stimuli_are_equivalent",
     "StimulusRebalanceSuggestion",
