@@ -245,6 +245,22 @@ class TrainingPlanAdapter:
             )
         )
 
+        combined_adaptations = (
+            plan.adaptations
+            + adaptation_records
+        )
+        if tuple(original_workouts) != tuple(workouts):
+            revisions = tuple(
+                replace(
+                    revision,
+                    adaptations=combined_adaptations,
+                    stimulus_suggestions=merged_stimulus_suggestions,
+                )
+                if revision.revision_id == active_revision_id
+                else revision
+                for revision in revisions
+            )
+
         return TrainingPlan(
             plan_id=plan.plan_id,
             start_date=plan.start_date,
@@ -258,10 +274,7 @@ class TrainingPlanAdapter:
             reconciled_workout_signatures=(
                 plan.reconciled_workout_signatures
             ),
-            adaptations=(
-                plan.adaptations
-                + adaptation_records
-            ),
+            adaptations=combined_adaptations,
             stimulus_suggestions=(
                 merged_stimulus_suggestions
             ),
@@ -315,6 +328,8 @@ class TrainingPlanAdapter:
                 end_date=plan.end_date,
                 primary_event_id=plan.primary_event_id,
                 competition_event_ids=plan.competition_event_ids,
+                adaptations=(),
+                stimulus_suggestions=(),
             )
             parent_revision_id = baseline.revision_id
             revisions = (baseline,)

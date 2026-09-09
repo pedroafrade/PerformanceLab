@@ -358,6 +358,8 @@ def regenerate_weekly_plan(
             events=tuple(deepcopy(tuple(athlete.events))),
             primary_event_id=plan.primary_event_id,
             competition_event_ids=plan.competition_event_ids,
+            adaptations=plan.adaptations,
+            stimulus_suggestions=plan.stimulus_suggestions,
         )
         athlete.training_plan = replace(
             plan,

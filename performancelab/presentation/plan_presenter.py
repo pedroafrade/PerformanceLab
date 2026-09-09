@@ -21,6 +21,7 @@ from performancelab.training.load import (
 from performancelab.training.planning import (
     TrainingPlanAdaptation,
     WorkoutOutcomeStatus,
+    planned_workout_stimulus,
 )
 from performancelab.training.planning.planner import (
     POST_PRIMARY_EVENT_RECOVERY_DAYS,
@@ -829,6 +830,9 @@ class PlanPresenter:
             if (
                 suggestion.candidate_workout_day
                 >= reference_day
+                and self._suggestion_matches_active_plan(
+                    suggestion
+                )
             )
         )
 
@@ -892,6 +896,25 @@ class PlanPresenter:
                 suggestion.applied
             ),
         )
+
+    def _suggestion_matches_active_plan(self, suggestion) -> bool:
+        """Rejects stale suggestions left by older revisions."""
+        workout = next(
+            (
+                item
+                for item in self.plan
+                if item.day == suggestion.candidate_workout_day
+            ),
+            None,
+        )
+        if workout is None:
+            return False
+        if suggestion.applied:
+            return (
+                planned_workout_stimulus(workout)
+                == suggestion.missing_stimulus
+            )
+        return workout.title == suggestion.candidate_workout_title
 
     # ======================================================
 

@@ -127,6 +127,8 @@ class GenerateTrainingPlan:
                 events=tuple(deepcopy(tuple(athlete.events))),
                 primary_event_id=generated_plan.primary_event_id,
                 competition_event_ids=generated_plan.competition_event_ids,
+                adaptations=generated_plan.adaptations,
+                stimulus_suggestions=generated_plan.stimulus_suggestions,
             )
             generated_plan = replace(
                 generated_plan,

@@ -24,6 +24,8 @@ from performancelab.training.planning import (
     PlannedWorkout,
     TrainingPlan,
     TrainingPlanAdaptation,
+    StimulusRebalanceSuggestion,
+    WorkoutStimulus,
     WorkoutOutcomeStatus,
 )
 from performancelab.workout import (
@@ -1230,6 +1232,40 @@ def test_has_no_latest_adaptation():
     )
 
     assert result.latest_adaptation is None
+
+
+def test_hides_applied_stimulus_suggestion_that_is_no_longer_active():
+    current = PlannedWorkout(
+        scheduled_at=datetime(2026, 9, 11, 8),
+        sport="Trail Running",
+        title="Hill Reps",
+        duration=timedelta(minutes=45),
+        intensity="Hard",
+        focus="hills",
+    )
+    stale = StimulusRebalanceSuggestion(
+        created_on=date(2026, 9, 9),
+        source_workout_day=date(2026, 8, 18),
+        source_workout_title="Tempo Run",
+        missing_stimulus=WorkoutStimulus.TEMPO,
+        completed_stimulus=WorkoutStimulus.UNKNOWN,
+        candidate_workout_day=date(2026, 9, 11),
+        candidate_workout_title="Hill Run",
+        candidate_stimulus=WorkoutStimulus.HILLS,
+        recommendation="Hill Run was changed to Tempo Run.",
+        rationale="Recover the missing tempo stimulus.",
+        applied=True,
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            workouts=[current],
+            stimulus_suggestions=(stale,),
+        ),
+        history=History(),
+    ).build(reference_day=date(2026, 9, 9))
+
+    assert result.latest_stimulus_suggestion is None
 
 def test_current_phase_metrics_only_include_remaining_sessions():
 

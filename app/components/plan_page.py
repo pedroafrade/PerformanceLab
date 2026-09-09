@@ -4296,18 +4296,20 @@ def _compact_plan_layout_styles(
         .st-key-plan_manage_events {
             position: absolute;
             z-index: 2;
-            top: 0;
+            top: 0.05rem;
             right: 0;
         }
 
         .st-key-plan_manage_events button {
-            width: 1.7rem;
-            min-width: 1.7rem;
-            height: 1.7rem;
-            min-height: 1.7rem;
+            width: 1.25rem;
+            min-width: 1.25rem;
+            height: 1.25rem;
+            min-height: 1.25rem;
             padding: 0;
             border-color: rgba(128, 128, 128, 0.5);
             border-radius: 50%;
+            font-size: 0.72rem;
+            font-weight: 400;
             line-height: 1;
         }
 

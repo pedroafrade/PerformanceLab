@@ -6,7 +6,10 @@ from datetime import date, timedelta
 import re
 
 from performancelab.storage.athlete_repository import AthleteRepository
-from performancelab.training.planning import TrainingPlanRevision
+from performancelab.training.planning import (
+    TrainingPlanRevision,
+    planned_workout_stimulus,
+)
 from performancelab.race import Event, EventEntry
 from performancelab.race.eventbook import EventBook
 
@@ -191,6 +194,52 @@ class RestoreTrainingPlanRevision:
         if not competition_event_ids:
             competition_event_ids = restored_event_ids
 
+        workouts_by_day = {
+            workout.day: workout
+            for workout in target.workouts
+        }
+        adaptations = (
+            target.adaptations
+            if target.adaptations is not None
+            else tuple(
+                adaptation
+                for adaptation in plan.adaptations
+                if (
+                    adaptation.workout_day in workouts_by_day
+                    and workouts_by_day[
+                        adaptation.workout_day
+                    ].title == adaptation.workout_title
+                )
+            )
+        )
+        stimulus_suggestions = (
+            target.stimulus_suggestions
+            if target.stimulus_suggestions is not None
+            else tuple(
+                suggestion
+                for suggestion in plan.stimulus_suggestions
+                if (
+                    suggestion.candidate_workout_day in workouts_by_day
+                    and (
+                        (
+                            suggestion.applied
+                            and planned_workout_stimulus(
+                                workouts_by_day[
+                                    suggestion.candidate_workout_day
+                                ]
+                            ) == suggestion.missing_stimulus
+                        )
+                        or (
+                            not suggestion.applied
+                            and workouts_by_day[
+                                suggestion.candidate_workout_day
+                            ].title == suggestion.candidate_workout_title
+                        )
+                    )
+                )
+            )
+        )
+
         original_revision = next(
             (
                 revision
@@ -211,6 +260,8 @@ class RestoreTrainingPlanRevision:
             events=tuple(deepcopy(tuple(athlete.events))),
             primary_event_id=primary_event_id,
             competition_event_ids=competition_event_ids,
+            adaptations=adaptations,
+            stimulus_suggestions=stimulus_suggestions,
         )
 
         athlete.training_plan = replace(
@@ -223,6 +274,8 @@ class RestoreTrainingPlanRevision:
             active_revision_id=recovery.revision_id,
             primary_event_id=primary_event_id,
             competition_event_ids=competition_event_ids,
+            adaptations=adaptations,
+            stimulus_suggestions=stimulus_suggestions,
         )
         self._repository.save(athlete)
 

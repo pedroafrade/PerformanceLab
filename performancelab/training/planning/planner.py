@@ -569,6 +569,8 @@ class Planner:
             end_date=training_plan.end_date,
             primary_event_id=training_plan.primary_event_id,
             competition_event_ids=training_plan.competition_event_ids,
+            adaptations=(),
+            stimulus_suggestions=(),
         )
 
         return replace(

@@ -9,6 +9,8 @@ from datetime import date, datetime
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from .planned_workout import PlannedWorkout
+from .plan_adaptation import TrainingPlanAdaptation
+from .stimulus_rebalancer import StimulusRebalanceSuggestion
 from performancelab.race.entry import EventEntry
 
 
@@ -41,6 +43,8 @@ class TrainingPlanRevision:
     events: tuple[EventEntry, ...] | None = None
     primary_event_id: str | None = None
     competition_event_ids: tuple[str, ...] = ()
+    adaptations: tuple[TrainingPlanAdaptation, ...] | None = None
+    stimulus_suggestions: tuple[StimulusRebalanceSuggestion, ...] | None = None
     revision_id: str = field(
         default_factory=lambda: str(uuid4()),
     )
@@ -78,6 +82,19 @@ class TrainingPlanRevision:
             isinstance(entry, EventEntry) for entry in self.events
         ):
             raise TypeError("events must contain EventEntry objects or be None.")
+        if self.adaptations is not None and not all(
+            isinstance(item, TrainingPlanAdaptation)
+            for item in self.adaptations
+        ):
+            raise TypeError("adaptations must contain TrainingPlanAdaptation objects.")
+        if self.stimulus_suggestions is not None and not all(
+            isinstance(item, StimulusRebalanceSuggestion)
+            for item in self.stimulus_suggestions
+        ):
+            raise TypeError(
+                "stimulus_suggestions must contain "
+                "StimulusRebalanceSuggestion objects."
+            )
 
         if (
             not isinstance(self.revision_id, str)
@@ -136,6 +153,8 @@ def ensure_plan_revision_history(
         end_date=plan.end_date,
         primary_event_id=plan.primary_event_id,
         competition_event_ids=plan.competition_event_ids,
+        adaptations=(),
+        stimulus_suggestions=(),
     )
 
     if tuple(plan.workouts) == tuple(original_workouts):
@@ -158,6 +177,8 @@ def ensure_plan_revision_history(
             end_date=plan.end_date,
             primary_event_id=plan.primary_event_id,
             competition_event_ids=plan.competition_event_ids,
+            adaptations=plan.adaptations,
+            stimulus_suggestions=plan.stimulus_suggestions,
         )
         revisions = (original, current)
         active_revision_id = current.revision_id

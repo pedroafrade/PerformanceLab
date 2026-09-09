@@ -1613,6 +1613,8 @@ def test_training_plan_revision_round_trip():
         ),
         primary_event_id="race-13",
         competition_event_ids=("race-13",),
+        adaptations=(),
+        stimulus_suggestions=(),
     )
 
     payload = (

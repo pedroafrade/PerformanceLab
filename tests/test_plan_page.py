@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from app.components.plan_page import (
     _actual_and_adapted_load_chart_data,
     _completed_load_chart_data,
+    _compact_plan_layout_styles,
     _current_plan_week,
     _ics_escape,
     _plan_calendar_ics,
@@ -465,6 +466,13 @@ def test_plan_page_opens_shared_event_manager():
     assert 'key="plan_manage_events"' in source
     assert 'help="Manage Events"' in source
     assert "on_click=open_event_manager" in source
+
+
+def test_plan_event_button_matches_adaptation_help_size():
+    source = inspect.getsource(_compact_plan_layout_styles)
+    assert ".st-key-plan_manage_events button" in source
+    assert "width: 1.25rem" in source
+    assert "height: 1.25rem" in source
 
 
 def test_identifies_current_week():
