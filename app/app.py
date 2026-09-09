@@ -5,6 +5,7 @@ Streamlit application.
 """
 
 import os
+from dataclasses import replace
 
 from datetime import (
     date,
@@ -39,6 +40,10 @@ from components import (
 
 from performancelab import (
     Athlete,
+)
+from performancelab.training.planning import (
+    PlanBuilderDraft,
+    TrainingPlanRevision,
 )
 from performancelab.application import (
     DeleteParticipantData,
@@ -329,12 +334,35 @@ def invalidate_daily_brief() -> None:
     st.session_state.pop("daily_brief_attempt_key", None)
     st.session_state.pop("daily_brief_resolution", None)
     
-def regenerate_weekly_plan() -> None:
+def regenerate_weekly_plan(
+    draft: PlanBuilderDraft | None = None,
+) -> None:
     """
     Generate and persist a complete training plan.
     """
 
     athlete = st.session_state.athlete
+
+    if isinstance(draft, PlanBuilderDraft) and draft.has_changes:
+        plan = athlete.training_plan
+        revision = TrainingPlanRevision(
+            created_on=date.today(),
+            source="manual_edit",
+            workouts=tuple(draft.workouts),
+            reason="Plan Builder changes applied by the athlete.",
+            parent_revision_id=plan.active_revision_id,
+        )
+        athlete.training_plan = replace(
+            plan,
+            workouts=list(draft.workouts),
+            revisions=(*plan.revisions, revision),
+            active_revision_id=revision.revision_id,
+        )
+        athlete_repository.save(athlete)
+        st.session_state.athlete = athlete
+        invalidate_daily_brief()
+        st.session_state.persisted_notice = "Plan changes saved."
+        return
 
     try:
 

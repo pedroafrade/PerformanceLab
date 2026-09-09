@@ -5340,8 +5340,25 @@ def _show_plan_builder_interactive_board(
     templates = {}
     for workout in draft.baseline_workouts:
         if workout.title and not _plan_builder_is_race(workout):
-            template_title = "Trail Run" if workout.title == "Hill Run" else workout.title
-            templates.setdefault(template_title, replace(workout, title=template_title))
+            if workout.title == "Hill Run":
+                templates.setdefault(
+                    "Trail Run",
+                    replace(
+                        workout,
+                        sport="Trail Running",
+                        title="Trail Run",
+                        intensity="Easy to moderate",
+                        objective="Build aerobic endurance and trail-running technique.",
+                        prescription_summary="Continuous trail run on varied terrain.",
+                        structure=(
+                            "Warm up 10 min easy",
+                            "Continuous trail run on varied terrain",
+                            "Cool down 5 min easy",
+                        ),
+                    ),
+                )
+                continue
+            templates.setdefault(workout.title, workout)
 
     completed_workouts = []
     if history is not None:
@@ -5360,6 +5377,21 @@ def _show_plan_builder_interactive_board(
             })
 
     def payload(workout):
+        supported_efforts = {
+            "very easy", "easy", "easy to moderate",
+            "moderately hard", "hard", "race effort", "very hard",
+        }
+        effort = str(workout.intensity or "").strip().lower()
+        if effort not in supported_efforts:
+            title = str(workout.title or "").lower()
+            if any(token in title for token in ("tempo", "lt2", "hill", "interval")):
+                effort = "hard"
+            elif "race" in title:
+                effort = "race effort"
+            elif any(token in title for token in ("easy", "recovery", "shakeout")):
+                effort = "easy"
+            else:
+                effort = "easy to moderate"
         return {
             "id": workout.planned_workout_id,
             "day": workout.day.isoformat(),
@@ -5367,7 +5399,7 @@ def _show_plan_builder_interactive_board(
             "duration": round(workout.duration.total_seconds() / 60) if workout.duration else None,
             "distance": workout.distance,
             "elevation": workout.elevation_gain,
-            "intensity": workout.intensity or "",
+            "intensity": effort,
             "prescription": workout.prescription_summary or "",
             "objective": workout.objective or "",
             "structure": "\n".join(workout.structure),
@@ -6222,9 +6254,7 @@ div[role="dialog"] [data-testid="stAlert"] {
                 use_container_width=True,
             ):
 
-                on_generate_plan(
-                    athlete
-                )
+                on_generate_plan(builder_draft)
 
     with recovery_tab:
         st.caption(

@@ -2530,6 +2530,9 @@ def test_plan_builder_uses_clickable_cell_component():
     assert 'kind == "delete"' in source
     assert "allow_occupied=True" in source
     assert "draft.update_workout" in source
+    assert "on_generate_plan(builder_draft)" in inspect.getsource(
+        _show_plan_generation_confirmation
+    )
 
 
 def test_plan_builder_preserves_structured_target_in_prescription():
