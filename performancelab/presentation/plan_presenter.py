@@ -1458,8 +1458,17 @@ class PlanPresenter:
             PlanChartPointData(
                 day=workout.day,
                 title=(
-                    workout.title
-                    or "Planned workout"
+                    self._target_event_title(workout)
+                    if (
+                        str(workout.intensity or "")
+                        .strip()
+                        .lower()
+                        == "race effort"
+                    )
+                    else (
+                        workout.title
+                        or "Planned workout"
+                    )
                 ),
                 phase=workout.phase,
                 planned_load=(

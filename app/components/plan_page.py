@@ -460,6 +460,62 @@ def _actual_and_adapted_load_chart_data(
         )
     )
 
+    completed_rows = [
+        row
+        for row in rows
+        if row["Source"] == "Completed"
+    ]
+    projection_rows = [
+        row
+        for row in rows
+        if row["Source"] == "Adapted projection"
+    ]
+    reference_date = plan.reference_day.isoformat()
+    completed_today = next(
+        (
+            row
+            for row in reversed(completed_rows)
+            if row["Date"] == reference_date
+        ),
+        None,
+    )
+    projection_today = next(
+        (
+            row
+            for row in projection_rows
+            if row["Date"] == reference_date
+        ),
+        None,
+    )
+    last_completed = max(
+        completed_rows,
+        key=lambda row: row["Date"],
+        default=None,
+    )
+    first_projection = min(
+        projection_rows,
+        key=lambda row: row["Date"],
+        default=None,
+    )
+    transition = (
+        completed_today
+        or projection_today
+        or last_completed
+        or first_projection
+    )
+    if transition is not None:
+        anchor = {
+            "Date": reference_date,
+            "Session": "Today",
+            "Actual or adapted load": transition[
+                "Actual or adapted load"
+            ],
+        }
+        if completed_today is None:
+            rows.append({**anchor, "Source": "Completed"})
+        if projection_today is None:
+            rows.append({**anchor, "Source": "Adapted projection"})
+
     return sorted(
         rows,
         key=lambda row: (
@@ -5492,6 +5548,7 @@ def _show_plan_builder_interactive_board(
         st.toast(str(error), icon="⚠️", duration=3000)
         return draft
     st.session_state[draft_key] = draft
+    st.rerun(scope="fragment")
     return draft
 
 

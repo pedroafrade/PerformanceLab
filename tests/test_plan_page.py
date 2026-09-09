@@ -2250,6 +2250,18 @@ def test_combines_completed_load_with_remaining_adapted_plan():
             "Source": "Completed",
         },
         {
+            "Date": "2026-09-07",
+            "Session": "Today",
+            "Actual or adapted load": 480.0,
+            "Source": "Adapted projection",
+        },
+        {
+            "Date": "2026-09-07",
+            "Session": "Today",
+            "Actual or adapted load": 480.0,
+            "Source": "Completed",
+        },
+        {
             "Date": "2026-09-08",
             "Session": "Hill Reps",
             "Actual or adapted load": 300.0,
@@ -2530,6 +2542,7 @@ def test_plan_builder_uses_clickable_cell_component():
     assert 'kind == "delete"' in source
     assert "allow_occupied=True" in source
     assert "draft.update_workout" in source
+    assert 'st.rerun(scope="fragment")' in source
     assert "on_generate_plan(builder_draft)" in inspect.getsource(
         _show_plan_generation_confirmation
     )

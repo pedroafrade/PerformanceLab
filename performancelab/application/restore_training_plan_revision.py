@@ -20,6 +20,39 @@ class RestoreTrainingPlanRevisionResult:
 
 class RestoreTrainingPlanRevision:
 
+    @staticmethod
+    def _is_race_workout(workout) -> bool:
+        title = str(workout.title or "").strip().lower()
+        intensity = str(workout.intensity or "").strip().lower()
+        return (
+            intensity == "race effort"
+            or title in {"race", "competition", "event"}
+        )
+
+    @staticmethod
+    def _event_name_from_workout(workout) -> str:
+        detail = " ".join(
+            str(value or "")
+            for value in (
+                workout.description,
+                workout.prescription_summary,
+                workout.objective,
+            )
+        )
+        patterns = (
+            r"Registered event:\s*([^\.]+)",
+            r"Perform effectively at\s+(.+?)(?:\.|$)",
+        )
+        for pattern in patterns:
+            match = re.search(
+                pattern,
+                detail,
+                flags=re.IGNORECASE,
+            )
+            if match is not None and match.group(1).strip():
+                return match.group(1).strip()
+        return str(workout.title or "Recovered race")
+
     def __init__(self, *, repository: AthleteRepository) -> None:
         self._repository = repository
 
@@ -33,17 +66,20 @@ class RestoreTrainingPlanRevision:
         athlete = self._repository.get(athlete_id)
         plan = athlete.training_plan
 
-        target = next(
+        target_index = next(
             (
-                revision
-                for revision in plan.revisions
+                index
+                for index, revision in enumerate(plan.revisions)
                 if revision.revision_id == revision_id
             ),
             None,
         )
 
-        if target is None:
+        if target_index is None:
             raise LookupError("Training plan revision was not found.")
+
+        target = plan.revisions[target_index]
+        retained_revisions = plan.revisions[: target_index + 1]
 
         workout_days = tuple(workout.day for workout in target.workouts)
         if target.start_date is not None:
@@ -73,34 +109,15 @@ class RestoreTrainingPlanRevision:
                 for entry in restored_events
             }
             for workout in target.workouts:
-                is_race = (
-                    str(workout.intensity or "").strip().lower() == "race effort"
-                    or "race" in str(workout.title or "").strip().lower()
-                )
-                if not is_race or workout.day in existing_days:
+                if (
+                    not self._is_race_workout(workout)
+                    or workout.day in existing_days
+                ):
                     continue
-                detail = " ".join(
-                    str(value or "")
-                    for value in (
-                        workout.description,
-                        workout.prescription_summary,
-                        workout.objective,
-                    )
-                )
-                match = re.search(
-                    r"Registered event:\s*([^\.]+)",
-                    detail,
-                    flags=re.IGNORECASE,
-                )
-                event_name = (
-                    match.group(1).strip()
-                    if match
-                    else str(workout.title or "Recovered race")
-                )
                 restored_events.append(
                     EventEntry(
                         event=Event(
-                            name=event_name,
+                            name=self._event_name_from_workout(workout),
                             date=workout.day,
                             sport=workout.sport or "Running",
                             distance=workout.distance,
@@ -134,6 +151,15 @@ class RestoreTrainingPlanRevision:
         if not competition_event_ids:
             competition_event_ids = restored_event_ids
 
+        original_revision = next(
+            (
+                revision
+                for revision in retained_revisions
+                if revision.source == "generated"
+            ),
+            target,
+        )
+
         recovery = TrainingPlanRevision(
             created_on=today or date.today(),
             source="recovery",
@@ -152,7 +178,8 @@ class RestoreTrainingPlanRevision:
             start_date=start_date,
             end_date=end_date,
             workouts=list(target.workouts),
-            revisions=(*plan.revisions, recovery),
+            original_workouts=original_revision.workouts,
+            revisions=(*retained_revisions, recovery),
             active_revision_id=recovery.revision_id,
             primary_event_id=primary_event_id,
             competition_event_ids=competition_event_ids,

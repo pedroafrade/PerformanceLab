@@ -30,6 +30,14 @@ def test_material_training_changes_invalidate_daily_brief():
         assert "invalidate_daily_brief()" in function_source(name)
 
 
+def test_event_changes_regenerate_the_persistent_plan():
+    text = source()
+    assert 'pop("event_plan_refresh_requested", False)' in text
+    assert 'operation="regenerate_plan_after_event_change"' in text
+    assert "GenerateTrainingPlan(" in text
+    assert '"Events and training plan updated."' in text
+
+
 def test_invalidation_clears_attempt_and_visible_resolution():
     body = function_source("invalidate_daily_brief")
     assert 'pop("daily_brief_attempt_key", None)' in body

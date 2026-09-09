@@ -1536,6 +1536,30 @@ def test_prefers_specific_race_title():
         result.target_event_title
         == "Sealand 10K"
     )
+
+
+def test_original_curve_uses_resolved_event_name():
+    race = PlannedWorkout(
+        scheduled_at=datetime(2026, 9, 13, 8),
+        sport="Road Running",
+        title="Race",
+        duration=timedelta(minutes=50),
+        intensity="Race effort",
+        objective="Perform effectively at Sealand.",
+        phase="Race",
+    )
+
+    result = PlanPresenter(
+        plan=TrainingPlan(
+            original_workouts=(race,),
+            workouts=[race],
+        ),
+        history=History(),
+    ).build(reference_day=date(2026, 8, 5))
+
+    assert result.original_chart_points[0].title == "Sealand"
+
+
 def test_uses_generic_race_title_without_event_name():
 
     race = PlannedWorkout(

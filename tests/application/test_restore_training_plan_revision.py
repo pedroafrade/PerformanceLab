@@ -33,7 +33,7 @@ def session(title):
     )
 
 
-def test_restores_revision_without_deleting_current_version():
+def test_restores_revision_and_discards_later_versions():
     original = TrainingPlanRevision(
         revision_id="original",
         created_on=date(2026, 9, 1),
@@ -64,8 +64,16 @@ def test_restores_revision_without_deleting_current_version():
     )
 
     assert result.athlete.training_plan.workouts[0].title == "Tempo Run"
-    assert len(result.athlete.training_plan.revisions) == 3
+    assert len(result.athlete.training_plan.revisions) == 2
     assert result.athlete.training_plan.revisions[-1].source == "recovery"
+    assert all(
+        revision.revision_id != "adapted"
+        for revision in result.athlete.training_plan.revisions
+    )
+    assert (
+        result.athlete.training_plan.original_workouts
+        == original.workouts
+    )
     assert repository.saved == [athlete]
 
 
@@ -172,3 +180,44 @@ def test_restore_legacy_revision_infers_horizon_and_race_event():
     assert restored.first.day == date(2026, 8, 12)
     assert result.athlete.events.next.event.name == "Sealand"
     assert result.athlete.events.next.event.date == date(2026, 9, 13)
+
+
+def test_restore_does_not_turn_pre_race_session_into_event():
+    pre_race = PlannedWorkout(
+        scheduled_at=datetime(2026, 9, 12, 8),
+        sport="Running",
+        title="Pre-Race Easy Run",
+        intensity="Easy",
+    )
+    race = PlannedWorkout(
+        scheduled_at=datetime(2026, 9, 13, 8),
+        sport="Road Running",
+        title="Race",
+        intensity="Race effort",
+        objective="Perform effectively at Sealand.",
+    )
+    revision = TrainingPlanRevision(
+        revision_id="legacy-race-week",
+        created_on=date(2026, 9, 9),
+        source="generated",
+        workouts=(pre_race, race),
+    )
+    athlete = Athlete(name="Pedro")
+    athlete.training_plan = TrainingPlan(
+        revisions=(revision,),
+        active_revision_id=revision.revision_id,
+        workouts=[],
+    )
+
+    result = RestoreTrainingPlanRevision(
+        repository=Repository(athlete)
+    ).execute(
+        athlete.athlete_id,
+        revision.revision_id,
+        today=date(2026, 9, 9),
+    )
+
+    restored_events = tuple(result.athlete.events)
+    assert len(restored_events) == 1
+    assert restored_events[0].event.name == "Sealand"
+    assert restored_events[0].event.date == date(2026, 9, 13)
