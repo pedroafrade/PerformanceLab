@@ -127,20 +127,20 @@ visualmente no Streamlit.
   aplicável diretamente no aviso com um clique.
 - Recomendações mantêm caráter informativo e não constituem garantia clínica.
 
+### 3.6 — Integridade transacional e restore
+
+- A aplicação do rascunho é um caso de uso transacional testável: valida a
+  revisão de origem, ignora repetições, cria uma única revisão e repõe o plano
+  anterior se a persistência falhar.
+- Um teste integrado cobre mover, editar, adicionar, eliminar e persistir numa
+  única sequência, incluindo identidade das sessões e revisão ativa.
+- Restore recupera em conjunto sessões, horizonte, plano original, eventos e
+  identificadores competitivos, elimina versões posteriores e cria uma revisão
+  de recuperação ligada diretamente à revisão restaurada.
+- As vistas derivadas são invalidadas pela revisão ativa após gravação, Restore,
+  alterações de eventos e alterações ao histórico realizado.
+
 ## 4. Trabalho pendente
-
-### Prioridade 1 — Integridade transacional do Plan Builder
-
-- Criar testes de fluxo completo para mover, adicionar, editar e eliminar uma
-  sessão, verificando na mesma execução célula, curvas, rascunho, persistência
-  após Generate Plan e estado após rerun/refresh.
-- Completar testes integrados de navegação entre Plan Builder, Plan
-  Progression, Plan Weeks, Calendar e Today após cada tipo de alteração.
-
-### Prioridade 3 — Histórico e restore transparentes
-
-- Acrescentar testes integrados para restore de sessões, eventos, horizonte,
-  curva original e projeção adaptada.
 
 ### Prioridade 4 — Today e aconselhamento
 
@@ -183,7 +183,7 @@ Um item só passa para concluído depois de:
 
 ## 7. Próximo conjunto recomendado
 
-Implementar num único commit a **Prioridade 1 — Integridade transacional do Plan
-Builder**. É a fundação para recomendações fisiológicas e histórico seguros:
-nenhuma destas funcionalidades deve depender de ações repetidas nem divergir
-depois de rerun ou refresh.
+Avançar para a **Prioridade 4 — Today e aconselhamento**, começando pela
+substituição de Today's Recommendation pelo Daily Brief persistido. Recovery
+Log e Strategy Adviser continuam dependentes das decisões de privacidade e
+limites clínicos descritas acima.

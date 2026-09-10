@@ -43,11 +43,10 @@ from components import (
 from performancelab import (
     Athlete,
 )
-from performancelab.training.planning import (
-    PlanBuilderDraft,
-    TrainingPlanRevision,
-)
+from performancelab.training.planning import PlanBuilderDraft
 from performancelab.application import (
+    ApplyPlanBuilderDraft,
+    StalePlanBuilderDraftError,
     DeleteParticipantData,
     DeleteWorkouts,
     ExportParticipantData,
@@ -368,46 +367,20 @@ def regenerate_weekly_plan(
     athlete = st.session_state.athlete
 
     if isinstance(draft, PlanBuilderDraft) and draft.has_changes:
-        plan = athlete.training_plan
-        if (
-            draft.source_plan_id != plan.plan_id
-            or draft.source_revision_id != plan.active_revision_id
-        ):
+        try:
+            result = ApplyPlanBuilderDraft(
+                repository=athlete_repository
+            ).execute(
+                athlete.athlete_id,
+                draft,
+                today=date.today(),
+            )
+        except StalePlanBuilderDraftError as error:
             st.session_state.plan_builder_save_error = (
-                "The active plan changed while this draft was open. "
-                "Review the refreshed plan before saving again."
+                f"{error} Review the refreshed plan before saving again."
             )
             return
-
-        if tuple(draft.workouts) == tuple(plan.workouts):
-            st.session_state.persisted_notice = "No plan changes to save."
-            return
-
-        revision = TrainingPlanRevision(
-            created_on=date.today(),
-            source="manual_edit",
-            workouts=tuple(draft.workouts),
-            reason="Plan Builder changes applied by the athlete.",
-            parent_revision_id=plan.active_revision_id,
-            start_date=plan.start_date,
-            end_date=plan.end_date,
-            events=tuple(deepcopy(tuple(athlete.events))),
-            primary_event_id=plan.primary_event_id,
-            competition_event_ids=plan.competition_event_ids,
-            adaptations=plan.adaptations,
-            stimulus_suggestions=plan.stimulus_suggestions,
-        )
-        revised_plan = replace(
-            plan,
-            workouts=list(draft.workouts),
-            revisions=(*plan.revisions, revision),
-            active_revision_id=revision.revision_id,
-        )
-        athlete.training_plan = revised_plan
-        try:
-            athlete_repository.save(athlete)
         except Exception as error:
-            athlete.training_plan = plan
             capture_exception(
                 error,
                 operation="save_plan_builder_draft",
@@ -418,8 +391,11 @@ def regenerate_weekly_plan(
                 "Your draft is still available; please try again."
             )
             return
-        st.session_state.athlete = athlete
-        invalidate_plan_views(revised_plan)
+        if not result.changed:
+            st.session_state.persisted_notice = "No plan changes to save."
+            return
+        st.session_state.athlete = result.athlete
+        invalidate_plan_views(result.athlete.training_plan)
         st.session_state.persisted_notice = "Plan changes saved."
         st.rerun()
         return

@@ -8,6 +8,11 @@ from .delete_workouts import (
     DeleteWorkouts,
     DeleteWorkoutsResult,
 )
+from .apply_plan_builder_draft import (
+    ApplyPlanBuilderDraft,
+    ApplyPlanBuilderDraftResult,
+    StalePlanBuilderDraftError,
+)
 from .delete_participant_data import (
     DeleteParticipantData,
     DeleteParticipantDataResult,
@@ -53,6 +58,9 @@ from .provision_invited_user import (
 )
 
 __all__ = [
+    "ApplyPlanBuilderDraft",
+    "ApplyPlanBuilderDraftResult",
+    "StalePlanBuilderDraftError",
     "DeleteParticipantData",
     "DeleteParticipantDataResult",
     "DeleteWorkouts",

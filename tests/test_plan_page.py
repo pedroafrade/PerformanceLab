@@ -2775,13 +2775,16 @@ def test_plan_builder_reviews_changes_before_persisting():
 
 
 def test_plan_builder_persistence_rejects_stale_and_duplicate_drafts():
-    source = Path("app/app.py").read_text(encoding="utf-8")
+    source = Path(
+        "performancelab/application/apply_plan_builder_draft.py"
+    ).read_text(encoding="utf-8")
+    app_source = Path("app/app.py").read_text(encoding="utf-8")
 
     assert "draft.source_revision_id != plan.active_revision_id" in source
     assert "tuple(draft.workouts) == tuple(plan.workouts)" in source
-    assert 'operation="save_plan_builder_draft"' in source
+    assert 'operation="save_plan_builder_draft"' in app_source
     assert "athlete.training_plan = plan" in source
-    assert "Your draft is still available" in source
+    assert "Your draft is still available" in app_source
 
 
 def test_existing_plan_uses_edit_plan_action():

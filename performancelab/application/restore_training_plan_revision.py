@@ -254,7 +254,7 @@ class RestoreTrainingPlanRevision:
             source="recovery",
             workouts=target.workouts,
             reason=f"Recovered revision {target.revision_id}.",
-            parent_revision_id=plan.active_revision_id,
+            parent_revision_id=target.revision_id,
             start_date=start_date,
             end_date=end_date,
             events=tuple(deepcopy(tuple(athlete.events))),

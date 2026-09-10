@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 
 import pytest
@@ -69,6 +70,10 @@ def test_restores_revision_and_discards_later_versions():
     assert all(
         revision.revision_id != "adapted"
         for revision in result.athlete.training_plan.revisions
+    )
+    assert (
+        result.athlete.training_plan.revisions[-1].parent_revision_id
+        == "original"
     )
     assert (
         result.athlete.training_plan.original_workouts
@@ -241,3 +246,74 @@ def test_restore_does_not_turn_pre_race_session_into_event():
     assert len(restored_events) == 1
     assert restored_events[0].event.name == "Sealand"
     assert restored_events[0].event.date == date(2026, 9, 13)
+
+
+def test_restore_is_a_complete_consistent_snapshot():
+    sealand = EventEntry(
+        event=Event(
+            event_id="sealand",
+            name="Sealand",
+            date=date(2026, 9, 13),
+            sport="Road Running",
+            distance=10,
+        ),
+        priority="A",
+    )
+    original_workout = session("Original Tempo")
+    restored_workout = replace(
+        original_workout,
+        scheduled_at=datetime(2026, 9, 12, 8),
+        title="Pre-Race Easy Run",
+    )
+    generated = TrainingPlanRevision(
+        revision_id="generated",
+        created_on=date(2026, 8, 10),
+        source="generated",
+        workouts=(original_workout,),
+        start_date=date(2026, 8, 10),
+        end_date=date(2026, 10, 4),
+        events=(sealand,),
+    )
+    target = TrainingPlanRevision(
+        revision_id="target",
+        created_on=date(2026, 9, 8),
+        source="manual_edit",
+        workouts=(restored_workout,),
+        parent_revision_id="generated",
+        start_date=date(2026, 8, 10),
+        end_date=date(2026, 10, 4),
+        events=(sealand,),
+        primary_event_id="sealand",
+        competition_event_ids=("sealand",),
+    )
+    later = TrainingPlanRevision(
+        revision_id="later",
+        created_on=date(2026, 9, 9),
+        source="automatic_adaptation",
+        workouts=(session("Later Hill Reps"),),
+        parent_revision_id="target",
+    )
+    athlete = Athlete(name="Pedro")
+    athlete.training_plan = TrainingPlan(
+        start_date=date(2026, 9, 7),
+        end_date=date(2026, 10, 4),
+        workouts=list(later.workouts),
+        revisions=(generated, target, later),
+        active_revision_id="later",
+    )
+
+    result = RestoreTrainingPlanRevision(
+        repository=Repository(athlete)
+    ).execute(athlete.athlete_id, "target", today=date(2026, 9, 10))
+
+    plan = result.athlete.training_plan
+    assert plan.start_date == date(2026, 8, 10)
+    assert plan.end_date == date(2026, 10, 4)
+    assert tuple(plan.workouts) == target.workouts
+    assert plan.original_workouts == generated.workouts
+    assert all(item.revision_id != "later" for item in plan.revisions)
+    assert plan.revisions[-1].parent_revision_id == "target"
+    assert plan.active_revision_id == plan.revisions[-1].revision_id
+    assert tuple(result.athlete.events) == (sealand,)
+    assert plan.primary_event_id == "sealand"
+    assert plan.competition_event_ids == ("sealand",)
