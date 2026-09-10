@@ -98,6 +98,14 @@ visualmente no Streamlit.
   adjacentes, sem criar uma carga ou inflexão artificial na data atual.
 - Bloqueios e recomendações do Plan Builder são apresentados integralmente num
   pop-up temporário na camada superior do diálogo, sem alterar o layout.
+- Cada gesto do quadro recebe confirmação explícita; se o Streamlit não
+  responder, o estado de espera é libertado automaticamente para não bloquear
+  as ações seguintes.
+- A gravação rejeita rascunhos desatualizados ou sem diferenças, mantém o
+  rascunho quando o repositório falha e apresenta uma revisão resumida antes da
+  confirmação.
+- O Restore apresenta também a lista concreta de sessões e eventos afetados,
+  num pop-up compacto com expansão apenas para alterações longas.
 
 ## 4. Trabalho pendente
 
@@ -106,12 +114,8 @@ visualmente no Streamlit.
 - Criar testes de fluxo completo para mover, adicionar, editar e eliminar uma
   sessão, verificando na mesma execução célula, curvas, rascunho, persistência
   após Generate Plan e estado após rerun/refresh.
-- Garantir que cada gesto é processado exatamente uma vez, sem exigir uma
-  segunda ação e sem duplicar sessões.
 - Centralizar a invalidação das projeções para que Plan Builder, Plan
   Progression, Plan Weeks, Calendar e Today sejam atualizados pela mesma revisão.
-- Em falhas de persistência, manter o rascunho e apresentar uma mensagem clara,
-  sem aparentar que a gravação foi concluída.
 
 ### Prioridade 2 — Recomendações fisiológicas acionáveis
 

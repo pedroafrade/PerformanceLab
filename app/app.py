@@ -347,6 +347,20 @@ def regenerate_weekly_plan(
 
     if isinstance(draft, PlanBuilderDraft) and draft.has_changes:
         plan = athlete.training_plan
+        if (
+            draft.source_plan_id != plan.plan_id
+            or draft.source_revision_id != plan.active_revision_id
+        ):
+            st.session_state.plan_builder_save_error = (
+                "The active plan changed while this draft was open. "
+                "Review the refreshed plan before saving again."
+            )
+            return
+
+        if tuple(draft.workouts) == tuple(plan.workouts):
+            st.session_state.persisted_notice = "No plan changes to save."
+            return
+
         revision = TrainingPlanRevision(
             created_on=date.today(),
             source="manual_edit",
@@ -361,13 +375,27 @@ def regenerate_weekly_plan(
             adaptations=plan.adaptations,
             stimulus_suggestions=plan.stimulus_suggestions,
         )
-        athlete.training_plan = replace(
+        revised_plan = replace(
             plan,
             workouts=list(draft.workouts),
             revisions=(*plan.revisions, revision),
             active_revision_id=revision.revision_id,
         )
-        athlete_repository.save(athlete)
+        athlete.training_plan = revised_plan
+        try:
+            athlete_repository.save(athlete)
+        except Exception as error:
+            athlete.training_plan = plan
+            capture_exception(
+                error,
+                operation="save_plan_builder_draft",
+                reporter=exception_reporter,
+            )
+            st.session_state.plan_builder_save_error = (
+                "Plan changes could not be saved. "
+                "Your draft is still available; please try again."
+            )
+            return
         st.session_state.athlete = athlete
         invalidate_daily_brief()
         st.session_state.persisted_notice = "Plan changes saved."

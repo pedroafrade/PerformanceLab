@@ -5466,6 +5466,11 @@ def _queue_plan_builder_feedback(
         "recommendations": normalize(recommendations),
         "blocked": blocked,
     }
+    interaction_key = f"{draft_key}:interaction-revision"
+    st.session_state[interaction_key] = (
+        int(st.session_state.get(interaction_key, 0))
+        + 1
+    )
 
 
 def _show_plan_builder_feedback(*, draft_key: str) -> None:
@@ -5645,6 +5650,12 @@ def _show_plan_builder_interactive_board(
         )
         for item in workouts
     )))
+    interaction_revision = int(
+        st.session_state.get(
+            f"{draft_key}:interaction-revision",
+            0,
+        )
+    )
     action = _plan_builder_board_component(
         days=[{"day": day.isoformat(), "label": day.strftime("%a %d %b"), "past": day < reference_day} for day in days],
         workouts=[
@@ -5652,7 +5663,11 @@ def _show_plan_builder_interactive_board(
             *[payload(workout) for workout in workouts if workout.day >= reference_day],
         ],
         templates=[payload(workout) for workout in templates.values()],
-        key=f"plan-builder-interactive-board-{board_revision}",
+        interaction_revision=interaction_revision,
+        key=(
+            "plan-builder-interactive-board-"
+            f"{board_revision}-{interaction_revision}"
+        ),
         default=None,
     )
     if not action:
@@ -5933,6 +5948,46 @@ def _revision_restore_details(
         for event_id in shared_event_ids
     )
 
+    changes = []
+    changes.extend(
+        f"Added {target_by_id[workout_id].title} on "
+        f"{target_by_id[workout_id].day:%d %b}"
+        for workout_id in sorted(target_by_id.keys() - current_by_id.keys())
+    )
+    changes.extend(
+        f"Removed {current_by_id[workout_id].title} from "
+        f"{current_by_id[workout_id].day:%d %b}"
+        for workout_id in sorted(current_by_id.keys() - target_by_id.keys())
+    )
+    changes.extend(
+        f"Moved {target_by_id[workout_id].title}: "
+        f"{current_by_id[workout_id].day:%d %b} → "
+        f"{target_by_id[workout_id].day:%d %b}"
+        for workout_id in sorted(shared_ids)
+        if current_by_id[workout_id].day != target_by_id[workout_id].day
+    )
+    changes.extend(
+        f"Edited {target_by_id[workout_id].title} on "
+        f"{target_by_id[workout_id].day:%d %b}"
+        for workout_id in sorted(shared_ids)
+        if (
+            current_by_id[workout_id] != target_by_id[workout_id]
+            and current_by_id[workout_id].day == target_by_id[workout_id].day
+        )
+    )
+    changes.extend(
+        f"Restored event {target_event_by_id[event_id].event.name}"
+        for event_id in sorted(
+            target_event_by_id.keys() - current_event_by_id.keys()
+        )
+    )
+    changes.extend(
+        f"Removed event {current_event_by_id[event_id].event.name}"
+        for event_id in sorted(
+            current_event_by_id.keys() - target_event_by_id.keys()
+        )
+    )
+
     return (
         f"Sessions: {added} added · {removed} removed · "
         f"{moved} moved · {edited} edited",
@@ -5948,6 +6003,7 @@ def _revision_restore_details(
             )
             else "Horizon: unchanged"
         ),
+        *changes,
     )
     previous_load = sum(float(planned_workout_load(item) or 0.0) for item in previous)
     current_load = sum(float(planned_workout_load(item) or 0.0) for item in current)
@@ -6054,8 +6110,14 @@ def _show_plan_recovery_revisions(
         with right:
             with st.popover("Restore", use_container_width=True):
                 st.markdown("**Restore this plan version?**")
-                for detail in details:
+                for detail in details[:3]:
                     st.caption(detail)
+                for detail in details[3:8]:
+                    st.caption(f"• {detail}")
+                if len(details) > 8:
+                    with st.expander("Show all changes"):
+                        for detail in details[8:]:
+                            st.caption(f"• {detail}")
                 st.caption(
                     f"{later_count} later version"
                     f"{'s' if later_count != 1 else ''} will be removed."
@@ -6110,6 +6172,17 @@ def _show_plan_generation_confirmation(
         f"{active_plan.active_revision_id or 'current'}"
     )
 
+    save_error = st.session_state.pop(
+        "plan_builder_save_error",
+        None,
+    )
+    if save_error:
+        _queue_plan_builder_feedback(
+            draft_key=draft_key,
+            messages=(save_error,),
+            blocked=True,
+        )
+
     if draft_key not in st.session_state:
 
         st.session_state[
@@ -6143,8 +6216,7 @@ def _show_plan_generation_confirmation(
     st.markdown(
         """
         <style>
-div[data-testid="stDialog"] [role="dialog"],
-div[role="dialog"] {
+div[data-testid="stDialog"] [role="dialog"] {
     width: 94vw !important;
     min-width: 94vw !important;
     max-width: 1500px !important;
@@ -6190,42 +6262,46 @@ div[data-testid="stDialog"]
     margin-bottom: 0.15rem;
 }
 
-div[data-testid="stDialog"] [role="dialog"] > div,
-div[role="dialog"] > div {
+div[data-testid="stDialog"] [role="dialog"] > div {
     width: 100% !important;
     max-width: none !important;
     box-sizing: border-box;
 }
 
-div[role="dialog"] [data-testid="stVerticalBlock"] {
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stVerticalBlock"] {
     width: 100% !important;
     max-width: none !important;
 }
 
-div[role="dialog"] [data-testid="stHorizontalBlock"] {
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stHorizontalBlock"] {
     width: 100% !important;
 }
 
-div[role="dialog"] .plan-builder-weeks {
+div[data-testid="stDialog"] [role="dialog"] .plan-builder-weeks {
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
 }
 
-div[role="dialog"] .plan-builder-library {
+div[data-testid="stDialog"] [role="dialog"] .plan-builder-library {
     max-width: 100%;
     overflow: hidden;
 }
 
-div[role="dialog"] .stSelectbox label,
-div[role="dialog"] .stDateInput label {
+div[data-testid="stDialog"] [role="dialog"] .stSelectbox label,
+div[data-testid="stDialog"] [role="dialog"] .stDateInput label {
     font-size: 0.68rem;
 }
 
-div[role="dialog"] [data-testid="stAlert"] {
+div[data-testid="stDialog"] [role="dialog"] [data-testid="stAlert"] {
     padding: 0.45rem 0.65rem;
     font-size: 0.68rem;
+}
+
+div[data-testid="stPopoverBody"] {
+    width: min(28rem, calc(100vw - 2rem)) !important;
+    max-width: min(28rem, calc(100vw - 2rem)) !important;
 }
         .plan-builder-workspace {
             margin: 0.45rem 0 0.25rem;
@@ -6702,14 +6778,24 @@ div[role="dialog"] [data-testid="stAlert"] {
                 return
 
         with generate_column:
-
-            if st.button(
+            with st.popover(
                 "Generate plan",
-                key="confirm-plan-generation",
                 use_container_width=True,
             ):
-
-                on_generate_plan(builder_draft)
+                st.markdown("**Review plan changes**")
+                st.caption(
+                    f"{draft_assessment.changed_sessions} sessions changed · "
+                    f"{draft_assessment.load_difference:+.0f} AU"
+                )
+                for message in draft_assessment.messages:
+                    st.caption(f"Warning: {message}")
+                if st.button(
+                    "Confirm changes",
+                    key="confirm-plan-generation",
+                    use_container_width=True,
+                    disabled=(not builder_draft.has_changes),
+                ):
+                    on_generate_plan(builder_draft)
 
     with recovery_tab:
         st.caption(

@@ -2537,6 +2537,9 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "margin-bottom: 0.35rem" in source
     assert 'data-testid="stTabPanel"' in source
     assert "overflow-y: hidden" in source
+    assert 'div[role="dialog"] {' not in source
+    assert 'data-testid="stPopoverBody"' in source
+    assert "28rem" in source
 
 def test_plan_builder_uses_movable_week_structure():
 
@@ -2581,6 +2584,7 @@ def test_plan_builder_uses_clickable_cell_component():
     assert "draft.update_workout" in source
     assert 'st.rerun(scope="fragment")' in source
     assert "board_revision" in source
+    assert "interaction_revision" in source
     assert "assess_plan_builder_change" in source
     assert "_claim_plan_builder_action" in source
     assert "on_generate_plan(builder_draft)" in inspect.getsource(
@@ -2627,6 +2631,9 @@ def test_plan_builder_component_waits_for_authoritative_render():
     assert 'aria-label="Remove session"' in source
     assert '#popover.compact' in source
     assert 'width:max-content' in source
+    assert "pendingTimer" in source
+    assert "3500" in source
+    assert "releasePending" in source
 
 
 def test_plan_builder_feedback_does_not_change_dialog_layout():
@@ -2707,20 +2714,23 @@ def test_restore_preview_classifies_session_and_event_changes():
     current = SimpleNamespace(
         planned_workout_id="session-1",
         day=date(2026, 9, 12),
+        title="Tempo Run",
     )
     moved = SimpleNamespace(
         planned_workout_id="session-1",
         day=date(2026, 9, 13),
+        title="Tempo Run",
     )
     added = SimpleNamespace(
         planned_workout_id="session-2",
         day=date(2026, 9, 14),
+        title="Easy Run",
     )
     current_event = SimpleNamespace(
-        event=SimpleNamespace(event_id="event-1"),
+        event=SimpleNamespace(event_id="event-1", name="Old Race"),
     )
     restored_event = SimpleNamespace(
-        event=SimpleNamespace(event_id="event-2"),
+        event=SimpleNamespace(event_id="event-2", name="Sealand"),
     )
     target = SimpleNamespace(
         workouts=(moved, added),
@@ -2739,6 +2749,28 @@ def test_restore_preview_classifies_session_and_event_changes():
     assert "1 moved" in details[0]
     assert "Events: 1 added · 1 removed · 0 edited" in details[1]
     assert "01 Sep 2026" in details[2]
+    assert any("Added Easy Run" in detail for detail in details)
+    assert any("Moved Tempo Run" in detail for detail in details)
+    assert any("Restored event Sealand" in detail for detail in details)
+
+
+def test_plan_builder_reviews_changes_before_persisting():
+    source = inspect.getsource(_show_plan_generation_confirmation)
+
+    assert "Review plan changes" in source
+    assert '"Confirm changes"' in source
+    assert "draft_assessment.changed_sessions" in source
+    assert "draft_assessment.load_difference" in source
+
+
+def test_plan_builder_persistence_rejects_stale_and_duplicate_drafts():
+    source = Path("app/app.py").read_text(encoding="utf-8")
+
+    assert "draft.source_revision_id != plan.active_revision_id" in source
+    assert "tuple(draft.workouts) == tuple(plan.workouts)" in source
+    assert 'operation="save_plan_builder_draft"' in source
+    assert "athlete.training_plan = plan" in source
+    assert "Your draft is still available" in source
 
 
 def test_existing_plan_uses_edit_plan_action():
