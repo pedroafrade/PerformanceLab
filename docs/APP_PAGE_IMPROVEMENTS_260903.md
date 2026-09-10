@@ -1,6 +1,6 @@
 # PerformanceLab — Melhorias das páginas
 
-**Atualizado em:** 9 de setembro de 2026
+**Atualizado em:** 10 de setembro de 2026
 
 **Estado:** resumo consolidado do trabalho concluído e da fila prioritária
 
@@ -80,6 +80,11 @@ visualmente no Streamlit.
 ### 3.4 — Versões, restore e adaptação
 
 - Plan recovery apresenta revisões recuperáveis do plano.
+- Plan recovery mantém as dimensões de Build Plan, usa scroll interno e mostra
+  inicialmente apenas as seis revisões distintas mais recentes da linhagem
+  ativa; snapshots repetidos e ramos abandonados não poluem a lista.
+- O Restore apresenta previamente sessões adicionadas, removidas, movidas ou
+  editadas, alterações de eventos, horizonte e versões posteriores afetadas.
 - Restore preserva o horizonte original, sessões, plano original e snapshots
   dos eventos associados e remove versões posteriores ao ponto restaurado.
 - Eventos restaurados recuperam a identidade e os dados originais; sessões de
@@ -89,6 +94,10 @@ visualmente no Streamlit.
   respeitam recuperação e proximidade das provas.
 - Plan Adaptation e Plan Progression resolvem a sessão a partir da mesma revisão.
 - Adaptações aplicadas são guardadas como revisões recuperáveis.
+- A ligação entre treino realizado e projeção usa diretamente as sessões reais
+  adjacentes, sem criar uma carga ou inflexão artificial na data atual.
+- Bloqueios e recomendações do Plan Builder são apresentados integralmente num
+  pop-up temporário na camada superior do diálogo, sem alterar o layout.
 
 ## 4. Trabalho pendente
 
@@ -118,10 +127,6 @@ visualmente no Streamlit.
 
 ### Prioridade 3 — Histórico e restore transparentes
 
-- Resumir em cada revisão as sessões e eventos adicionados, alterados, movidos
-  ou eliminados.
-- Pré-visualizar a diferença entre a revisão atual e a revisão a restaurar.
-- Indicar que versões posteriores serão eliminadas e listar o intervalo afetado.
 - Acrescentar testes integrados para restore de sessões, eventos, horizonte,
   curva original e projeção adaptada.
 

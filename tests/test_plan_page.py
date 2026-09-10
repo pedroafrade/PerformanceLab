@@ -26,6 +26,7 @@ from app.components.plan_page import (
     _plan_builder_prescription,
     _claim_plan_builder_action,
     _recoverable_plan_revisions,
+    _revision_restore_details,
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart,
@@ -34,6 +35,7 @@ from app.components.plan_page import (
     _show_plan_builder_interactive_board,
     _show_plan_builder_feedback,
     _show_plan_actions,
+    _show_plan_recovery_revisions,
     _sidebar_adaptation_html,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -2534,7 +2536,7 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "overflow-y: hidden" in source
     assert "margin-bottom: 0.35rem" in source
     assert 'data-testid="stTabPanel"' in source
-    assert "overflow-y: auto" in source
+    assert "overflow-y: hidden" in source
 
 def test_plan_builder_uses_movable_week_structure():
 
@@ -2642,6 +2644,8 @@ def test_plan_builder_feedback_does_not_change_dialog_layout():
     feedback_source = inspect.getsource(_show_plan_builder_feedback)
     assert "components.html" in feedback_source
     assert "3000" in feedback_source
+    assert 'setAttribute("popover", "manual")' in feedback_source
+    assert "showPopover" in feedback_source
     assert "st.toast" not in feedback_source
 
 
@@ -2661,13 +2665,15 @@ def test_curve_bridge_uses_real_adjacent_dates_without_today_anchor():
 
 
 def test_plan_recovery_summarises_and_confirms_restore():
-    source = inspect.getsource(_show_plan_generation_confirmation)
+    dialog_source = inspect.getsource(_show_plan_generation_confirmation)
+    source = inspect.getsource(_show_plan_recovery_revisions)
     assert "_revision_change_summary" in source
     assert 'with st.popover(' in source
     assert '"Confirm restore"' in source
     assert "later_count" in source
     assert "will be removed" in source
-    assert "_recoverable_plan_revisions" in source
+    assert "_recoverable_plan_revisions" in dialog_source
+    assert 'height=560' in dialog_source
     assert 'revisions[:6]' in source
     assert '"Show older versions"' in source
 
@@ -2695,6 +2701,44 @@ def test_plan_recovery_keeps_only_distinct_active_ancestors():
     )
 
     assert _recoverable_plan_revisions(plan) == (duplicate,)
+
+
+def test_restore_preview_classifies_session_and_event_changes():
+    current = SimpleNamespace(
+        planned_workout_id="session-1",
+        day=date(2026, 9, 12),
+    )
+    moved = SimpleNamespace(
+        planned_workout_id="session-1",
+        day=date(2026, 9, 13),
+    )
+    added = SimpleNamespace(
+        planned_workout_id="session-2",
+        day=date(2026, 9, 14),
+    )
+    current_event = SimpleNamespace(
+        event=SimpleNamespace(event_id="event-1"),
+    )
+    restored_event = SimpleNamespace(
+        event=SimpleNamespace(event_id="event-2"),
+    )
+    target = SimpleNamespace(
+        workouts=(moved, added),
+        events=(restored_event,),
+        start_date=date(2026, 9, 1),
+        end_date=date(2026, 10, 4),
+    )
+
+    details = _revision_restore_details(
+        current_workouts=(current,),
+        current_events=(current_event,),
+        target_revision=target,
+    )
+
+    assert "1 added" in details[0]
+    assert "1 moved" in details[0]
+    assert "Events: 1 added · 1 removed · 0 edited" in details[1]
+    assert "01 Sep 2026" in details[2]
 
 
 def test_existing_plan_uses_edit_plan_action():

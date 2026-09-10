@@ -5500,9 +5500,11 @@ def _show_plan_builder_feedback(*, draft_key: str) -> None:
             doc.getElementById(payload.id)?.remove();
             const popup = doc.createElement("div");
             popup.id = payload.id;
+            popup.setAttribute("popover", "manual");
             popup.setAttribute("role", "alert");
             popup.style.cssText = [
                 "position:fixed", "top:1.25rem", "right:1.25rem",
+                "bottom:auto", "left:auto", "margin:0",
                 "z-index:1000001", "width:min(26rem,calc(100vw - 2.5rem))",
                 "max-height:calc(100vh - 2.5rem)", "overflow:auto",
                 "padding:0.85rem 1rem", "border-radius:0.65rem",
@@ -5529,6 +5531,7 @@ def _show_plan_builder_feedback(*, draft_key: str) -> None:
             close.onclick = () => popup.remove();
             popup.appendChild(close);
             doc.body.appendChild(popup);
+            popup.showPopover();
             const dismiss = (event) => {{
                 if (event.key === "Escape") {{
                     popup.remove();
@@ -5867,6 +5870,85 @@ def _revision_change_summary(revision, previous_revision=None) -> str:
         previous_by_id.get(workout_id) != current_by_id.get(workout_id)
         for workout_id in previous_by_id.keys() | current_by_id.keys()
     )
+
+
+def _revision_restore_details(
+    *,
+    current_workouts,
+    current_events,
+    target_revision,
+) -> tuple[str, ...]:
+    """Describes the material effects of restoring one revision."""
+
+    current_by_id = {
+        workout.planned_workout_id: workout
+        for workout in current_workouts
+    }
+    target_by_id = {
+        workout.planned_workout_id: workout
+        for workout in target_revision.workouts
+    }
+    shared_ids = current_by_id.keys() & target_by_id.keys()
+    added = len(target_by_id.keys() - current_by_id.keys())
+    removed = len(current_by_id.keys() - target_by_id.keys())
+    moved = sum(
+        current_by_id[workout_id].day
+        != target_by_id[workout_id].day
+        for workout_id in shared_ids
+    )
+    edited = sum(
+        current_by_id[workout_id] != target_by_id[workout_id]
+        and current_by_id[workout_id].day
+        == target_by_id[workout_id].day
+        for workout_id in shared_ids
+    )
+
+    def events_by_id(events):
+        return {
+            entry.event.event_id: entry
+            for entry in events or ()
+        }
+
+    current_event_by_id = events_by_id(current_events)
+    target_event_by_id = events_by_id(
+        target_revision.events
+        if target_revision.events is not None
+        else current_events
+    )
+    shared_event_ids = (
+        current_event_by_id.keys()
+        & target_event_by_id.keys()
+    )
+    added_events = len(
+        target_event_by_id.keys()
+        - current_event_by_id.keys()
+    )
+    removed_events = len(
+        current_event_by_id.keys()
+        - target_event_by_id.keys()
+    )
+    edited_events = sum(
+        current_event_by_id[event_id]
+        != target_event_by_id[event_id]
+        for event_id in shared_event_ids
+    )
+
+    return (
+        f"Sessions: {added} added · {removed} removed · "
+        f"{moved} moved · {edited} edited",
+        f"Events: {added_events} added · {removed_events} removed · "
+        f"{edited_events} edited",
+        (
+            "Horizon: "
+            f"{target_revision.start_date:%d %b %Y} – "
+            f"{target_revision.end_date:%d %b %Y}"
+            if (
+                target_revision.start_date is not None
+                and target_revision.end_date is not None
+            )
+            else "Horizon: unchanged"
+        ),
+    )
     previous_load = sum(float(planned_workout_load(item) or 0.0) for item in previous)
     current_load = sum(float(planned_workout_load(item) or 0.0) for item in current)
     event_count = len(revision.events or ())
@@ -5932,6 +6014,69 @@ def _recoverable_plan_revisions(plan):
             distinct.append(revision)
         comparison = revision
     return tuple(distinct)
+
+
+def _show_plan_recovery_revisions(
+    *,
+    revisions,
+    revision_by_id,
+    active_plan,
+    athlete,
+    draft_key: str,
+    on_restore_revision,
+) -> None:
+    """Renders the scrollable revision list and restore previews."""
+
+    if not revisions:
+        st.info("No earlier plan revisions are available.")
+        return
+
+    show_older_key = f"{draft_key}:show-older-revisions"
+    show_older = bool(st.session_state.get(show_older_key))
+    visible_revisions = revisions if show_older else revisions[:6]
+
+    for revision_index, revision in enumerate(visible_revisions):
+        previous_revision = revision_by_id.get(revision.parent_revision_id)
+        later_count = revision_index + 1
+        label = (
+            f"{revision.created_on:%d %b %Y} · "
+            f"{revision.source.replace('_', ' ').title()}"
+        )
+        details = _revision_restore_details(
+            current_workouts=active_plan.workouts,
+            current_events=athlete.events,
+            target_revision=revision,
+        )
+        left, right = st.columns([4, 1], gap="small")
+        with left:
+            st.caption(label)
+            st.caption(_revision_change_summary(revision, previous_revision))
+        with right:
+            with st.popover("Restore", use_container_width=True):
+                st.markdown("**Restore this plan version?**")
+                for detail in details:
+                    st.caption(detail)
+                st.caption(
+                    f"{later_count} later version"
+                    f"{'s' if later_count != 1 else ''} will be removed."
+                )
+                if st.button(
+                    "Confirm restore",
+                    key=f"restore-plan-{revision.revision_id}",
+                    use_container_width=True,
+                    disabled=(on_restore_revision is None),
+                ):
+                    on_restore_revision(revision.revision_id)
+                    st.rerun()
+
+    if len(revisions) > 6 and not show_older:
+        if st.button(
+            "Show older versions",
+            key="plan-recovery-show-older",
+            use_container_width=True,
+        ):
+            st.session_state[show_older_key] = True
+            st.rerun()
 
 @st.dialog(
     "Plan Builder",
@@ -6011,10 +6156,10 @@ div[data-testid="stDialog"] [role="dialog"] {
 }
 
 div[data-testid="stDialog"] [data-testid="stTabPanel"] {
-    height: min(39rem, calc(100dvh - 11rem)) !important;
-    min-height: min(39rem, calc(100dvh - 11rem)) !important;
-    max-height: min(39rem, calc(100dvh - 11rem)) !important;
-    overflow-y: auto !important;
+    height: min(42rem, calc(100dvh - 9rem)) !important;
+    min-height: min(42rem, calc(100dvh - 9rem)) !important;
+    max-height: min(42rem, calc(100dvh - 9rem)) !important;
+    overflow-y: hidden !important;
     overflow-x: hidden !important;
     scrollbar-width: thin;
 }
@@ -6571,69 +6716,19 @@ div[role="dialog"] [data-testid="stAlert"] {
             "Review an earlier version before restoring it. "
             "Versions created after it will be removed."
         )
-
-        if not revisions:
-            st.info("No earlier plan revisions are available.")
-
-        show_older_key = f"{draft_key}:show-older-revisions"
-        show_older = bool(st.session_state.get(show_older_key))
-        visible_revisions = (
-            revisions
-            if show_older
-            else revisions[:6]
-        )
-
-        for revision_index, revision in enumerate(visible_revisions):
-            previous_revision = (
-                revision_by_id.get(revision.parent_revision_id)
+        with st.container(
+            height=560,
+            border=False,
+            key="plan-recovery-scroll",
+        ):
+            _show_plan_recovery_revisions(
+                revisions=revisions,
+                revision_by_id=revision_by_id,
+                active_plan=active_plan,
+                athlete=athlete,
+                draft_key=draft_key,
+                on_restore_revision=on_restore_revision,
             )
-            later_count = revision_index + 1
-            label = (
-                f"{revision.created_on:%d %b %Y} · "
-                f"{revision.source.replace('_', ' ').title()}"
-            )
-            left, right = st.columns([4, 1], gap="small")
-            with left:
-                st.caption(label)
-                st.caption(
-                    _revision_change_summary(
-                        revision,
-                        previous_revision,
-                    )
-                )
-            with right:
-                with st.popover(
-                    "Restore",
-                    use_container_width=True,
-                ):
-                    st.markdown("**Restore this plan version?**")
-                    st.caption(
-                        f"{later_count} later version"
-                        f"{'s' if later_count != 1 else ''} will be removed."
-                    )
-                    st.caption(
-                        _revision_change_summary(
-                            revision,
-                            previous_revision,
-                        )
-                    )
-                    if st.button(
-                        "Confirm restore",
-                        key=f"restore-plan-{revision.revision_id}",
-                        use_container_width=True,
-                        disabled=(on_restore_revision is None),
-                    ):
-                        on_restore_revision(revision.revision_id)
-                        st.rerun()
-
-        if len(revisions) > 6 and not show_older:
-            if st.button(
-                "Show older versions",
-                key="plan-recovery-show-older",
-                use_container_width=True,
-            ):
-                st.session_state[show_older_key] = True
-                st.rerun()
 
 def _show_plan_actions(
     plan,
