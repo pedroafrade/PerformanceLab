@@ -5450,6 +5450,7 @@ def _queue_plan_builder_feedback(
     draft_key: str,
     messages,
     recommendations=(),
+    alternatives=(),
     blocked: bool = False,
 ) -> None:
     """Queues feedback for the authoritative component rerender."""
@@ -5465,6 +5466,14 @@ def _queue_plan_builder_feedback(
         "messages": normalize(messages),
         "recommendations": normalize(recommendations),
         "blocked": blocked,
+        "alternatives": tuple(
+            {
+                "workout_id": item.workout_id,
+                "target_day": item.target_day.isoformat(),
+                "label": f"Move to {item.target_day:%a %d %b}",
+            }
+            for item in alternatives
+        ),
     }
     interaction_key = f"{draft_key}:interaction-revision"
     st.session_state[interaction_key] = (
@@ -5494,6 +5503,7 @@ def _show_plan_builder_feedback(*, draft_key: str) -> None:
             "id": popup_id,
             "parts": parts,
             "blocked": feedback["blocked"],
+            "alternatives": feedback.get("alternatives", ()),
         }
     )
     components.html(
@@ -5527,6 +5537,23 @@ def _show_plan_builder_feedback(*, draft_key: str) -> None:
                 line.textContent = part;
                 line.style.marginTop = "0.35rem";
                 popup.appendChild(line);
+            }});
+            payload.alternatives.forEach((alternative) => {{
+                const apply = doc.createElement("button");
+                apply.type = "button";
+                apply.textContent = alternative.label;
+                apply.style.cssText = "display:block;margin-top:.65rem;padding:.4rem .7rem;border:1px solid currentColor;border-radius:.4rem;background:transparent;color:inherit;cursor:pointer";
+                apply.onclick = () => {{
+                    doc.querySelectorAll("iframe").forEach((frame) =>
+                        frame.contentWindow?.postMessage({{
+                            type:"plan-builder:apply-alternative",
+                            workout_id:alternative.workout_id,
+                            target_day:alternative.target_day
+                        }}, "*")
+                    );
+                    popup.remove();
+                }};
+                popup.appendChild(apply);
             }});
             const close = doc.createElement("button");
             close.type = "button";
@@ -5757,10 +5784,15 @@ def _show_plan_builder_interactive_board(
         reference_day=reference_day,
     )
     if assessment.blocked:
+        alternatives = tuple(
+            f"Try {alternative.target_day:%a %d %b}: {alternative.reason}"
+            for alternative in assessment.alternatives
+        )
         _queue_plan_builder_feedback(
             draft_key=draft_key,
             messages=assessment.messages,
-            recommendations=assessment.recommendations,
+            recommendations=(*assessment.recommendations, *alternatives),
+            alternatives=assessment.alternatives,
             blocked=True,
         )
         st.rerun(scope="fragment")
@@ -6467,6 +6499,14 @@ div[data-testid="stPopoverBody"] {
             padding-block: 0 !important;
             align-items: center !important;
         }
+
+        .st-key-plan-builder-generate-action button,
+        .st-key-plan-builder-generate-action button:hover,
+        .st-key-plan-builder-generate-action button:focus-visible,
+        .st-key-plan-builder-generate-action button:disabled {
+            border: 1px solid #9aa0aa !important;
+            box-shadow: none !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -6805,10 +6845,20 @@ div[data-testid="stPopoverBody"] {
                             f"{new_load:.0f} AU ({difference:+.0f} AU{percentage})"
                         )
                     for message in draft_assessment.messages:
-                        label = (
-                            "Blocked" if draft_assessment.blocked else "Caution"
+                        issue = next(
+                            (
+                                item for item in draft_assessment.issues
+                                if item.message == message
+                            ),
+                            None,
                         )
-                        st.caption(f"{label}: {message}")
+                        label = (
+                            issue.severity.title()
+                            if issue is not None
+                            else "Information"
+                        )
+                        rule = f" · {issue.rule}" if issue is not None else ""
+                        st.caption(f"{label}{rule}: {message}")
                     for recommendation in draft_assessment.recommendations:
                         st.caption(f"Recommendation: {recommendation}")
                     if st.button(

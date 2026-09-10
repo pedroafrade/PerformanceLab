@@ -126,3 +126,72 @@ def test_reports_weekly_load_before_after_and_percentage():
     assert week == date(2026, 9, 14)
     assert new_load > old_load
     assert growth == (new_load - old_load) / old_load
+
+
+def test_high_percentage_with_small_absolute_change_is_information_only():
+    baseline = (workout(14, "Easy Run", "Easy", 10),)
+    revised = (replace(baseline[0], duration=timedelta(minutes=14)),)
+
+    result = assess_plan_builder_change(
+        baseline_workouts=baseline,
+        revised_workouts=revised,
+        reference_day=date(2026, 9, 10),
+    )
+
+    assert result.blocked is False
+    assert any(issue.severity == "information" for issue in result.issues)
+
+
+def test_weekly_load_blocks_only_when_percentage_and_absolute_growth_are_high():
+    baseline = (workout(14, "Easy Run", "Easy", 100),)
+    revised = (replace(baseline[0], duration=timedelta(minutes=240)),)
+
+    result = assess_plan_builder_change(
+        baseline_workouts=baseline,
+        revised_workouts=revised,
+        reference_day=date(2026, 9, 10),
+    )
+
+    weekly_issue = next(
+        issue for issue in result.issues if issue.rule == "weekly_load"
+    )
+    assert weekly_issue.severity == "blocked"
+    assert weekly_issue.week == date(2026, 9, 14)
+    assert "AU" in weekly_issue.message
+
+
+def test_blocked_move_proposes_a_deterministic_safe_date():
+    baseline = (
+        workout(16, "Hill Reps", "Hard", 45),
+        workout(13, "Race", "Race effort", 60),
+    )
+    revised = (
+        replace(
+            baseline[0],
+            scheduled_at=datetime(2026, 9, 12, 8),
+        ),
+        baseline[1],
+    )
+
+    result = assess_plan_builder_change(
+        baseline_workouts=baseline,
+        revised_workouts=revised,
+        reference_day=date(2026, 9, 10),
+    )
+
+    assert result.blocked is True
+    assert result.alternatives
+    assert result.alternatives[0].workout_id == baseline[0].planned_workout_id
+    assert result.alternatives[0].target_day != date(2026, 9, 12)
+
+
+def test_board_can_apply_the_suggested_move_in_one_action():
+    source = (
+        __import__("pathlib").Path(
+            "app/components/plan_builder_board/index.html"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert 'type==="plan-builder:apply-alternative"' in source
+    assert 'action:"move"' in source
+    assert "workout_id:event.data.workout_id" in source

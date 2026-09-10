@@ -114,6 +114,19 @@ visualmente no Streamlit.
   vistas derivadas e identificam a revisão ativa, evitando dados antigos entre
   Plan, Calendar, Today e Daily Brief.
 
+### 3.5 — Recomendações fisiológicas acionáveis
+
+- A avaliação considera o plano completo após mover, criar, editar ou eliminar
+  sessões: carga semanal, intensidade consecutiva, recuperação, sessão longa,
+  taper e proximidade de prova.
+- Resultados distinguem informação, precaução e bloqueio e identificam a regra,
+  semana, sessões, AU e percentagem responsáveis.
+- Limites percentuais são combinados com diferenças absolutas para não bloquear
+  artificialmente semanas de carga baixa.
+- Bloqueios de movimentos apresentam uma alternativa determinística segura,
+  aplicável diretamente no aviso com um clique.
+- Recomendações mantêm caráter informativo e não constituem garantia clínica.
+
 ## 4. Trabalho pendente
 
 ### Prioridade 1 — Integridade transacional do Plan Builder
@@ -123,20 +136,6 @@ visualmente no Streamlit.
   após Generate Plan e estado após rerun/refresh.
 - Completar testes integrados de navegação entre Plan Builder, Plan
   Progression, Plan Weeks, Calendar e Today após cada tipo de alteração.
-
-### Prioridade 2 — Recomendações fisiológicas acionáveis
-
-- Avaliar o plano completo depois de mover, criar, editar ou eliminar uma
-  sessão, e não apenas a diferença de carga da sessão isolada.
-- Mostrar todos os conflitos relevantes: carga semanal, intensidade consecutiva,
-  recuperação mínima, sessão longa, taper e proximidade de prova.
-- Distinguir claramente informação, precaução e bloqueio.
-- Reservar bloqueios para taper, provas e limites elevados de carga; conflitos
-  de recuperação em torno da sessão longa permanecem precauções explícitas.
-- Quando existir uma alternativa segura determinística, permitir aplicá-la com
-  um clique, mostrando previamente todas as sessões afetadas.
-- Manter a decisão final do atleta e não apresentar recomendações como garantias
-  clínicas.
 
 ### Prioridade 3 — Histórico e restore transparentes
 

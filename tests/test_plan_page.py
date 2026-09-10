@@ -2756,6 +2756,8 @@ def test_restore_preview_classifies_session_and_event_changes():
 
 def test_plan_builder_reviews_changes_before_persisting():
     source = inspect.getsource(_show_plan_generation_confirmation)
+    feedback_source = inspect.getsource(_show_plan_builder_feedback)
+    board_source = inspect.getsource(_show_plan_builder_interactive_board)
 
     assert "Review plan changes" in source
     assert '"Confirm changes"' in source
@@ -2765,6 +2767,11 @@ def test_plan_builder_reviews_changes_before_persisting():
     assert "draft_assessment.blocked" in source
     assert 'key="plan-builder-generate-action"' in source
     assert "height: 2.5rem" in source
+    assert "issue.severity.title()" in source
+    assert "alternative.target_day" in board_source
+    assert "button:focus-visible" in source
+    assert '"plan-builder:apply-alternative"' in feedback_source
+    assert "alternatives=assessment.alternatives" in board_source
 
 
 def test_plan_builder_persistence_rejects_stale_and_duplicate_drafts():
