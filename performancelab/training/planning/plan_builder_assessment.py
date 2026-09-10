@@ -10,6 +10,7 @@ from performancelab.training.load import planned_workout_load
 class PlanBuilderAssessment:
     status: str
     messages: tuple[str, ...]
+    recommendations: tuple[str, ...]
     changed_sessions: int
     load_difference: float
 
@@ -69,6 +70,7 @@ def assess_plan_builder_change(
 
     warnings = []
     blockers = []
+    recommendations = []
     future = tuple(item for item in revised if item.day >= reference_day)
     demanding = tuple(sorted(
         (item for item in future if _is_demanding(item) and not _is_race(item)),
@@ -80,12 +82,37 @@ def assess_plan_builder_change(
                 f"{previous.title} and {following.title} leave less than "
                 "48 hours of recovery."
             )
+            recommendations.append(
+                "Move one demanding session or reduce its duration or intensity."
+            )
 
     race_days = tuple(item.day for item in future if _is_race(item))
     for workout in demanding:
         if any(timedelta(0) < race_day - workout.day <= timedelta(days=1) for race_day in race_days):
             blockers.append(
                 f"{workout.title} is too close to a race and would compromise taper."
+            )
+            recommendations.append(
+                f"Move {workout.title} earlier or replace it with an easy session."
+            )
+
+    long_runs = tuple(
+        item
+        for item in future
+        if "long" in str(item.title or "").lower()
+        and not _is_race(item)
+    )
+    for long_run in long_runs:
+        if any(
+            item.planned_workout_id != long_run.planned_workout_id
+            and abs((item.day - long_run.day).days) < 2
+            for item in demanding
+        ):
+            warnings.append(
+                f"{long_run.title} is less than 48 hours from a demanding session."
+            )
+            recommendations.append(
+                "Keep at least one easy or rest day around the long session."
             )
 
     baseline_weeks = {}
@@ -107,15 +134,22 @@ def assess_plan_builder_change(
             blockers.append(
                 f"Weekly load from {week:%d %b} increases by more than 35%."
             )
+            recommendations.append(
+                "Move load to another compatible week or reduce duration or intensity."
+            )
         elif growth > 0.20:
             warnings.append(
                 f"Weekly load from {week:%d %b} increases by more than 20%."
+            )
+            recommendations.append(
+                "Consider reducing the added load or increasing recovery in that week."
             )
 
     status = "blocked" if blockers else "warning" if warnings else "safe"
     return PlanBuilderAssessment(
         status=status,
         messages=tuple(dict.fromkeys((*blockers, *warnings))),
+        recommendations=tuple(dict.fromkeys(recommendations)),
         changed_sessions=len(changed_ids),
         load_difference=_load(revised) - _load(baseline),
     )

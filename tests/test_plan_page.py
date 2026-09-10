@@ -27,6 +27,7 @@ from app.components.plan_page import (
     _claim_plan_builder_action,
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
+    _planned_load_chart,
     _planned_load_chart_series,
     _show_plan_builder_drag_board,
     _show_plan_builder_interactive_board,
@@ -2265,25 +2266,33 @@ def test_combines_completed_load_with_remaining_adapted_plan():
             "Date": "2026-09-06",
             "Session": "LT2 Run",
             "Actual or adapted load": 480.0,
+            "Displayed load": 480.0,
             "Source": "Completed",
+            "Synthetic": False,
         },
         {
             "Date": "2026-09-07",
-            "Session": "Today",
+            "Session": "",
             "Actual or adapted load": 480.0,
+            "Displayed load": None,
             "Source": "Adapted projection",
+            "Synthetic": True,
         },
         {
             "Date": "2026-09-07",
-            "Session": "Today",
+            "Session": "",
             "Actual or adapted load": 480.0,
+            "Displayed load": None,
             "Source": "Completed",
+            "Synthetic": True,
         },
         {
             "Date": "2026-09-08",
             "Session": "Hill Reps",
             "Actual or adapted load": 300.0,
+            "Displayed load": 300.0,
             "Source": "Adapted projection",
+            "Synthetic": False,
         },
     ]
 
@@ -2606,6 +2615,37 @@ def test_plan_builder_component_waits_for_authoritative_render():
     assert 'board.removeAttribute("aria-busy")' in source
     assert "ignoreNextRender" not in source
     assert "pending-" not in source
+    assert 'menu.textContent="⋮"' in source
+    assert "stroke:currentColor" in source
+    assert 'aria-label="Remove session"' in source
+
+
+def test_plan_builder_feedback_does_not_change_dialog_layout():
+    source = inspect.getsource(
+        _show_plan_generation_confirmation
+    )
+    board_source = inspect.getsource(
+        _show_plan_builder_interactive_board
+    )
+
+    assert "_show_plan_builder_feedback" in source
+    assert "st.warning" not in source
+    assert "_queue_plan_builder_feedback" in board_source
+    assert 'st.rerun(scope="fragment")' in board_source
+
+
+def test_synthetic_today_anchor_has_no_visible_session_or_load():
+    source = inspect.getsource(
+        _actual_and_adapted_load_chart_data
+    )
+    chart_source = inspect.getsource(
+        _planned_load_chart
+    )
+
+    assert '"Synthetic": True' in source
+    assert '"Session": ""' in source
+    assert '"Displayed load": None' in source
+    assert "alt.datum.Synthetic" in chart_source
 
 
 def test_plan_recovery_summarises_and_confirms_restore():

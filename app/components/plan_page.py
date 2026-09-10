@@ -436,7 +436,11 @@ def _actual_and_adapted_load_chart_data(
             "Actual or adapted load": float(
                 point.completed_load
             ),
+            "Displayed load": float(
+                point.completed_load
+            ),
             "Source": "Completed",
+            "Synthetic": False,
         }
         for point in plan.completed_load_points
     ]
@@ -453,7 +457,11 @@ def _actual_and_adapted_load_chart_data(
             "Actual or adapted load": float(
                 point.planned_load
             ),
+            "Displayed load": float(
+                point.planned_load
+            ),
             "Source": "Adapted projection",
+            "Synthetic": False,
         }
         for point in plan.chart_points
         if (
@@ -510,10 +518,12 @@ def _actual_and_adapted_load_chart_data(
     if transition is not None:
         anchor = {
             "Date": reference_date,
-            "Session": "Today",
+            "Session": "",
             "Actual or adapted load": transition[
                 "Actual or adapted load"
             ],
+            "Synthetic": True,
+            "Displayed load": None,
         }
         if completed_today is None:
             rows.append({**anchor, "Source": "Completed"})
@@ -989,7 +999,7 @@ def _planned_load_chart(
                     title="Activity",
                 ),
                 alt.Tooltip(
-                    "Actual or adapted load:Q",
+                    "Displayed load:Q",
                     title="Load (AU)",
                     format=".0f",
                 ),
@@ -1029,8 +1039,8 @@ def _planned_load_chart(
     completed_points = (
         completed_base
         .transform_filter(
-            alt.datum.Source
-            == "Completed"
+            (alt.datum.Source == "Completed")
+            & (alt.datum.Synthetic == False)
         )
         .mark_point(
             filled=True,
@@ -1086,8 +1096,8 @@ def _planned_load_chart(
     adapted_projection_points = (
         completed_base
         .transform_filter(
-            alt.datum.Source
-            == "Adapted projection"
+            (alt.datum.Source == "Adapted projection")
+            & (alt.datum.Synthetic == False)
         )
         .mark_point(
             filled=False,
@@ -5447,6 +5457,51 @@ def _claim_plan_builder_action(
     return True
 
 
+def _queue_plan_builder_feedback(
+    *,
+    draft_key: str,
+    messages,
+    recommendations=(),
+    blocked: bool = False,
+) -> None:
+    """Queues feedback for the authoritative component rerender."""
+
+    normalize = lambda values: tuple(
+        dict.fromkeys(
+            str(value).strip()
+            for value in values
+            if str(value).strip()
+        )
+    )
+    st.session_state[f"{draft_key}:feedback"] = {
+        "messages": normalize(messages),
+        "recommendations": normalize(recommendations),
+        "blocked": blocked,
+    }
+
+
+def _show_plan_builder_feedback(*, draft_key: str) -> None:
+    """Shows assessment feedback without changing the dialog layout."""
+
+    feedback = st.session_state.pop(
+        f"{draft_key}:feedback",
+        None,
+    )
+    if not feedback:
+        return
+
+    parts = list(feedback["messages"])
+    parts.extend(
+        f"Recommendation: {recommendation}"
+        for recommendation in feedback["recommendations"]
+    )
+    st.toast(
+        "\n\n".join(parts),
+        icon="⛔" if feedback["blocked"] else "⚠️",
+        duration=5000,
+    )
+
+
 def _show_plan_builder_interactive_board(
     *, draft, draft_key: str, plan_start: date,
     plan_end: date, reference_day: date, history=None,
@@ -5624,7 +5679,12 @@ def _show_plan_builder_interactive_board(
                 structure=tuple(line.strip() for line in str(values.get("structure") or "").splitlines() if line.strip()),
             )
     except (KeyError, LookupError, TypeError, ValueError) as error:
-        st.toast(str(error), icon="⚠️", duration=3000)
+        _queue_plan_builder_feedback(
+            draft_key=draft_key,
+            messages=(str(error),),
+            blocked=True,
+        )
+        st.rerun(scope="fragment")
         return current_draft
 
     assessment = assess_plan_builder_change(
@@ -5633,13 +5693,21 @@ def _show_plan_builder_interactive_board(
         reference_day=reference_day,
     )
     if assessment.blocked:
-        st.toast(
-            assessment.messages[0],
-            icon="⛔",
-            duration=3000,
+        _queue_plan_builder_feedback(
+            draft_key=draft_key,
+            messages=assessment.messages,
+            recommendations=assessment.recommendations,
+            blocked=True,
         )
+        st.rerun(scope="fragment")
         return current_draft
     st.session_state[draft_key] = draft
+    if assessment.messages:
+        _queue_plan_builder_feedback(
+            draft_key=draft_key,
+            messages=assessment.messages,
+            recommendations=assessment.recommendations,
+        )
     st.rerun(scope="fragment")
     return draft
 
@@ -5741,21 +5809,6 @@ def _show_plan_builder_session_actions(
                 st.session_state[draft_key] = draft
 
     return draft
-
-
-def _plan_builder_recommendation(
-    draft,
-    *,
-    reference_day: date,
-) -> str | None:
-    """Warns when draft edits compress demanding recovery."""
-
-    assessment = assess_plan_builder_change(
-        baseline_workouts=draft.baseline_workouts,
-        revised_workouts=draft.workouts,
-        reference_day=reference_day,
-    )
-    return assessment.messages[0] if assessment.messages else None
 
 
 def _revision_change_summary(revision, previous_revision=None) -> str:
@@ -6279,15 +6332,9 @@ div[role="dialog"] [data-testid="stAlert"] {
             )
         )
 
-        draft_recommendation = (
-            _plan_builder_recommendation(
-                builder_draft,
-                reference_day=date.today(),
-            )
+        _show_plan_builder_feedback(
+            draft_key=draft_key,
         )
-
-        if draft_recommendation:
-            st.warning(draft_recommendation)
 
         draft_assessment = assess_plan_builder_change(
             baseline_workouts=builder_draft.baseline_workouts,
