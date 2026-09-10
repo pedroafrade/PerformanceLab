@@ -5415,6 +5415,38 @@ def _plan_builder_prescription(values, fallback=""):
     return prescription or None
 
 
+def _claim_plan_builder_action(
+    *,
+    action,
+    draft_key: str,
+) -> bool:
+    """Claims one component action exactly once for this draft."""
+
+    action_id = str(
+        action.get("action_id")
+        or action.get("nonce")
+        or ""
+    ).strip()
+    if not action_id:
+        return False
+
+    handled_key = f"{draft_key}:handled-actions"
+    handled = tuple(
+        st.session_state.get(
+            handled_key,
+            (),
+        )
+    )
+    if action_id in handled:
+        return False
+
+    st.session_state[handled_key] = (
+        *handled[-31:],
+        action_id,
+    )
+    return True
+
+
 def _show_plan_builder_interactive_board(
     *, draft, draft_key: str, plan_start: date,
     plan_end: date, reference_day: date, history=None,
@@ -5521,11 +5553,11 @@ def _show_plan_builder_interactive_board(
     )
     if not action:
         return draft
-    nonce = action.get("nonce")
-    handled_key = "plan-builder-board-handled-action"
-    if not nonce or st.session_state.get(handled_key) == nonce:
+    if not _claim_plan_builder_action(
+        action=action,
+        draft_key=draft_key,
+    ):
         return draft
-    st.session_state[handled_key] = nonce
     current_draft = draft
     kind = action.get("action")
     workout_id = action.get("workout_id")

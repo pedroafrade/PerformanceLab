@@ -4,8 +4,10 @@ Tests for the complete training-plan page.
 import inspect
 
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from types import SimpleNamespace
 
+from app.components import plan_page
 from app.components.plan_page import (
     _actual_and_adapted_load_chart_data,
     _completed_load_chart_data,
@@ -22,6 +24,7 @@ from app.components.plan_page import (
     _plan_generation_notice_html,
     _plan_builder_workspace_html,
     _plan_builder_prescription,
+    _claim_plan_builder_action,
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart_series,
@@ -2563,9 +2566,46 @@ def test_plan_builder_uses_clickable_cell_component():
     assert 'st.rerun(scope="fragment")' in source
     assert "board_revision" in source
     assert "assess_plan_builder_change" in source
+    assert "_claim_plan_builder_action" in source
     assert "on_generate_plan(builder_draft)" in inspect.getsource(
         _show_plan_generation_confirmation
     )
+
+
+def test_plan_builder_claims_each_component_action_once(monkeypatch):
+    session_state = {}
+    monkeypatch.setattr(plan_page.st, "session_state", session_state)
+    action = {
+        "action": "move",
+        "action_id": "board-action-1",
+    }
+
+    assert _claim_plan_builder_action(
+        action=action,
+        draft_key="draft-a",
+    ) is True
+    assert _claim_plan_builder_action(
+        action=action,
+        draft_key="draft-a",
+    ) is False
+    assert _claim_plan_builder_action(
+        action=action,
+        draft_key="draft-b",
+    ) is True
+
+
+def test_plan_builder_component_waits_for_authoritative_render():
+    source = (
+        Path("app/components/plan_builder_board/index.html")
+        .read_text(encoding="utf-8")
+    )
+
+    assert "if(pending)return" in source
+    assert 'action_id:actionId' in source
+    assert 'board.setAttribute("aria-busy","true")' in source
+    assert 'board.removeAttribute("aria-busy")' in source
+    assert "ignoreNextRender" not in source
+    assert "pending-" not in source
 
 
 def test_plan_recovery_summarises_and_confirms_restore():
