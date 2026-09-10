@@ -2761,6 +2761,10 @@ def test_plan_builder_reviews_changes_before_persisting():
     assert '"Confirm changes"' in source
     assert "draft_assessment.changed_sessions" in source
     assert "draft_assessment.load_difference" in source
+    assert "draft_assessment.weekly_load_changes" in source
+    assert "draft_assessment.blocked" in source
+    assert 'key="plan-builder-generate-action"' in source
+    assert "height: 2.5rem" in source
 
 
 def test_plan_builder_persistence_rejects_stale_and_duplicate_drafts():

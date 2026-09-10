@@ -13,6 +13,7 @@ class PlanBuilderAssessment:
     recommendations: tuple[str, ...]
     changed_sessions: int
     load_difference: float
+    weekly_load_changes: tuple[tuple[date, float, float, float | None], ...]
 
     @property
     def blocked(self) -> bool:
@@ -108,7 +109,7 @@ def assess_plan_builder_change(
             and abs((item.day - long_run.day).days) < 2
             for item in demanding
         ):
-            blockers.append(
+            warnings.append(
                 f"{long_run.title} is less than 48 hours from a demanding session."
             )
             recommendations.append(
@@ -125,11 +126,21 @@ def assess_plan_builder_change(
             totals[week] = totals.get(week, 0.0) + float(
                 planned_workout_load(workout) or 0.0
             )
-    for week, revised_load in revised_weeks.items():
+    weekly_load_changes = []
+    for week in sorted(baseline_weeks.keys() | revised_weeks.keys()):
+        revised_load = revised_weeks.get(week, 0.0)
         baseline_load = baseline_weeks.get(week, 0.0)
+        growth = (
+            (revised_load - baseline_load) / baseline_load
+            if baseline_load > 0
+            else None
+        )
+        if revised_load != baseline_load:
+            weekly_load_changes.append(
+                (week, baseline_load, revised_load, growth)
+            )
         if baseline_load <= 0:
             continue
-        growth = (revised_load - baseline_load) / baseline_load
         if growth > 0.35:
             blockers.append(
                 f"Weekly load from {week:%d %b} increases by more than 35%."
@@ -152,4 +163,5 @@ def assess_plan_builder_change(
         recommendations=tuple(dict.fromkeys(recommendations)),
         changed_sessions=len(changed_ids),
         load_difference=_load(revised) - _load(baseline),
+        weekly_load_changes=tuple(weekly_load_changes),
     )

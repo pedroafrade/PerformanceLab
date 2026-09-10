@@ -6456,11 +6456,16 @@ div[data-testid="stPopoverBody"] {
 
         .st-key-plan-builder-reset-drag button,
         .st-key-cancel-plan-generation button,
-        .st-key-confirm-plan-generation button {
+        .st-key-confirm-plan-generation button,
+        .st-key-plan-builder-generate-action [data-testid="stPopover"] > button {
             color: var(--text-color) !important;
             border-color:
                 #9aa0aa !important;
             margin-bottom: 0.35rem !important;
+            height: 2.5rem !important;
+            min-height: 2.5rem !important;
+            padding-block: 0 !important;
+            align-items: center !important;
         }
         </style>
         """,
@@ -6778,24 +6783,44 @@ div[data-testid="stPopoverBody"] {
                 return
 
         with generate_column:
-            with st.popover(
-                "Generate plan",
-                use_container_width=True,
-            ):
-                st.markdown("**Review plan changes**")
-                st.caption(
-                    f"{draft_assessment.changed_sessions} sessions changed · "
-                    f"{draft_assessment.load_difference:+.0f} AU"
-                )
-                for message in draft_assessment.messages:
-                    st.caption(f"Warning: {message}")
-                if st.button(
-                    "Confirm changes",
-                    key="confirm-plan-generation",
+            with st.container(key="plan-builder-generate-action"):
+                with st.popover(
+                    "Generate plan",
                     use_container_width=True,
-                    disabled=(not builder_draft.has_changes),
                 ):
-                    on_generate_plan(builder_draft)
+                    st.markdown("**Review plan changes**")
+                    st.caption(
+                        f"{draft_assessment.changed_sessions} sessions changed · "
+                        f"{draft_assessment.load_difference:+.0f} AU"
+                    )
+                    for week, old_load, new_load, growth in (
+                        draft_assessment.weekly_load_changes
+                    ):
+                        difference = new_load - old_load
+                        percentage = (
+                            f" · {growth:+.0%}" if growth is not None else ""
+                        )
+                        st.caption(
+                            f"Week of {week:%d %b}: {old_load:.0f} → "
+                            f"{new_load:.0f} AU ({difference:+.0f} AU{percentage})"
+                        )
+                    for message in draft_assessment.messages:
+                        label = (
+                            "Blocked" if draft_assessment.blocked else "Caution"
+                        )
+                        st.caption(f"{label}: {message}")
+                    for recommendation in draft_assessment.recommendations:
+                        st.caption(f"Recommendation: {recommendation}")
+                    if st.button(
+                        "Confirm changes",
+                        key="confirm-plan-generation",
+                        use_container_width=True,
+                        disabled=(
+                            not builder_draft.has_changes
+                            or draft_assessment.blocked
+                        ),
+                    ):
+                        on_generate_plan(builder_draft)
 
     with recovery_tab:
         st.caption(

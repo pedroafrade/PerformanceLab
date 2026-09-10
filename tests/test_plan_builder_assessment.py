@@ -88,3 +88,41 @@ def test_reports_long_run_spacing_and_weekly_load_together():
     assert any("Weekly load" in message for message in result.messages)
     assert len(result.recommendations) >= 2
     assert result.blocked is True
+    assert result.weekly_load_changes
+
+
+def test_long_run_spacing_is_caution_without_an_independent_blocker():
+    baseline = (
+        workout(14, "Long Run", "Easy", 60),
+        workout(16, "Hill Reps", "Hard", 30),
+    )
+    revised = (
+        baseline[0],
+        replace(baseline[1], scheduled_at=datetime(2026, 9, 15, 8)),
+    )
+
+    result = assess_plan_builder_change(
+        baseline_workouts=baseline,
+        revised_workouts=revised,
+        reference_day=date(2026, 9, 10),
+    )
+
+    assert result.status == "warning"
+    assert result.blocked is False
+    assert any("Long Run" in message for message in result.messages)
+
+
+def test_reports_weekly_load_before_after_and_percentage():
+    baseline = (workout(14, "Easy Run", "Easy", 40),)
+    revised = (replace(baseline[0], duration=timedelta(minutes=50)),)
+
+    result = assess_plan_builder_change(
+        baseline_workouts=baseline,
+        revised_workouts=revised,
+        reference_day=date(2026, 9, 10),
+    )
+
+    week, old_load, new_load, growth = result.weekly_load_changes[0]
+    assert week == date(2026, 9, 14)
+    assert new_load > old_load
+    assert growth == (new_load - old_load) / old_load

@@ -74,6 +74,10 @@ visualmente no Streamlit.
   Generate Plan.
 - O impacto fisiológico é calculado imediatamente e acompanhado por uma
   recomendação.
+- A revisão antes de guardar apresenta a carga anterior e nova por semana,
+  diferenças absolutas e percentuais, precauções, bloqueios e recomendações.
+- Reset changes, Cancel e Generate plan mantêm a mesma altura e alinhamento no
+  rodapé do diálogo.
 - Dias concluídos, sessões realizadas e provas não podem ser tratados como
   sessões futuras editáveis.
 
@@ -127,6 +131,8 @@ visualmente no Streamlit.
 - Mostrar todos os conflitos relevantes: carga semanal, intensidade consecutiva,
   recuperação mínima, sessão longa, taper e proximidade de prova.
 - Distinguir claramente informação, precaução e bloqueio.
+- Reservar bloqueios para taper, provas e limites elevados de carga; conflitos
+  de recuperação em torno da sessão longa permanecem precauções explícitas.
 - Quando existir uma alternativa segura determinística, permitir aplicá-la com
   um clique, mostrando previamente todas as sessões afetadas.
 - Manter a decisão final do atleta e não apresentar recomendações como garantias
