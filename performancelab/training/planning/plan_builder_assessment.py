@@ -108,7 +108,7 @@ def assess_plan_builder_change(
             and abs((item.day - long_run.day).days) < 2
             for item in demanding
         ):
-            warnings.append(
+            blockers.append(
                 f"{long_run.title} is less than 48 hours from a demanding session."
             )
             recommendations.append(

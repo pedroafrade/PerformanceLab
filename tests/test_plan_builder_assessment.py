@@ -87,3 +87,4 @@ def test_reports_long_run_spacing_and_weekly_load_together():
     assert any("Long Run" in message for message in result.messages)
     assert any("Weekly load" in message for message in result.messages)
     assert len(result.recommendations) >= 2
+    assert result.blocked is True
