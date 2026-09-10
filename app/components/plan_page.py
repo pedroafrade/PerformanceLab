@@ -6,6 +6,7 @@ Complete training-plan page.
 
 from datetime import date, timedelta
 from html import escape
+import json
 from pathlib import Path
 
 from dataclasses import replace
@@ -482,23 +483,6 @@ def _actual_and_adapted_load_chart_data(
         for row in rows
         if row["Source"] == "Adapted projection"
     ]
-    reference_date = plan.reference_day.isoformat()
-    completed_today = next(
-        (
-            row
-            for row in reversed(completed_rows)
-            if row["Date"] == reference_date
-        ),
-        None,
-    )
-    projection_today = next(
-        (
-            row
-            for row in projection_rows
-            if row["Date"] == reference_date
-        ),
-        None,
-    )
     last_completed = max(
         completed_rows,
         key=lambda row: row["Date"],
@@ -509,26 +493,30 @@ def _actual_and_adapted_load_chart_data(
         key=lambda row: row["Date"],
         default=None,
     )
-    transition = (
-        completed_today
-        or projection_today
-        or last_completed
-        or first_projection
-    )
-    if transition is not None:
-        anchor = {
-            "Date": reference_date,
-            "Session": "",
-            "Actual or adapted load": transition[
-                "Actual or adapted load"
-            ],
-            "Synthetic": True,
-            "Displayed load": None,
-        }
-        if completed_today is None:
-            rows.append({**anchor, "Source": "Completed"})
-        if projection_today is None:
-            rows.append({**anchor, "Source": "Adapted projection"})
+    if (
+        last_completed is not None
+        and first_projection is not None
+        and last_completed["Date"]
+        < first_projection["Date"]
+    ):
+        rows.append(
+            {
+                **last_completed,
+                "Source": "Adapted projection",
+                "Synthetic": True,
+                "Displayed load": None,
+                "Session": "",
+            }
+        )
+        rows.append(
+            {
+                **first_projection,
+                "Source": "Completed",
+                "Synthetic": True,
+                "Displayed load": None,
+                "Session": "",
+            }
+        )
 
     return sorted(
         rows,
@@ -5495,10 +5483,68 @@ def _show_plan_builder_feedback(*, draft_key: str) -> None:
         f"Recommendation: {recommendation}"
         for recommendation in feedback["recommendations"]
     )
-    st.toast(
-        "\n\n".join(parts),
-        icon="⛔" if feedback["blocked"] else "⚠️",
-        duration=5000,
+    popup_id = "plan-builder-assessment-popup"
+    payload = json.dumps(
+        {
+            "id": popup_id,
+            "parts": parts,
+            "blocked": feedback["blocked"],
+        }
+    )
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const payload = {payload};
+            const doc = window.parent.document;
+            doc.getElementById(payload.id)?.remove();
+            const popup = doc.createElement("div");
+            popup.id = payload.id;
+            popup.setAttribute("role", "alert");
+            popup.style.cssText = [
+                "position:fixed", "top:1.25rem", "right:1.25rem",
+                "z-index:1000001", "width:min(26rem,calc(100vw - 2.5rem))",
+                "max-height:calc(100vh - 2.5rem)", "overflow:auto",
+                "padding:0.85rem 1rem", "border-radius:0.65rem",
+                "border:1px solid rgba(128,128,128,.42)",
+                "background:var(--background-color,#fff)",
+                "color:var(--text-color,#31333f)",
+                "box-shadow:0 0.35rem 1.4rem rgba(0,0,0,.2)",
+                "font:0.86rem/1.4 var(--font, sans-serif)"
+            ].join(";");
+            const header = doc.createElement("strong");
+            header.textContent = payload.blocked ? "Change blocked" : "Plan warning";
+            popup.appendChild(header);
+            payload.parts.forEach((part) => {{
+                const line = doc.createElement("div");
+                line.textContent = part;
+                line.style.marginTop = "0.35rem";
+                popup.appendChild(line);
+            }});
+            const close = doc.createElement("button");
+            close.type = "button";
+            close.setAttribute("aria-label", "Close warning");
+            close.textContent = "×";
+            close.style.cssText = "position:absolute;top:.35rem;right:.5rem;border:0;background:transparent;color:inherit;font-size:1.1rem;cursor:pointer";
+            close.onclick = () => popup.remove();
+            popup.appendChild(close);
+            doc.body.appendChild(popup);
+            const dismiss = (event) => {{
+                if (event.key === "Escape") {{
+                    popup.remove();
+                    doc.removeEventListener("keydown", dismiss);
+                }}
+            }};
+            doc.addEventListener("keydown", dismiss);
+            window.setTimeout(() => {{
+                popup.remove();
+                doc.removeEventListener("keydown", dismiss);
+            }}, 3000);
+        }})();
+        </script>
+        """,
+        height=0,
+        width=0,
     )
 
 
@@ -5829,6 +5875,64 @@ def _revision_change_summary(revision, previous_revision=None) -> str:
         f"{current_load - previous_load:+.0f} AU · {event_count} events"
     )
 
+
+def _same_revision_snapshot(left, right) -> bool:
+    """Ignores revision metadata when comparing persisted plan states."""
+
+    return (
+        left.workouts == right.workouts
+        and tuple(left.events or ()) == tuple(right.events or ())
+        and left.start_date == right.start_date
+        and left.end_date == right.end_date
+        and left.primary_event_id == right.primary_event_id
+        and left.competition_event_ids == right.competition_event_ids
+    )
+
+
+def _recoverable_plan_revisions(plan):
+    """Returns distinct ancestors of the active plan revision, newest first."""
+
+    revisions = tuple(plan.revisions)
+    by_id = {
+        revision.revision_id: revision
+        for revision in revisions
+    }
+    active = by_id.get(plan.active_revision_id)
+    if active is None:
+        lineage = tuple(
+            reversed(
+                tuple(
+                    revision
+                    for revision in revisions
+                    if revision.revision_id != plan.active_revision_id
+                )
+            )
+        )
+        comparison = None
+    else:
+        lineage_items = []
+        seen = {active.revision_id}
+        parent_id = active.parent_revision_id
+        while parent_id and parent_id not in seen:
+            parent = by_id.get(parent_id)
+            if parent is None:
+                break
+            lineage_items.append(parent)
+            seen.add(parent_id)
+            parent_id = parent.parent_revision_id
+        lineage = tuple(lineage_items)
+        comparison = active
+
+    distinct = []
+    for revision in lineage:
+        if comparison is None or not _same_revision_snapshot(
+            revision,
+            comparison,
+        ):
+            distinct.append(revision)
+        comparison = revision
+    return tuple(distinct)
+
 @st.dialog(
     "Plan Builder",
     width="large",
@@ -5904,6 +6008,15 @@ div[data-testid="stDialog"] [role="dialog"] {
     height: auto !important;
     max-height: calc(100dvh - 2.5rem) !important;
     overflow: hidden !important;
+}
+
+div[data-testid="stDialog"] [data-testid="stTabPanel"] {
+    height: min(39rem, calc(100dvh - 11rem)) !important;
+    min-height: min(39rem, calc(100dvh - 11rem)) !important;
+    max-height: min(39rem, calc(100dvh - 11rem)) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
 }
 
 section[data-testid="stMain"]:has(
@@ -6274,16 +6387,13 @@ div[role="dialog"] [data-testid="stAlert"] {
         width=0,
     )
 
-    revisions = tuple(
-        reversed(
-            tuple(
-                revision
-                for revision in athlete.training_plan.revisions
-                if revision.revision_id
-                != athlete.training_plan.active_revision_id
-            )
-        )
+    revisions = _recoverable_plan_revisions(
+        athlete.training_plan
     )
+    revision_by_id = {
+        revision.revision_id: revision
+        for revision in athlete.training_plan.revisions
+    }
 
     build_tab, recovery_tab = st.tabs(
         ["Build plan", "Plan recovery"]
@@ -6465,18 +6575,19 @@ div[role="dialog"] [data-testid="stAlert"] {
         if not revisions:
             st.info("No earlier plan revisions are available.")
 
-        for revision in revisions:
-            revision_index = next(
-                index
-                for index, item in enumerate(active_plan.revisions)
-                if item.revision_id == revision.revision_id
-            )
+        show_older_key = f"{draft_key}:show-older-revisions"
+        show_older = bool(st.session_state.get(show_older_key))
+        visible_revisions = (
+            revisions
+            if show_older
+            else revisions[:6]
+        )
+
+        for revision_index, revision in enumerate(visible_revisions):
             previous_revision = (
-                active_plan.revisions[revision_index - 1]
-                if revision_index > 0
-                else None
+                revision_by_id.get(revision.parent_revision_id)
             )
-            later_count = len(active_plan.revisions) - revision_index - 1
+            later_count = revision_index + 1
             label = (
                 f"{revision.created_on:%d %b %Y} · "
                 f"{revision.source.replace('_', ' ').title()}"
@@ -6515,6 +6626,15 @@ div[role="dialog"] [data-testid="stAlert"] {
                         on_restore_revision(revision.revision_id)
                         st.rerun()
 
+        if len(revisions) > 6 and not show_older:
+            if st.button(
+                "Show older versions",
+                key="plan-recovery-show-older",
+                use_container_width=True,
+            ):
+                st.session_state[show_older_key] = True
+                st.rerun()
+
 def _show_plan_actions(
     plan,
     athlete,
@@ -6522,9 +6642,18 @@ def _show_plan_actions(
     on_restore_revision=None,
 ) -> None:
     """Render plan generation in the plan's right column."""
+    has_existing_plan = (
+        plan is not None
+        and (
+            bool(getattr(plan, "weeks", ()))
+            or bool(getattr(plan, "workouts", ()))
+            or getattr(plan, "start_date", None) is not None
+            or getattr(plan, "end_date", None) is not None
+        )
+    )
     generate_plan_requested = (
         st.button(
-            "Generate plan",
+            "Edit Plan" if has_existing_plan else "Generate plan",
             icon=(
                 ":material/auto_awesome:"
             ),

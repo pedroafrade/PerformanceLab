@@ -25,12 +25,15 @@ from app.components.plan_page import (
     _plan_builder_workspace_html,
     _plan_builder_prescription,
     _claim_plan_builder_action,
+    _recoverable_plan_revisions,
     _show_plan_generation_confirmation,
     _plan_today_marker_data,
     _planned_load_chart,
     _planned_load_chart_series,
     _show_plan_builder_drag_board,
     _show_plan_builder_interactive_board,
+    _show_plan_builder_feedback,
+    _show_plan_actions,
     _sidebar_adaptation_html,
     _sidebar_phase_html,
     _sidebar_session_marker_class,
@@ -2264,14 +2267,6 @@ def test_combines_completed_load_with_remaining_adapted_plan():
     ) == [
         {
             "Date": "2026-09-06",
-            "Session": "LT2 Run",
-            "Actual or adapted load": 480.0,
-            "Displayed load": 480.0,
-            "Source": "Completed",
-            "Synthetic": False,
-        },
-        {
-            "Date": "2026-09-07",
             "Session": "",
             "Actual or adapted load": 480.0,
             "Displayed load": None,
@@ -2279,12 +2274,12 @@ def test_combines_completed_load_with_remaining_adapted_plan():
             "Synthetic": True,
         },
         {
-            "Date": "2026-09-07",
-            "Session": "",
+            "Date": "2026-09-06",
+            "Session": "LT2 Run",
             "Actual or adapted load": 480.0,
-            "Displayed load": None,
+            "Displayed load": 480.0,
             "Source": "Completed",
-            "Synthetic": True,
+            "Synthetic": False,
         },
         {
             "Date": "2026-09-08",
@@ -2293,6 +2288,14 @@ def test_combines_completed_load_with_remaining_adapted_plan():
             "Displayed load": 300.0,
             "Source": "Adapted projection",
             "Synthetic": False,
+        },
+        {
+            "Date": "2026-09-08",
+            "Session": "",
+            "Actual or adapted load": 300.0,
+            "Displayed load": None,
+            "Source": "Completed",
+            "Synthetic": True,
         },
     ]
 
@@ -2530,6 +2533,8 @@ def test_plan_builder_separates_build_and_recovery_tabs():
     assert "calc(100dvh - 2.5rem)" in source
     assert "overflow-y: hidden" in source
     assert "margin-bottom: 0.35rem" in source
+    assert 'data-testid="stTabPanel"' in source
+    assert "overflow-y: auto" in source
 
 def test_plan_builder_uses_movable_week_structure():
 
@@ -2618,6 +2623,8 @@ def test_plan_builder_component_waits_for_authoritative_render():
     assert 'menu.textContent="⋮"' in source
     assert "stroke:currentColor" in source
     assert 'aria-label="Remove session"' in source
+    assert '#popover.compact' in source
+    assert 'width:max-content' in source
 
 
 def test_plan_builder_feedback_does_not_change_dialog_layout():
@@ -2632,9 +2639,13 @@ def test_plan_builder_feedback_does_not_change_dialog_layout():
     assert "st.warning" not in source
     assert "_queue_plan_builder_feedback" in board_source
     assert 'st.rerun(scope="fragment")' in board_source
+    feedback_source = inspect.getsource(_show_plan_builder_feedback)
+    assert "components.html" in feedback_source
+    assert "3000" in feedback_source
+    assert "st.toast" not in feedback_source
 
 
-def test_synthetic_today_anchor_has_no_visible_session_or_load():
+def test_curve_bridge_uses_real_adjacent_dates_without_today_anchor():
     source = inspect.getsource(
         _actual_and_adapted_load_chart_data
     )
@@ -2645,6 +2656,7 @@ def test_synthetic_today_anchor_has_no_visible_session_or_load():
     assert '"Synthetic": True' in source
     assert '"Session": ""' in source
     assert '"Displayed load": None' in source
+    assert "reference_date" not in source
     assert "alt.datum.Synthetic" in chart_source
 
 
@@ -2655,6 +2667,42 @@ def test_plan_recovery_summarises_and_confirms_restore():
     assert '"Confirm restore"' in source
     assert "later_count" in source
     assert "will be removed" in source
+    assert "_recoverable_plan_revisions" in source
+    assert 'revisions[:6]' in source
+    assert '"Show older versions"' in source
+
+
+def test_plan_recovery_keeps_only_distinct_active_ancestors():
+    def revision(revision_id, parent_id, workouts):
+        return SimpleNamespace(
+            revision_id=revision_id,
+            parent_revision_id=parent_id,
+            workouts=workouts,
+            events=(),
+            start_date=date(2026, 9, 1),
+            end_date=date(2026, 9, 30),
+            primary_event_id=None,
+            competition_event_ids=(),
+        )
+
+    original = revision("original", None, ("easy",))
+    duplicate = revision("duplicate", "original", ("easy",))
+    branch = revision("branch", "original", ("branch",))
+    active = revision("active", "duplicate", ("tempo",))
+    plan = SimpleNamespace(
+        revisions=(original, duplicate, branch, active),
+        active_revision_id="active",
+    )
+
+    assert _recoverable_plan_revisions(plan) == (duplicate,)
+
+
+def test_existing_plan_uses_edit_plan_action():
+    source = inspect.getsource(_show_plan_actions)
+
+    assert '"Edit Plan" if has_existing_plan else "Generate plan"' in source
+    assert 'getattr(plan, "weeks", ())' in source
+    assert "len(plan)" not in source
 
 
 def test_plan_builder_preserves_structured_target_in_prescription():
