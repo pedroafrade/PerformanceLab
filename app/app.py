@@ -335,6 +335,28 @@ def invalidate_daily_brief() -> None:
 
     st.session_state.pop("daily_brief_attempt_key", None)
     st.session_state.pop("daily_brief_resolution", None)
+
+
+def invalidate_plan_views(plan=None) -> None:
+    """Invalidate every view derived from the active training plan."""
+
+    invalidate_daily_brief()
+    stale_prefixes = (
+        "plan_builder_draft:",
+        "plan-builder-interactive-board-",
+        "plan-builder-timeline-",
+    )
+    for key in tuple(st.session_state.keys()):
+        if str(key).startswith(stale_prefixes):
+            st.session_state.pop(key, None)
+
+    if plan is None:
+        athlete = st.session_state.get("athlete")
+        plan = getattr(athlete, "training_plan", None)
+    st.session_state["plan_view_revision"] = (
+        f"{getattr(plan, 'plan_id', 'none')}:"
+        f"{getattr(plan, 'active_revision_id', 'current')}"
+    )
     
 def regenerate_weekly_plan(
     draft: PlanBuilderDraft | None = None,
@@ -397,7 +419,7 @@ def regenerate_weekly_plan(
             )
             return
         st.session_state.athlete = athlete
-        invalidate_daily_brief()
+        invalidate_plan_views(revised_plan)
         st.session_state.persisted_notice = "Plan changes saved."
         st.rerun()
         return
@@ -430,7 +452,7 @@ def regenerate_weekly_plan(
     st.session_state.athlete = (
         result.athlete
     )
-    invalidate_daily_brief()
+    invalidate_plan_views(result.athlete.training_plan)
 
     st.session_state.persisted_notice = (
         "Training plan generated."
@@ -449,7 +471,7 @@ def restore_training_plan_revision(
     )
     st.session_state.athlete = result.athlete
     st.session_state.notice = "Training plan revision restored."
-    invalidate_daily_brief()
+    invalidate_plan_views(result.athlete.training_plan)
 
 def import_completed_activities(
     workouts,
@@ -472,7 +494,7 @@ def import_completed_activities(
     st.session_state.athlete = (
         result.athlete
     )
-    invalidate_daily_brief()
+    invalidate_plan_views(result.athlete.training_plan)
 
     return result
 
@@ -499,7 +521,7 @@ def update_completed_workout(
     st.session_state.athlete = (
         result.athlete
     )
-    invalidate_daily_brief()
+    invalidate_plan_views(result.athlete.training_plan)
 
     return result
 
@@ -524,7 +546,7 @@ def delete_completed_workouts(
     st.session_state.athlete = (
         result.athlete
     )
-    invalidate_daily_brief()
+    invalidate_plan_views(result.athlete.training_plan)
 
     return result
 
@@ -1140,7 +1162,7 @@ if st.session_state.pop("event_plan_refresh_requested", False):
     else:
         athlete = result.athlete
         st.session_state.athlete = athlete
-        invalidate_daily_brief()
+        invalidate_plan_views(result.athlete.training_plan)
         st.session_state.persisted_notice = (
             "Events and training plan updated."
         )

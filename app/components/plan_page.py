@@ -6932,6 +6932,10 @@ def show_plan_page(
     """
 
     today = date.today()
+    plan_revision = (
+        f"{athlete.training_plan.plan_id}:"
+        f"{athlete.training_plan.active_revision_id or 'current'}"
+    )
 
     plan = PlanPresenter(
         plan=athlete.training_plan,
@@ -7075,6 +7079,7 @@ def show_plan_page(
         st.altair_chart(
             _planned_load_chart(plan),
             use_container_width=True,
+            key=f"plan-load-{plan_revision}",
         )
 
         st.html(
@@ -7098,6 +7103,7 @@ def show_plan_page(
         st.altair_chart(
             _distance_elevation_chart(plan),
             use_container_width=True,
+            key=f"plan-distance-elevation-{plan_revision}",
         )
 
         _plan_styles()

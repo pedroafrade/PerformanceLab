@@ -106,6 +106,9 @@ visualmente no Streamlit.
   confirmação.
 - O Restore apresenta também a lista concreta de sessões e eventos afetados,
   num pop-up compacto com expansão apenas para alterações longas.
+- Alterações ao plano, histórico, eventos e Restore invalidam centralmente as
+  vistas derivadas e identificam a revisão ativa, evitando dados antigos entre
+  Plan, Calendar, Today e Daily Brief.
 
 ## 4. Trabalho pendente
 
@@ -114,8 +117,8 @@ visualmente no Streamlit.
 - Criar testes de fluxo completo para mover, adicionar, editar e eliminar uma
   sessão, verificando na mesma execução célula, curvas, rascunho, persistência
   após Generate Plan e estado após rerun/refresh.
-- Centralizar a invalidação das projeções para que Plan Builder, Plan
-  Progression, Plan Weeks, Calendar e Today sejam atualizados pela mesma revisão.
+- Completar testes integrados de navegação entre Plan Builder, Plan
+  Progression, Plan Weeks, Calendar e Today após cada tipo de alteração.
 
 ### Prioridade 2 — Recomendações fisiológicas acionáveis
 

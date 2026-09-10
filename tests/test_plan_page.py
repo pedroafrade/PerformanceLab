@@ -2781,6 +2781,14 @@ def test_existing_plan_uses_edit_plan_action():
     assert "len(plan)" not in source
 
 
+def test_plan_progression_charts_are_keyed_by_active_revision():
+    source = inspect.getsource(show_plan_page)
+
+    assert "athlete.training_plan.active_revision_id" in source
+    assert 'key=f"plan-load-{plan_revision}"' in source
+    assert 'key=f"plan-distance-elevation-{plan_revision}"' in source
+
+
 def test_plan_builder_preserves_structured_target_in_prescription():
     result = _plan_builder_prescription(
         {
