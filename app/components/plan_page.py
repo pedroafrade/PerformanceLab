@@ -6297,7 +6297,7 @@ def _typical_week_html(typical) -> str:
         if hour is not None
     ]
     start_hour = min(6, min(observed_hours, default=6))
-    end_hour = max(22, max(observed_hours, default=22))
+    end_hour = max(20, max(observed_hours, default=20))
     cells = ['<div class="typical-week-corner">Time</div>']
     cells.extend(
         f'<div class="typical-week-day">{day}</div>'
@@ -6355,7 +6355,7 @@ def _typical_week_html(typical) -> str:
         '.typical-week-time{padding:.35rem .45rem;text-align:right;font-size:.7rem;'
         'opacity:.65;border-right:1px solid rgba(128,128,128,.2);'
         'border-bottom:1px solid rgba(128,128,128,.13);}'
-        '.typical-week-slot{min-height:1.72rem;padding:.1rem;border-right:1px solid '
+        '.typical-week-slot{min-height:1.55rem;padding:.08rem;border-right:1px solid '
         'rgba(128,128,128,.13);border-bottom:1px solid rgba(128,128,128,.13);}'
         '.typical-week-session{display:flex;flex-direction:column;gap:.12rem;padding:.35rem;'
         'border-left:3px solid #ff4b4b;border-radius:.3rem;background:rgba(128,128,128,.1);'
@@ -6453,6 +6453,14 @@ body:has(div[data-testid="stDialog"] [role="dialog"]),
 [data-testid="stAppViewContainer"]:has(
     div[data-testid="stDialog"] [role="dialog"]
 ) {
+    overflow: hidden !important;
+}
+
+html,
+body,
+[data-testid="stAppViewContainer"],
+section[data-testid="stMain"] {
+    height: 100dvh !important;
     overflow: hidden !important;
 }
 div[data-testid="stDialog"] [role="dialog"] {
