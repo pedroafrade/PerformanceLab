@@ -997,7 +997,8 @@ def _apply_today_page_styles(
         }
 
         .st-key-today_brief_recovery_row {
-            margin-bottom: 2rem;
+            margin-top: 1.25rem;
+            margin-bottom: 1.25rem;
         }
 
         .st-key-today_brief_recovery_row > div,
@@ -1015,6 +1016,66 @@ def _apply_today_page_styles(
         .st-key-today_brief_recovery_row
         .st-key-today_recovery_log {
             min-height: 10.25rem;
+        }
+
+        .st-key-today_guidance_column
+        > div[data-testid="stVerticalBlock"] {
+            gap: 1.25rem;
+        }
+
+        .st-key-today_recovery_log [data-testid="stHorizontalBlock"] {
+            align-items: center;
+        }
+
+        .st-key-today_recovery_log button[kind="secondary"] {
+            width: 2rem;
+            min-width: 2rem;
+            height: 2rem;
+            min-height: 2rem;
+            padding: 0;
+            border-radius: 999px;
+        }
+
+        .recovery-log-summary {
+            min-height: 1rem;
+            margin-top: 0.55rem;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            opacity: 0.65;
+        }
+
+        .today-equivalent-cards {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+            margin: 0.35rem 0 0.65rem;
+        }
+
+        .today-equivalent-card {
+            display: flex;
+            min-width: 0;
+            padding: 0.55rem;
+            border: 1px solid rgba(128, 128, 128, 0.24);
+            border-radius: 0.55rem;
+            background: rgba(128, 128, 128, 0.055);
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .today-equivalent-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .today-equivalent-card strong {
+            font-size: 0.92rem;
+            line-height: 1.2;
+        }
+
+        .today-equivalent-card span {
+            font-size: 0.68rem;
+            line-height: 1.25;
+            opacity: 0.65;
         }
 
         .st-key-today-recommendation-card
@@ -1107,6 +1168,9 @@ def _apply_today_page_styles(
         }
 
         @media (max-width: 760px) {
+            .today-equivalent-cards {
+                grid-template-columns: 1fr;
+            }
             .today-adaptation-comparison {
                 grid-template-columns: 1fr;
             }
@@ -1292,8 +1356,20 @@ def _show_session_equivalent(session_card) -> None:
     with st.container(border=True, key="today_session_equivalent"):
         st.markdown("**Session equivalent**")
         st.caption("Similar estimated load and duration")
-        st.write(f"Cycling · {round(minutes * 1.35)} min · steady aerobic")
-        st.write(f"Swimming · {max(20, round(minutes * .8))} min · technique + aerobic")
+        st.html(
+            '<div class="today-equivalent-cards">'
+            '<article class="today-equivalent-card">'
+            '<div class="today-equivalent-title">Cycling</div>'
+            f'<strong>{round(minutes * 1.35)} min</strong>'
+            '<span>Steady aerobic</span>'
+            '</article>'
+            '<article class="today-equivalent-card">'
+            '<div class="today-equivalent-title">Swimming</div>'
+            f'<strong>{max(20, round(minutes * .8))} min</strong>'
+            '<span>Technique + aerobic</span>'
+            '</article>'
+            '</div>'
+        )
         st.caption(
             "Cycling reduces impact and eccentric loading; swimming reduces "
             "weight-bearing load and adds upper-body demand. Neither reproduces "
@@ -1305,39 +1381,124 @@ def _show_session_equivalent(session_card) -> None:
         )
 
 
-def _show_recovery_log(athlete, on_save=None, on_delete=None) -> None:
+@st.dialog("Recovery log", width="small")
+def _show_recovery_log_dialog(
+    athlete,
+    on_save=None,
+    on_update=None,
+    on_delete=None,
+) -> None:
+    st.caption(
+        "Private history for awareness only; it does not diagnose or replace "
+        "assessment by a qualified healthcare professional."
+    )
+    with st.expander("Add entry", expanded=not athlete.recovery_log):
+        with st.form("recovery-log-add-entry"):
+            day = st.date_input("Date", value=date.today(), key="recovery-add-day")
+            category = st.selectbox(
+                "Type", ("Pain", "Injury", "Condition", "Other"),
+                key="recovery-add-category",
+            )
+            body_area = st.text_input(
+                "Body area or condition", key="recovery-add-body-area"
+            )
+            severity = st.slider(
+                "Severity", 1, 10, 3, key="recovery-add-severity"
+            )
+            notes = st.text_area("Notes", key="recovery-add-notes")
+            if st.form_submit_button("Save", disabled=on_save is None):
+                on_save(RecoveryLogEntry(
+                    day=day, category=category, body_area=body_area.strip(),
+                    severity=severity, notes=notes.strip(),
+                ))
+                st.rerun()
+
+    for entry in sorted(
+        athlete.recovery_log, key=lambda item: item.day, reverse=True
+    ):
+        label = (
+            f"{entry.day:%d %b %Y} · {entry.category} · "
+            f"{entry.body_area or 'Not specified'} · {entry.severity}/10"
+        )
+        with st.expander(label):
+            with st.form(f"recovery-log-edit-{entry.entry_id}"):
+                edited_day = st.date_input(
+                    "Date", value=entry.day, key=f"recovery-day-{entry.entry_id}"
+                )
+                categories = ("Pain", "Injury", "Condition", "Other")
+                edited_category = st.selectbox(
+                    "Type", categories, index=categories.index(entry.category),
+                    key=f"recovery-category-{entry.entry_id}",
+                )
+                edited_body_area = st.text_input(
+                    "Body area or condition", value=entry.body_area,
+                    key=f"recovery-body-{entry.entry_id}",
+                )
+                edited_severity = st.slider(
+                    "Severity", 1, 10, entry.severity,
+                    key=f"recovery-severity-{entry.entry_id}",
+                )
+                edited_notes = st.text_area(
+                    "Notes", value=entry.notes,
+                    key=f"recovery-notes-{entry.entry_id}",
+                )
+                save_column, delete_column = st.columns(2)
+                with save_column:
+                    update = st.form_submit_button(
+                        "Save changes", disabled=on_update is None,
+                        use_container_width=True,
+                    )
+                with delete_column:
+                    delete = st.form_submit_button(
+                        "Remove", disabled=on_delete is None,
+                        use_container_width=True,
+                    )
+                if update:
+                    on_update(RecoveryLogEntry(
+                        entry_id=entry.entry_id, day=edited_day,
+                        category=edited_category,
+                        body_area=edited_body_area.strip(),
+                        severity=edited_severity, notes=edited_notes.strip(),
+                    ))
+                    st.rerun()
+                if delete:
+                    on_delete(entry.entry_id)
+                    st.rerun()
+
+
+def _show_recovery_log(
+    athlete,
+    on_save=None,
+    on_update=None,
+    on_delete=None,
+) -> None:
     with st.container(border=True, key="today_recovery_log"):
-        st.markdown("**Recovery log**")
+        title_column, action_column = st.columns(
+            [1, 0.13], gap="small", vertical_alignment="center"
+        )
+        with title_column:
+            st.markdown("**Recovery log**")
+        with action_column:
+            manage = st.button(
+                "✎", key="manage-recovery-log", help="Manage recovery log"
+            )
         st.caption(
             "Private history for awareness only; it does not diagnose or replace "
             "assessment by a qualified healthcare professional."
         )
-        with st.popover("Add entry", use_container_width=False):
-            with st.form("recovery-log-entry"):
-                day = st.date_input("Date", value=date.today())
-                category = st.selectbox(
-                    "Type", ("Pain", "Injury", "Condition", "Other")
-                )
-                body_area = st.text_input("Body area or condition")
-                severity = st.slider("Severity", 1, 10, 3)
-                notes = st.text_area("Notes")
-                if st.form_submit_button("Save", disabled=on_save is None):
-                    on_save(RecoveryLogEntry(
-                        day=day, category=category, body_area=body_area.strip(),
-                        severity=severity, notes=notes.strip(),
-                    ))
-                    st.rerun()
-        for entry in sorted(athlete.recovery_log, key=lambda item: item.day, reverse=True)[:6]:
-            left, right = st.columns([5, 1])
-            with left:
-                st.caption(
-                    f"{entry.day:%d %b %Y} · {entry.category} · "
-                    f"{entry.body_area or 'Not specified'} · {entry.severity}/10"
-                )
-            with right:
-                if st.button("Delete", key=f"delete-recovery-{entry.entry_id}", disabled=on_delete is None):
-                    on_delete(entry.entry_id)
-                    st.rerun()
+        entries = tuple(athlete.recovery_log)
+        latest = max(entries, key=lambda item: item.day) if entries else None
+        st.html(
+            '<div class="recovery-log-summary">'
+            + (
+                f"{len(entries)} entr{'y' if len(entries) == 1 else 'ies'} · "
+                f"latest {latest.day:%d %b %Y}"
+                if latest is not None else "No entries recorded"
+            )
+            + '</div>'
+        )
+    if manage:
+        _show_recovery_log_dialog(athlete, on_save, on_update, on_delete)
 
 def _today_completed_workout(
     athlete,
@@ -1377,6 +1538,7 @@ def show_today_page(
     *,
     daily_brief_resolution=None,
     on_save_recovery_entry=None,
+    on_update_recovery_entry=None,
     on_delete_recovery_entry=None,
 ) -> None:
     """
@@ -1430,6 +1592,7 @@ def show_today_page(
             _show_recovery_log(
                 athlete,
                 on_save_recovery_entry,
+                on_update_recovery_entry,
                 on_delete_recovery_entry,
             )
 
@@ -1454,26 +1617,22 @@ def show_today_page(
                 _show_session_equivalent(today.session_card)
 
         with guidance_column:
-            _show_guidance_card(
-                title="Why this workout today",
-                items=today.guidance.reasons,
-            )
+            with st.container(key="today_guidance_column"):
+                _show_guidance_card(
+                    title="Why this workout today",
+                    items=today.guidance.reasons,
+                )
 
-            _show_guidance_card(
-                title="Attention during training",
-                items=today.guidance.cautions,
-            )
+                _show_guidance_card(
+                    title="Attention during training",
+                    items=today.guidance.cautions,
+                )
 
-            _show_latest_adaptation(
-                today.latest_adaptation,
-                reference_day=(
-                    today.reference_day
-                ),
-                stimulus_suggestion=(
-                    today
-                    .latest_stimulus_suggestion
-                ),
-            )
+                _show_latest_adaptation(
+                    today.latest_adaptation,
+                    reference_day=(today.reference_day),
+                    stimulus_suggestion=(today.latest_stimulus_suggestion),
+                )
 
     if today_workout is not None:
         show_activity_analysis(

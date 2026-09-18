@@ -14,8 +14,10 @@ def test_plan_builder_locks_outer_page_and_typical_week_fits_without_scroll():
     text = source("plan_page.py")
     assert 'body:has(div[data-testid="stDialog"] [role="dialog"])' in text
     assert '[data-testid="stAppViewContainer"]:has(' in text
+    assert "height: 100dvh !important" in text
     assert ".typical-week-scroll{overflow:hidden" in text
-    assert ".typical-week-slot{min-height:1.72rem" in text
+    assert ".typical-week-slot{min-height:1.55rem" in text
+    assert "end_hour = max(20" in text
 
 
 def test_typical_week_header_uses_theme_colours():
@@ -29,7 +31,28 @@ def test_typical_week_header_uses_theme_colours():
 def test_today_rows_keep_a_plan_like_vertical_gap():
     text = source("today_page.py")
     assert ".st-key-today_brief_recovery_row" in text
-    assert "margin-bottom: 2rem" in text
+    assert "margin-top: 1.25rem" in text
+    assert "margin-bottom: 1.25rem" in text
+    assert ".st-key-today_guidance_column" in text
+
+
+def test_recovery_log_management_does_not_expand_the_today_card():
+    text = source("today_page.py")
+    app = (ROOT.parent / "app.py").read_text(encoding="utf-8")
+    assert '@st.dialog("Recovery log", width="small")' in text
+    assert "recovery-log-summary" in text
+    assert "recovery-log-add-entry" in text
+    assert "on_update(RecoveryLogEntry(" in text
+    assert "st.rerun()" in text
+    assert "def update_recovery_log_entry(entry)" in app
+    assert "on_update_recovery_entry=update_recovery_log_entry" in app
+
+
+def test_session_equivalents_are_rendered_as_internal_cards():
+    text = source("today_page.py")
+    assert 'class="today-equivalent-cards"' in text
+    assert text.count('class="today-equivalent-card"') == 2
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in text
 
 
 def test_development_charts_align_and_do_not_render_a_duplicate_zero_axis():

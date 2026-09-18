@@ -177,8 +177,14 @@ visualmente no Streamlit.
 - O Plan Builder bloqueia o scroll da página subjacente enquanto está aberto.
 - Typical Week compacta a escala horária sem scroll interno e usa as variáveis
   do tema para manter os dias legíveis nos modos claro e escuro.
+- A grelha usa o intervalo horário efetivamente necessário, com limite mínimo
+  até às 20:00, evitando cortar as últimas linhas do diálogo.
 - Today mantém uma separação vertical consistente entre as duas primeiras
   linhas de contentores.
+- Today aplica a mesma separação entre linhas e cartões de orientação;
+  Session Equivalent apresenta cada alternativa num cartão interno.
+- Recovery Log mantém um resumo de altura estável em Today e concentra a
+  adição, edição e remoção num diálogo aberto pelo botão de lápis.
 - Plan e Settings usam tipografia uniformizada e limitada à respetiva página;
   o nome do atleta surge na mesma linha de Athlete profile.
 - Em Development, os dois gráficos partilham o mesmo limite visual direito, o

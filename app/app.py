@@ -554,6 +554,24 @@ def delete_recovery_log_entry(entry_id: str) -> None:
     st.session_state.athlete = athlete
     st.session_state.persisted_notice = "Recovery log entry deleted."
 
+
+def update_recovery_log_entry(entry) -> None:
+    athlete = st.session_state.athlete
+    previous = list(athlete.recovery_log)
+    athlete.recovery_log = [
+        entry if item.entry_id == entry.entry_id else item
+        for item in athlete.recovery_log
+    ]
+    if not any(item.entry_id == entry.entry_id for item in previous):
+        raise ValueError("Recovery log entry was not found.")
+    try:
+        athlete_repository.save(athlete)
+    except Exception:
+        athlete.recovery_log = previous
+        raise
+    st.session_state.athlete = athlete
+    st.session_state.persisted_notice = "Recovery log entry updated privately."
+
 def resolve_training_coach(
     *,
     athlete,
@@ -1319,6 +1337,7 @@ elif page == "today":
         athlete,
         daily_brief_resolution=daily_brief_resolution,
         on_save_recovery_entry=save_recovery_log_entry,
+        on_update_recovery_entry=update_recovery_log_entry,
         on_delete_recovery_entry=delete_recovery_log_entry,
     )
 
