@@ -1,6 +1,6 @@
 # PerformanceLab — Melhorias das páginas
 
-**Atualizado em:** 10 de setembro de 2026
+**Atualizado em:** 18 de setembro de 2026
 
 **Estado:** resumo consolidado do trabalho concluído e da fila prioritária
 
@@ -153,15 +153,29 @@ visualmente no Streamlit.
   seis meses de sessões realizadas e coloca padrões recorrentes — incluindo
   NRTV e ciclismo — no respetivo dia e hora modais de uma grelha de sete dias.
 
+### 3.8 — Guia de métricas e planos
+
+- O guia identifica entradas, unidades, janela temporal, fórmula, exemplo,
+  interpretação, limitações e origem de implementação.
+- ATL, CTL e TSB documentam as constantes exponenciais efetivamente usadas e
+  os exemplos são testados contra as funções de análise.
+- A carga planeada documenta a correspondência de intensidade para RPE e o
+  fator conservador de desnível, com exemplo calculado pela função real.
+- As regras do Plan Builder explicitam limites percentuais e absolutos,
+  recuperação, long run e taper sem os apresentar como garantia clínica.
+- Typical Week documenta a janela de 183 dias e os critérios mínimos de
+  recorrência, distinguindo preferência observada de prescrição.
+- O guia distingue cálculos determinísticos das explicações do Training Coach;
+  o texto do Coach não altera autonomamente o plano persistido.
+- Today separa explicitamente a primeira e segunda linhas de contentores e usa
+  a mesma grelha para alinhar Recovery Log com os contentores de orientação.
+- Typical Week apresenta os sete dias numa grelha horária completa, conserva
+  blocos vazios e posiciona cada padrão na hora modal observada.
+
 ## 4. Trabalho pendente
 
-### Prioridade 5 — Guia de métricas e planos
-
-- Documentar métricas, coeficientes e regras usados na criação e adaptação.
-- Indicar entradas, unidades, período, fórmula, exemplo, interpretação,
-  limitações e origem.
-- Distinguir cálculos determinísticos de interpretações do Training Coach.
-- Testar os exemplos do guia contra as funções reais.
+As prioridades funcionais descritas neste documento estão concluídas. Ficam
+pendentes apenas a validação visual recorrente e as decisões de produto abaixo.
 
 ## 5. Decisões necessárias
 
@@ -183,5 +197,5 @@ Um item só passa para concluído depois de:
 
 ## 7. Próximo conjunto recomendado
 
-Avançar para a **Prioridade 5 — Guia de métricas e planos**, documentando e
-testando as fórmulas e limites usados pela aplicação.
+Validar o guia e a grelha Typical Week em desktop e móvel, nos temas claro e
+escuro, e decidir as duas políticas de produto ainda abertas.

@@ -993,7 +993,16 @@ def _apply_today_page_styles(
         }
         .st-key-today-recommendation-card {
             margin-top: 0;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0;
+        }
+
+        .st-key-today_brief_recovery_row {
+            margin-bottom: 1.25rem;
+        }
+
+        .st-key-today_brief_recovery_row > div,
+        .st-key-today_detail_row > div {
+            width: 100%;
         }
 
         .st-key-today_brief_recovery_row
@@ -1413,7 +1422,7 @@ def show_today_page(
 
     with st.container(key="today_brief_recovery_row"):
         brief_column, recovery_column = st.columns(
-            [1.7, 1], gap="medium", vertical_alignment="top"
+            [1.7, 1], gap="large", vertical_alignment="top"
         )
         with brief_column:
             _show_daily_decision(today, daily_brief_resolution)

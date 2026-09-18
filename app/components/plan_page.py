@@ -6259,6 +6259,85 @@ def _typical_week(history, *, reference_day: date):
         )
     return result
 
+
+def _typical_week_html(typical) -> str:
+    """Render a seven-day time grid, including every empty hourly slot."""
+    day_names = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    observed_hours = [
+        hour
+        for sessions in typical.values()
+        for hour, *_ in sessions
+        if hour is not None
+    ]
+    start_hour = min(6, min(observed_hours, default=6))
+    end_hour = max(22, max(observed_hours, default=22))
+    cells = ['<div class="typical-week-corner">Time</div>']
+    cells.extend(
+        f'<div class="typical-week-day">{day}</div>'
+        for day in day_names
+    )
+    for hour in range(start_hour, end_hour + 1):
+        cells.append(
+            f'<div class="typical-week-time">{hour:02d}:00</div>'
+        )
+        for day in range(7):
+            cards = []
+            for session_hour, label, count, total in typical[day]:
+                if session_hour == hour:
+                    cards.append(
+                        '<div class="typical-week-session">'
+                        f'<strong>{escape(label)}</strong>'
+                        f'<span>{count}/{total} matching sessions</span>'
+                        '</div>'
+                    )
+            cells.append(
+                '<div class="typical-week-slot" '
+                f'aria-label="{day_names[day]} {hour:02d}:00">'
+                + "".join(cards)
+                + '</div>'
+            )
+    unscheduled = {
+        day: [item for item in sessions if item[0] is None]
+        for day, sessions in typical.items()
+    }
+    if any(unscheduled.values()):
+        cells.append('<div class="typical-week-time">Unscheduled</div>')
+        for day in range(7):
+            cards = [
+                '<div class="typical-week-session">'
+                f'<strong>{escape(label)}</strong>'
+                f'<span>{count}/{total} matching sessions</span>'
+                '</div>'
+                for _, label, count, total in unscheduled[day]
+            ]
+            cells.append(
+                '<div class="typical-week-slot">'
+                + "".join(cards)
+                + '</div>'
+            )
+    return (
+        '<style>'
+        '.typical-week-scroll{max-height:35rem;overflow:auto;border:1px solid '
+        'rgba(128,128,128,.25);border-radius:.55rem;}'
+        '.typical-week-grid{display:grid;grid-template-columns:4rem repeat(7,minmax(8rem,1fr));'
+        'min-width:64rem;}'
+        '.typical-week-corner,.typical-week-day{position:sticky;top:0;z-index:2;'
+        'padding:.55rem;background:var(--background-color,#fff);font-weight:700;'
+        'border-bottom:1px solid rgba(128,128,128,.3);}'
+        '.typical-week-time{padding:.35rem .45rem;text-align:right;font-size:.7rem;'
+        'opacity:.65;border-right:1px solid rgba(128,128,128,.2);'
+        'border-bottom:1px solid rgba(128,128,128,.13);}'
+        '.typical-week-slot{min-height:3.35rem;padding:.18rem;border-right:1px solid '
+        'rgba(128,128,128,.13);border-bottom:1px solid rgba(128,128,128,.13);}'
+        '.typical-week-session{display:flex;flex-direction:column;gap:.12rem;padding:.35rem;'
+        'border-left:3px solid #ff4b4b;border-radius:.3rem;background:rgba(128,128,128,.1);'
+        'font-size:.75rem;line-height:1.2;}'
+        '.typical-week-session span{font-size:.65rem;opacity:.65;}'
+        '</style><div class="typical-week-scroll"><div class="typical-week-grid">'
+        + "".join(cells)
+        + '</div></div>'
+    )
+
 @st.dialog(
     "Plan Builder",
     width="large",
@@ -6965,20 +7044,7 @@ div[data-testid="stPopoverBody"] {
             "This describes preference, not a safety rule or prescribed plan."
         )
         typical = _typical_week(athlete.history, reference_day=date.today())
-        day_columns = st.columns(7, gap="small")
-        for day, column in enumerate(day_columns):
-            with column:
-                st.markdown(f"**{('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[day]}**")
-                if not typical[day]:
-                    st.caption("—")
-                for hour, label, count, total in sorted(
-                    typical[day], key=lambda item: (item[0] is None, item[0] or 0)
-                ):
-                    time_label = f"{hour:02d}:00" if hour is not None else "Usual time"
-                    with st.container(border=True):
-                        st.caption(time_label)
-                        st.markdown(label)
-                        st.caption(f"{count}/{total} matching sessions")
+        st.html(_typical_week_html(typical))
 
     with recovery_tab:
         st.caption(

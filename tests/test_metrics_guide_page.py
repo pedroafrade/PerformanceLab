@@ -48,3 +48,35 @@ def test_documented_one_day_examples_match_the_real_calculations():
     assert round(acute, 2) == 13.31
     assert round(chronic, 2) == 2.35
     assert round(balance, 2) == -10.96
+
+
+def test_planned_load_example_matches_the_real_calculation():
+    from datetime import datetime, timedelta
+
+    from performancelab.training.load import planned_workout_load
+    from performancelab.training.planning import PlannedWorkout
+
+    workout = PlannedWorkout(
+        scheduled_at=datetime(2026, 9, 20, 9), sport="Running",
+        title="Easy Run", duration=timedelta(minutes=60),
+        intensity="Easy", elevation_gain=200,
+    )
+    entry = next(item for item in GUIDE_ENTRIES if item.name == "Planned session load")
+    assert round(planned_workout_load(workout), 2) == 198.0
+    assert "198 AU" in entry.example
+
+
+def test_every_implemented_entry_documents_a_complete_contract():
+    for entry in GUIDE_ENTRIES:
+        if entry.implementation:
+            assert entry.inputs
+            assert entry.period
+            assert entry.interpretation
+            assert entry.limitations
+
+
+def test_guide_separates_rules_from_coach_explanation():
+    plan = next(item for item in GUIDE_ENTRIES if item.name == "Training-plan phases")
+    safeguards = next(item for item in GUIDE_ENTRIES if item.name == "Plan Builder safeguards")
+    assert plan.calculation_type == "Mixed: deterministic plan + Coach explanation"
+    assert safeguards.calculation_type == "Deterministic"

@@ -43,7 +43,10 @@ def test_strategy_adviser_is_local_six_month_pattern_analysis():
     assert "timedelta(days=183)" in source
     assert '"Build plan", "Typical week", "Plan recovery"' in source
     assert "def _typical_week" in source
-    assert "day_columns = st.columns(7" in source
+    assert "def _typical_week_html" in source
+    assert 'class="typical-week-slot"' in source
+    assert "range(start_hour, end_hour + 1)" in source
+    assert "repeat(7,minmax(8rem,1fr))" in source
     assert "len(weekdays) < 3" in source
     assert "not a safety rule" in source
     assert 'category = f"{recurring_title} sessions"' in source
@@ -56,3 +59,10 @@ def test_pre_race_session_is_not_treated_as_an_event():
     source = Path("app/components/plan_page.py").read_text(encoding="utf-8")
     assert 'title in {"race", "competition", "event"}' in source
     assert '"race" in str(workout.title' not in source
+
+
+def test_today_rows_share_the_same_grid_and_have_explicit_spacing():
+    source = Path("app/components/today_page.py").read_text(encoding="utf-8")
+    assert source.count("[1.7, 1]") >= 2
+    assert ".st-key-today_brief_recovery_row" in source
+    assert "margin-bottom: 1.25rem" in source
