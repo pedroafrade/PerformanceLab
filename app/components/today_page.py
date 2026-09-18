@@ -992,8 +992,20 @@ def _apply_today_page_styles(
             opacity: 0.55;
         }
         .st-key-today-recommendation-card {
-            margin-top: 0.75rem;
+            margin-top: 0;
             margin-bottom: 0.75rem;
+        }
+
+        .st-key-today_brief_recovery_row
+        [data-testid="stColumn"] > [data-testid="stVerticalBlock"] {
+            padding-top: 0 !important;
+        }
+
+        .st-key-today_brief_recovery_row
+        .st-key-today-recommendation-card,
+        .st-key-today_brief_recovery_row
+        .st-key-today_recovery_log {
+            min-height: 10.25rem;
         }
 
         .st-key-today-recommendation-card

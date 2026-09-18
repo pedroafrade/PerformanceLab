@@ -5388,10 +5388,10 @@ def _show_plan_builder_drag_board(
 def _plan_builder_is_race(workout) -> bool:
     """Returns whether a planned item represents an event."""
 
+    title = str(workout.title or "").strip().lower()
     return (
-        str(workout.intensity or "").strip().lower()
-        == "race effort"
-        or "race" in str(workout.title or "").strip().lower()
+        str(workout.intensity or "").strip().lower() == "race effort"
+        or title in {"race", "competition", "event"}
     )
 
 
@@ -6225,6 +6225,40 @@ def _strategy_adviser(history, *, reference_day: date) -> tuple[str, ...]:
             )
     return tuple(advice)
 
+
+def _typical_week(history, *, reference_day: date):
+    """Return recurring sessions at their modal weekday and start hour."""
+    cutoff = reference_day - timedelta(days=183)
+    observations = {}
+    for workout in history:
+        value = workout.date
+        workout_day = value.date() if hasattr(value, "date") else value
+        if workout_day is None or not cutoff <= workout_day <= reference_day:
+            continue
+        raw_title = str(getattr(workout.info, "title", "") or "").strip()
+        sport = str(getattr(workout, "sport", "") or "").lower()
+        label = re.sub(
+            r"^T\d+[_\s-]*", "", raw_title, flags=re.IGNORECASE
+        ).replace("_", " ").strip() or str(getattr(workout, "sport", "Session"))
+        if any(token in sport for token in ("cycl", "bike", "bicycle")):
+            label = "Cycling"
+        hour = value.hour if hasattr(value, "hour") else None
+        observations.setdefault(label, []).append((workout_day.weekday(), hour))
+    result = {day: [] for day in range(7)}
+    for label, values in sorted(observations.items()):
+        if len(values) < 3:
+            continue
+        weekdays = [day for day, _ in values]
+        preferred_day = max(sorted(set(weekdays)), key=weekdays.count)
+        if weekdays.count(preferred_day) / len(values) < 0.4:
+            continue
+        hours = [hour for day, hour in values if day == preferred_day and hour is not None]
+        preferred_hour = max(sorted(set(hours)), key=hours.count) if hours else None
+        result[preferred_day].append(
+            (preferred_hour, label, weekdays.count(preferred_day), len(values))
+        )
+    return result
+
 @st.dialog(
     "Plan Builder",
     width="large",
@@ -6714,8 +6748,8 @@ div[data-testid="stPopoverBody"] {
         for revision in athlete.training_plan.revisions
     }
 
-    build_tab, recovery_tab = st.tabs(
-        ["Build plan", "Plan recovery"]
+    build_tab, typical_tab, recovery_tab = st.tabs(
+        ["Build plan", "Typical week", "Plan recovery"]
     )
 
     with build_tab:
@@ -6729,19 +6763,6 @@ div[data-testid="stPopoverBody"] {
                     notice
                 )
             )
-
-        strategy_advice = _strategy_adviser(
-            athlete.history,
-            reference_day=date.today(),
-        )
-        if strategy_advice:
-            with st.expander("Strategy adviser", expanded=False):
-                st.caption(
-                    "Based locally on recurring completed-session weekdays "
-                    "during the last six months; preference is not a safety rule."
-                )
-                for item in strategy_advice:
-                    st.caption(f"• {item}")
 
         st.markdown(
             "#### Complete plan timeline"
@@ -6937,6 +6958,27 @@ div[data-testid="stPopoverBody"] {
                         ),
                     ):
                         on_generate_plan(builder_draft)
+
+    with typical_tab:
+        st.caption(
+            "Typical completed-session timing from the last six months. "
+            "This describes preference, not a safety rule or prescribed plan."
+        )
+        typical = _typical_week(athlete.history, reference_day=date.today())
+        day_columns = st.columns(7, gap="small")
+        for day, column in enumerate(day_columns):
+            with column:
+                st.markdown(f"**{('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[day]}**")
+                if not typical[day]:
+                    st.caption("—")
+                for hour, label, count, total in sorted(
+                    typical[day], key=lambda item: (item[0] is None, item[0] or 0)
+                ):
+                    time_label = f"{hour:02d}:00" if hour is not None else "Usual time"
+                    with st.container(border=True):
+                        st.caption(time_label)
+                        st.markdown(label)
+                        st.caption(f"{count}/{total} matching sessions")
 
     with recovery_tab:
         st.caption(

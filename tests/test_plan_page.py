@@ -2520,10 +2520,11 @@ def test_plan_builder_separates_build_and_recovery_tabs():
         _show_plan_generation_confirmation
     )
 
-    assert '"Build plan", "Plan recovery"' in source
+    assert '"Build plan", "Typical week", "Plan recovery"' in source
     assert "st.tabs" in source
     assert "with build_tab" in source
     assert "with recovery_tab" in source
+    assert "with typical_tab" in source
     assert "'94vw'" in source
     assert "'1500px'" in source
     assert "_planned_load_chart(" in source

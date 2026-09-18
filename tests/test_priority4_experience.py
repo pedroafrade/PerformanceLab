@@ -41,10 +41,18 @@ def test_today_contains_equivalents_and_private_recovery_controls():
 def test_strategy_adviser_is_local_six_month_pattern_analysis():
     source = Path("app/components/plan_page.py").read_text(encoding="utf-8")
     assert "timedelta(days=183)" in source
-    assert 'with st.expander("Strategy adviser"' in source
+    assert '"Build plan", "Typical week", "Plan recovery"' in source
+    assert "def _typical_week" in source
+    assert "day_columns = st.columns(7" in source
     assert "len(weekdays) < 3" in source
-    assert "preference is not a safety rule" in source
+    assert "not a safety rule" in source
     assert 'category = f"{recurring_title} sessions"' in source
     assert 'r"^T\\d+[_\\s-]*"' in source
     assert 'category = "Cycling"' in source
     assert "weekend_count / len(weekdays) >= 0.6" in source
+
+
+def test_pre_race_session_is_not_treated_as_an_event():
+    source = Path("app/components/plan_page.py").read_text(encoding="utf-8")
+    assert 'title in {"race", "competition", "event"}' in source
+    assert '"race" in str(workout.title' not in source

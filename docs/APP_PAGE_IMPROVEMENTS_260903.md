@@ -149,10 +149,9 @@ visualmente no Streamlit.
   sugere força complementar apenas quando familiar e sem dor.
 - Recovery Log guarda um histórico privado controlado pelo atleta, incluído na
   exportação e eliminação do perfil e nunca enviado ao Coach/IA.
-- Strategy Adviser analisa localmente seis meses de sessões realizadas, exige
-  pelo menos três exemplos, reconhece nomes recorrentes como NRTV, modalidades
-  como ciclismo e padrões de fim de semana, apresentando preferências como
-  informação e não como regra de segurança.
+- O separador Typical Week, entre Build Plan e Plan Recovery, analisa localmente
+  seis meses de sessões realizadas e coloca padrões recorrentes — incluindo
+  NRTV e ciclismo — no respetivo dia e hora modais de uma grelha de sete dias.
 
 ## 4. Trabalho pendente
 
