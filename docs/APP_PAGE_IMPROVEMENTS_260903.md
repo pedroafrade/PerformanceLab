@@ -142,16 +142,17 @@ visualmente no Streamlit.
 
 ### 3.7 — Today e aconselhamento
 
-- Today reutiliza o Daily Brief persistido no contentor existente, sem nova
-  geração nem alteração da sua posição.
+- Today reutiliza o Daily Brief persistido no contentor existente e divide a
+  mesma linha com o Recovery Log, sem nova geração.
 - Next Session divide o espaço com Session Equivalent, que compara duração e
   carga entre running, cycling e swimming, explicita diferenças de estímulo e
   sugere força complementar apenas quando familiar e sem dor.
 - Recovery Log guarda um histórico privado controlado pelo atleta, incluído na
   exportação e eliminação do perfil e nunca enviado ao Coach/IA.
 - Strategy Adviser analisa localmente seis meses de sessões realizadas, exige
-  pelo menos três exemplos e apresenta preferências de dias como informação,
-  não como regra de segurança.
+  pelo menos três exemplos, reconhece nomes recorrentes como NRTV, modalidades
+  como ciclismo e padrões de fim de semana, apresentando preferências como
+  informação e não como regra de segurança.
 
 ## 4. Trabalho pendente
 

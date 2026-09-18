@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from html import escape
 import json
 from pathlib import Path
+import re
 
 from dataclasses import replace
 
@@ -6183,7 +6184,9 @@ def _strategy_adviser(history, *, reference_day: date) -> tuple[str, ...]:
             workout_day = workout_day.date()
         if workout_day is None or workout_day < cutoff or workout_day > reference_day:
             continue
-        title = str(getattr(workout.info, "title", "") or "").lower()
+        raw_title = str(getattr(workout.info, "title", "") or "").strip()
+        title = raw_title.lower()
+        sport = str(getattr(workout, "sport", "") or "").lower()
         category = next(
             (label for token, label in (
                 ("long", "Long runs"), ("hill", "Hill sessions"),
@@ -6192,6 +6195,13 @@ def _strategy_adviser(history, *, reference_day: date) -> tuple[str, ...]:
             ) if token in title),
             None,
         )
+        if category is None and raw_title:
+            recurring_title = re.sub(
+                r"^T\d+[_\s-]*", "", raw_title, flags=re.IGNORECASE
+            ).replace("_", " ").strip()
+            category = f"{recurring_title} sessions"
+        if any(token in sport for token in ("cycl", "bike", "bicycle")):
+            category = "Cycling"
         if category is None:
             continue
         weekdays = patterns.setdefault(category, [])
@@ -6200,9 +6210,15 @@ def _strategy_adviser(history, *, reference_day: date) -> tuple[str, ...]:
     for category, weekdays in sorted(patterns.items()):
         if len(weekdays) < 3:
             continue
+        weekend_count = sum(day >= 5 for day in weekdays)
         preferred = max(set(weekdays), key=weekdays.count)
         confidence = weekdays.count(preferred) / len(weekdays)
-        if confidence >= 0.5:
+        if weekend_count / len(weekdays) >= 0.6:
+            advice.append(
+                f"{category}: usually at the weekend "
+                f"({weekend_count}/{len(weekdays)} sessions)."
+            )
+        elif confidence >= 0.5:
             advice.append(
                 f"{category}: usually {('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[preferred]} "
                 f"({weekdays.count(preferred)}/{len(weekdays)} sessions)."

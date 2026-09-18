@@ -1399,10 +1399,18 @@ def show_today_page(
         unsafe_allow_html=True,
     )
 
-    _show_daily_decision(
-        today,
-        daily_brief_resolution,
-    )
+    with st.container(key="today_brief_recovery_row"):
+        brief_column, recovery_column = st.columns(
+            [1.7, 1], gap="medium", vertical_alignment="top"
+        )
+        with brief_column:
+            _show_daily_decision(today, daily_brief_resolution)
+        with recovery_column:
+            _show_recovery_log(
+                athlete,
+                on_save_recovery_entry,
+                on_delete_recovery_entry,
+            )
 
     with st.container(key="today_detail_row"):
         session_column, guidance_column = (
@@ -1445,12 +1453,6 @@ def show_today_page(
                     .latest_stimulus_suggestion
                 ),
             )
-
-    _show_recovery_log(
-        athlete,
-        on_save_recovery_entry,
-        on_delete_recovery_entry,
-    )
 
     if today_workout is not None:
         show_activity_analysis(

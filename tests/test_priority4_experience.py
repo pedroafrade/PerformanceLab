@@ -24,6 +24,8 @@ def test_today_reuses_daily_brief_and_preserves_card_key():
     assert 'key="today-recommendation-card"' in source
     assert '"DAILY BRIEF"' in source
     assert "daily_brief_resolution=daily_brief_resolution" in app
+    assert 'key="today_brief_recovery_row"' in source
+    assert "brief_column, recovery_column" in source
 
 
 def test_today_contains_equivalents_and_private_recovery_controls():
@@ -42,3 +44,7 @@ def test_strategy_adviser_is_local_six_month_pattern_analysis():
     assert 'with st.expander("Strategy adviser"' in source
     assert "len(weekdays) < 3" in source
     assert "preference is not a safety rule" in source
+    assert 'category = f"{recurring_title} sessions"' in source
+    assert 'r"^T\\d+[_\\s-]*"' in source
+    assert 'category = "Cycling"' in source
+    assert "weekend_count / len(weekdays) >= 0.6" in source
