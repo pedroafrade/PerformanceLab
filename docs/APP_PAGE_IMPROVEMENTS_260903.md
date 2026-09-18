@@ -185,6 +185,8 @@ visualmente no Streamlit.
   Session Equivalent apresenta cada alternativa num cartão interno.
 - Recovery Log mantém um resumo de altura estável em Today e concentra a
   adição, edição e remoção num diálogo aberto pelo botão de lápis.
+- Recovery Log mostra as entradas mais recentes no próprio cartão, com scroll
+  interno, e Today reutiliza a escala de espaçamento de 0,75 rem do Dashboard.
 - Plan e Settings usam tipografia uniformizada e limitada à respetiva página;
   o nome do atleta surge na mesma linha de Athlete profile.
 - Em Development, os dois gráficos partilham o mesmo limite visual direito, o

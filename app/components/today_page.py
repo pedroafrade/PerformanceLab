@@ -997,8 +997,8 @@ def _apply_today_page_styles(
         }
 
         .st-key-today_brief_recovery_row {
-            margin-top: 1.25rem;
-            margin-bottom: 1.25rem;
+            margin-top: 0.75rem;
+            margin-bottom: 0.75rem;
         }
 
         .st-key-today_brief_recovery_row > div,
@@ -1018,9 +1018,14 @@ def _apply_today_page_styles(
             min-height: 10.25rem;
         }
 
+        .st-key-today_recovery_log {
+            height: 10.25rem;
+            box-sizing: border-box;
+        }
+
         .st-key-today_guidance_column
         > div[data-testid="stVerticalBlock"] {
-            gap: 1.25rem;
+            gap: 0.75rem;
         }
 
         .st-key-today_recovery_log [data-testid="stHorizontalBlock"] {
@@ -1036,12 +1041,33 @@ def _apply_today_page_styles(
             border-radius: 999px;
         }
 
-        .recovery-log-summary {
-            min-height: 1rem;
-            margin-top: 0.55rem;
+        .recovery-log-entries {
+            max-height: 6.5rem;
+            margin-top: 0.3rem;
+            padding-right: 0.2rem;
+            overflow-y: auto;
+            scrollbar-gutter: stable;
+        }
+
+        .recovery-log-entry,
+        .recovery-log-empty {
+            padding: 0.34rem 0;
+            border-top: 1px solid rgba(128, 128, 128, 0.16);
             font-size: 0.72rem;
             line-height: 1.35;
-            opacity: 0.65;
+        }
+
+        .recovery-log-entry:first-child,
+        .recovery-log-empty:first-child {
+            border-top: 0;
+        }
+
+        .recovery-log-entry-meta {
+            opacity: 0.62;
+        }
+
+        .recovery-log-entry strong {
+            font-weight: 650;
         }
 
         .today-equivalent-cards {
@@ -1388,10 +1414,6 @@ def _show_recovery_log_dialog(
     on_update=None,
     on_delete=None,
 ) -> None:
-    st.caption(
-        "Private history for awareness only; it does not diagnose or replace "
-        "assessment by a qualified healthcare professional."
-    )
     with st.expander("Add entry", expanded=not athlete.recovery_log):
         with st.form("recovery-log-add-entry"):
             day = st.date_input("Date", value=date.today(), key="recovery-add-day")
@@ -1482,19 +1504,21 @@ def _show_recovery_log(
             manage = st.button(
                 "✎", key="manage-recovery-log", help="Manage recovery log"
             )
-        st.caption(
-            "Private history for awareness only; it does not diagnose or replace "
-            "assessment by a qualified healthcare professional."
+        entries = sorted(
+            athlete.recovery_log, key=lambda item: item.day, reverse=True
         )
-        entries = tuple(athlete.recovery_log)
-        latest = max(entries, key=lambda item: item.day) if entries else None
+        entry_rows = "".join(
+            '<div class="recovery-log-entry">'
+            f'<strong>{escape(entry.body_area or entry.category)}</strong>'
+            '<div class="recovery-log-entry-meta">'
+            f'{entry.day:%d %b %Y} · {escape(entry.category)} · '
+            f'{entry.severity}/10'
+            '</div></div>'
+            for entry in entries
+        )
         st.html(
-            '<div class="recovery-log-summary">'
-            + (
-                f"{len(entries)} entr{'y' if len(entries) == 1 else 'ies'} · "
-                f"latest {latest.day:%d %b %Y}"
-                if latest is not None else "No entries recorded"
-            )
+            '<div class="recovery-log-entries">'
+            + (entry_rows or '<div class="recovery-log-empty">No entries recorded</div>')
             + '</div>'
         )
     if manage:
@@ -1584,7 +1608,7 @@ def show_today_page(
 
     with st.container(key="today_brief_recovery_row"):
         brief_column, recovery_column = st.columns(
-            [1.7, 1], gap="large", vertical_alignment="top"
+            [1.7, 1], gap="small", vertical_alignment="top"
         )
         with brief_column:
             _show_daily_decision(today, daily_brief_resolution)
@@ -1600,13 +1624,13 @@ def show_today_page(
         session_column, guidance_column = (
             st.columns(
                 [1.7, 1],
-                gap="large",
+                gap="small",
                 vertical_alignment="top",
             )
         )
 
         with session_column:
-            next_column, equivalent_column = st.columns(2, gap="medium")
+            next_column, equivalent_column = st.columns(2, gap="small")
             with next_column:
                 _show_today_session(
                     today.session_card,

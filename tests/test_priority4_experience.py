@@ -35,7 +35,7 @@ def test_today_contains_equivalents_and_private_recovery_controls():
     assert "running economy, tendon loading" in source
     assert "calf raises, split squats and hip hinges" in source
     assert 'key="today_recovery_log"' in source
-    assert "does not diagnose" in source
+    assert "Private history for awareness only" not in source
     assert 'class="today-equivalent-card"' in source
     assert '@st.dialog("Recovery log", width="small")' in source
     assert '"\u270e", key="manage-recovery-log"' in source
@@ -70,6 +70,6 @@ def test_today_rows_share_the_same_grid_and_have_explicit_spacing():
     source = Path("app/components/today_page.py").read_text(encoding="utf-8")
     assert source.count("[1.7, 1]") >= 2
     assert ".st-key-today_brief_recovery_row" in source
-    assert "margin-top: 1.25rem" in source
-    assert "margin-bottom: 1.25rem" in source
+    assert "margin-top: 0.75rem" in source
+    assert "margin-bottom: 0.75rem" in source
     assert 'key="today_guidance_column"' in source

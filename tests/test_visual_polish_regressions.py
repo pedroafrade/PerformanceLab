@@ -31,8 +31,8 @@ def test_typical_week_header_uses_theme_colours():
 def test_today_rows_keep_a_plan_like_vertical_gap():
     text = source("today_page.py")
     assert ".st-key-today_brief_recovery_row" in text
-    assert "margin-top: 1.25rem" in text
-    assert "margin-bottom: 1.25rem" in text
+    assert "margin-top: 0.75rem" in text
+    assert "margin-bottom: 0.75rem" in text
     assert ".st-key-today_guidance_column" in text
 
 
@@ -40,12 +40,31 @@ def test_recovery_log_management_does_not_expand_the_today_card():
     text = source("today_page.py")
     app = (ROOT.parent / "app.py").read_text(encoding="utf-8")
     assert '@st.dialog("Recovery log", width="small")' in text
-    assert "recovery-log-summary" in text
+    assert "recovery-log-entries" in text
     assert "recovery-log-add-entry" in text
     assert "on_update(RecoveryLogEntry(" in text
     assert "st.rerun()" in text
     assert "def update_recovery_log_entry(entry)" in app
     assert "on_update_recovery_entry=update_recovery_log_entry" in app
+
+
+def test_recovery_log_shows_recent_entries_inside_a_stable_scroll_area():
+    text = source("today_page.py")
+    assert 'class="recovery-log-entries"' in text
+    assert 'class="recovery-log-entry"' in text
+    assert "height: 10.25rem" in text
+    assert "max-height: 6.5rem" in text
+    assert "overflow-y: auto" in text
+    card = text[text.index("def _show_recovery_log("):text.index("def _today_completed_workout(")]
+    assert "Private history for awareness only" not in card
+
+
+def test_today_uses_the_dashboard_spacing_scale():
+    text = source("today_page.py")
+    dashboard = source("dashboard/dashboard_view.py")
+    assert ".st-key-dashboard_page {gap: 0.75rem;}" in dashboard
+    assert "gap: 0.75rem" in text
+    assert text.count('gap="small"') >= 3
 
 
 def test_session_equivalents_are_rendered_as_internal_cards():
