@@ -997,7 +997,7 @@ def _apply_today_page_styles(
         }
 
         .st-key-today_brief_recovery_row {
-            margin-bottom: 1.25rem;
+            margin-bottom: 2rem;
         }
 
         .st-key-today_brief_recovery_row > div,

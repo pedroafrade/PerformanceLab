@@ -3636,6 +3636,33 @@ def _compact_plan_layout_styles(
             section[data-testid="stMain"] {
                 overflow-y: hidden;
             }
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-progression-heading h3,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-chart-heading,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            h3 {
+                font-size: 1rem;
+                line-height: 1.2;
+            }
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-chart-caption,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-sidebar-date-range,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-sidebar-week-phase,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-sidebar-week-summary {
+                font-size: 0.68rem;
+                line-height: 1.25;
+            }
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-sidebar-heading,
+            section[data-testid="stMain"]:has(.plan-page-header)
+            .plan-sidebar-session {
+                font-size: 0.75rem;
+                line-height: 1.2;
+            }
             .st-key-plan_lower_row
             > div[data-testid="stVerticalBlock"] {
                 gap: 0;
@@ -3736,14 +3763,14 @@ def _compact_plan_layout_styles(
                 flex: 1 1 auto;
             }
             .st-key-plan_summary_cards .plan-sidebar-heading { margin-bottom: 0.45rem; }
-            .st-key-plan_summary_cards .plan-sidebar-phase-name { font-size: 1.35rem; margin-bottom: 0.25rem; }
+            .st-key-plan_summary_cards .plan-sidebar-phase-name { font-size: 1.15rem; margin-bottom: 0.25rem; }
             .st-key-plan_summary_cards .plan-sidebar-date-range,
             .st-key-plan_summary_cards .plan-sidebar-week-phase,
             .st-key-plan_summary_cards .plan-sidebar-week-summary { margin-bottom: 0.4rem; }
             .st-key-plan_summary_cards .plan-sidebar-divider { margin: 0.45rem 0; }
             .st-key-plan_summary_cards .plan-sidebar-phase-metrics { gap: 0.3rem; }
             .st-key-plan_summary_cards .plan-sidebar-phase-metric { padding: 0.3rem 0.4rem; }
-            .st-key-plan_summary_cards .plan-sidebar-week-range { font-size: 1.15rem; }
+            .st-key-plan_summary_cards .plan-sidebar-week-range { font-size: 1rem; }
             .st-key-plan_summary_cards .plan-sidebar-session { min-height: 1.75rem; padding: 0.25rem 0.4rem; }
             .st-key-plan_summary_cards .plan-sidebar-adaptation-context { margin-bottom: 0.4rem; }
             .st-key-plan_summary_cards .plan-sidebar-adaptation-column { padding: 0.35rem; }
@@ -6317,21 +6344,22 @@ def _typical_week_html(typical) -> str:
             )
     return (
         '<style>'
-        '.typical-week-scroll{max-height:35rem;overflow:auto;border:1px solid '
+        '.typical-week-scroll{overflow:hidden;border:1px solid '
         'rgba(128,128,128,.25);border-radius:.55rem;}'
         '.typical-week-grid{display:grid;grid-template-columns:4rem repeat(7,minmax(8rem,1fr));'
         'min-width:64rem;}'
         '.typical-week-corner,.typical-week-day{position:sticky;top:0;z-index:2;'
-        'padding:.55rem;background:var(--background-color,#fff);font-weight:700;'
+        'padding:.38rem .5rem;background:var(--secondary-background-color);'
+        'color:var(--text-color);font-weight:700;'
         'border-bottom:1px solid rgba(128,128,128,.3);}'
         '.typical-week-time{padding:.35rem .45rem;text-align:right;font-size:.7rem;'
         'opacity:.65;border-right:1px solid rgba(128,128,128,.2);'
         'border-bottom:1px solid rgba(128,128,128,.13);}'
-        '.typical-week-slot{min-height:3.35rem;padding:.18rem;border-right:1px solid '
+        '.typical-week-slot{min-height:1.72rem;padding:.1rem;border-right:1px solid '
         'rgba(128,128,128,.13);border-bottom:1px solid rgba(128,128,128,.13);}'
         '.typical-week-session{display:flex;flex-direction:column;gap:.12rem;padding:.35rem;'
         'border-left:3px solid #ff4b4b;border-radius:.3rem;background:rgba(128,128,128,.1);'
-        'font-size:.75rem;line-height:1.2;}'
+        'font-size:.68rem;line-height:1.12;}'
         '.typical-week-session span{font-size:.65rem;opacity:.65;}'
         '</style><div class="typical-week-scroll"><div class="typical-week-grid">'
         + "".join(cells)
@@ -6418,6 +6446,14 @@ div[data-testid="stDialog"] [role="dialog"] {
     width: 94vw !important;
     min-width: 94vw !important;
     max-width: 1500px !important;
+}
+
+html:has(div[data-testid="stDialog"] [role="dialog"]),
+body:has(div[data-testid="stDialog"] [role="dialog"]),
+[data-testid="stAppViewContainer"]:has(
+    div[data-testid="stDialog"] [role="dialog"]
+) {
+    overflow: hidden !important;
 }
 div[data-testid="stDialog"] [role="dialog"] {
     height: auto !important;

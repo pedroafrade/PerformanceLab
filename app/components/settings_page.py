@@ -4,6 +4,8 @@ PerformanceLab
 Athlete settings page.
 """
 
+from html import escape
+
 import streamlit as st
 
 from .athlete_panel import (
@@ -137,6 +139,19 @@ def _settings_page_header() -> None:
             line-height: 1.15;
             opacity: 0.58;
         }
+        section[data-testid="stMain"]:has(.settings-page-header) h2,
+        section[data-testid="stMain"]:has(.settings-page-header) h3,
+        section[data-testid="stMain"]:has(.settings-page-header) h4 {
+            line-height: 1.25;
+        }
+        section[data-testid="stMain"]:has(.settings-page-header)
+        [data-testid="stCaptionContainer"],
+        section[data-testid="stMain"]:has(.settings-page-header) p,
+        section[data-testid="stMain"]:has(.settings-page-header) label,
+        section[data-testid="stMain"]:has(.settings-page-header) button {
+            font-size: 0.8rem;
+            line-height: 1.35;
+        }
         .athlete-profile-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -181,6 +196,23 @@ def _settings_page_header() -> None:
             opacity: 0.65;
         }
         .st-key-settings_profile_summary > * { flex-shrink: 0; }
+        .settings-profile-heading {
+            display: flex;
+            gap: 0.75rem;
+            align-items: baseline;
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.25;
+        }
+        .settings-profile-heading strong {
+            font-size: inherit;
+            font-weight: 600;
+            opacity: 0.72;
+        }
+        .st-key-settings_profile_summary
+        [data-testid="stHeadingWithActionElements"] {
+            display: none;
+        }
         @media (min-width: 1001px) {
             .st-key-settings_profile_summary:has(.athlete-profile-grid) {
                 gap: 0.6rem;
@@ -238,7 +270,12 @@ def show_settings_page(
     _settings_page_header()
 
     with st.container(border=True, key="settings_profile_summary"):
-        st.subheader("Athlete profile")
+        st.html(
+            '<h3 class="settings-profile-heading">'
+            '<span>Athlete profile</span>'
+            f'<strong>{escape(getattr(athlete, "name", None) or "Unnamed athlete")}</strong>'
+            '</h3>'
+        )
         athlete = show_athlete_panel(
             athlete,
             show_heading=False,

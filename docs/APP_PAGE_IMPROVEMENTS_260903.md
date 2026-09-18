@@ -172,6 +172,18 @@ visualmente no Streamlit.
 - Typical Week apresenta os sete dias numa grelha horária completa, conserva
   blocos vazios e posiciona cada padrão na hora modal observada.
 
+### 3.9 — Uniformização visual final
+
+- O Plan Builder bloqueia o scroll da página subjacente enquanto está aberto.
+- Typical Week compacta a escala horária sem scroll interno e usa as variáveis
+  do tema para manter os dias legíveis nos modos claro e escuro.
+- Today mantém uma separação vertical consistente entre as duas primeiras
+  linhas de contentores.
+- Plan e Settings usam tipografia uniformizada e limitada à respetiva página;
+  o nome do atleta surge na mesma linha de Athlete profile.
+- Em Development, os dois gráficos partilham o mesmo limite visual direito, o
+  eixo redundante da linha zero foi removido e a linha inferior foi aproximada.
+
 ## 4. Trabalho pendente
 
 As prioridades funcionais descritas neste documento estão concluídas. Ficam

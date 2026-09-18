@@ -1,0 +1,53 @@
+"""Regression checks for cross-page visual alignment refinements."""
+
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1] / "app" / "components"
+
+
+def source(name: str) -> str:
+    return (ROOT / name).read_text(encoding="utf-8")
+
+
+def test_plan_builder_locks_outer_page_and_typical_week_fits_without_scroll():
+    text = source("plan_page.py")
+    assert 'body:has(div[data-testid="stDialog"] [role="dialog"])' in text
+    assert '[data-testid="stAppViewContainer"]:has(' in text
+    assert ".typical-week-scroll{overflow:hidden" in text
+    assert ".typical-week-slot{min-height:1.72rem" in text
+
+
+def test_typical_week_header_uses_theme_colours():
+    text = source("plan_page.py")
+    assert "background:var(--secondary-background-color)" in text
+    assert "color:var(--text-color)" in text
+    header_styles = text[text.index(".typical-week-corner"):text.index(".typical-week-time")]
+    assert "var(--background-color,#fff)" not in header_styles
+
+
+def test_today_rows_keep_a_plan_like_vertical_gap():
+    text = source("today_page.py")
+    assert ".st-key-today_brief_recovery_row" in text
+    assert "margin-bottom: 2rem" in text
+
+
+def test_development_charts_align_and_do_not_render_a_duplicate_zero_axis():
+    text = source("development_page.py")
+    assert 'padding={"right": 0 if mobile else 48}' in text
+    assert 'alt.Y("y:Q", axis=None)' in text
+    assert "margin-bottom: -1.9rem" in text
+
+
+def test_settings_places_escaped_athlete_name_in_the_profile_heading():
+    text = source("settings_page.py")
+    assert 'class="settings-profile-heading"' in text
+    assert 'escape(getattr(athlete, "name", None) or "Unnamed athlete")' in text
+    assert '[data-testid="stHeadingWithActionElements"]' in text
+
+
+def test_plan_and_settings_typography_is_scoped_to_each_page():
+    plan = source("plan_page.py")
+    settings = source("settings_page.py")
+    assert 'section[data-testid="stMain"]:has(.plan-page-header)' in plan
+    assert 'section[data-testid="stMain"]:has(.settings-page-header)' in settings

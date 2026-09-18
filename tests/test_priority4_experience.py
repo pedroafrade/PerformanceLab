@@ -65,4 +65,4 @@ def test_today_rows_share_the_same_grid_and_have_explicit_spacing():
     source = Path("app/components/today_page.py").read_text(encoding="utf-8")
     assert source.count("[1.7, 1]") >= 2
     assert ".st-key-today_brief_recovery_row" in source
-    assert "margin-bottom: 1.25rem" in source
+    assert "margin-bottom: 2rem" in source

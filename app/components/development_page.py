@@ -249,6 +249,7 @@ def _daily_training_load_chart(
         )
         .properties(
             height=240 if mobile else 175,
+            padding={"right": 0 if mobile else 48},
         )
         .configure_view(
             strokeWidth=0,
@@ -444,7 +445,7 @@ def _development_load_form_chart(
             opacity=0.28,
         )
         .encode(
-            y="y:Q",
+            y=alt.Y("y:Q", axis=None),
         )
     )
 
@@ -1820,7 +1821,7 @@ def show_development_page(
             height: 0;
             min-height: 0;
             margin-top: -0.65rem;
-            margin-bottom: -1.55rem;
+            margin-bottom: -1.9rem;
         }
         </style>
 
