@@ -141,7 +141,9 @@ def test_restore_recovers_original_horizon_and_event_snapshot():
     assert restored.start_date == date(2026, 8, 10)
     assert restored.end_date == date(2026, 10, 4)
     assert restored.first.day == date(2026, 9, 13)
-    assert result.athlete.events.next.event.name == "Sealand"
+    restored_events = tuple(result.athlete.events)
+    assert len(restored_events) == 1
+    assert restored_events[0].event.name == "Sealand"
 
 
 def test_restore_legacy_revision_infers_horizon_and_race_event():
@@ -183,8 +185,10 @@ def test_restore_legacy_revision_infers_horizon_and_race_event():
     assert restored.start_date == date(2026, 8, 10)
     assert restored.end_date == date(2026, 9, 13)
     assert restored.first.day == date(2026, 8, 12)
-    assert result.athlete.events.next.event.name == "Sealand"
-    assert result.athlete.events.next.event.date == date(2026, 9, 13)
+    restored_events = tuple(result.athlete.events)
+    assert len(restored_events) == 1
+    assert restored_events[0].event.name == "Sealand"
+    assert restored_events[0].event.date == date(2026, 9, 13)
 
 
 def test_restore_does_not_turn_pre_race_session_into_event():
