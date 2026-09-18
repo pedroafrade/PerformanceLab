@@ -21,6 +21,7 @@ from .analysis import (
 from .goals.goalbook import GoalBook
 from .history import History
 from .race.eventbook import EventBook
+from .recovery_log import RecoveryLogEntry
 from .training.config import (
     AthleteAvailability,
     AthletePreferences,
@@ -94,6 +95,7 @@ class Athlete:
     events: EventBook = field(
         default_factory=EventBook
     )
+    recovery_log: list[RecoveryLogEntry] = field(default_factory=list)
 
     analytics: AthleteAnalytics = field(
         init=False,

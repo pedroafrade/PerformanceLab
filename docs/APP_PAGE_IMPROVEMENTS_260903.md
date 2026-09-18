@@ -140,17 +140,20 @@ visualmente no Streamlit.
 - As vistas derivadas são invalidadas pela revisão ativa após gravação, Restore,
   alterações de eventos e alterações ao histórico realizado.
 
+### 3.7 — Today e aconselhamento
+
+- Today reutiliza o Daily Brief persistido no contentor existente, sem nova
+  geração nem alteração da sua posição.
+- Next Session divide o espaço com Session Equivalent, que compara duração e
+  carga entre running, cycling e swimming, explicita diferenças de estímulo e
+  sugere força complementar apenas quando familiar e sem dor.
+- Recovery Log guarda um histórico privado controlado pelo atleta, incluído na
+  exportação e eliminação do perfil e nunca enviado ao Coach/IA.
+- Strategy Adviser analisa localmente seis meses de sessões realizadas, exige
+  pelo menos três exemplos e apresenta preferências de dias como informação,
+  não como regra de segurança.
+
 ## 4. Trabalho pendente
-
-### Prioridade 4 — Today e aconselhamento
-
-- Substituir Today's Recommendation pelo Daily Brief guardado, sem uma segunda
-  geração.
-- Criar **Planned Session Equivalents** com alternativas de running, cycling e
-  swimming de impacto aproximado, explicitando diferenças e limites.
-- Definir modelo, retenção, exportação, eliminação e proteção de dados antes de
-  implementar **Recovery Log**.
-- Criar **Strategy Adviser** com limites explícitos e sem garantias clínicas.
 
 ### Prioridade 5 — Guia de métricas e planos
 
@@ -162,9 +165,6 @@ visualmente no Streamlit.
 
 ## 5. Decisões necessárias
 
-- **Recovery Log:** modelo, retenção e proteção de dados de saúde.
-- **Strategy Adviser:** regras e relação com o Training Coach.
-- **Planned Session Equivalents:** métricas e limites de equivalência.
 - **Recomendações automáticas:** definir aviso, aplicação direta e bloqueio.
 - **Retenção de revisões:** decidir se versões removidas após restore devem ter
   recuperação técnica temporária.
@@ -183,7 +183,5 @@ Um item só passa para concluído depois de:
 
 ## 7. Próximo conjunto recomendado
 
-Avançar para a **Prioridade 4 — Today e aconselhamento**, começando pela
-substituição de Today's Recommendation pelo Daily Brief persistido. Recovery
-Log e Strategy Adviser continuam dependentes das decisões de privacidade e
-limites clínicos descritas acima.
+Avançar para a **Prioridade 5 — Guia de métricas e planos**, documentando e
+testando as fórmulas e limites usados pela aplicação.

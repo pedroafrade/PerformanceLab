@@ -5,7 +5,7 @@ Today presentation models.
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from .activity_models import (
     ActivityListItemData,
@@ -117,6 +117,7 @@ class TodaySessionCardData:
     metadata: str
     status: str
     structure: tuple[str, ...]
+    duration: timedelta | None
 
 @dataclass(frozen=True)
 class TodayData:

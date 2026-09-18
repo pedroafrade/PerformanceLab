@@ -410,6 +410,7 @@ class TodayPresenter:
                 structure=tuple(
                     today_session.structure
                 ),
+                duration=today_session.duration,
             )
 
         if next_workout is not None:
@@ -455,6 +456,7 @@ class TodayPresenter:
                 structure=tuple(
                     next_workout.structure
                 ),
+                duration=next_workout.duration,
             )
 
         return TodaySessionCardData(
@@ -465,6 +467,7 @@ class TodayPresenter:
             ),
             status="Recovery",
             structure=(),
+            duration=None,
         )
 
     @staticmethod

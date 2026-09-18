@@ -6172,6 +6172,43 @@ def _show_plan_recovery_revisions(
             st.session_state[show_older_key] = True
             st.rerun()
 
+
+def _strategy_adviser(history, *, reference_day: date) -> tuple[str, ...]:
+    """Infer stable weekday preferences locally from six months of history."""
+    cutoff = reference_day - timedelta(days=183)
+    patterns = {}
+    for workout in history:
+        workout_day = workout.date
+        if hasattr(workout_day, "date"):
+            workout_day = workout_day.date()
+        if workout_day is None or workout_day < cutoff or workout_day > reference_day:
+            continue
+        title = str(getattr(workout.info, "title", "") or "").lower()
+        category = next(
+            (label for token, label in (
+                ("long", "Long runs"), ("hill", "Hill sessions"),
+                ("tempo", "Tempo sessions"), ("interval", "Interval sessions"),
+                ("easy", "Easy sessions"),
+            ) if token in title),
+            None,
+        )
+        if category is None:
+            continue
+        weekdays = patterns.setdefault(category, [])
+        weekdays.append(workout_day.weekday())
+    advice = []
+    for category, weekdays in sorted(patterns.items()):
+        if len(weekdays) < 3:
+            continue
+        preferred = max(set(weekdays), key=weekdays.count)
+        confidence = weekdays.count(preferred) / len(weekdays)
+        if confidence >= 0.5:
+            advice.append(
+                f"{category}: usually {('Mon','Tue','Wed','Thu','Fri','Sat','Sun')[preferred]} "
+                f"({weekdays.count(preferred)}/{len(weekdays)} sessions)."
+            )
+    return tuple(advice)
+
 @st.dialog(
     "Plan Builder",
     width="large",
@@ -6676,6 +6713,19 @@ div[data-testid="stPopoverBody"] {
                     notice
                 )
             )
+
+        strategy_advice = _strategy_adviser(
+            athlete.history,
+            reference_day=date.today(),
+        )
+        if strategy_advice:
+            with st.expander("Strategy adviser", expanded=False):
+                st.caption(
+                    "Based locally on recurring completed-session weekdays "
+                    "during the last six months; preference is not a safety rule."
+                )
+                for item in strategy_advice:
+                    st.caption(f"• {item}")
 
         st.markdown(
             "#### Complete plan timeline"

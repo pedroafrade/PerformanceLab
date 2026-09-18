@@ -34,6 +34,7 @@ from performancelab.analysis import (
     HeartRateZone,
     NutritionProfile,
 )
+from performancelab.recovery_log import RecoveryLogEntry
 
 from performancelab.training.planning.planned_workout import (
     PlannedWorkout,
@@ -1482,6 +1483,17 @@ def athlete_to_dict(athlete):
             for entry in athlete.events
 
         ],
+        "recovery_log": [
+            {
+                "id": entry.entry_id,
+                "day": _serialize_date(entry.day),
+                "category": entry.category,
+                "body_area": entry.body_area,
+                "severity": entry.severity,
+                "notes": entry.notes,
+            }
+            for entry in athlete.recovery_log
+        ],
         "activity_coach_interpretations": [
 
             _activity_coach_interpretation_to_dict(
@@ -1693,6 +1705,17 @@ def athlete_from_dict(data):
             )
         )
     )
+    athlete.recovery_log = [
+        RecoveryLogEntry(
+            entry_id=item.get("id", str(uuid4())),
+            day=_deserialize_date(item.get("day")),
+            category=item.get("category", "Other"),
+            body_area=item.get("body_area", ""),
+            severity=int(item.get("severity", 1)),
+            notes=item.get("notes", ""),
+        )
+        for item in data.get("recovery_log", [])
+    ]
     athlete.vo2max_observations = (
         VO2MaxObservationBook(
             observations=tuple(

@@ -526,6 +526,34 @@ def delete_completed_workouts(
 
     return result
 
+
+def save_recovery_log_entry(entry) -> None:
+    athlete = st.session_state.athlete
+    previous = list(athlete.recovery_log)
+    athlete.recovery_log.append(entry)
+    try:
+        athlete_repository.save(athlete)
+    except Exception:
+        athlete.recovery_log = previous
+        raise
+    st.session_state.athlete = athlete
+    st.session_state.persisted_notice = "Recovery log entry saved privately."
+
+
+def delete_recovery_log_entry(entry_id: str) -> None:
+    athlete = st.session_state.athlete
+    previous = list(athlete.recovery_log)
+    athlete.recovery_log = [
+        item for item in athlete.recovery_log if item.entry_id != entry_id
+    ]
+    try:
+        athlete_repository.save(athlete)
+    except Exception:
+        athlete.recovery_log = previous
+        raise
+    st.session_state.athlete = athlete
+    st.session_state.persisted_notice = "Recovery log entry deleted."
+
 def resolve_training_coach(
     *,
     athlete,
@@ -1288,7 +1316,10 @@ if page == "dashboard":
 elif page == "today":
 
     show_today_page(
-        athlete
+        athlete,
+        daily_brief_resolution=daily_brief_resolution,
+        on_save_recovery_entry=save_recovery_log_entry,
+        on_delete_recovery_entry=delete_recovery_log_entry,
     )
 
 

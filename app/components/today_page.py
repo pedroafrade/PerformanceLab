@@ -4,7 +4,7 @@ PerformanceLab
 Today page.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from html import escape
 
 import streamlit as st
@@ -12,6 +12,7 @@ import streamlit as st
 from performancelab.presentation import (
     TodayPresenter,
 )
+from performancelab.recovery_log import RecoveryLogEntry
 
 from .activity_analysis import (
     show_activity_analysis,
@@ -1231,6 +1232,7 @@ def _today_current_state_summary(
 
 def _show_daily_decision(
     today,
+    daily_brief_resolution=None,
 ) -> None:
     """
     Displays the daily decision below the shared
@@ -1242,16 +1244,11 @@ def _show_daily_decision(
         key="today-recommendation-card",
     ):
         st.caption(
-            "TODAY'S RECOMMENDATION"
+            "DAILY BRIEF"
         )
-
-        st.markdown(
-            f"### {today.guidance.title}"
-        )
-
-        st.write(
-            today.guidance.action
-        )
+        narrative = getattr(daily_brief_resolution, "narrative", None)
+        st.markdown(f"### {today.guidance.title}")
+        st.write(narrative or today.guidance.action)
 
         _show_temporary_adjustment(
             today.guidance
@@ -1263,10 +1260,63 @@ def _show_daily_decision(
             .plan_is_modified
         ):
             st.caption(
-                "This is a temporary daily "
-                "recommendation. The persistent "
-                "training plan has not been changed."
+                "Daily Brief guidance does not change the persistent plan."
             )
+
+
+def _show_session_equivalent(session_card) -> None:
+    """Show deterministic cross-training options without claiming equal stimulus."""
+    duration = getattr(session_card, "duration", None)
+    minutes = round(duration.total_seconds() / 60) if duration else 45
+    with st.container(border=True, key="today_session_equivalent"):
+        st.markdown("**Session equivalent**")
+        st.caption("Similar estimated load and duration")
+        st.write(f"Cycling · {round(minutes * 1.35)} min · steady aerobic")
+        st.write(f"Swimming · {max(20, round(minutes * .8))} min · technique + aerobic")
+        st.caption(
+            "Cycling reduces impact and eccentric loading; swimming reduces "
+            "weight-bearing load and adds upper-body demand. Neither reproduces "
+            "running economy, tendon loading or hill-specific strength."
+        )
+        st.caption(
+            "Complement: 2–3 sets of calf raises, split squats and hip hinges, "
+            "only when pain-free and already familiar."
+        )
+
+
+def _show_recovery_log(athlete, on_save=None, on_delete=None) -> None:
+    with st.container(border=True, key="today_recovery_log"):
+        st.markdown("**Recovery log**")
+        st.caption(
+            "Private history for awareness only; it does not diagnose or replace "
+            "assessment by a qualified healthcare professional."
+        )
+        with st.popover("Add entry", use_container_width=False):
+            with st.form("recovery-log-entry"):
+                day = st.date_input("Date", value=date.today())
+                category = st.selectbox(
+                    "Type", ("Pain", "Injury", "Condition", "Other")
+                )
+                body_area = st.text_input("Body area or condition")
+                severity = st.slider("Severity", 1, 10, 3)
+                notes = st.text_area("Notes")
+                if st.form_submit_button("Save", disabled=on_save is None):
+                    on_save(RecoveryLogEntry(
+                        day=day, category=category, body_area=body_area.strip(),
+                        severity=severity, notes=notes.strip(),
+                    ))
+                    st.rerun()
+        for entry in sorted(athlete.recovery_log, key=lambda item: item.day, reverse=True)[:6]:
+            left, right = st.columns([5, 1])
+            with left:
+                st.caption(
+                    f"{entry.day:%d %b %Y} · {entry.category} · "
+                    f"{entry.body_area or 'Not specified'} · {entry.severity}/10"
+                )
+            with right:
+                if st.button("Delete", key=f"delete-recovery-{entry.entry_id}", disabled=on_delete is None):
+                    on_delete(entry.entry_id)
+                    st.rerun()
 
 def _today_completed_workout(
     athlete,
@@ -1303,6 +1353,10 @@ def _today_completed_workout(
 )
 def show_today_page(
     athlete,
+    *,
+    daily_brief_resolution=None,
+    on_save_recovery_entry=None,
+    on_delete_recovery_entry=None,
 ) -> None:
     """
     Displays the athlete's daily decision page.
@@ -1346,7 +1400,8 @@ def show_today_page(
     )
 
     _show_daily_decision(
-        today
+        today,
+        daily_brief_resolution,
     )
 
     with st.container(key="today_detail_row"):
@@ -1359,11 +1414,15 @@ def show_today_page(
         )
 
         with session_column:
-            _show_today_session(
-                today.session_card,
-                today.today_activity_summary,
-                today_workout,
-            )
+            next_column, equivalent_column = st.columns(2, gap="medium")
+            with next_column:
+                _show_today_session(
+                    today.session_card,
+                    today.today_activity_summary,
+                    today_workout,
+                )
+            with equivalent_column:
+                _show_session_equivalent(today.session_card)
 
         with guidance_column:
             _show_guidance_card(
@@ -1386,6 +1445,12 @@ def show_today_page(
                     .latest_stimulus_suggestion
                 ),
             )
+
+    _show_recovery_log(
+        athlete,
+        on_save_recovery_entry,
+        on_delete_recovery_entry,
+    )
 
     if today_workout is not None:
         show_activity_analysis(
