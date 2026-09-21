@@ -78,6 +78,7 @@ patches/
 
 # Terraform / OpenTofu local state and private values
 .terraform/
+*.plan
 *.tfstate
 *.tfstate.*
 *.tfvars

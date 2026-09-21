@@ -77,6 +77,7 @@ def test_git_ignores_terraform_state_and_private_variables():
     ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
     assert ".terraform/" in ignore
+    assert "*.plan" in ignore
     assert "*.tfstate" in ignore
     assert "*.tfvars" in ignore
     assert "!*.tfvars.example" in ignore
