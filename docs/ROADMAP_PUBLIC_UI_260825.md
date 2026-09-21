@@ -1,8 +1,8 @@
 # PerformanceLab — Roadmap até à alpha privada
 
-**Atualizado:** 27 de agosto de 2026
+**Atualizado:** 21 de setembro de 2026
 
-**Fonte auditada:** branch `main`, commit `23fef6669d75a2a42defc345abb1129498505a09` (`Enforce migration preflight on alpha startup`)
+**Fonte auditada:** branch `main`, commit `c0788c4` (`Align Today spacing and improve Recovery Log visibility`)
 
 **Objetivo:** disponibilizar uma alpha privada a 3–5 participantes convidados, todos com 18 anos ou mais.
 
@@ -29,7 +29,7 @@
 | E — Training Coach controlado | 9/9 | concluída |
 | F — Privacidade e controlo | **8/9** | revisão jurídica pendente |
 | G — Qualidade, segurança e operação | **10/13** | ativação externa e Cloud SQL pendentes |
-| H — Deployment e convite | **9/15** | preparação técnica em curso |
+| H — Deployment e convite | **10/15** | infraestrutura reproduzível preparada; ativação externa pendente |
 
 ## 3. Fases concluídas
 
@@ -152,14 +152,14 @@ O ambiente é reproduzível, observável e recuperável; uma falha pode ser diag
 - [ ] logs e alertas ativos — logging concluído, Better Stack externo
   pendente;
 - [x] dados de demonstração desativados;
-- [ ] contacto de suporte visível;
+- [x] contacto de suporte visível;
 - [x] procedimento de incidente disponível;
 - [ ] testes essenciais em desktop, Android e iOS.
 
 ### Estado atual
 
-Estado confirmado na `main` em 27 de agosto de 2026, após o commit
-`23fef66` (`Enforce migration preflight on alpha startup`).
+Estado confirmado na `main` em 21 de setembro de 2026, após o commit
+`c0788c4` (`Align Today spacing and improve Recovery Log visibility`).
 
 O arranque alpha valida agora, por ordem, a configuração runtime, a
 configuração OIDC, a ligação PostgreSQL e as revisões das migrações antes
@@ -167,9 +167,9 @@ de iniciar o Streamlit.
 
 Dos 15 requisitos anteriores:
 
-- **9 estão tecnicamente concluídos**;
+- **10 estão tecnicamente concluídos**;
 - **3 estão implementados, mas aguardam validação externa**;
-- **3 permanecem pendentes**.
+- **2 permanecem pendentes**.
 
 Aguardam validação externa:
 
@@ -180,8 +180,13 @@ Aguardam validação externa:
 Permanecem pendentes:
 
 - backup automático e restauro real no Google Cloud SQL;
-- contacto de suporte visível na aplicação;
 - testes essenciais em desktop, Android e iOS.
+
+A configuração reproduzível em `infra/google-alpha/` prepara duas fases. A
+primeira cria a infraestrutura base e os cofres vazios. A segunda permanece
+bloqueada até existirem segredos válidos, uma imagem fixada pelo respetivo
+digest e confirmação humana do plano. A configuração versionada não cria
+recursos por si só e não contém valores secretos.
 
 A revisão jurídica externa pendente não impede a continuação do trabalho
 técnico das fases G e H, mas impede a publicação final dos textos e
@@ -201,14 +206,18 @@ Google Cloud, não inicia custos e não inicia o período experimental de
 
 ## 7. Próxima sequência recomendada
 
-1. **Fase F, passo 3:** completar todos os factos atualmente conhecidos da política e manter claramente assinaladas as decisões ainda não tomadas.
-2. Fase F, passo 4: exportação completa.
-3. Fase F, passo 5: eliminação integral.
-4. Fase F, passo 6: retenção.
-5. Fase F, passo 7: procedimento manual de direitos.
-6. Fase F, passo 8: limites das recomendações.
-7. Fase F, passo 9: revisão jurídica.
-8. Só depois iniciar a fase G.
+1. Validar localmente `infra/google-alpha/` com Terraform ou OpenTofu, sem
+   executar `apply`.
+2. Criar ou escolher o projeto Google Cloud e confirmar a avaliação, o
+   orçamento e os alertas.
+3. Escolher e registar a região europeia e os contactos reais.
+4. Rever o custo apresentado e criar apenas a infraestrutura base.
+5. Configurar PostgreSQL, OIDC, Better Stack e os segredos fora do Git.
+6. Publicar uma imagem fixada por digest e executar as migrações através do
+   job separado.
+7. Testar internamente login, isolamento, backup, restauro e rollback.
+8. Concluir a revisão jurídica e os testes em desktop, Android e iOS.
+9. Convidar primeiro um único participante e só depois o restante grupo.
 
 ## 8. Trabalho funcional mantido na calha
 

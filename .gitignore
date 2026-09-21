@@ -76,5 +76,18 @@ project_tree.txt
 *.patch
 patches/
 
+# Terraform / OpenTofu local state and private values
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
 # Local continuity handouts
 docs/HANDOUT_*.md

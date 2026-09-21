@@ -33,7 +33,7 @@ def test_phase_h_records_current_progress():
 
     assert "Dos 15 requisitos anteriores" in text
     assert (
-        "9 estão tecnicamente concluídos"
+        "10 estão tecnicamente concluídos"
         in text
     )
     assert (
@@ -42,7 +42,7 @@ def test_phase_h_records_current_progress():
         in text
     )
     assert (
-        "3 permanecem pendentes"
+        "2 permanecem pendentes"
         in text
     )
 
@@ -103,6 +103,6 @@ def test_phase_h_records_alpha_startup_preflights():
         in text
     )
     assert (
-        "23fef66"
+        "c0788c4"
         in text
     )
