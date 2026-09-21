@@ -50,6 +50,11 @@ terraform -chdir=infra/google-alpha apply alpha-base.plan
 O primeiro `apply` cria recursos Google Cloud e pode consumir crédito. Não
 prossiga sem rever a estimativa na consola.
 
+A base PostgreSQL fixa explicitamente a edição Cloud SQL `ENTERPRISE`. Isto
+é necessário para utilizar o tipo partilhado e económico `db-f1-micro`;
+PostgreSQL 16 ou posterior escolheria `ENTERPRISE_PLUS` por defeito, que rejeita
+esse tipo de máquina.
+
 O comando `init` deve confirmar o backend `gcs`. Se indicar que o bucket não
 existe, que o acesso foi recusado ou que pretende usar apenas estado local,
 interrompa o processo. Não execute `apply` sem o backend remoto confirmado.

@@ -96,6 +96,9 @@ resource "google_sql_database_instance" "alpha" {
 
   settings {
     tier              = var.database_tier
+    # PostgreSQL 16+ defaults to Enterprise Plus unless the edition is
+    # explicit. Shared-core tiers such as db-f1-micro require Enterprise.
+    edition           = "ENTERPRISE"
     availability_type = "ZONAL"
     disk_type         = "PD_SSD"
     disk_size         = 10
