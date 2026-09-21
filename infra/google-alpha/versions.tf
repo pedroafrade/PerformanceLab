@@ -1,6 +1,11 @@
 terraform {
   required_version = ">= 1.6"
 
+  backend "gcs" {
+    bucket = "performancelab-private-alpha-terraform-state"
+    prefix = "terraform/alpha"
+  }
+
   required_providers {
     google = {
       source  = "hashicorp/google"

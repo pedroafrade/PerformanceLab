@@ -21,6 +21,14 @@ def test_base_infrastructure_is_staged_before_application_deployment():
     assert 'can(regex("@sha256:' in variables
 
 
+def test_terraform_state_uses_protected_cloud_storage_backend():
+    versions = source("versions.tf")
+
+    assert 'backend "gcs"' in versions
+    assert 'bucket = "performancelab-private-alpha-terraform-state"' in versions
+    assert 'prefix = "terraform/alpha"' in versions
+
+
 def test_alpha_uses_european_postgresql_with_recoverable_backups():
     variables = source("variables.tf")
     main = source("main.tf")

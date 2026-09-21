@@ -5,6 +5,11 @@ Cloud. Aplicar apenas a primeira fase cria a base de dados, os cofres vazios
 para os segredos e o local onde será guardada a imagem. Não convida
 participantes nem publica a aplicação.
 
+O ficheiro de controlo do Terraform é guardado no bucket privado
+`performancelab-private-alpha-terraform-state`, na região `europe-west1`.
+Esse bucket foi criado separadamente, com acesso público bloqueado, acesso
+uniforme e histórico de versões. Não guarde uma segunda cópia do estado no Git.
+
 ## Antes de começar
 
 Não execute ainda estes passos sem confirmar:
@@ -44,6 +49,10 @@ terraform -chdir=infra/google-alpha apply alpha-base.plan
 
 O primeiro `apply` cria recursos Google Cloud e pode consumir crédito. Não
 prossiga sem rever a estimativa na consola.
+
+O comando `init` deve confirmar o backend `gcs`. Se indicar que o bucket não
+existe, que o acesso foi recusado ou que pretende usar apenas estado local,
+interrompa o processo. Não execute `apply` sem o backend remoto confirmado.
 
 ## Paragem obrigatória entre as duas fases
 
