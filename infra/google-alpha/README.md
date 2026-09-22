@@ -99,6 +99,35 @@ powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_database
 
 Não utilize `-RotateExisting` durante a primeira execução normal.
 
+### Configurar o início de sessão Google
+
+Crie primeiro um cliente OAuth do tipo **Aplicação Web** na Google Auth
+Platform. Deixe as origens JavaScript vazias e registe como URI de
+redirecionamento o endereço permanente do serviço seguido de
+`/oauth2callback`.
+
+Depois, na raiz do repositório, execute:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_oidc.ps1
+```
+
+O assistente confirma o projeto e o endereço da aplicação, pede o ID do
+cliente e pede duas vezes o segredo do cliente com os caracteres ocultos.
+Também cria localmente uma chave de sessão aleatória. O `secrets.toml`
+resultante é enviado diretamente da memória para o segredo
+`performancelab-alpha-oidc-toml`; nenhum destes valores é mostrado, escrito
+no disco ou colocado no Git.
+
+Se já existir uma versão ativa, o assistente para sem a substituir. Apenas
+uma rotação deliberada das credenciais deve usar:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_oidc.ps1 -RotateExisting
+```
+
+Não utilize `-RotateExisting` durante a primeira execução normal.
+
 ## Fase 2 — publicar a aplicação
 
 Só depois de todos os cofres terem pelo menos uma versão válida:
