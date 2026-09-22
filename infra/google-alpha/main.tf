@@ -1,6 +1,12 @@
 locals {
   service_name = "performancelab-alpha"
 
+  create_cloud_run_service = (
+    var.bootstrap_application || var.deploy_application
+  )
+
+  bootstrap_image = "us-docker.pkg.dev/cloudrun/container/hello:latest"
+
   required_services = toset([
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
@@ -139,12 +145,21 @@ resource "google_sql_database" "application" {
 }
 
 resource "google_cloud_run_v2_service" "application" {
-  count = var.deploy_application ? 1 : 0
+  count = local.create_cloud_run_service ? 1 : 0
 
   name                = local.service_name
   location            = var.region
   deletion_protection = true
   ingress             = "INGRESS_TRAFFIC_ALL"
+
+  lifecycle {
+    precondition {
+      condition = !(
+        var.bootstrap_application && var.deploy_application
+      )
+      error_message = "bootstrap_application and deploy_application cannot both be true."
+    }
+  }
 
   template {
     service_account = google_service_account.application.email
@@ -156,7 +171,7 @@ resource "google_cloud_run_v2_service" "application" {
     }
 
     containers {
-      image = var.container_image
+      image = var.deploy_application ? var.container_image : local.bootstrap_image
 
       ports {
         container_port = 8080
@@ -171,51 +186,39 @@ resource "google_cloud_run_v2_service" "application" {
       }
 
       dynamic "env" {
-        for_each = local.runtime_environment
+        for_each = var.deploy_application ? local.runtime_environment : {}
         content {
           name  = env.key
           value = env.value
         }
       }
 
-      env {
-        name = "DATABASE_URL"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.runtime["performancelab-alpha-database-url"].secret_id
-            version = "latest"
+      dynamic "env" {
+        for_each = var.deploy_application ? {
+          DATABASE_URL           = "performancelab-alpha-database-url"
+          BETTER_STACK_ERROR_DSN = "performancelab-alpha-better-stack-dsn"
+          GEMINI_API_KEY         = "performancelab-alpha-gemini-api-key"
+        } : {}
+        content {
+          name = env.key
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.runtime[env.value].secret_id
+              version = "latest"
+            }
           }
         }
       }
 
-      env {
-        name = "BETTER_STACK_ERROR_DSN"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.runtime["performancelab-alpha-better-stack-dsn"].secret_id
-            version = "latest"
-          }
+      dynamic "volume_mounts" {
+        for_each = var.deploy_application ? {
+          cloudsql = "/cloudsql"
+          oidc     = "/app/.streamlit"
+        } : {}
+        content {
+          name       = volume_mounts.key
+          mount_path = volume_mounts.value
         }
-      }
-
-      env {
-        name = "GEMINI_API_KEY"
-        value_source {
-          secret_key_ref {
-            secret  = google_secret_manager_secret.runtime["performancelab-alpha-gemini-api-key"].secret_id
-            version = "latest"
-          }
-        }
-      }
-
-      volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-
-      volume_mounts {
-        name       = "oidc"
-        mount_path = "/app/.streamlit"
       }
 
       startup_probe {
@@ -225,27 +228,33 @@ resource "google_cloud_run_v2_service" "application" {
         failure_threshold     = 24
 
         http_get {
-          path = "/_stcore/health"
+          path = var.deploy_application ? "/_stcore/health" : "/"
           port = 8080
         }
       }
     }
 
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [google_sql_database_instance.alpha.connection_name]
+    dynamic "volumes" {
+      for_each = var.deploy_application ? [1] : []
+      content {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [google_sql_database_instance.alpha.connection_name]
+        }
       }
     }
 
-    volumes {
-      name = "oidc"
-      secret {
-        secret = google_secret_manager_secret.runtime["performancelab-alpha-oidc-toml"].secret_id
-        items {
-          version = "latest"
-          path    = "secrets.toml"
-          mode    = 292
+    dynamic "volumes" {
+      for_each = var.deploy_application ? [1] : []
+      content {
+        name = "oidc"
+        secret {
+          secret = google_secret_manager_secret.runtime["performancelab-alpha-oidc-toml"].secret_id
+          items {
+            version = "latest"
+            path    = "secrets.toml"
+            mode    = 292
+          }
         }
       }
     }
@@ -260,7 +269,7 @@ resource "google_cloud_run_v2_service" "application" {
 # The address is reachable so Streamlit can complete OIDC in a normal browser.
 # PerformanceLab still refuses every identity without an individual invitation.
 resource "google_cloud_run_v2_service_iam_member" "browser_access" {
-  count = var.deploy_application ? 1 : 0
+  count = local.create_cloud_run_service ? 1 : 0
 
   project  = var.project_id
   location = var.region

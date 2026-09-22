@@ -39,6 +39,12 @@ variable "deploy_application" {
   default     = false
 }
 
+variable "bootstrap_application" {
+  description = "Cria temporariamente um servico vazio para obter o URL OIDC."
+  type        = bool
+  default     = false
+}
+
 variable "privacy_contact_email" {
   description = "Email de privacidade mostrado aos participantes."
   type        = string

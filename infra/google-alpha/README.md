@@ -121,6 +121,33 @@ Este passo publica a imagem mas não cria o serviço Cloud Run. Guarde a
 referência imutável para a revisão do plano de deployment; ela não é um
 segredo.
 
+### Obter o endereço para configurar o login Google
+
+O endereço de retorno OIDC só é conhecido depois de o serviço Cloud Run
+existir. Para quebrar esta dependência sem publicar prematuramente a aplicação,
+defina temporariamente no ficheiro privado `alpha.auto.tfvars`:
+
+```hcl
+bootstrap_application = true
+deploy_application    = false
+```
+
+O plano cria o serviço com a imagem oficial vazia do Cloud Run, sem montar a
+base de dados ou qualquer segredo. Depois do `apply`, obtenha `service_url` nos
+outputs e acrescente `/oauth2callback` para configurar o cliente Google OIDC.
+Durante este intervalo pode existir uma página pública de demonstração, mas
+não existe PerformanceLab, login ou acesso a dados nesse contentor.
+
+Depois de guardar o OIDC real no Secret Manager, volte a definir:
+
+```hcl
+bootstrap_application = false
+deploy_application    = true
+```
+
+Os dois modos nunca podem estar ativos em simultâneo. A transição atualiza o
+mesmo serviço e preserva o seu endereço permanente.
+
 ### Ativar o serviço
 
 1. fixe `container_image` com o digest completo `@sha256:...`;

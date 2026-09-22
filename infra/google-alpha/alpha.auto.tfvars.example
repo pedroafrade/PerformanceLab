@@ -7,7 +7,9 @@ privacy_contact_email   = "privacy@example.com"
 support_contact_email   = "support@example.com"
 training_coach_enabled  = false
 
-# Primeira fase: manter false. Isto cria a infraestrutura base, mas nao publica
-# a aplicacao. Mude apenas depois de preencher os segredos e publicar a imagem.
-deploy_application = false
-container_image    = ""
+# Primeira fase: manter ambos false. Para obter o URL necessario ao OIDC,
+# ative temporariamente apenas bootstrap_application. Depois de preencher os
+# segredos, desative o bootstrap e ative deploy_application.
+bootstrap_application = false
+deploy_application    = false
+container_image       = ""

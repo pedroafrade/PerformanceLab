@@ -14,6 +14,6 @@ output "secret_names" {
 }
 
 output "service_url" {
-  description = "Endereco da aplicacao; vazio durante a primeira fase."
-  value       = var.deploy_application ? google_cloud_run_v2_service.application[0].uri : null
+  description = "Endereco permanente do servico; vazio antes do bootstrap."
+  value       = local.create_cloud_run_service ? google_cloud_run_v2_service.application[0].uri : null
 }

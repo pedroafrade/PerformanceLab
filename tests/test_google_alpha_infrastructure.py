@@ -16,9 +16,26 @@ def test_base_infrastructure_is_staged_before_application_deployment():
     main = source("main.tf")
 
     assert 'variable "deploy_application"' in variables
+    assert 'variable "bootstrap_application"' in variables
     assert "default     = false" in variables
-    assert "count = var.deploy_application ? 1 : 0" in main
+    assert "count = local.create_cloud_run_service ? 1 : 0" in main
     assert 'can(regex("@sha256:' in variables
+
+
+def test_bootstrap_service_exposes_only_a_stable_url_without_secrets():
+    variables = source("variables.tf")
+    main = source("main.tf")
+    outputs = source("outputs.tf")
+    example = source("alpha.auto.tfvars.example")
+
+    assert 'bootstrap_image = "us-docker.pkg.dev/cloudrun/container/hello:latest"' in main
+    assert "var.bootstrap_application || var.deploy_application" in main
+    assert "var.bootstrap_application && var.deploy_application" in main
+    assert "for_each = var.deploy_application ? local.runtime_environment : {}" in main
+    assert "for_each = var.deploy_application ? [1] : []" in main
+    assert "local.create_cloud_run_service" in outputs
+    assert "bootstrap_application = false" in example
+    assert 'default     = false' in variables
 
 
 def test_terraform_state_uses_protected_cloud_storage_backend():
@@ -58,7 +75,7 @@ def test_runtime_secrets_are_references_not_secret_values():
         assert setting not in example
 
     assert "google_secret_manager_secret_version" not in main
-    assert 'mount_path = "/app/.streamlit"' in main
+    assert 'oidc     = "/app/.streamlit"' in main
     assert 'path    = "secrets.toml"' in main
 
 
