@@ -103,6 +103,26 @@ Não utilize `-RotateExisting` durante a primeira execução normal.
 
 Só depois de todos os cofres terem pelo menos uma versão válida:
 
+### Publicar uma imagem candidata
+
+Com a `main` limpa, sincronizada e com a CI verde, execute na raiz do
+repositório:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish_google_alpha_image.ps1
+```
+
+O assistente confirma que o commit local coincide com `origin/main`, envia
+apenas o contexto permitido por `.gcloudignore`, constrói a imagem no Cloud
+Build europeu e publica-a no Artifact Registry. A tag identifica o commit e o
+resultado final apresenta uma referência imutável `@sha256:...`.
+
+Este passo publica a imagem mas não cria o serviço Cloud Run. Guarde a
+referência imutável para a revisão do plano de deployment; ela não é um
+segredo.
+
+### Ativar o serviço
+
 1. fixe `container_image` com o digest completo `@sha256:...`;
 2. altere `deploy_application` para `true`;
 3. execute novamente `plan`;
