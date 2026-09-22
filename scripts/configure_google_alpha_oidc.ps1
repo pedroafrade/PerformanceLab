@@ -55,7 +55,19 @@ $versionsUri = (
     "$ProjectId/secrets/$SecretId/versions?filter=state%3AENABLED"
 )
 $versions = Invoke-RestMethod -Method Get -Uri $versionsUri -Headers $headers
-$enabledVersions = @($versions.versions)
+$enabledVersions = @()
+$versionsProperty = $null
+
+if ($null -ne $versions) {
+    $versionsProperty = $versions.PSObject.Properties["versions"]
+}
+
+if ($null -ne $versionsProperty -and $null -ne $versionsProperty.Value) {
+    $enabledVersions = @(
+        $versionsProperty.Value |
+            Where-Object { $null -ne $_ -and $_.state -eq "ENABLED" }
+    )
+}
 
 if ($enabledVersions.Count -gt 0 -and -not $RotateExisting) {
     throw (
@@ -140,6 +152,9 @@ finally {
     $oidcToml = $null
     $encodedPayload = $null
     $secretBody = $null
+    $versions = $null
+    $versionsProperty = $null
+    $enabledVersions = $null
     $accessToken = $null
     $secureClientSecret = $null
     $secureConfirmation = $null

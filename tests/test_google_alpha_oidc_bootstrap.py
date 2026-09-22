@@ -42,3 +42,13 @@ def test_oidc_bootstrap_requires_explicit_rotation_and_documents_usage():
     assert "$enabledVersions.Count -gt 0 -and -not $RotateExisting" in script
     assert "configure_google_alpha_oidc.ps1" in readme
     assert "Não utilize `-RotateExisting`" in readme
+
+
+def test_oidc_bootstrap_treats_a_secret_without_versions_as_empty():
+    script = source(SCRIPT)
+
+    assert "$enabledVersions = @()" in script
+    assert '$versions.PSObject.Properties["versions"]' in script
+    assert "$null -ne $versionsProperty.Value" in script
+    assert '$_.state -eq "ENABLED"' in script
+    assert "$enabledVersions = @($versions.versions)" not in script
