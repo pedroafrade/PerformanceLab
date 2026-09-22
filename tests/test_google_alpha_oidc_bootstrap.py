@@ -17,7 +17,10 @@ def test_oidc_bootstrap_keeps_secrets_out_of_files_and_arguments():
 
     assert 'Read-Host "Google OAuth client secret" -AsSecureString' in script
     assert 'Read-Host "Repeat the Google OAuth client secret" -AsSecureString' in script
-    assert "RandomNumberGenerator]::Fill" in script
+    assert "RandomNumberGenerator]::Create()" in script
+    assert "$randomGenerator.GetBytes($cookieBytes)" in script
+    assert "$randomGenerator.Dispose()" in script
+    assert "RandomNumberGenerator]::Fill" not in script
     assert "Invoke-RestMethod" in script
     assert "Set-Content" not in script
     assert "Out-File" not in script

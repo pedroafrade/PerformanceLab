@@ -90,6 +90,7 @@ $cookieSecret = $null
 $oidcToml = $null
 $encodedPayload = $null
 $secretBody = $null
+$randomGenerator = $null
 
 try {
     $plainClientSecret = Get-PlainText $secureClientSecret
@@ -103,7 +104,10 @@ try {
     }
 
     $cookieBytes = [byte[]]::new(32)
-    [Security.Cryptography.RandomNumberGenerator]::Fill($cookieBytes)
+    $randomGenerator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    $randomGenerator.GetBytes($cookieBytes)
+    $randomGenerator.Dispose()
+    $randomGenerator = $null
     $cookieSecret = [Convert]::ToBase64String($cookieBytes)
 
     $oidcToml = @(
@@ -143,6 +147,9 @@ try {
     Write-Host "The client secret and cookie secret were not displayed or written to disk."
 }
 finally {
+    if ($null -ne $randomGenerator) {
+        $randomGenerator.Dispose()
+    }
     if ($cookieBytes) {
         [Array]::Clear($cookieBytes, 0, $cookieBytes.Length)
     }
@@ -155,6 +162,7 @@ finally {
     $versions = $null
     $versionsProperty = $null
     $enabledVersions = $null
+    $randomGenerator = $null
     $accessToken = $null
     $secureClientSecret = $null
     $secureConfirmation = $null
