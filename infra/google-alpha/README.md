@@ -75,6 +75,30 @@ Os valores secretos nunca são colocados em ficheiros Terraform, argumentos
 guardados no histórico, outputs, commits ou screenshots. As instruções da
 segunda fase serão usadas apenas depois desta validação.
 
+### Configurar o acesso da aplicação à base de dados
+
+Depois de a Fase 1 terminar sem alterações pendentes, execute na raiz do
+repositório:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_database.ps1
+```
+
+O assistente confirma o projeto ativo e pede duas vezes uma password com pelo
+menos 24 caracteres. Os caracteres ficam ocultos. Em seguida cria o utilizador
+`performancelab_app` e adiciona uma versão ao segredo
+`performancelab-alpha-database-url`, usando o socket gerido do Cloud SQL. A
+password e o `DATABASE_URL` existem apenas em memória durante a operação.
+
+Se o utilizador já existir, o assistente para sem o alterar. Uma recuperação
+deliberada pode definir uma password nova e uma nova versão do segredo com:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_database.ps1 -RotateExisting
+```
+
+Não utilize `-RotateExisting` durante a primeira execução normal.
+
 ## Fase 2 — publicar a aplicação
 
 Só depois de todos os cofres terem pelo menos uma versão válida:
