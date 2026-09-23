@@ -98,8 +98,8 @@ def build_exception_reporter(
     """
     Build local logging or Better Stack reporting.
 
-    Better Stack is mandatory in the alpha environment but
-    remains optional during local development and tests.
+    Use Better Stack when configured and otherwise retain
+    privacy-safe structured application logging.
     """
 
     if not isinstance(
@@ -142,14 +142,6 @@ def build_exception_reporter(
         )
 
     if dsn is None:
-
-        if normalized_environment == "alpha":
-
-            raise RuntimeError(
-                "BETTER_STACK_ERROR_DSN is required "
-                "in the alpha environment."
-            )
-
         return LoggingExceptionReporter()
 
     return BetterStackExceptionReporter(

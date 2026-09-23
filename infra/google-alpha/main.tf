@@ -101,7 +101,7 @@ resource "google_sql_database_instance" "alpha" {
   deletion_protection = true
 
   settings {
-    tier              = var.database_tier
+    tier = var.database_tier
     # PostgreSQL 16+ defaults to Enterprise Plus unless the edition is
     # explicit. Shared-core tiers such as db-f1-micro require Enterprise.
     edition           = "ENTERPRISE"
@@ -194,11 +194,15 @@ resource "google_cloud_run_v2_service" "application" {
       }
 
       dynamic "env" {
-        for_each = var.deploy_application ? {
-          DATABASE_URL           = "performancelab-alpha-database-url"
-          BETTER_STACK_ERROR_DSN = "performancelab-alpha-better-stack-dsn"
-          GEMINI_API_KEY         = "performancelab-alpha-gemini-api-key"
-        } : {}
+        for_each = var.deploy_application ? merge(
+          {
+            DATABASE_URL   = "performancelab-alpha-database-url"
+            GEMINI_API_KEY = "performancelab-alpha-gemini-api-key"
+          },
+          var.better_stack_enabled ? {
+            BETTER_STACK_ERROR_DSN = "performancelab-alpha-better-stack-dsn"
+          } : {}
+        ) : {}
         content {
           name = env.key
           value_source {

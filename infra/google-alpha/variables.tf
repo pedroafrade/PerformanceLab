@@ -84,3 +84,9 @@ variable "training_coach_enabled" {
   type        = bool
   default     = false
 }
+
+variable "better_stack_enabled" {
+  description = "Ativa alertas Better Stack apenas depois de configurar o respetivo DSN."
+  type        = bool
+  default     = false
+}

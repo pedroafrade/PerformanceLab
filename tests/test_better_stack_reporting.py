@@ -57,19 +57,17 @@ def test_local_environment_uses_logging_without_dsn():
     )
 
 
-def test_alpha_environment_requires_better_stack_dsn():
+def test_alpha_environment_uses_logging_without_dsn():
 
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            "BETTER_STACK_ERROR_DSN is required"
-        ),
-    ):
+    reporter = build_exception_reporter(
+        {},
+        environment="alpha",
+    )
 
-        build_exception_reporter(
-            {},
-            environment="alpha",
-        )
+    assert isinstance(
+        reporter,
+        LoggingExceptionReporter,
+    )
 
 
 def test_rejects_invalid_better_stack_dsn():
