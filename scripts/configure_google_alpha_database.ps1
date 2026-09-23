@@ -111,7 +111,7 @@ try {
         $escapedUser = [Uri]::EscapeDataString($DatabaseUser)
         $operation = Invoke-RestMethod `
             -Method Put `
-            -Uri "$usersUri?name=$escapedUser" `
+            -Uri "${usersUri}?name=$escapedUser" `
             -Headers $headers `
             -ContentType "application/json" `
             -Body $userBody

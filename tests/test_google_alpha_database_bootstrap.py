@@ -21,6 +21,8 @@ def test_database_bootstrap_keeps_credentials_out_of_files_and_arguments():
     assert "--password" not in script
     assert "Set-Content" not in script
     assert "Out-File" not in script
+    assert '"${usersUri}?name=$escapedUser"' in script
+    assert '"$usersUri?name=$escapedUser"' not in script
 
 
 def test_database_bootstrap_targets_the_expected_private_alpha_resources():

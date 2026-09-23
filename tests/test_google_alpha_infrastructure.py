@@ -54,7 +54,7 @@ def test_alpha_uses_european_postgresql_with_recoverable_backups():
     assert 'startswith(var.region, "europe-")' in variables
     assert 'database_version = "POSTGRES_17"' in main
     assert 'edition           = "ENTERPRISE"' in main
-    assert "tier              = var.database_tier" in main
+    assert "tier = var.database_tier" in " ".join(main.split())
     assert "deletion_protection = true" in main
     assert "point_in_time_recovery_enabled = true" in main
     assert "retained_backups = 14" in main
