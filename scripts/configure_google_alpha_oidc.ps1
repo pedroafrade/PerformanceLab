@@ -84,8 +84,25 @@ if (-not $clientId -or $clientId -match "[\r\n]") {
 $secureClientSecret = Read-Host "Google OAuth client secret" -AsSecureString
 $secureConfirmation = Read-Host "Repeat the Google OAuth client secret" -AsSecureString
 
+$auth0Domain = (Read-Host "Auth0 domain (for example tenant.eu.auth0.com)").Trim()
+$auth0Domain = $auth0Domain -replace "^https://", ""
+$auth0Domain = $auth0Domain.TrimEnd("/")
+if (-not $auth0Domain -or $auth0Domain -notmatch "^[A-Za-z0-9.-]+\.auth0\.com$") {
+    throw "The Auth0 domain is invalid. No secret version was created."
+}
+
+$auth0ClientId = (Read-Host "Auth0 client ID").Trim()
+if (-not $auth0ClientId -or $auth0ClientId -match "[\r\n]") {
+    throw "The Auth0 client ID is empty or invalid. No secret version was created."
+}
+
+$secureAuth0ClientSecret = Read-Host "Auth0 client secret" -AsSecureString
+$secureAuth0Confirmation = Read-Host "Repeat the Auth0 client secret" -AsSecureString
+
 $plainClientSecret = $null
 $plainConfirmation = $null
+$plainAuth0ClientSecret = $null
+$plainAuth0Confirmation = $null
 $cookieSecret = $null
 $oidcToml = $null
 $encodedPayload = $null
@@ -103,6 +120,15 @@ try {
         throw "The client secret is empty or invalid. No secret version was created."
     }
 
+    $plainAuth0ClientSecret = Get-PlainText $secureAuth0ClientSecret
+    $plainAuth0Confirmation = Get-PlainText $secureAuth0Confirmation
+    if ($plainAuth0ClientSecret -cne $plainAuth0Confirmation) {
+        throw "The two Auth0 client secrets do not match. No secret version was created."
+    }
+    if (-not $plainAuth0ClientSecret -or $plainAuth0ClientSecret -match "[\r\n]") {
+        throw "The Auth0 client secret is empty or invalid. No secret version was created."
+    }
+
     $cookieBytes = [byte[]]::new(32)
     $randomGenerator = [Security.Cryptography.RandomNumberGenerator]::Create()
     $randomGenerator.GetBytes($cookieBytes)
@@ -116,9 +142,17 @@ try {
         '[auth]'
         ('redirect_uri = "{0}"' -f (ConvertTo-TomlString $redirectUri))
         ('cookie_secret = "{0}"' -f (ConvertTo-TomlString $cookieSecret))
+        ''
+        '[auth.google]'
         ('client_id = "{0}"' -f (ConvertTo-TomlString $clientId))
         ('client_secret = "{0}"' -f (ConvertTo-TomlString $plainClientSecret))
         'server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"'
+        ''
+        '[auth.email]'
+        ('client_id = "{0}"' -f (ConvertTo-TomlString $auth0ClientId))
+        ('client_secret = "{0}"' -f (ConvertTo-TomlString $plainAuth0ClientSecret))
+        ('server_metadata_url = "https://{0}/.well-known/openid-configuration"' -f (ConvertTo-TomlString $auth0Domain))
+        'client_kwargs = { "prompt" = "login" }'
         ''
     ) -join "`n"
 
@@ -141,10 +175,10 @@ try {
         -Body $secretBody
 
     $versionName = ($secretVersion.name -split "/")[-1]
-    Write-Host "Google login configuration saved successfully."
+    Write-Host "Google and email-code login configuration saved successfully."
     Write-Host "Secret version created: $versionName"
     Write-Host "Redirect URI: $redirectUri"
-    Write-Host "The client secret and cookie secret were not displayed or written to disk."
+    Write-Host "The client secrets and cookie secret were not displayed or written to disk."
 }
 finally {
     if ($null -ne $randomGenerator) {
@@ -155,6 +189,8 @@ finally {
     }
     $plainClientSecret = $null
     $plainConfirmation = $null
+    $plainAuth0ClientSecret = $null
+    $plainAuth0Confirmation = $null
     $cookieSecret = $null
     $oidcToml = $null
     $encodedPayload = $null
@@ -166,4 +202,6 @@ finally {
     $accessToken = $null
     $secureClientSecret = $null
     $secureConfirmation = $null
+    $secureAuth0ClientSecret = $null
+    $secureAuth0Confirmation = $null
 }

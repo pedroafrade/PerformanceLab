@@ -18,12 +18,20 @@ DEFAULT_AUTH_CONFIGURATION_PATH = Path(
     "/app/.streamlit/secrets.toml"
 )
 
-REQUIRED_AUTH_SETTINGS = (
+REQUIRED_SHARED_AUTH_SETTINGS = (
     "redirect_uri",
     "cookie_secret",
+)
+
+REQUIRED_PROVIDER_SETTINGS = (
     "client_id",
     "client_secret",
     "server_metadata_url",
+)
+
+REQUIRED_AUTH_PROVIDERS = (
+    "google",
+    "email",
 )
 
 SUCCESS_MESSAGE = (
@@ -62,7 +70,7 @@ def validate_auth_configuration(
 
         return False
 
-    return all(
+    shared_settings_are_valid = all(
         isinstance(
             auth_values.get(setting_name),
             str,
@@ -73,7 +81,25 @@ def validate_auth_configuration(
             ].strip()
         )
         for setting_name
-        in REQUIRED_AUTH_SETTINGS
+        in REQUIRED_SHARED_AUTH_SETTINGS
+    )
+
+    if not shared_settings_are_valid:
+        return False
+
+    return all(
+        isinstance(auth_values.get(provider_name), Mapping)
+        and all(
+            isinstance(
+                auth_values[provider_name].get(setting_name),
+                str,
+            )
+            and bool(
+                auth_values[provider_name][setting_name].strip()
+            )
+            for setting_name in REQUIRED_PROVIDER_SETTINGS
+        )
+        for provider_name in REQUIRED_AUTH_PROVIDERS
     )
 
 

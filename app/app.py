@@ -839,12 +839,13 @@ def show_login_screen() -> None:
 
         st.html(
             journal_logo_html(
-                placement="login"
+                placement="login",
+                theme=st.context.theme.type,
             )
         )
 
         st.caption(
-            "Sign in to continue."
+            "Sign in with Google or receive a one-time code by email."
         )
 
         st.write("")
@@ -854,6 +855,14 @@ def show_login_screen() -> None:
             type="primary",
             use_container_width=True,
             on_click=st.login,
+            args=("google",),
+        )
+
+        st.button(
+            "Continue with email code",
+            use_container_width=True,
+            on_click=st.login,
+            args=("email",),
         )
 
 def logout() -> None:

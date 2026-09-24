@@ -74,13 +74,17 @@ no Google Secret Manager e montado no contentor em:
 /app/.streamlit/secrets.toml
 ```
 
-O ficheiro montado deverá conter a secção `[auth]`, incluindo:
+O ficheiro montado deverá conter a secção `[auth]` partilhada e as secções
+`[auth.google]` e `[auth.email]`, incluindo:
 
 - endereço de retorno público da aplicação;
 - segredo do cookie;
-- identificador do cliente Google;
-- segredo do cliente Google;
-- endereço de metadados OIDC da Google.
+- identificadores e segredos dos clientes Google e Auth0;
+- endereço de metadados OIDC de cada fornecedor.
+
+O fornecedor `email` usa Auth0 Passwordless Email com código de utilização
+única. A aplicação não recolhe, guarda ou valida passwords. O acesso continua
+dependente de convite, mesmo quando o Auth0 confirma o endereço de email.
 
 O endereço de retorno só poderá ser preenchido depois de existir um
 endereço interno confirmado para o serviço Cloud Run.

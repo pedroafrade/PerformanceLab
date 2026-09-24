@@ -259,6 +259,32 @@ def test_repeated_identity_resolves_same_user(
     ) == 1
 
 
+def test_same_verified_email_can_link_google_and_email_code(
+    tmp_path,
+):
+    repository_set = repositories(tmp_path)
+    prepare_email_only_invitation(repository_set)
+    service = ProvisionInvitedUser(**repository_set)
+
+    google_result = service.execute(
+        external_identity()
+    )
+    email_result = service.execute(
+        ExternalIdentity(
+            issuer="https://example.eu.auth0.com/",
+            subject="auth0-passwordless-subject",
+            email="pedro@example.com",
+            email_verified=True,
+            name="Pedro",
+        )
+    )
+
+    assert email_result.created is False
+    assert email_result.user.user_id == google_result.user.user_id
+    assert email_result.access_grant == google_result.access_grant
+    assert len(repository_set["identity_repository"].list()) == 2
+
+
 def test_unverified_identity_is_rejected(
     tmp_path,
 ):

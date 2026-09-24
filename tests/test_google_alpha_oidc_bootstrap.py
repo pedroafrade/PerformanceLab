@@ -17,6 +17,8 @@ def test_oidc_bootstrap_keeps_secrets_out_of_files_and_arguments():
 
     assert 'Read-Host "Google OAuth client secret" -AsSecureString' in script
     assert 'Read-Host "Repeat the Google OAuth client secret" -AsSecureString' in script
+    assert 'Read-Host "Auth0 client secret" -AsSecureString' in script
+    assert 'Read-Host "Repeat the Auth0 client secret" -AsSecureString' in script
     assert "RandomNumberGenerator]::Create()" in script
     assert "$randomGenerator.GetBytes($cookieBytes)" in script
     assert "$randomGenerator.Dispose()" in script
@@ -35,6 +37,10 @@ def test_oidc_bootstrap_targets_expected_alpha_resources_and_redirect():
     assert '"$normalizedUrl/oauth2callback"' in script
     assert 'PERFORMANCELAB_ENV = "alpha"' in script
     assert "https://accounts.google.com/.well-known/openid-configuration" in script
+    assert '"^[A-Za-z0-9.-]+\\.auth0\\.com$"' in script
+    assert '"https://{0}/.well-known/openid-configuration"' in script
+    assert "[auth.google]" in script
+    assert "[auth.email]" in script
 
 
 def test_oidc_bootstrap_requires_explicit_rotation_and_documents_usage():

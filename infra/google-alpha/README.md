@@ -99,12 +99,19 @@ powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_database
 
 Não utilize `-RotateExisting` durante a primeira execução normal.
 
-### Configurar o início de sessão Google
+### Configurar Google e código de utilização única por email
 
 Crie primeiro um cliente OAuth do tipo **Aplicação Web** na Google Auth
 Platform. Deixe as origens JavaScript vazias e registe como URI de
 redirecionamento o endereço permanente do serviço seguido de
 `/oauth2callback`.
+
+Crie também uma conta Auth0 gratuita e uma aplicação do tipo **Regular Web
+Application**. Em **Allowed Callback URLs**, registe exatamente o mesmo URI
+de redirecionamento. Ative a ligação **Passwordless Email** com código de
+utilização única, associe-a à aplicação e desative a ligação de base de dados
+com palavra-passe. Desta forma, o Auth0 confirma o email sem a aplicação
+guardar passwords.
 
 Depois, na raiz do repositório, execute:
 
@@ -112,10 +119,13 @@ Depois, na raiz do repositório, execute:
 powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_oidc.ps1
 ```
 
-O assistente confirma o projeto e o endereço da aplicação, pede o ID do
-cliente e pede duas vezes o segredo do cliente com os caracteres ocultos.
+O assistente confirma o projeto e o endereço da aplicação, pede os IDs dos
+clientes Google e Auth0 e pede duas vezes cada segredo com os caracteres
+ocultos. No Auth0, o domínio tem um formato semelhante a
+`exemplo.eu.auth0.com`.
 Também cria localmente uma chave de sessão aleatória. O `secrets.toml`
-resultante é enviado diretamente da memória para o segredo
+resultante contém os fornecedores nomeados `google` e `email` e é enviado
+diretamente da memória para o segredo
 `performancelab-alpha-oidc-toml`; nenhum destes valores é mostrado, escrito
 no disco ou colocado no Git.
 
@@ -126,7 +136,10 @@ uma rotação deliberada das credenciais deve usar:
 powershell -ExecutionPolicy Bypass -File scripts/configure_google_alpha_oidc.ps1 -RotateExisting
 ```
 
-Não utilize `-RotateExisting` durante a primeira execução normal.
+Como já existe uma versão que contém apenas Google, esta alteração requer uma
+rotação deliberada com `-RotateExisting`. Faça a rotação imediatamente antes
+de publicar a imagem que apresenta os dois botões, para evitar incompatibilidade
+entre a imagem e a configuração.
 
 ## Fase 2 — publicar a aplicação
 

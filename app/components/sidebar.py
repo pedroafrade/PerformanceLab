@@ -12,7 +12,7 @@ from .activity_input import (
     show_activity_input,
 )
 from .i18n import translate
-from .brand import journal_logo_html
+from .brand import journal_sidebar_button_css
 
 
 # ======================================================
@@ -574,12 +574,18 @@ def show_sidebar(
             key="sidebar_top",
         ):
 
-            with st.container(key="sidebar_brand"):
-                st.html(
-                    journal_logo_html(
-                        placement="sidebar"
-                    )
+            st.html(
+                journal_sidebar_button_css(
+                    theme=st.context.theme.type,
                 )
+            )
+            st.button(
+                "Journal home",
+                key="sidebar_brand",
+                on_click=_set_page,
+                args=(_HOME_PAGE,),
+                help="Open Dashboard",
+            )
 
             _show_user_account(
                 athlete,

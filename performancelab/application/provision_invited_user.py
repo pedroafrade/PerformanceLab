@@ -171,9 +171,9 @@ class ProvisionInvitedUser:
             ) from error
 
         if invitation.is_claimed:
-            raise RuntimeError(
-                "The invitation is already claimed "
-                "but has no external identity link."
+            return self._link_additional_identity(
+                identity=identity,
+                invitation=invitation,
             )
 
         if invitation.role != "athlete":
@@ -257,6 +257,63 @@ class ProvisionInvitedUser:
             access_grant=(
                 access_grant
             ),
+        )
+
+    def _link_additional_identity(
+        self,
+        *,
+        identity: ExternalIdentity,
+        invitation: AlphaInvitation,
+    ) -> ProvisionInvitedUserResult:
+        """Link another verified provider for the invited email."""
+
+        try:
+            user = self._user_repository.get_by_email(
+                invitation.email
+            )
+        except KeyError as error:
+            raise RuntimeError(
+                "The invitation is already claimed "
+                "but its user does not exist."
+            ) from error
+
+        if invitation.claimed_by_user_id != user.user_id:
+            raise RuntimeError(
+                "The invitation is already claimed "
+                "by a different user."
+            )
+
+        if (
+            not user.is_athlete
+            or user.athlete_id is None
+            or invitation.athlete_id != user.athlete_id
+        ):
+            raise PermissionError(
+                "The claimed invitation does not match "
+                "the athlete user."
+            )
+
+        access_grant = AthleteAccessGrant(
+            user_id=user.user_id,
+            athlete_id=user.athlete_id,
+            permission="owner",
+        )
+        self._validate_existing_access(
+            access_grant
+        )
+
+        self._identity_repository.save(
+            ExternalIdentityLink.from_identity(
+                identity,
+                user_id=user.user_id,
+            )
+        )
+
+        return ProvisionInvitedUserResult(
+            user=user,
+            created=False,
+            invitation=invitation,
+            access_grant=access_grant,
         )
 
     def _existing_identity_result(

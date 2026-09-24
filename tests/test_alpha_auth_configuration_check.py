@@ -6,7 +6,9 @@ Streamlit OIDC configuration preflight tests.
 
 from scripts.check_alpha_auth_configuration import (
     FAILURE_MESSAGE,
-    REQUIRED_AUTH_SETTINGS,
+    REQUIRED_AUTH_PROVIDERS,
+    REQUIRED_PROVIDER_SETTINGS,
+    REQUIRED_SHARED_AUTH_SETTINGS,
     SUCCESS_MESSAGE,
     main,
     validate_auth_configuration,
@@ -27,17 +29,22 @@ def valid_auth_values() -> dict[
             "cookie_secret": (
                 "fictitious-cookie-secret"
             ),
-            "client_id": (
-                "fictitious-client-id"
-            ),
-            "client_secret": (
-                "fictitious-client-secret"
-            ),
-            "server_metadata_url": (
-                "https://accounts.google.com/"
-                ".well-known/"
-                "openid-configuration"
-            ),
+            "google": {
+                "client_id": "fictitious-google-client-id",
+                "client_secret": "fictitious-google-client-secret",
+                "server_metadata_url": (
+                    "https://accounts.google.com/.well-known/"
+                    "openid-configuration"
+                ),
+            },
+            "email": {
+                "client_id": "fictitious-email-client-id",
+                "client_secret": "fictitious-email-client-secret",
+                "server_metadata_url": (
+                    "https://example.eu.auth0.com/.well-known/"
+                    "openid-configuration"
+                ),
+            },
         },
     }
 
@@ -49,7 +56,7 @@ def test_requires_all_streamlit_auth_settings():
         values
     )
 
-    for setting_name in REQUIRED_AUTH_SETTINGS:
+    for setting_name in REQUIRED_SHARED_AUTH_SETTINGS:
 
         incomplete_values = (
             valid_auth_values()
@@ -62,6 +69,12 @@ def test_requires_all_streamlit_auth_settings():
         assert not validate_auth_configuration(
             incomplete_values
         )
+
+    for provider_name in REQUIRED_AUTH_PROVIDERS:
+        for setting_name in REQUIRED_PROVIDER_SETTINGS:
+            incomplete_values = valid_auth_values()
+            del incomplete_values["auth"][provider_name][setting_name]
+            assert not validate_auth_configuration(incomplete_values)
 
 
 def test_rejects_missing_auth_section():
@@ -86,9 +99,16 @@ def test_accepts_valid_toml_file(
 [auth]
 redirect_uri = "https://alpha.example.com/oauth2callback"
 cookie_secret = "fictitious-cookie-secret"
-client_id = "fictitious-client-id"
-client_secret = "fictitious-client-secret"
+
+[auth.google]
+client_id = "fictitious-google-client-id"
+client_secret = "fictitious-google-client-secret"
 server_metadata_url = "https://accounts.google.com/.well-known/openid-configuration"
+
+[auth.email]
+client_id = "fictitious-email-client-id"
+client_secret = "fictitious-email-client-secret"
+server_metadata_url = "https://example.eu.auth0.com/.well-known/openid-configuration"
 """.strip(),
         encoding="utf-8",
     )
