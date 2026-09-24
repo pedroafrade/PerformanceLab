@@ -69,12 +69,21 @@ class Card:
 @pytest.mark.parametrize("sport,value,label", [("Running", "10.0 km", "Total Running Distance"),
                                                ("Cycling", "40.0 km", "Total Cycling Distance")])
 def test_distance_card_switches_without_changing_original_card(sport, value, label):
-    helper = functions("app/components/development_page.py", {"_distance_summary_card"}, replace=replace)
+    helper = functions(
+        "app/components/development_page.py",
+        {"_distance_trend_label", "_distance_summary_card"},
+        replace=replace,
+    )
     totals = RECENT["recent_activity_summary"]([workout(date.today()), workout(date.today(), "Cycling", 40)], date.today())
+    previous = RECENT["recent_activity_summary"](
+        [workout(date.today() - timedelta(days=30), distance=5),
+         workout(date.today() - timedelta(days=30), "Cycling", 20)],
+        date.today() - timedelta(days=30),
+    )
     original = Card()
-    card = helper["_distance_summary_card"](original, totals, sport)
+    card = helper["_distance_summary_card"](original, totals, previous, sport)
     assert card.label == label and card.value == value
-    assert card.trend == "Last 30 days" and original == Card()
+    assert card.trend == "↑ 100.0% vs previous 30 days" and original == Card()
 
 
 def test_selection_is_saved_separately_from_widget_state():
@@ -90,9 +99,11 @@ def test_four_cards_render_with_one_distance_menu(choice):
     st.session_state = {"development_distance_sport": choice}
     st.columns.return_value = [MagicMock() for _ in range(4)]
     names = {"_show_development_summary_cards", "_development_summary_cards_html",
-             "_development_summary_styles", "_distance_summary_card", "_remember_distance_sport"}
+             "_development_summary_styles", "_distance_trend_label",
+             "_distance_summary_card", "_remember_distance_sport"}
     scope = functions("app/components/development_page.py", names, st=st, replace=replace,
-                      escape=escape, recent_activity_summary=RECENT["recent_activity_summary"])
+                      escape=escape, timedelta=timedelta,
+                      recent_activity_summary=RECENT["recent_activity_summary"])
     cards = [Card(key="duration"), Card(), Card(key="load"), Card(key="vo2")]
     athlete = SimpleNamespace(history=[workout(date.today()), workout(date.today(), "Cycling", 40)])
     scope["_show_development_summary_cards"](cards, athlete, date.today())

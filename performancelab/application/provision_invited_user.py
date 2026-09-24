@@ -19,6 +19,9 @@ from typing import (
 from performancelab.alpha_invitation import (
     AlphaInvitation,
 )
+from performancelab.athlete import (
+    Athlete,
+)
 from performancelab.athlete_access import (
     AthleteAccessGrant,
 )
@@ -179,31 +182,33 @@ class ProvisionInvitedUser:
                 "for the first private alpha."
             )
 
-        athlete_id = (
-            invitation.athlete_id
-        )
+        original_invitation = invitation
+        athlete = None
+        athlete_id = invitation.athlete_id
 
         if athlete_id is None:
-            raise RuntimeError(
-                "The athlete invitation has no athlete."
+            athlete = Athlete(
+                name=(identity.name or "").strip()
             )
-
-        try:
-
-            self._athlete_repository.get(
+            athlete_id = athlete.athlete_id
+            invitation = invitation.assign_athlete(
                 athlete_id
             )
-
-        except FileNotFoundError as error:
-
-            raise RuntimeError(
-                "The invited athlete profile "
-                "does not exist."
-            ) from error
+        else:
+            try:
+                self._athlete_repository.get(
+                    athlete_id
+                )
+            except FileNotFoundError as error:
+                raise RuntimeError(
+                    "The invited athlete profile "
+                    "does not exist."
+                ) from error
 
         user, created = (
             self._user_for_invitation(
-                invitation
+                invitation,
+                athlete_id=athlete_id,
             )
         )
 
@@ -232,11 +237,12 @@ class ProvisionInvitedUser:
         )
 
         self._persist(
+            athlete=athlete,
             user=user,
             created=created,
             link=link,
             access_grant=access_grant,
-            invitation=invitation,
+            invitation=original_invitation,
             claimed_invitation=(
                 claimed_invitation
             ),
@@ -315,6 +321,8 @@ class ProvisionInvitedUser:
     def _user_for_invitation(
         self,
         invitation: AlphaInvitation,
+        *,
+        athlete_id: str,
     ) -> tuple[User, bool]:
         """
         Reuse a compatible user or create a new one.
@@ -335,9 +343,7 @@ class ProvisionInvitedUser:
                 User(
                     email=invitation.email,
                     role=invitation.role,
-                    athlete_id=(
-                        invitation.athlete_id
-                    ),
+                    athlete_id=athlete_id,
                 ),
                 True,
             )
@@ -353,7 +359,7 @@ class ProvisionInvitedUser:
 
         if (
             user.athlete_id
-            != invitation.athlete_id
+            != athlete_id
         ):
             raise PermissionError(
                 "Existing user athlete does not "
@@ -393,6 +399,7 @@ class ProvisionInvitedUser:
     def _persist(
         self,
         *,
+        athlete: Athlete | None,
         user: User,
         created: bool,
         link: ExternalIdentityLink,
@@ -404,12 +411,19 @@ class ProvisionInvitedUser:
         Persist local development records with compensation.
         """
 
+        athlete_saved = False
         user_saved = False
         link_saved = False
         grant_saved = False
         invitation_saved = False
 
         try:
+
+            if athlete is not None:
+                self._athlete_repository.save(
+                    athlete
+                )
+                athlete_saved = True
 
             if created:
 
@@ -486,6 +500,16 @@ class ProvisionInvitedUser:
                 try:
                     self._user_repository.delete(
                         user.user_id
+                    )
+                except Exception as rollback_error:
+                    rollback_errors.append(
+                        rollback_error
+                    )
+
+            if athlete_saved:
+                try:
+                    self._athlete_repository.delete(
+                        athlete.athlete_id
                     )
                 except Exception as rollback_error:
                     rollback_errors.append(

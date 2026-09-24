@@ -21,6 +21,7 @@ from app.components.today_page import (
     _recovery_context_label,
     _recovery_updated_label,
     _session_step_html,
+    _session_equivalent_context,
     _show_temporary_adjustment,
     _today_current_state_summary,
     _today_session_metadata,
@@ -102,6 +103,31 @@ def test_formats_today_duration():
         )
         == "45 min"
     )
+
+
+def test_session_equivalent_uses_completed_activity_context():
+    planned = SimpleNamespace(
+        title="Planned Long Run",
+        duration=timedelta(minutes=90),
+    )
+    completed = SimpleNamespace(
+        title="Morning Trail Run",
+        duration=timedelta(minutes=72),
+        workout_date=datetime(2026, 9, 24, 7, 30),
+    )
+
+    duration, title, workout_day, label = (
+        _session_equivalent_context(
+            planned,
+            completed,
+            datetime(2026, 9, 24).date(),
+        )
+    )
+
+    assert duration == timedelta(minutes=72)
+    assert title == "Morning Trail Run"
+    assert workout_day == completed.workout_date
+    assert label == "Equivalent of completed session"
 
 
 def test_formats_latest_adaptation_change():

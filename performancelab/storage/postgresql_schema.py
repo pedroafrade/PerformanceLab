@@ -294,13 +294,6 @@ alpha_invitations = Table(
         "role IN ('athlete', 'coach')",
         name="role",
     ),
-    CheckConstraint(
-        (
-            "role <> 'athlete' "
-            "OR athlete_id IS NOT NULL"
-        ),
-        name="athlete_invitation_has_athlete",
-    ),
 )
 
 training_coach_consents = Table(

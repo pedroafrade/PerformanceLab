@@ -826,6 +826,35 @@ def _show_guidance_card(
         )
 
 
+def _show_combined_guidance_card(
+    *,
+    reasons: tuple[str, ...],
+    cautions: tuple[str, ...],
+) -> None:
+    """Display reasons and cautions in one visual container."""
+
+    sections = []
+    for title, items in (
+        ("Why this workout today", reasons),
+        ("Attention during training", cautions),
+    ):
+        content = "".join(
+            _guidance_item_html(index=index, text=item)
+            for index, item in enumerate(items, start=1)
+        )
+        sections.append(
+            '<section class="today-guidance-section">'
+            '<div class="today-guidance-heading">'
+            + escape(title)
+            + "</div>"
+            + content
+            + "</section>"
+        )
+
+    with st.container(border=True, key="today_guidance_combined"):
+        st.html("".join(sections))
+
+
 def _apply_today_page_styles(
     subtitle: str,
 ) -> None:
@@ -1375,12 +1404,59 @@ def _show_daily_decision(
             )
 
 
-def _show_session_equivalent(session_card) -> None:
+def _session_equivalent_context(
+    session_card,
+    completed_activity,
+    reference_day,
+):
+    """Select the actual or planned session represented by alternatives."""
+
+    if completed_activity is not None:
+        return (
+            getattr(completed_activity, "duration", None)
+            or getattr(session_card, "duration", None),
+            getattr(completed_activity, "title", None)
+            or "Completed activity",
+            getattr(completed_activity, "workout_date", None)
+            or reference_day,
+            "Equivalent of completed session",
+        )
+
+    return (
+        getattr(session_card, "duration", None),
+        getattr(session_card, "title", None) or "Planned session",
+        reference_day,
+        "Alternative to planned session",
+    )
+
+
+def _show_session_equivalent(
+    session_card,
+    *,
+    completed_activity=None,
+    reference_day=None,
+) -> None:
     """Show deterministic cross-training options without claiming equal stimulus."""
-    duration = getattr(session_card, "duration", None)
+    duration, source_title, source_day, source_label = (
+        _session_equivalent_context(
+            session_card,
+            completed_activity,
+            reference_day,
+        )
+    )
     minutes = round(duration.total_seconds() / 60) if duration else 45
+    if isinstance(source_day, datetime):
+        source_day = source_day.date()
+    date_label = (
+        source_day.strftime("%A, %d %B %Y")
+        if isinstance(source_day, date)
+        else "Date unavailable"
+    )
     with st.container(border=True, key="today_session_equivalent"):
         st.markdown("**Session equivalent**")
+        st.caption(
+            f"{source_label} · {source_title} · {date_label}"
+        )
         st.caption("Similar estimated load and duration")
         st.html(
             '<div class="today-equivalent-cards">'
@@ -1638,18 +1714,27 @@ def show_today_page(
                     today_workout,
                 )
             with equivalent_column:
-                _show_session_equivalent(today.session_card)
+                equivalent_day = (
+                    today.today_activity_summary.workout_date
+                    if today.today_activity_summary is not None
+                    else (
+                        today.next_workout.scheduled_at
+                        if today.next_workout is not None
+                        and today.session_card.heading == "Next Session"
+                        else today.reference_day
+                    )
+                )
+                _show_session_equivalent(
+                    today.session_card,
+                    completed_activity=today.today_activity_summary,
+                    reference_day=equivalent_day,
+                )
 
         with guidance_column:
             with st.container(key="today_guidance_column"):
-                _show_guidance_card(
-                    title="Why this workout today",
-                    items=today.guidance.reasons,
-                )
-
-                _show_guidance_card(
-                    title="Attention during training",
-                    items=today.guidance.cautions,
+                _show_combined_guidance_card(
+                    reasons=today.guidance.reasons,
+                    cautions=today.guidance.cautions,
                 )
 
                 _show_latest_adaptation(

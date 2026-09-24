@@ -103,15 +103,6 @@ class AlphaInvitation:
                 "athlete_id must be a string or None."
             )
 
-        if (
-            self.role == "athlete"
-            and normalized_athlete_id is None
-        ):
-            raise ValueError(
-                "An athlete invitation must have "
-                "an athlete_id."
-            )
-
         normalized_claimed_user = (
             self.claimed_by_user_id.strip()
             if isinstance(
@@ -210,4 +201,30 @@ class AlphaInvitation:
             claimed_by_user_id=(
                 normalized_user_id
             ),
+        )
+
+    def assign_athlete(
+        self,
+        athlete_id: str,
+    ):
+        """Return the invitation linked to its provisioned athlete."""
+
+        if not isinstance(athlete_id, str):
+            raise TypeError("athlete_id must be a string.")
+
+        normalized_athlete_id = athlete_id.strip()
+        if not normalized_athlete_id:
+            raise ValueError("athlete_id cannot be empty.")
+
+        if (
+            self.athlete_id is not None
+            and self.athlete_id != normalized_athlete_id
+        ):
+            raise ValueError(
+                "Invitation is already linked to another athlete."
+            )
+
+        return replace(
+            self,
+            athlete_id=normalized_athlete_id,
         )

@@ -8,6 +8,17 @@ from performancelab.storage.json_alpha_invitation_repository import (
 )
 
 
+def test_athlete_invitation_can_be_created_before_profile_exists():
+    invitation = AlphaInvitation(
+        email="new.athlete@example.com",
+    )
+
+    assert invitation.athlete_id is None
+    assigned = invitation.assign_athlete("athlete-123")
+    assert assigned.athlete_id == "athlete-123"
+    assert invitation.athlete_id is None
+
+
 def invitation(
     *,
     email="pedro@example.com",
@@ -42,16 +53,11 @@ def test_normalizes_invitation_email():
     )
 
 
-def test_athlete_invitation_requires_athlete():
+def test_invitation_cannot_be_reassigned_to_another_athlete():
+    linked = invitation().assign_athlete("athlete-123")
 
-    with pytest.raises(
-        ValueError,
-        match="must have an athlete_id",
-    ):
-        AlphaInvitation(
-            email="pedro@example.com",
-            role="athlete",
-        )
+    with pytest.raises(ValueError, match="another athlete"):
+        linked.assign_athlete("athlete-456")
 
 
 def test_claims_invitation_immutably():

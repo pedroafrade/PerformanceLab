@@ -23,6 +23,8 @@ from streamlit.errors import (
     StreamlitSecretNotFoundError,
 )
 
+from components.brand import journal_logo_html
+
 from components import (
     show_activities_page,
     show_alpha_participation_consent_dialog,
@@ -118,9 +120,12 @@ from performancelab.storage.training_coach_quota_store import (
 # Page configuration
 # ======================================================
 
+APP_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = APP_DIR.parent
+
 st.set_page_config(
-    page_title="PerformanceLab",
-    page_icon="📈",
+    page_title="Journal — Adaptive Endurance Training",
+    page_icon="app/assets/journal-icon-512x512_black.png",
     layout="wide",
     initial_sidebar_state="locked",
 )
@@ -135,9 +140,6 @@ if "correlation_id" not in st.session_state:
 set_correlation_id(
     st.session_state.correlation_id
 )
-
-APP_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = APP_DIR.parent
 
 runtime_values = dict(
     os.environ
@@ -826,7 +828,7 @@ def confirm_daily_brief_timezone(timezone_name: str) -> None:
 
 def show_login_screen() -> None:
     """
-    Display the PerformanceLab OIDC login screen.
+    Display the Journal OIDC login screen.
     """
 
     left, centre, right = st.columns(
@@ -835,8 +837,10 @@ def show_login_screen() -> None:
 
     with centre:
 
-        st.markdown(
-            "## PerformanceLab"
+        st.html(
+            journal_logo_html(
+                placement="login"
+            )
         )
 
         st.caption(

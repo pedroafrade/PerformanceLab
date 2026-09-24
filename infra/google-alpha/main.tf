@@ -335,3 +335,56 @@ resource "google_cloud_run_v2_job" "migrations" {
     google_secret_manager_secret_iam_member.application,
   ]
 }
+
+resource "google_cloud_run_v2_job" "invitations" {
+  count = var.deploy_application ? 1 : 0
+
+  name                = "journal-alpha-invitations"
+  location            = var.region
+  deletion_protection = true
+
+  template {
+    template {
+      service_account = google_service_account.application.email
+      timeout         = "300s"
+      max_retries     = 0
+
+      containers {
+        image   = var.container_image
+        command = ["python", "-m", "performancelab.application.invite_alpha_user"]
+
+        env {
+          name  = "PERFORMANCELAB_ENV"
+          value = "alpha"
+        }
+
+        env {
+          name = "DATABASE_URL"
+          value_source {
+            secret_key_ref {
+              secret  = google_secret_manager_secret.runtime["performancelab-alpha-database-url"].secret_id
+              version = "latest"
+            }
+          }
+        }
+
+        volume_mounts {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
+      }
+
+      volumes {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [google_sql_database_instance.alpha.connection_name]
+        }
+      }
+    }
+  }
+
+  depends_on = [
+    google_project_iam_member.cloud_sql_client,
+    google_secret_manager_secret_iam_member.application,
+  ]
+}

@@ -111,6 +111,49 @@ def prepare_invitation(
     return athlete, invitation
 
 
+def prepare_email_only_invitation(
+    repository_set,
+):
+    invitation = AlphaInvitation(
+        invitation_id="invitation-email-only",
+        email="pedro@example.com",
+        role="athlete",
+    )
+    repository_set[
+        "invitation_repository"
+    ].save(invitation)
+    return invitation
+
+
+def test_first_login_creates_athlete_for_email_only_invitation(
+    tmp_path,
+):
+    repository_set = repositories(tmp_path)
+    invitation = prepare_email_only_invitation(
+        repository_set
+    )
+
+    result = ProvisionInvitedUser(
+        **repository_set
+    ).execute(external_identity())
+
+    assert result.created is True
+    assert result.user.athlete_id is not None
+    athlete = repository_set[
+        "athlete_repository"
+    ].get(result.user.athlete_id)
+    assert athlete.name == "Pedro"
+    assert result.access_grant.athlete_id == athlete.athlete_id
+    assert result.invitation.athlete_id == athlete.athlete_id
+    assert result.invitation.is_claimed is True
+
+    stored = repository_set[
+        "invitation_repository"
+    ].get(invitation.invitation_id)
+    assert stored.athlete_id == athlete.athlete_id
+    assert stored.claimed_by_user_id == result.user.user_id
+
+
 def test_provisions_verified_invited_user(
     tmp_path,
 ):

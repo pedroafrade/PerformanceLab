@@ -90,6 +90,18 @@ def test_application_has_small_bounded_runtime_and_separate_migrations():
     assert 'args    = ["upgrade", "head"]' in main
 
 
+def test_alpha_has_a_private_invitation_job():
+    main = source("main.tf")
+
+    assert 'resource "google_cloud_run_v2_job" "invitations"' in main
+    assert 'name                = "journal-alpha-invitations"' in main
+    assert (
+        'command = ["python", "-m", '
+        '"performancelab.application.invite_alpha_user"]'
+    ) in " ".join(main.split())
+    assert 'version = "latest"' in main
+
+
 def test_git_ignores_terraform_state_and_private_variables():
     ignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 

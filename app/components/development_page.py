@@ -511,15 +511,48 @@ def _development_recovery_context(
     )
 
 
-def _distance_summary_card(card, totals, sport):
+def _distance_trend_label(
+    current_distance,
+    previous_distance,
+):
+    """Compare the latest 30 days with the preceding 30 days."""
+
+    if current_distance is None:
+        return "No current data"
+
+    if previous_distance is None:
+        return "No previous data"
+
+    if previous_distance == 0:
+        return (
+            "→ 0.0% vs previous 30 days"
+            if current_distance == 0
+            else "New distance vs previous 30 days"
+        )
+
+    change = (
+        (current_distance - previous_distance)
+        / previous_distance
+        * 100
+    )
+    symbol = "↑" if change > 0 else "↓" if change < 0 else "→"
+    return f"{symbol} {abs(change):.1f}% vs previous 30 days"
+
+
+def _distance_summary_card(card, totals, previous_totals, sport):
     """Replace only the displayed pace card; retain stored pace and calculations."""
     cycling = sport == "Cycling"
     distance = totals.cycling_distance if cycling else totals.running_distance
+    previous_distance = (
+        previous_totals.cycling_distance
+        if cycling
+        else previous_totals.running_distance
+    )
     missing = totals.cycling_missing if cycling else totals.running_missing
     return replace(card, key="total-distance", icon="↔",
                    label=f"Total {'Cycling' if cycling else 'Running'} Distance",
                    value="—" if distance is None else f"{distance:.1f} km",
-                   trend="Last 30 days",
+                   trend=_distance_trend_label(distance, previous_distance),
                    context=(f"{missing} activities missing distance" if missing
                             else "Cycling" if cycling else "Running + trail"))
 
@@ -530,6 +563,10 @@ def _remember_distance_sport():
 
 def _show_development_summary_cards(cards, athlete, reference_day):
     totals = recent_activity_summary(athlete.history, reference_day)
+    previous_totals = recent_activity_summary(
+        athlete.history,
+        reference_day - timedelta(days=30),
+    )
     st.markdown("<style>" + _development_summary_styles() + """
     .st-key-development_kpi_row .development-kpi-grid {grid-template-columns:minmax(0,1fr);}
     .st-key-development_distance_card {position:relative;}
@@ -557,7 +594,12 @@ def _show_development_summary_cards(cards, athlete, reference_day):
                                      on_change=_remember_distance_sport)
                         choice = st.session_state.get("development_distance_sport", choice)
                         st.markdown(_development_summary_cards_html((
-                            _distance_summary_card(card, totals, choice),)), unsafe_allow_html=True)
+                            _distance_summary_card(
+                                card,
+                                totals,
+                                previous_totals,
+                                choice,
+                            ),)), unsafe_allow_html=True)
                 else:
                     st.markdown(_development_summary_cards_html((card,)), unsafe_allow_html=True)
 

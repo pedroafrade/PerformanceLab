@@ -136,6 +136,27 @@ def test_guidance_heading_and_body_are_one_flow():
     assert html.index("Why &lt;today&gt;") < html.index("First &amp; second")
     st.markdown.assert_not_called()
 
+
+def test_daily_guidance_sections_share_one_container():
+    st = MagicMock()
+    row = helper("today_page.py", "_guidance_item_html")
+    helper(
+        "today_page.py",
+        "_show_combined_guidance_card",
+        st=st,
+        _guidance_item_html=row,
+    )(
+        reasons=("Reason",),
+        cautions=("Caution",),
+    )
+    html = st.html.call_args.args[0]
+    assert "Why this workout today" in html
+    assert "Attention during training" in html
+    st.container.assert_called_once_with(
+        border=True,
+        key="today_guidance_combined",
+    )
+
 @pytest.mark.parametrize("with_zones", [False, True])
 def test_compact_profile_preserves_values_and_escapes(with_zones):
     profile = SimpleNamespace(uses_manual_zones=True, zones=[

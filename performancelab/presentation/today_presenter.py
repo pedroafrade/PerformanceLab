@@ -170,7 +170,11 @@ class TodayPresenter:
 
         recovery = dashboard.recovery
         training_load = (
-            dashboard.training_load
+            dashboard.training_load_at(
+                reference_time=reference_time,
+            )
+            if reference_time is not None
+            else dashboard.training_load
         )
 
         training_state = (

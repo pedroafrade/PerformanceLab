@@ -545,6 +545,11 @@ def test_exposes_time_aware_readiness():
         )
         .recovery_score
     )
+    reference_state = athlete.analytics.training_state_at(
+        reference_time=reference_time
+    )
+    assert result.training_load.chronic_load == reference_state.ctl
+    assert result.training_load.acute_load == reference_state.atl
 
 
 def test_today_readiness_falls_back_to_daily_estimate():
