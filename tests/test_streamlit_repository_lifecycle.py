@@ -20,16 +20,23 @@ def source() -> str:
     )
 
 
-def test_repository_bundle_is_reused_by_one_streamlit_session():
+def test_repository_bundle_is_rotated_between_streamlit_reruns():
     app = source()
 
     assert (
-        'if "_repository_bundle" not in st.session_state:'
+        'st.session_state.pop(\n'
+        '        "_repository_bundle",'
+        in app
+    )
+    assert "previous_repository_bundle.close()" in app
+    assert (
+        'st.session_state["_repository_bundle"] = (\n'
+        '    repository_bundle'
         in app
     )
     assert (
-        'repository_bundle = st.session_state["_repository_bundle"]'
-        in app
+        'if "_repository_bundle" not in st.session_state:'
+        not in app
     )
 
 

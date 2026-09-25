@@ -191,21 +191,30 @@ exception_reporter = (
     )
 )
 
-if "_repository_bundle" not in st.session_state:
-
-    st.session_state["_repository_bundle"] = (
-        build_repository_bundle(
-            runtime_configuration,
-            data_directory=(
-                PROJECT_ROOT
-                / "data"
-            ),
-        )
+previous_repository_bundle = (
+    st.session_state.pop(
+        "_repository_bundle",
+        None,
     )
+)
 
-repository_bundle = st.session_state["_repository_bundle"]
+if previous_repository_bundle is not None:
 
-repository_bundle.rollback_pending_read_transaction()
+    previous_repository_bundle.close()
+
+repository_bundle = (
+    build_repository_bundle(
+        runtime_configuration,
+        data_directory=(
+            PROJECT_ROOT
+            / "data"
+        ),
+    )
+)
+
+st.session_state["_repository_bundle"] = (
+    repository_bundle
+)
 
 daily_brief_generation_service = (
     build_daily_brief_generation_service(
