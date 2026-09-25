@@ -204,6 +204,9 @@ if "_repository_bundle" not in st.session_state:
     )
 
 repository_bundle = st.session_state["_repository_bundle"]
+
+repository_bundle.rollback_pending_read_transaction()
+
 daily_brief_generation_service = (
     build_daily_brief_generation_service(
         repository_bundle=repository_bundle,
