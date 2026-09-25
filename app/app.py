@@ -1111,11 +1111,19 @@ operational_logger.info(
     "streamlit_current_user_ready"
 )
 
+operational_logger.info(
+    "streamlit_alpha_consent_check_started"
+)
+
 alpha_participation_permitted = (
     alpha_participation_consent_manager
     .is_permitted(
         user_id=current_user.user_id
     )
+)
+
+operational_logger.info(
+    "streamlit_alpha_consent_check_completed"
 )
 
 if not alpha_participation_permitted:
@@ -1131,6 +1139,10 @@ if not alpha_participation_permitted:
 
 
 if "athlete" not in st.session_state:
+
+    operational_logger.info(
+        "streamlit_athlete_load_started"
+    )
 
     try:
         load_result = (
@@ -1149,6 +1161,10 @@ if "athlete" not in st.session_state:
 
         st.session_state.athlete = (
             load_result.athlete
+        )
+
+        operational_logger.info(
+            "streamlit_athlete_load_completed"
         )
 
     except PermissionError:
