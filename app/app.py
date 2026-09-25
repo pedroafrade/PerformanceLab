@@ -191,15 +191,19 @@ exception_reporter = (
     )
 )
 
-repository_bundle = (
-    build_repository_bundle(
-        runtime_configuration,
-        data_directory=(
-            PROJECT_ROOT
-            / "data"
-        ),
+if "_repository_bundle" not in st.session_state:
+
+    st.session_state["_repository_bundle"] = (
+        build_repository_bundle(
+            runtime_configuration,
+            data_directory=(
+                PROJECT_ROOT
+                / "data"
+            ),
+        )
     )
-)
+
+repository_bundle = st.session_state["_repository_bundle"]
 daily_brief_generation_service = (
     build_daily_brief_generation_service(
         repository_bundle=repository_bundle,
@@ -742,6 +746,8 @@ def delete_participant_account() -> None:
 
         return
 
+    close_repository_bundle()
+
     st.session_state.clear()
 
     st.logout()
@@ -877,6 +883,20 @@ def show_login_screen() -> None:
             args=("email",),
         )
 
+def close_repository_bundle() -> None:
+    """
+    Release persistence resources owned by this Streamlit session.
+    """
+
+    active_bundle = st.session_state.pop(
+        "_repository_bundle",
+        None,
+    )
+
+    if active_bundle is not None:
+
+        active_bundle.close()
+
 def logout() -> None:
     """
     End the current OIDC user session.
@@ -903,6 +923,8 @@ def logout() -> None:
         "daily_brief_timezone_selection",
         None,
     )
+
+    close_repository_bundle()
 
     st.logout()
 
@@ -1022,7 +1044,7 @@ if "current_user" not in st.session_state:
 
         st.button(
             "Sign out",
-            on_click=st.logout,
+            on_click=logout,
         )
 
         st.stop()
@@ -1045,7 +1067,7 @@ if "current_user" not in st.session_state:
 
         st.button(
             "Sign out",
-            on_click=st.logout,
+            on_click=logout,
         )
 
         st.stop()
@@ -1104,7 +1126,7 @@ if "athlete" not in st.session_state:
 
         st.button(
             "Sign out",
-            on_click=st.logout,
+            on_click=logout,
         )
 
         st.stop()
