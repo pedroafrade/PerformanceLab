@@ -129,7 +129,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="locked",
 )
-configure_operational_logging()
+operational_logger = (
+    configure_operational_logging()
+)
 
 if "correlation_id" not in st.session_state:
 
@@ -216,6 +218,10 @@ st.session_state["_repository_bundle"] = (
     repository_bundle
 )
 
+operational_logger.info(
+    "streamlit_repository_bundle_ready"
+)
+
 daily_brief_generation_service = (
     build_daily_brief_generation_service(
         repository_bundle=repository_bundle,
@@ -233,6 +239,10 @@ application_health = (
         runtime_configuration,
         repository_bundle,
     )
+)
+
+operational_logger.info(
+    "streamlit_application_health_checked"
 )
 
 if not application_health.ready:
@@ -993,6 +1003,10 @@ if "current_user" not in st.session_state:
 
     try:
 
+        operational_logger.info(
+            "streamlit_identity_provision_started"
+        )
+
         external_identity = (
             external_identity_from_claims(
                 st.user.to_dict()
@@ -1028,6 +1042,10 @@ if "current_user" not in st.session_state:
 
         st.session_state.current_user = (
             provision_result.user
+        )
+
+        operational_logger.info(
+            "streamlit_identity_provision_completed"
         )
 
     except PermissionError as error:
@@ -1087,6 +1105,10 @@ if "current_user" not in st.session_state:
 
 current_user: User = (
     st.session_state.current_user
+)
+
+operational_logger.info(
+    "streamlit_current_user_ready"
 )
 
 alpha_participation_permitted = (
