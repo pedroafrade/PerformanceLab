@@ -51,3 +51,35 @@ def test_every_logout_releases_the_session_repository_bundle():
         app.index("close_repository_bundle()")
         < app.index("st.session_state.clear()")
     )
+
+
+def test_active_athlete_load_commits_reconciliation_before_render():
+    app = source()
+    load_block = (
+        app.split(
+            'if "athlete" not in st.session_state:',
+            1,
+        )[1]
+        .split(
+            "except PermissionError:",
+            1,
+        )[0]
+    )
+
+    rollback = (
+        "repository_bundle."
+        "rollback_pending_read_transaction()"
+    )
+    transaction = (
+        "with repository_bundle.transaction():"
+    )
+    load = "LoadActiveAthlete("
+
+    assert rollback in load_block
+    assert transaction in load_block
+    assert load in load_block
+    assert (
+        load_block.index(rollback)
+        < load_block.index(transaction)
+        < load_block.index(load)
+    )

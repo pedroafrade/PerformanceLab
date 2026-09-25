@@ -1145,19 +1145,23 @@ if "athlete" not in st.session_state:
     )
 
     try:
-        load_result = (
-            LoadActiveAthlete(
-                repository=(
-                    athlete_repository
-                ),
-                authorization=(
-                    athlete_authorization
-                ),
+        repository_bundle.rollback_pending_read_transaction()
+
+        with repository_bundle.transaction():
+
+            load_result = (
+                LoadActiveAthlete(
+                    repository=(
+                        athlete_repository
+                    ),
+                    authorization=(
+                        athlete_authorization
+                    ),
+                )
+                .execute(
+                    current_user
+                )
             )
-            .execute(
-                current_user
-            )
-        )
 
         st.session_state.athlete = (
             load_result.athlete
