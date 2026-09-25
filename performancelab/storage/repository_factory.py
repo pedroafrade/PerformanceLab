@@ -137,6 +137,24 @@ class RepositoryBundle:
             self.engine is not None
             and self.connection is not None
         )
+    def rollback_pending_read_transaction(
+        self,
+    ) -> None:
+        """
+        End an implicit PostgreSQL read transaction.
+
+        SQLAlchemy begins a transaction for repository reads. Streamlit
+        callbacks can run after such a read and must clear it before opening
+        an explicit write transaction. Explicit nested transactions remain
+        rejected by transaction().
+        """
+
+        if (
+            self.connection is not None
+            and self.connection.in_transaction()
+        ):
+            self.connection.rollback()
+
     @contextmanager
     def transaction(
         self,

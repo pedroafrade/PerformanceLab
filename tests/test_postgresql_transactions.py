@@ -182,6 +182,38 @@ def test_rejects_nested_transaction():
         bundle.close()
 
 
+def test_rolls_back_pending_read_before_explicit_write():
+
+    bundle = postgresql_bundle()
+
+    try:
+
+        assert bundle.user_repository.list() == []
+        assert bundle.connection is not None
+        assert bundle.connection.in_transaction()
+
+        bundle.rollback_pending_read_transaction()
+
+        assert not bundle.connection.in_transaction()
+
+        with bundle.transaction():
+
+            bundle.user_repository.save(
+                coach_user()
+            )
+
+        assert (
+            bundle.user_repository.get(
+                "user-1"
+            ).email
+            == "coach@example.com"
+        )
+
+    finally:
+
+        bundle.close()
+
+
 def test_local_transaction_context_remains_available(
     tmp_path,
 ):

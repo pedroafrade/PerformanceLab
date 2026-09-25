@@ -353,9 +353,13 @@ resource "google_cloud_run_v2_job" "invitations" {
         image   = var.container_image
         command = ["python", "-m", "performancelab.application.invite_alpha_user"]
 
-        env {
-          name  = "PERFORMANCELAB_ENV"
-          value = "alpha"
+        dynamic "env" {
+          for_each = local.runtime_environment
+
+          content {
+            name  = env.key
+            value = env.value
+          }
         }
 
         env {

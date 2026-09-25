@@ -600,6 +600,8 @@ def resolve_training_coach(
             "Training Coach consent is required."
         )
 
+    repository_bundle.rollback_pending_read_transaction()
+
     with repository_bundle.transaction():
 
         result = (
@@ -681,6 +683,8 @@ def delete_participant_account() -> None:
 
     try:
 
+        repository_bundle.rollback_pending_read_transaction()
+
         DeleteParticipantData(
             daily_brief_privacy_repository=(
                 repository_bundle.daily_brief_privacy_repository
@@ -751,6 +755,8 @@ def accept_alpha_participation() -> None:
         st.session_state.current_user
     )
 
+    repository_bundle.rollback_pending_read_transaction()
+
     with repository_bundle.transaction():
 
         alpha_participation_consent_manager.accept(
@@ -769,6 +775,8 @@ def allow_training_coach() -> None:
     current_user = (
         st.session_state.current_user
     )
+
+    repository_bundle.rollback_pending_read_transaction()
 
     with repository_bundle.transaction():
 
@@ -790,6 +798,8 @@ def withdraw_training_coach() -> None:
     current_user = (
         st.session_state.current_user
     )
+
+    repository_bundle.rollback_pending_read_transaction()
 
     with repository_bundle.transaction():
 
@@ -814,6 +824,8 @@ def confirm_daily_brief_timezone(timezone_name: str) -> None:
         raise RuntimeError(
             "Timezone confirmation requires PostgreSQL persistence."
         )
+
+    repository_bundle.rollback_pending_read_transaction()
 
     with repository_bundle.transaction():
         daily_brief_timezone_store.confirm(
