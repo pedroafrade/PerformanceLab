@@ -27,12 +27,47 @@ def invite_alpha_user(email: str, invitation_repository) -> AlphaInvitation:
     return existing
 
 
+def list_alpha_invitations(invitation_repository) -> tuple[AlphaInvitation, ...]:
+    """Return invitations in a stable, administrator-friendly order."""
+
+    return tuple(
+        sorted(
+            invitation_repository.list(),
+            key=lambda invitation: invitation.email,
+        )
+    )
+
+
+def _print_invitation_list(invitation_repository) -> None:
+    """Print a compact invitation report for the Cloud Run job."""
+
+    print("EMAIL\tROLE\tSTATUS")
+    for invitation in list_alpha_invitations(invitation_repository):
+        status = "claimed" if invitation.is_claimed else "unclaimed"
+        print(f"{invitation.email}\t{invitation.role}\t{status}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Invite one athlete to the Journal private alpha."
+        description="Manage Journal private alpha invitations."
     )
-    parser.add_argument("email", help="Verified Google account email")
+    parser.add_argument(
+        "email",
+        nargs="?",
+        help="Email address to invite",
+    )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_invitations",
+        help="List invited email addresses and their status",
+    )
     args = parser.parse_args(argv)
+
+    if args.list_invitations and args.email:
+        parser.error("email cannot be combined with --list")
+    if not args.list_invitations and not args.email:
+        parser.error("provide an email address or --list")
 
     configuration = RuntimeConfiguration.from_mapping(dict(os.environ))
     if not configuration.uses_postgresql:
@@ -40,6 +75,12 @@ def main(argv: list[str] | None = None) -> int:
 
     repositories = build_repository_bundle(configuration)
     try:
+        if args.list_invitations:
+            _print_invitation_list(
+                repositories.alpha_invitation_repository
+            )
+            return 0
+
         with repositories.transaction():
             invitation = invite_alpha_user(
                 args.email,

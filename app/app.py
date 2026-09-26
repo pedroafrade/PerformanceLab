@@ -33,6 +33,7 @@ from components import (
     show_dashboard,
     show_development_page,
     show_metrics_guide_page,
+    show_onboarding_dialog,
     show_plan_page,
     show_selected_workout_route,
     show_settings_page,
@@ -478,12 +479,15 @@ def import_completed_activities(
         st.session_state.athlete
     )
 
-    result = ImportActivities(
-        repository=athlete_repository
-    ).execute(
-        athlete.athlete_id,
-        workouts,
-    )
+    repository_bundle.rollback_pending_read_transaction()
+
+    with repository_bundle.transaction():
+        result = ImportActivities(
+            repository=athlete_repository
+        ).execute(
+            athlete.athlete_id,
+            workouts,
+        )
 
     st.session_state.athlete = (
         result.athlete
@@ -491,6 +495,21 @@ def import_completed_activities(
     invalidate_plan_views(result.athlete.training_plan)
 
     return result
+
+def save_onboarding_progress(
+    athlete: Athlete,
+) -> None:
+    """Persist one onboarding step before rerunning the application."""
+
+    repository_bundle.rollback_pending_read_transaction()
+
+    with repository_bundle.transaction():
+        athlete_repository.save(
+            athlete
+        )
+
+    st.session_state.athlete = athlete
+    invalidate_daily_brief()
 
 def update_completed_workout(
     workout_id,
@@ -1185,6 +1204,18 @@ if "athlete" not in st.session_state:
         st.stop()
 
 athlete: Athlete = st.session_state.athlete
+
+if athlete.onboarding_completed is False:
+
+    show_onboarding_dialog(
+        athlete,
+        on_save=save_onboarding_progress,
+        on_import_activities=(
+            import_completed_activities
+        ),
+    )
+
+    st.stop()
 
 if st.session_state.pop("event_plan_refresh_requested", False):
     try:

@@ -142,6 +142,8 @@ def test_first_login_creates_athlete_for_email_only_invitation(
     athlete = repository_set[
         "athlete_repository"
     ].get(result.user.athlete_id)
+    assert athlete.onboarding_completed is False
+    assert athlete.onboarding_step == 1
     assert athlete.name == "Pedro"
     assert result.access_grant.athlete_id == athlete.athlete_id
     assert result.invitation.athlete_id == athlete.athlete_id

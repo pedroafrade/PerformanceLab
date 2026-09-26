@@ -188,7 +188,9 @@ class ProvisionInvitedUser:
 
         if athlete_id is None:
             athlete = Athlete(
-                name=(identity.name or "").strip()
+                name=(identity.name or "").strip(),
+                onboarding_completed=False,
+                onboarding_step=1,
             )
             athlete_id = athlete.athlete_id
             invitation = invitation.assign_athlete(

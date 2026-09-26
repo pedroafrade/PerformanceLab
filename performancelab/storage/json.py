@@ -1439,6 +1439,12 @@ def athlete_to_dict(athlete):
                 athlete.threshold_hr
             ),
 
+            "onboarding_completed": (
+                athlete.onboarding_completed
+            ),
+
+            "onboarding_step": athlete.onboarding_step,
+
             "heart_rate_zones": [
 
                 _heart_rate_zone_to_dict(
@@ -1667,6 +1673,15 @@ def athlete_from_dict(data):
 
         threshold_hr=athlete_data.get(
             "threshold_hr"
+        ),
+
+        onboarding_completed=athlete_data.get(
+            "onboarding_completed"
+        ),
+
+        onboarding_step=athlete_data.get(
+            "onboarding_step",
+            1,
         ),
 
         manual_heart_rate_zones=tuple(

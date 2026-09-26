@@ -14,7 +14,7 @@ if (-not (Get-Command gcloud.cmd -ErrorAction SilentlyContinue)) {
 
 $normalizedEmail = $Email.Trim().ToLowerInvariant()
 if (-not $normalizedEmail -or $normalizedEmail -notmatch "^[^@\s]+@[^@\s]+\.[^@\s]+$") {
-    throw "Provide a valid Google account email address."
+    throw "Provide a valid email address."
 }
 
 $configuredProject = (& gcloud.cmd config get-value project 2>$null).Trim()

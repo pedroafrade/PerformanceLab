@@ -37,6 +37,9 @@ from .elevation_profile import (
 from .import_panel import (
     show_import_panel,
 )
+from .onboarding import (
+    show_onboarding_dialog,
+)
 from .route_map import (
     show_route_map,
 )
@@ -84,6 +87,7 @@ __all__ = [
     "show_development_page",
     "show_elevation_profile",
     "show_import_panel",
+    "show_onboarding_dialog",
     "show_plan_page",
     "show_route_map",
     "show_selected_workout_route",

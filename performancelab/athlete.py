@@ -49,6 +49,9 @@ class Athlete:
     resting_hr: int | None = None
     threshold_hr: int | None = None
 
+    onboarding_completed: bool | None = None
+    onboarding_step: int = 1
+
     manual_heart_rate_zones: tuple[
         HeartRateZone,
         ...,
@@ -105,6 +108,20 @@ class Athlete:
     def __post_init__(
         self,
     ) -> None:
+
+        if self.onboarding_completed not in (None, False, True):
+            raise TypeError(
+                "onboarding_completed must be a boolean or None."
+            )
+
+        if (
+            not isinstance(self.onboarding_step, int)
+            or isinstance(self.onboarding_step, bool)
+            or self.onboarding_step not in range(1, 6)
+        ):
+            raise ValueError(
+                "onboarding_step must be between 1 and 5."
+            )
 
         self.analytics = AthleteAnalytics(
             self
