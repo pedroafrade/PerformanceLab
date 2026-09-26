@@ -78,7 +78,7 @@ def test_birth_year_uses_one_complete_scrollable_list():
     assert 'st.date_input(' not in profile
 
 
-def test_history_navigation_is_blocked_during_upload():
+def test_history_navigation_is_absent_during_upload():
     source = (
         ROOT / "app" / "components" / "onboarding.py"
     ).read_text(encoding="utf-8")
@@ -86,10 +86,19 @@ def test_history_navigation_is_blocked_during_upload():
     history = source.split("def _history_step", 1)[1].split(
         "def _review_step", 1
     )[0]
-    assert "upload_pending = show_import_panel(" in history
-    assert "disabled=upload_pending" in history
-    assert history.count("disabled=upload_pending") == 2
-    assert "Please wait for the selected activities" in history
+    assert 'mode_key = "onboarding_history_mode"' in history
+    assert 'if mode is None:' in history
+    assert '"Upload activities"' in history
+    assert '"Continue without activities"' in history
+    assert 'if not upload_completed:' in history
+    assert "Navigation" in history
+    assert history.index("if not upload_completed:") < history.index(
+        '"Continue",'
+    )
+    blocked = history.split("if not upload_completed:", 1)[1].split(
+        'if st.button(\n        "Continue",', 1
+    )[0]
+    assert "return" in blocked
 
 
 def test_account_deletion_refreshes_transaction_after_reads():

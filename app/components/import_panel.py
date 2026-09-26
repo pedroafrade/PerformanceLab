@@ -607,6 +607,10 @@ def show_import_panel(
         f"{key_prefix}_file_uploader_error"
     )
 
+    upload_completed_key = (
+        f"{key_prefix}_file_uploader_completed"
+    )
+
     pending_error = (
         st.session_state.pop(
             upload_error_key,
@@ -712,6 +716,10 @@ def show_import_panel(
     st.session_state[
         uploader_version_key
     ] = uploader_version + 1
+
+    st.session_state[
+        upload_completed_key
+    ] = True
 
     st.rerun()
 

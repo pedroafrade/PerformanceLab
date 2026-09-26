@@ -707,6 +707,10 @@ def test_successful_import_resets_uploader(
         == 1
     )
 
+    assert state[
+        "test_file_uploader_completed"
+    ] is True
+
     assert (
         state[
             "persisted_notice"
@@ -795,6 +799,10 @@ def test_failed_import_resets_uploader(
         ]
         == 1
     )
+
+    assert state[
+        "test_file_uploader_completed"
+    ] is True
 
     assert (
         state[

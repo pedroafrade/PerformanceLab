@@ -275,33 +275,60 @@ def _history_step(athlete, on_save, on_import_activities):
         "Upload past activities to populate training load and development trends. "
         "Multiple supported files can be selected together."
     )
-    upload_pending = show_import_panel(
+
+    mode_key = "onboarding_history_mode"
+    completed_key = "onboarding_history_file_uploader_completed"
+    mode = st.session_state.get(mode_key)
+
+    if mode is None:
+        upload, continue_without = st.columns(2)
+        with upload:
+            if st.button(
+                "Upload activities",
+                type="primary",
+                key="onboarding_history_upload",
+                use_container_width=True,
+            ):
+                st.session_state[mode_key] = "upload"
+                st.session_state.pop(completed_key, None)
+                st.rerun()
+        with continue_without:
+            if st.button(
+                "Continue without activities",
+                key="onboarding_history_without_upload",
+                use_container_width=True,
+            ):
+                _save_step(athlete, step=5, on_save=on_save)
+
+        _navigation(athlete, step=4, on_save=on_save)
+        return
+
+    upload_completed = st.session_state.get(completed_key, False)
+
+    show_import_panel(
         athlete,
         on_import_activities=on_import_activities,
         key_prefix="onboarding_history",
     )
 
-    if upload_pending:
+    if not upload_completed:
         st.info(
-            "Please wait for the selected activities to finish importing "
-            "before continuing or leaving setup."
+            "Choose the activity files and keep this page open. Navigation "
+            "will become available after the complete batch finishes."
         )
+        return
 
     if st.button(
         "Continue",
         type="primary",
         key="onboarding_history_continue",
         use_container_width=True,
-        disabled=upload_pending,
     ):
+        st.session_state.pop(mode_key, None)
+        st.session_state.pop(completed_key, None)
         _save_step(athlete, step=5, on_save=on_save)
 
-    _navigation(
-        athlete,
-        step=4,
-        on_save=on_save,
-        disabled=upload_pending,
-    )
+    _navigation(athlete, step=4, on_save=on_save)
 
 
 def _review_step(athlete, on_save):
