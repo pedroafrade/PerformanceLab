@@ -140,3 +140,10 @@ def test_account_deletion_refreshes_transaction_after_reads():
     assert "repository_bundle.rollback_pending_read_transaction()" in deletion
     assert "transaction_factory=(\n                deletion_transaction" in deletion
     assert 'operation="delete_participant_account"' in deletion
+
+def test_onboarding_dialog_cannot_be_dismissed_accidentally():
+    source = (
+        ROOT / "app" / "components" / "onboarding.py"
+    ).read_text(encoding="utf-8")
+
+    assert "dismissible=False" in source

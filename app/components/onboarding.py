@@ -357,7 +357,11 @@ def _review_step(athlete, on_save):
     _navigation(athlete, step=5, on_save=on_save)
 
 
-@st.dialog("Set up your athlete profile", width="large")
+@st.dialog(
+    "Set up your athlete profile",
+    width="large",
+    dismissible=False,
+)
 def show_onboarding_dialog(
     athlete,
     *,
