@@ -356,6 +356,23 @@ def invalidate_daily_brief() -> None:
     st.session_state.pop("daily_brief_resolution", None)
 
 
+def persist_athlete(athlete: Athlete) -> None:
+    """Commit one athlete aggregate without leaving an implicit transaction."""
+
+    repository_bundle.rollback_pending_read_transaction()
+
+    with repository_bundle.transaction():
+        athlete_repository.save(athlete)
+
+
+@st.dialog("Training plan", width="small")
+def show_plan_error(message: str) -> None:
+    """Present a plan-generation error without changing the page layout."""
+
+    st.error("Unable to generate the weekly training plan.")
+    st.caption(message)
+
+
 def invalidate_plan_views(plan=None) -> None:
     """Invalidate every view derived from the active training plan."""
 
@@ -570,7 +587,7 @@ def save_recovery_log_entry(entry) -> None:
     previous = list(athlete.recovery_log)
     athlete.recovery_log.append(entry)
     try:
-        athlete_repository.save(athlete)
+        persist_athlete(athlete)
     except Exception:
         athlete.recovery_log = previous
         raise
@@ -585,7 +602,7 @@ def delete_recovery_log_entry(entry_id: str) -> None:
         item for item in athlete.recovery_log if item.entry_id != entry_id
     ]
     try:
-        athlete_repository.save(athlete)
+        persist_athlete(athlete)
     except Exception:
         athlete.recovery_log = previous
         raise
@@ -603,7 +620,7 @@ def update_recovery_log_entry(entry) -> None:
     if not any(item.entry_id == entry.entry_id for item in previous):
         raise ValueError("Recovery log entry was not found.")
     try:
-        athlete_repository.save(athlete)
+        persist_athlete(athlete)
     except Exception:
         athlete.recovery_log = previous
         raise
@@ -1271,7 +1288,7 @@ if st.session_state.pop("event_plan_refresh_requested", False):
                 ),
                 workouts=list(previous_plan.workouts),
             )
-        athlete_repository.save(athlete)
+        persist_athlete(athlete)
         result = GenerateTrainingPlan(
             repository=athlete_repository
         ).execute(
@@ -1395,13 +1412,7 @@ page = st.session_state.page
 
 if st.session_state.plan_error:
 
-    st.error(
-        "Não foi possível gerar o plano semanal."
-    )
-
-    st.code(
-        st.session_state.plan_error
-    )
+    show_plan_error(st.session_state.plan_error)
 
     st.session_state.plan_error = None
 
@@ -1494,9 +1505,7 @@ elif page == "activities":
 
     if activities_changed:
 
-        athlete_repository.save(
-            athlete
-        )
+        persist_athlete(athlete)
 
     if st.session_state.pop(
         "activity_coach_refresh_requested",
@@ -1615,9 +1624,7 @@ st.session_state.athlete = athlete
 
 if should_save_athlete:
 
-    athlete_repository.save(
-        athlete,
-    )
+    persist_athlete(athlete)
 
 if (
     page == "athlete"

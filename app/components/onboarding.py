@@ -61,10 +61,6 @@ def _birth_date_inputs(current_value):
     """Render a birth date without the paged native year picker."""
 
     fallback = current_value or date(1990, 1, 1)
-    supplied = st.checkbox(
-        "Add birth date",
-        value=current_value is not None,
-    )
     year, month, day = st.columns(3)
     with year:
         selected_year = st.selectbox(
@@ -85,9 +81,6 @@ def _birth_date_inputs(current_value):
             range(1, 32),
             index=fallback.day - 1,
         )
-
-    if not supplied:
-        return None
 
     try:
         return date(selected_year, selected_month, selected_day)
@@ -234,6 +227,9 @@ def _events_step(athlete, on_save):
             ],
         )
         distance = st.number_input("Distance (km)", min_value=0.0, step=0.1)
+        elevation_gain = st.number_input(
+            "Elevation gain (m)", min_value=0.0, step=10.0
+        )
         priority = st.selectbox("Priority", ["A", "B", "C"])
         add_event = st.form_submit_button("Add event", use_container_width=True)
 
@@ -251,6 +247,7 @@ def _events_step(athlete, on_save):
                     date=event_date,
                     sport=sport,
                     distance=_optional_float(distance),
+                    elevation_gain=_optional_float(elevation_gain),
                 ),
                 priority=priority,
             )

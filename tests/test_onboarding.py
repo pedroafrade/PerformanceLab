@@ -63,6 +63,35 @@ def test_onboarding_reuses_existing_event_and_import_components():
     assert "on_import_activities=on_import_activities" in source
     assert '"Skip setup"' in source
     assert '"Finish setup"' in source
+    assert '"Add birth date"' not in source
+    assert '"Elevation gain (m)"' in source
+    assert "elevation_gain=_optional_float(elevation_gain)" in source
+
+
+def test_profile_and_event_changes_use_committed_persistence():
+    source = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
+
+    assert "def persist_athlete(athlete: Athlete)" in source
+    assert "with repository_bundle.transaction():" in source
+    assert "if should_save_athlete:\n\n    persist_athlete(athlete)" in source
+
+
+def test_plan_error_uses_an_english_dialog():
+    source = (ROOT / "app" / "app.py").read_text(encoding="utf-8")
+
+    assert '@st.dialog("Training plan", width="small")' in source
+    assert 'st.error("Unable to generate the weekly training plan.")' in source
+    assert '"Não foi possível gerar o plano semanal."' not in source
+
+
+def test_settings_birth_date_uses_all_twelve_months():
+    source = (
+        ROOT / "app" / "components" / "athlete_panel.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'range(1, 13)' in source
+    assert 'key="athlete_edit_birth_month"' in source
+    assert 'key="athlete_edit_birth_date"' not in source
 
 
 def test_birth_year_uses_one_complete_scrollable_list():

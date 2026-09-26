@@ -4,6 +4,7 @@ PerformanceLab
 Athlete Panel Component.
 """
 
+from calendar import month_name
 from datetime import date
 
 import streamlit as st
@@ -24,7 +25,9 @@ _EDIT_STATE_KEY = "athlete_edit_mode"
 
 _FORM_KEYS = (
     "athlete_edit_name",
-    "athlete_edit_birth_date",
+    "athlete_edit_birth_year",
+    "athlete_edit_birth_month",
+    "athlete_edit_birth_day",
     "athlete_edit_gender",
     "athlete_edit_height",
     "athlete_edit_weight",
@@ -87,9 +90,10 @@ def _start_editing(
         "athlete_edit_name"
     ] = athlete.name or ""
 
-    st.session_state[
-        "athlete_edit_birth_date"
-    ] = athlete.birth_date
+    birth_date = athlete.birth_date or date(1990, 1, 1)
+    st.session_state["athlete_edit_birth_year"] = birth_date.year
+    st.session_state["athlete_edit_birth_month"] = birth_date.month
+    st.session_state["athlete_edit_birth_day"] = birth_date.day
 
     st.session_state[
         "athlete_edit_gender"
@@ -603,12 +607,31 @@ def _show_athlete_form(
             key="athlete_edit_name",
         )
 
-        birth_date = st.date_input(
-            "Birth date",
-            key="athlete_edit_birth_date",
-            min_value=date(1900, 1, 1),
-            max_value=date.today(),
-        )
+        birth_columns = st.columns(3)
+        with birth_columns[0]:
+            birth_year = st.selectbox(
+                "Birth year",
+                range(date.today().year, 1899, -1),
+                key="athlete_edit_birth_year",
+            )
+        with birth_columns[1]:
+            birth_month = st.selectbox(
+                "Birth month",
+                range(1, 13),
+                key="athlete_edit_birth_month",
+                format_func=lambda value: month_name[value],
+            )
+        with birth_columns[2]:
+            birth_day = st.selectbox(
+                "Birth day",
+                range(1, 32),
+                key="athlete_edit_birth_day",
+            )
+
+        try:
+            birth_date = date(birth_year, birth_month, birth_day)
+        except ValueError:
+            birth_date = False
 
         gender = st.selectbox(
             "Gender",
@@ -958,6 +981,22 @@ def _show_athlete_form(
 
             st.error(
                 "Name cannot be empty."
+            )
+
+            return athlete
+
+        if birth_date is False:
+
+            st.error(
+                "Enter a valid birth date."
+            )
+
+            return athlete
+
+        if birth_date > date.today():
+
+            st.error(
+                "Birth date cannot be in the future."
             )
 
             return athlete
