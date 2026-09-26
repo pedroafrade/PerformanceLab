@@ -5,6 +5,7 @@ Streamlit application.
 """
 
 import os
+from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
 
@@ -716,6 +717,16 @@ def delete_participant_account() -> None:
         st.session_state.current_user
     )
 
+    @contextmanager
+    def deletion_transaction():
+        """Clear reads performed by the deletion use case before writing."""
+
+        repository_bundle.rollback_pending_read_transaction()
+
+        with repository_bundle.transaction():
+
+            yield
+
     try:
 
         repository_bundle.rollback_pending_read_transaction()
@@ -752,7 +763,7 @@ def delete_participant_account() -> None:
                 athlete_authorization
             ),
             transaction_factory=(
-                repository_bundle.transaction
+                deletion_transaction
             ),
         ).execute(
             current_user
@@ -765,7 +776,13 @@ def delete_participant_account() -> None:
         FileNotFoundError,
         KeyError,
         RuntimeError,
-    ):
+    ) as error:
+
+        capture_exception(
+            error,
+            operation="delete_participant_account",
+            reporter=exception_reporter,
+        )
 
         st.session_state[
             "participant_deletion_error"

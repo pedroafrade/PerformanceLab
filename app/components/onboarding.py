@@ -1,5 +1,6 @@
 """First-login setup for newly provisioned athlete accounts."""
 
+from calendar import month_name
 from datetime import date
 
 import streamlit as st
@@ -33,13 +34,14 @@ def _save_step(athlete, *, step, on_save):
     st.rerun()
 
 
-def _navigation(athlete, *, step, on_save):
+def _navigation(athlete, *, step, on_save, disabled=False):
     previous, spacer, skip = st.columns([1, 1, 1])
     with previous:
         if step > 1 and st.button(
             "Back",
             key=f"onboarding_back_{step}",
             use_container_width=True,
+            disabled=disabled,
         ):
             _save_step(athlete, step=step - 1, on_save=on_save)
     with skip:
@@ -47,11 +49,50 @@ def _navigation(athlete, *, step, on_save):
             "Skip setup",
             key=f"onboarding_skip_{step}",
             use_container_width=True,
+            disabled=disabled,
         ):
             athlete.onboarding_completed = True
             athlete.onboarding_step = 5
             on_save(athlete)
             st.rerun()
+
+
+def _birth_date_inputs(current_value):
+    """Render a birth date without the paged native year picker."""
+
+    fallback = current_value or date(1990, 1, 1)
+    supplied = st.checkbox(
+        "Add birth date",
+        value=current_value is not None,
+    )
+    year, month, day = st.columns(3)
+    with year:
+        selected_year = st.selectbox(
+            "Year",
+            range(date.today().year, 1899, -1),
+            index=date.today().year - fallback.year,
+        )
+    with month:
+        selected_month = st.selectbox(
+            "Month",
+            range(1, 13),
+            index=fallback.month - 1,
+            format_func=lambda value: month_name[value],
+        )
+    with day:
+        selected_day = st.selectbox(
+            "Day",
+            range(1, 32),
+            index=fallback.day - 1,
+        )
+
+    if not supplied:
+        return None
+
+    try:
+        return date(selected_year, selected_month, selected_day)
+    except ValueError:
+        return False
 
 
 def _profile_step(athlete, on_save):
@@ -63,12 +104,7 @@ def _profile_step(athlete, on_save):
 
     with st.form("onboarding_profile"):
         name = st.text_input("Name", value=athlete.name)
-        birth_date = st.date_input(
-            "Birth date",
-            value=athlete.birth_date,
-            min_value=date(1900, 1, 1),
-            max_value=date.today(),
-        )
+        birth_date = _birth_date_inputs(athlete.birth_date)
         gender = st.selectbox(
             "Gender",
             genders,
@@ -84,6 +120,12 @@ def _profile_step(athlete, on_save):
     if submitted:
         if not name.strip():
             st.error("Name is required.")
+            return
+        if birth_date is False:
+            st.error("Enter a valid birth date.")
+            return
+        if birth_date is not None and birth_date > date.today():
+            st.error("Birth date cannot be in the future.")
             return
         athlete.name = name.strip()
         athlete.birth_date = birth_date
@@ -233,21 +275,33 @@ def _history_step(athlete, on_save, on_import_activities):
         "Upload past activities to populate training load and development trends. "
         "Multiple supported files can be selected together."
     )
-    show_import_panel(
+    upload_pending = show_import_panel(
         athlete,
         on_import_activities=on_import_activities,
         key_prefix="onboarding_history",
     )
+
+    if upload_pending:
+        st.info(
+            "Please wait for the selected activities to finish importing "
+            "before continuing or leaving setup."
+        )
 
     if st.button(
         "Continue",
         type="primary",
         key="onboarding_history_continue",
         use_container_width=True,
+        disabled=upload_pending,
     ):
         _save_step(athlete, step=5, on_save=on_save)
 
-    _navigation(athlete, step=4, on_save=on_save)
+    _navigation(
+        athlete,
+        step=4,
+        on_save=on_save,
+        disabled=upload_pending,
+    )
 
 
 def _review_step(athlete, on_save):

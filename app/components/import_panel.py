@@ -591,7 +591,7 @@ def show_import_panel(
     *,
     on_import_activities,
     key_prefix: str = "activity",
-) -> None:
+) -> bool:
     """
     Display the activity file import panel.
 
@@ -647,7 +647,7 @@ def show_import_panel(
 
     if not uploaded_files:
 
-        return
+        return False
 
     try:
 
@@ -714,3 +714,5 @@ def show_import_panel(
     ] = uploader_version + 1
 
     st.rerun()
+
+    return True
