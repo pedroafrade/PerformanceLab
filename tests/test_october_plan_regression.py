@@ -11,7 +11,9 @@ import pytest
 
 from performancelab import Athlete
 from performancelab.coaching.context import CoachContext
+from performancelab.coaching.strategies.base import BaseStrategy
 from performancelab.coaching.strategies.peak import PeakStrategy
+from performancelab.coaching.strategy import StrategyPlan
 from performancelab.race.entry import EventEntry
 from performancelab.race.event import Event
 from performancelab.storage import athlete_from_dict, athlete_to_dict
@@ -19,7 +21,11 @@ from performancelab.training.planning.planner import Planner
 
 
 def test_sao_silvestre_and_smat_share_horizon():
-    athlete = Athlete(name="October regression")
+    athlete = Athlete(
+        name="October regression",
+        usual_weekly_sessions=3,
+        usual_weekly_minutes=180,
+    )
     road = Event(name="São Silvestre", date=date(2026, 12, 26),
                  sport="Road Running", distance=10, elevation_gain=105)
     trail = Event(name="SMAT", date=date(2027, 1, 31),
@@ -32,6 +38,19 @@ def test_sao_silvestre_and_smat_share_horizon():
     plan = Planner().build_training_plan(athlete=athlete, today=date(2026, 10, 1))
     assert plan.primary_event_id == trail.event_id
     assert plan.end_date == date(2027, 2, 7)
+
+    workouts_by_day = {
+        workout.day: workout
+        for workout in plan.workouts
+    }
+    assert date(2026, 12, 26) in workouts_by_day
+    assert date(2026, 12, 27) not in workouts_by_day
+
+    assert any(
+        workout.title == "Hill Run"
+        and workout.day < trail.date
+        for workout in plan.workouts
+    )
 
 
 @pytest.mark.parametrize("rpe", [5, 8])
@@ -129,3 +148,40 @@ def test_training_routine_round_trips_in_athlete_snapshot():
 
     assert restored.usual_weekly_sessions == 5
     assert restored.usual_weekly_minutes == 420
+
+
+def test_long_session_is_capped_to_a_sustainable_weekly_share():
+    strategy = StrategyPlan(
+        strategy="PeakStrategy",
+        phase="Peak",
+        volume_factor=0.9,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=4,
+        target_weekly_minutes=180,
+        long_session_minutes=160,
+    )
+
+    limited = Planner._limit_long_session_share(strategy)
+
+    assert limited.long_session_minutes == 115
+
+
+def test_base_starts_from_observed_running_long_duration():
+    context = SimpleNamespace(
+        tsb=0,
+        average_rpe=None,
+        next_event=None,
+        phase_event=None,
+        primary_event=None,
+        weekly_sessions_reference=3,
+        weekly_minutes_reference=180,
+        training_reference=SimpleNamespace(
+            typical_running_long_session_minutes=67.0,
+        ),
+    )
+
+    plan = BaseStrategy().build(context)
+
+    assert plan.long_session_minutes == 65

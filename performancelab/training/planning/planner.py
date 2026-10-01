@@ -50,6 +50,7 @@ MIN_DAYS_BETWEEN_LONG_AND_INTENSITY = 2
 POST_PRIMARY_EVENT_RECOVERY_DAYS = 7
 MIN_EVENT_BASED_LONG_SESSION_MINUTES = 90
 MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
+MAX_LONG_SESSION_WEEKLY_VOLUME_RATIO = 0.65
 AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS = 2
 
 EVENT_COMPLETE_REST_DAYS = 1
@@ -253,6 +254,12 @@ class Planner:
             )
         )
 
+        strategy_plan = (
+            self._limit_long_session_share(
+                strategy_plan
+            )
+        )
+
         slots = self.structure_generator.generate(
             strategy_plan=strategy_plan,
             availability=resolved_availability,
@@ -283,6 +290,14 @@ class Planner:
                 context.competition_block_events
             ),
             event_durations=event_durations,
+        )
+
+        slots = self._protect_post_event_recovery(
+            slots=slots,
+            week_start=start_date,
+            event_entries=(
+                context.competition_block_events
+            ),
         )
 
         print()
@@ -912,6 +927,46 @@ class Planner:
         return max(
             MIN_EVENT_BASED_LONG_SESSION_MINUTES,
             rounded_ceiling,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _limit_long_session_share(
+        strategy_plan,
+    ):
+        """Keep one long workout proportional to the weekly volume."""
+
+        if (
+            strategy_plan.phase
+            not in {"Base", "Build", "Peak"}
+            or strategy_plan.long_sessions <= 0
+            or strategy_plan.long_session_minutes is None
+            or strategy_plan.target_weekly_minutes is None
+        ):
+            return strategy_plan
+
+        maximum_long_minutes = max(
+            30,
+            int(
+                (
+                    strategy_plan.target_weekly_minutes
+                    * MAX_LONG_SESSION_WEEKLY_VOLUME_RATIO
+                )
+                // 5
+                * 5
+            ),
+        )
+
+        if (
+            strategy_plan.long_session_minutes
+            <= maximum_long_minutes
+        ):
+            return strategy_plan
+
+        return replace(
+            strategy_plan,
+            long_session_minutes=maximum_long_minutes,
         )
 
     # ======================================================
@@ -1814,6 +1869,90 @@ class Planner:
                 slots=updated_slots,
             )
         )
+
+    # ======================================================
+
+    @staticmethod
+    def _protect_post_event_recovery(
+        *,
+        slots: tuple[DraftTrainingSlot, ...],
+        week_start: date,
+        event_entries: tuple[object, ...],
+    ) -> tuple[DraftTrainingSlot, ...]:
+        """Remove training placed too soon after a registered race."""
+
+        protected_dates: set[date] = set()
+        no_intensity_dates: set[date] = set()
+
+        for event_entry in event_entries:
+            event = getattr(event_entry, "event", None)
+            event_date = getattr(event, "date", None)
+
+            if event_date is None:
+                continue
+
+            effort_distance = getattr(
+                event,
+                "effort_distance",
+                None,
+            )
+            rest_days = (
+                DEMANDING_EVENT_COMPLETE_REST_DAYS
+                if (
+                    isinstance(effort_distance, (int, float))
+                    and not isinstance(effort_distance, bool)
+                    and effort_distance
+                    >= DEMANDING_EVENT_EFFORT_DISTANCE
+                )
+                else EVENT_COMPLETE_REST_DAYS
+            )
+
+            protected_dates.update(
+                event_date + timedelta(days=offset)
+                for offset in range(1, rest_days + 1)
+            )
+            no_intensity_dates.update(
+                event_date + timedelta(days=offset)
+                for offset in range(1, EVENT_NO_INTENSITY_DAYS + 1)
+            )
+
+        if not protected_dates and not no_intensity_dates:
+            return slots
+
+        updated = []
+
+        for slot in slots:
+            slot_date = week_start + timedelta(
+                days=slot.weekday.value
+            )
+
+            must_rest = slot_date in protected_dates
+            must_avoid_intensity = (
+                slot_date in no_intensity_dates
+                and slot.purpose is SessionPurpose.INTENSITY
+            )
+
+            if (
+                (must_rest or must_avoid_intensity)
+                and slot.purpose
+                not in {
+                    SessionPurpose.RACE,
+                    SessionPurpose.SHAKEOUT,
+                }
+            ):
+                updated.append(
+                    DraftTrainingSlot.rest(
+                        slot.weekday,
+                        notes=(
+                            "Post-race recovery protected after "
+                            "a registered event."
+                        ),
+                    )
+                )
+            else:
+                updated.append(slot)
+
+        return tuple(updated)
     # ======================================================
 
     @staticmethod
@@ -2301,7 +2440,17 @@ class Planner:
         Regeneration strategy through CoachContext.
         """
 
-        if context.days_since_event != 1:
+        days_since_event = context.days_since_event
+
+        if (
+            days_since_event is None
+            or days_since_event < 1
+            or days_since_event
+            > max(
+                DEMANDING_EVENT_COMPLETE_REST_DAYS,
+                EVENT_NO_INTENSITY_DAYS,
+            )
+        ):
             return constraints
 
         previous_entry = context.previous_event
@@ -2343,8 +2492,19 @@ class Planner:
         protected_days = []
         no_intensity_days = []
 
+        remaining_rest_days = max(
+            0,
+            recovery_days - days_since_event + 1,
+        )
+        remaining_no_intensity_days = max(
+            0,
+            EVENT_NO_INTENSITY_DAYS
+            - days_since_event
+            + 1,
+        )
+
         for day_offset in range(
-            recovery_days
+            remaining_rest_days
         ):
 
             protected_date = (
@@ -2363,7 +2523,7 @@ class Planner:
                     )
                 )
         for day_offset in range(
-            EVENT_NO_INTENSITY_DAYS
+            remaining_no_intensity_days
         ):
 
             protected_date = (

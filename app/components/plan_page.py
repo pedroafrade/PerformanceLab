@@ -6998,10 +6998,11 @@ div[data-testid="stPopoverBody"] {
 
         (
             reset_column,
+            regenerate_column,
             cancel_column,
             generate_column,
         ) = st.columns(
-            [1, 1, 1],
+            [1, 1, 1, 1],
             gap="small",
         )
 
@@ -7021,6 +7022,25 @@ div[data-testid="stPopoverBody"] {
                 ] = (
                     builder_draft.reset()
                 )
+
+        with regenerate_column:
+            with st.popover(
+                "Regenerate plan",
+                use_container_width=True,
+            ):
+                st.markdown("**Replace the current plan?**")
+                st.caption(
+                    "A new plan will be generated from the latest athlete "
+                    "profile, training history and events. Unsaved manual "
+                    "changes in this editor will be discarded."
+                )
+                if st.button(
+                    "Confirm regeneration",
+                    key="confirm-plan-regeneration",
+                    use_container_width=True,
+                    type="primary",
+                ):
+                    on_generate_plan()
 
         with cancel_column:
 

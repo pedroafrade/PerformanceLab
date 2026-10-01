@@ -68,6 +68,16 @@ class BaseStrategy(CoachStrategy):
             "weekly_minutes_reference",
             None,
         )
+        training_reference = getattr(
+            context,
+            "training_reference",
+            None,
+        )
+        typical_long_minutes = getattr(
+            training_reference,
+            "typical_running_long_session_minutes",
+            0.0,
+        )
 
         if weekly_sessions is not None:
             target_sessions = weekly_sessions
@@ -135,7 +145,17 @@ class BaseStrategy(CoachStrategy):
             if weekly_minutes is not None
             else 360
         )
-        long_session_minutes = min(90, target_weekly_minutes)
+        long_session_minutes = min(
+            (
+                max(
+                    30,
+                    int(round(typical_long_minutes / 5.0) * 5),
+                )
+                if typical_long_minutes > 0
+                else 90
+            ),
+            target_weekly_minutes,
+        )
 
         return StrategyPlan(
             strategy=self.name,

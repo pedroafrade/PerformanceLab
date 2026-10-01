@@ -893,6 +893,30 @@ def test_blocks_first_recovery_day_after_short_event(
         Weekday.WEDNESDAY
     )
 
+
+def test_blocks_intensity_on_second_day_after_event(
+    default_constraints,
+):
+    context = SimpleNamespace(
+        days_since_event=2,
+        today=date(2026, 9, 14),
+        previous_event=SimpleNamespace(
+            event=SimpleNamespace(
+                effort_distance=11.1,
+            ),
+        ),
+    )
+
+    result = Planner._block_event_recovery_days(
+        constraints=default_constraints,
+        context=context,
+        week_start=date(2026, 9, 14),
+    )
+
+    assert not result.is_blocked(Weekday.MONDAY)
+    assert not result.allows_intensity(Weekday.MONDAY)
+    assert result.allows_intensity(Weekday.TUESDAY)
+
 def test_event_removes_session_before_shakeout_block():
 
     slots = [

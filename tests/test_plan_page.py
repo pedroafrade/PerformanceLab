@@ -2796,6 +2796,17 @@ def test_existing_plan_uses_edit_plan_action():
     assert "len(plan)" not in source
 
 
+def test_edit_plan_offers_confirmed_full_regeneration():
+    source = inspect.getsource(
+        _show_plan_generation_confirmation
+    )
+
+    assert '"Regenerate plan"' in source
+    assert '"Confirm regeneration"' in source
+    assert "on_generate_plan()" in source
+    assert "Unsaved manual" in source
+
+
 def test_plan_progression_charts_are_keyed_by_active_revision():
     source = inspect.getsource(show_plan_page)
 
