@@ -58,6 +58,26 @@ class BaseStrategy(CoachStrategy):
 
         focus = "aerobic endurance"
 
+        weekly_sessions = getattr(
+            context,
+            "weekly_sessions_reference",
+            None,
+        )
+        weekly_minutes = getattr(
+            context,
+            "weekly_minutes_reference",
+            None,
+        )
+
+        if weekly_sessions is not None:
+            target_sessions = weekly_sessions
+            intensity_sessions = min(
+                intensity_sessions,
+                max(0, target_sessions - 2),
+            )
+            long_sessions = min(long_sessions, target_sessions)
+            recovery_days = max(recovery_days, 7 - target_sessions)
+
         should_reduce_volume = getattr(
             context,
             "should_reduce_volume",
@@ -110,6 +130,13 @@ class BaseStrategy(CoachStrategy):
                 f"Build a strong aerobic foundation for {event_name}."
             )
 
+        target_weekly_minutes = (
+            int(round((weekly_minutes * volume_factor) / 5.0) * 5)
+            if weekly_minutes is not None
+            else 360
+        )
+        long_session_minutes = min(90, target_weekly_minutes)
+
         return StrategyPlan(
             strategy=self.name,
             phase=self.phase,
@@ -140,9 +167,9 @@ class BaseStrategy(CoachStrategy):
 
             race_specificity=0.00,
 
-            target_weekly_minutes=360,
+            target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=400.0 * volume_factor,
-            long_session_minutes=90,
+            long_session_minutes=long_session_minutes,
 
             objectives=tuple(objectives),
             guidelines=tuple(guidelines),

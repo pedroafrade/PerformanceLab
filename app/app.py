@@ -8,6 +8,7 @@ import os
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
+from functools import wraps
 
 from datetime import (
     date,
@@ -394,6 +395,30 @@ def invalidate_plan_views(plan=None) -> None:
         f"{getattr(plan, 'active_revision_id', 'current')}"
     )
     
+def committed_plan_action(action):
+    """Commit plan actions before publishing their results to the session."""
+    @wraps(action)
+    def execute(*args, **kwargs):
+        repository_bundle.rollback_pending_read_transaction()
+        with repository_bundle.transaction():
+            return action(*args, **kwargs)
+    return execute
+
+
+@committed_plan_action
+def generate_persisted_plan(athlete_id, *, today):
+    return GenerateTrainingPlan(repository=athlete_repository).execute(
+        athlete_id, today=today
+    )
+
+
+@committed_plan_action
+def apply_persisted_plan_draft(athlete_id, draft, *, today):
+    return ApplyPlanBuilderDraft(repository=athlete_repository).execute(
+        athlete_id, draft, today=today
+    )
+
+
 def regenerate_weekly_plan(
     draft: PlanBuilderDraft | None = None,
 ) -> None:
@@ -405,9 +430,7 @@ def regenerate_weekly_plan(
 
     if isinstance(draft, PlanBuilderDraft) and draft.has_changes:
         try:
-            result = ApplyPlanBuilderDraft(
-                repository=athlete_repository
-            ).execute(
+            result = apply_persisted_plan_draft(
                 athlete.athlete_id,
                 draft,
                 today=date.today(),
@@ -439,9 +462,7 @@ def regenerate_weekly_plan(
 
     try:
 
-        result = GenerateTrainingPlan(
-            repository=athlete_repository
-        ).execute(
+        result = generate_persisted_plan(
             athlete.athlete_id,
             today=date.today(),
         )
@@ -475,13 +496,15 @@ def regenerate_weekly_plan(
 def restore_training_plan_revision(
     revision_id: str,
 ) -> None:
-    result = RestoreTrainingPlanRevision(
-        repository=athlete_repository
-    ).execute(
-        st.session_state.athlete.athlete_id,
-        revision_id,
-        today=date.today(),
-    )
+    repository_bundle.rollback_pending_read_transaction()
+    with repository_bundle.transaction():
+        result = RestoreTrainingPlanRevision(
+            repository=athlete_repository
+        ).execute(
+            st.session_state.athlete.athlete_id,
+            revision_id,
+            today=date.today(),
+        )
     st.session_state.athlete = result.athlete
     st.session_state.notice = "Training plan revision restored."
     invalidate_plan_views(result.athlete.training_plan)
@@ -541,13 +564,15 @@ def update_completed_workout(
         st.session_state.athlete
     )
 
-    result = UpdateWorkout(
-        repository=athlete_repository
-    ).execute(
-        athlete.athlete_id,
-        workout_id,
-        update,
-    )
+    repository_bundle.rollback_pending_read_transaction()
+    with repository_bundle.transaction():
+        result = UpdateWorkout(
+            repository=athlete_repository
+        ).execute(
+            athlete.athlete_id,
+            workout_id,
+            update,
+        )
 
     st.session_state.athlete = (
         result.athlete
@@ -567,12 +592,14 @@ def delete_completed_workouts(
         st.session_state.athlete
     )
 
-    result = DeleteWorkouts(
-        repository=athlete_repository
-    ).execute(
-        athlete.athlete_id,
-        workout_ids,
-    )
+    repository_bundle.rollback_pending_read_transaction()
+    with repository_bundle.transaction():
+        result = DeleteWorkouts(
+            repository=athlete_repository
+        ).execute(
+            athlete.athlete_id,
+            workout_ids,
+        )
 
     st.session_state.athlete = (
         result.athlete
@@ -1289,9 +1316,7 @@ if st.session_state.pop("event_plan_refresh_requested", False):
                 workouts=list(previous_plan.workouts),
             )
         persist_athlete(athlete)
-        result = GenerateTrainingPlan(
-            repository=athlete_repository
-        ).execute(
+        result = generate_persisted_plan(
             athlete.athlete_id,
             today=(
                 previous_plan.start_date

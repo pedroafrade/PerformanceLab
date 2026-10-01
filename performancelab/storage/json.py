@@ -1439,6 +1439,14 @@ def athlete_to_dict(athlete):
                 athlete.threshold_hr
             ),
 
+            "usual_weekly_sessions": (
+                athlete.usual_weekly_sessions
+            ),
+
+            "usual_weekly_minutes": (
+                athlete.usual_weekly_minutes
+            ),
+
             "onboarding_completed": (
                 athlete.onboarding_completed
             ),
@@ -1673,6 +1681,14 @@ def athlete_from_dict(data):
 
         threshold_hr=athlete_data.get(
             "threshold_hr"
+        ),
+
+        usual_weekly_sessions=athlete_data.get(
+            "usual_weekly_sessions"
+        ),
+
+        usual_weekly_minutes=athlete_data.get(
+            "usual_weekly_minutes"
         ),
 
         onboarding_completed=athlete_data.get(

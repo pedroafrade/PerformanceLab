@@ -54,6 +54,19 @@ class TaperStrategy(CoachStrategy):
         recovery_days = 4
         focus = "race readiness"
 
+        weekly_sessions = getattr(
+            context,
+            "weekly_sessions_reference",
+            None,
+        )
+        if weekly_sessions is not None:
+            target_sessions = min(target_sessions, weekly_sessions)
+            intensity_sessions = min(
+                intensity_sessions,
+                max(0, target_sessions - 1),
+            )
+            recovery_days = max(recovery_days, 7 - target_sessions)
+
         event_sport = self._event_sport(
             context
         )
@@ -150,9 +163,13 @@ class TaperStrategy(CoachStrategy):
             )
 
         typical_weekly_minutes = getattr(
-            training_reference,
-            "typical_weekly_minutes",
-            0.0,
+            context,
+            "weekly_minutes_reference",
+            getattr(
+                training_reference,
+                "typical_weekly_minutes",
+                0.0,
+            ),
         )
 
         if typical_weekly_minutes > 0:

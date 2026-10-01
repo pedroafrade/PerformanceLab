@@ -1199,7 +1199,7 @@ class WorkoutGenerator:
             0.0,
         )
 
-        if easy_pace <= 0:
+        if easy_pace is None or easy_pace <= 0:
             return None
 
         planned_distance = (
@@ -1254,7 +1254,7 @@ class WorkoutGenerator:
             0.0,
         )
 
-        if effort_pace <= 0:
+        if effort_pace is None or effort_pace <= 0:
 
             effort_pace = getattr(
                 training_state,
@@ -1262,7 +1262,7 @@ class WorkoutGenerator:
                 0.0,
             )
 
-        if effort_pace <= 0:
+        if effort_pace is None or effort_pace <= 0:
 
             typical_running_pace = getattr(
                 training_state,
@@ -1270,14 +1270,14 @@ class WorkoutGenerator:
                 0.0,
             )
 
-            if typical_running_pace > 0:
+            if typical_running_pace is not None and typical_running_pace > 0:
 
                 effort_pace = (
                     typical_running_pace
                     * LONG_RUN_FALLBACK_PACE_FACTOR
                 )
 
-        if effort_pace <= 0:
+        if effort_pace is None or effort_pace <= 0:
             return None
 
         effort_distance = (

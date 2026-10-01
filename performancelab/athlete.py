@@ -48,6 +48,8 @@ class Athlete:
     max_hr: int | None = None
     resting_hr: int | None = None
     threshold_hr: int | None = None
+    usual_weekly_sessions: int | None = None
+    usual_weekly_minutes: int | None = None
 
     onboarding_completed: bool | None = None
     onboarding_step: int = 1
@@ -121,6 +123,30 @@ class Athlete:
         ):
             raise ValueError(
                 "onboarding_step must be between 1 and 5."
+            )
+
+        if (
+            self.usual_weekly_sessions is not None
+            and (
+                not isinstance(self.usual_weekly_sessions, int)
+                or isinstance(self.usual_weekly_sessions, bool)
+                or self.usual_weekly_sessions not in range(1, 8)
+            )
+        ):
+            raise ValueError(
+                "usual_weekly_sessions must be between 1 and 7."
+            )
+
+        if (
+            self.usual_weekly_minutes is not None
+            and (
+                not isinstance(self.usual_weekly_minutes, int)
+                or isinstance(self.usual_weekly_minutes, bool)
+                or self.usual_weekly_minutes not in range(1, 3001)
+            )
+        ):
+            raise ValueError(
+                "usual_weekly_minutes must be between 1 and 3000."
             )
 
         self.analytics = AthleteAnalytics(

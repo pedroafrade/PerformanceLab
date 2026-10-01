@@ -73,16 +73,35 @@ class BuildStrategy(CoachStrategy):
             )
 
         typical_weekly_minutes = getattr(
-            training_reference,
-            "typical_weekly_minutes",
-            0.0,
+            context,
+            "weekly_minutes_reference",
+            getattr(
+                training_reference,
+                "typical_weekly_minutes",
+                0.0,
+            ),
         )
 
         typical_weekly_sessions = getattr(
-            training_reference,
-            "typical_weekly_sessions",
-            0.0,
+            context,
+            "weekly_sessions_reference",
+            getattr(
+                training_reference,
+                "typical_weekly_sessions",
+                0.0,
+            ),
         )
+
+        if not getattr(
+            context,
+            "training_reference_is_declared",
+            True,
+        ):
+            warnings.append(
+                "Training history is limited; weekly volume uses a "
+                "conservative provisional baseline. Add your usual "
+                "training routine in Settings to improve the plan."
+            )
 
         typical_long_minutes = getattr(
             training_reference,

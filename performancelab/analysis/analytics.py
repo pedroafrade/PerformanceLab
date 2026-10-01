@@ -731,6 +731,33 @@ class AthleteAnalytics:
 
         return session_count / 4
 
+    @property
+    def recent_training_session_count(self) -> int:
+        """Return valid sessions in the latest rolling 28 days."""
+
+        today = date.today()
+        start_date = today - timedelta(days=27)
+
+        return sum(
+            1
+            for workout in self.history
+            if (
+                (
+                    workout.date.date()
+                    if isinstance(workout.date, datetime)
+                    else workout.date
+                )
+                is not None
+                and start_date
+                <= (
+                    workout.date.date()
+                    if isinstance(workout.date, datetime)
+                    else workout.date
+                )
+                <= today
+            )
+        )
+
     # ======================================================
     
     @staticmethod

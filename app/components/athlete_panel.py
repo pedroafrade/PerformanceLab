@@ -35,6 +35,8 @@ _FORM_KEYS = (
     "athlete_edit_max_hr",
     "athlete_edit_resting_hr",
     "athlete_edit_threshold_hr",
+    "athlete_edit_usual_weekly_sessions",
+    "athlete_edit_usual_weekly_minutes",
     "athlete_edit_manual_hr_zones",
     "athlete_edit_z1_lower",
     "athlete_edit_z1_upper",
@@ -134,6 +136,14 @@ def _start_editing(
     ] = int(
         athlete.threshold_hr or 0
     )
+
+    st.session_state[
+        "athlete_edit_usual_weekly_sessions"
+    ] = int(athlete.usual_weekly_sessions or 3)
+
+    st.session_state[
+        "athlete_edit_usual_weekly_minutes"
+    ] = int(athlete.usual_weekly_minutes or 180)
 
     manual_zones = (
         athlete.manual_heart_rate_zones
@@ -702,6 +712,24 @@ def _show_athlete_form(
             ),
         )
 
+        usual_weekly_sessions = st.number_input(
+            "Usual training sessions per week",
+            min_value=1,
+            max_value=7,
+            step=1,
+            key="athlete_edit_usual_weekly_sessions",
+            help="Use your sustainable routine, not an exceptional week.",
+        )
+
+        usual_weekly_minutes = st.number_input(
+            "Usual training time per week (minutes)",
+            min_value=30,
+            max_value=3000,
+            step=15,
+            key="athlete_edit_usual_weekly_minutes",
+            help="Include all endurance training in a typical week.",
+        )
+
         st.caption(
             "Heart-rate training zones:"
         )
@@ -1166,6 +1194,14 @@ def _show_athlete_form(
 
         athlete.threshold_hr = _optional_int(
             threshold_hr
+        )
+
+        athlete.usual_weekly_sessions = int(
+            usual_weekly_sessions
+        )
+
+        athlete.usual_weekly_minutes = int(
+            usual_weekly_minutes
         )
 
         athlete.manual_heart_rate_zones = (

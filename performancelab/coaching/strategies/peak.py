@@ -93,6 +93,23 @@ class PeakStrategy(CoachStrategy):
             0.0,
         )
 
+        # Use the same observed frequency as Build. A phase change is not
+        # evidence that the athlete can suddenly sustain five sessions.
+        typical_sessions = getattr(
+            context,
+            "weekly_sessions_reference",
+            getattr(training_reference, "typical_weekly_sessions", 0.0),
+        )
+        if typical_sessions > 0:
+            target_sessions = min(
+                target_sessions, max(1, int(typical_sessions + 0.5))
+            )
+            long_sessions = min(long_sessions, target_sessions)
+            intensity_sessions = min(
+                intensity_sessions, max(0, target_sessions - 2)
+            )
+            recovery_days = max(recovery_days, 7 - target_sessions)
+
         long_session_elevation_gain = None
 
         if (
@@ -156,6 +173,36 @@ class PeakStrategy(CoachStrategy):
                 f"Sharpen readiness for {event_name}."
             )
 
+        if typical_sessions > 0:
+            intensity_sessions = min(
+                intensity_sessions, max(0, target_sessions - 2)
+            )
+
+        typical_minutes = getattr(
+            context,
+            "weekly_minutes_reference",
+            None,
+        )
+        target_weekly_minutes = (
+            int(round((typical_minutes * volume_factor) / 5.0) * 5)
+            if typical_minutes is not None
+            else 330
+        )
+        long_session_minutes = min(
+            90,
+            target_weekly_minutes,
+        )
+
+        if not getattr(
+            context,
+            "training_reference_is_declared",
+            True,
+        ):
+            warnings.append(
+                "Training history is limited; peak volume uses a "
+                "conservative provisional baseline."
+            )
+
         return StrategyPlan(
             strategy=self.name,
             phase=self.phase,
@@ -193,9 +240,9 @@ class PeakStrategy(CoachStrategy):
 
             elevation_demand=elevation_demand,
 
-            target_weekly_minutes=330,
+            target_weekly_minutes=target_weekly_minutes,
             target_weekly_load=450.0 * volume_factor,
-            long_session_minutes=90,
+            long_session_minutes=long_session_minutes,
             long_session_elevation_gain=(
                 long_session_elevation_gain
             ),

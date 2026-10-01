@@ -100,6 +100,55 @@ class CoachContext:
 
         return analytics
 
+    @property
+    def weekly_sessions_reference(self) -> int:
+        """Resolve sustainable frequency without treating sparse imports as zero."""
+
+        declared = getattr(
+            self.athlete,
+            "usual_weekly_sessions",
+            None,
+        )
+        if declared is not None:
+            return declared
+
+        analytics = self.training_reference
+        observed = getattr(analytics, "typical_weekly_sessions", 0.0)
+        sample_size = getattr(analytics, "recent_training_session_count", 0)
+
+        if sample_size >= 8:
+            return max(1, min(7, int(observed + 0.5)))
+
+        return max(2, min(7, int(observed + 0.999)))
+
+    @property
+    def weekly_minutes_reference(self) -> int:
+        """Resolve sustainable duration from declared or sufficiently observed data."""
+
+        declared = getattr(
+            self.athlete,
+            "usual_weekly_minutes",
+            None,
+        )
+        if declared is not None:
+            return declared
+
+        analytics = self.training_reference
+        observed = getattr(analytics, "typical_weekly_minutes", 0.0)
+        sample_size = getattr(analytics, "recent_training_session_count", 0)
+
+        if sample_size >= 8:
+            return max(30, int(observed + 0.5))
+
+        return max(120, int(observed + 0.5))
+
+    @property
+    def training_reference_is_declared(self) -> bool:
+        return (
+            getattr(self.athlete, "usual_weekly_sessions", None) is not None
+            and getattr(self.athlete, "usual_weekly_minutes", None) is not None
+        )
+
     # ======================================================
 
     @property

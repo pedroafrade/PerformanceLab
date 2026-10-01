@@ -175,6 +175,26 @@ def _metrics_step(athlete, on_save):
             value=int(athlete.threshold_hr or 0),
             step=1,
         )
+        usual_weekly_sessions = st.number_input(
+            "Usual training sessions per week",
+            min_value=1,
+            max_value=7,
+            value=int(athlete.usual_weekly_sessions or 3),
+            step=1,
+            help=(
+                "Use your sustainable routine, not an exceptional week."
+            ),
+        )
+        usual_weekly_minutes = st.number_input(
+            "Usual training time per week (minutes)",
+            min_value=30,
+            max_value=3000,
+            value=int(athlete.usual_weekly_minutes or 180),
+            step=15,
+            help=(
+                "Include all endurance training in a typical sustainable week."
+            ),
+        )
         submitted = st.form_submit_button(
             "Save and continue",
             type="primary",
@@ -198,6 +218,8 @@ def _metrics_step(athlete, on_save):
         athlete.max_hr = _optional_int(max_hr)
         athlete.resting_hr = _optional_int(resting_hr)
         athlete.threshold_hr = _optional_int(threshold_hr)
+        athlete.usual_weekly_sessions = int(usual_weekly_sessions)
+        athlete.usual_weekly_minutes = int(usual_weekly_minutes)
         athlete.analytics.invalidate_performance_profile()
         _save_step(athlete, step=3, on_save=on_save)
 
@@ -333,6 +355,11 @@ def _review_step(athlete, on_save):
     st.write(f"**Name:** {athlete.name or 'Not set'}")
     st.write(f"**Activities imported:** {len(athlete.history)}")
     st.write(f"**Upcoming events:** {len(tuple(athlete.events.upcoming))}")
+    st.write(
+        "**Usual training:** "
+        f"{athlete.usual_weekly_sessions or 'Not set'} sessions · "
+        f"{athlete.usual_weekly_minutes or 'Not set'} minutes per week"
+    )
     metrics = sum(
         value is not None
         for value in (
