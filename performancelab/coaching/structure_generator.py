@@ -28,6 +28,7 @@ MAX_EASY_TO_LONG_DURATION_RATIO = 0.75
 MAX_REGENERATION_EASY_MINUTES = 60
 MAX_TAPER_EASY_MINUTES = 60
 MAX_RECOVERY_SESSION_MINUTES = 40
+MIN_EASY_SESSION_MINUTES = 30
 
 DEFAULT_LONG_DAY = Weekday.SUNDAY
 TRANSITION_TRAINING_DAYS = (
@@ -1257,6 +1258,21 @@ class WeekStructureGenerator:
 
                 if duration > 0:
                     purpose = purposes[weekday]
+
+                    if (
+                        purpose is SessionPurpose.EASY
+                        and duration < MIN_EASY_SESSION_MINUTES
+                    ):
+                        slots.append(
+                            DraftTrainingSlot.rest(
+                                weekday,
+                                notes=(
+                                    "Available volume is insufficient "
+                                    "for a useful easy aerobic session."
+                                ),
+                            )
+                        )
+                        continue
 
                     slots.append(
                         DraftTrainingSlot(

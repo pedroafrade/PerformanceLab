@@ -85,6 +85,7 @@ def test_application_has_small_bounded_runtime_and_separate_migrations():
     assert "min_instance_count = 0" in main
     assert "max_instance_count = 2" in main
     assert 'memory = "1Gi"' in main
+    assert "session_affinity = true" in " ".join(main.split())
     assert 'resource "google_cloud_run_v2_job" "migrations"' in main
     assert 'command = ["alembic"]' in main
     assert 'args    = ["upgrade", "head"]' in main

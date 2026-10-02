@@ -165,6 +165,7 @@ resource "google_cloud_run_v2_service" "application" {
     service_account                  = google_service_account.application.email
     timeout                          = "300s"
     max_instance_request_concurrency = 2
+    session_affinity                 = true
 
     scaling {
       min_instance_count = 0

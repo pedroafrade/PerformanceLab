@@ -52,6 +52,8 @@ MIN_EVENT_BASED_LONG_SESSION_MINUTES = 90
 MAX_LONG_SESSION_EVENT_DURATION_RATIO = 0.75
 MAX_LONG_SESSION_WEEKLY_VOLUME_RATIO = 0.65
 AUTOMATIC_MAX_CONSECUTIVE_TRAINING_DAYS = 2
+MIN_PRODUCTIVE_EASY_SESSION_MINUTES = 30
+MIN_PRODUCTIVE_INTENSITY_SESSION_MINUTES = 45
 
 EVENT_COMPLETE_REST_DAYS = 1
 EVENT_NO_INTENSITY_DAYS = 2
@@ -251,6 +253,12 @@ class Planner:
                 strategy_plan=strategy_plan,
                 week_start=start_date,
                 today=reference_day,
+            )
+        )
+
+        strategy_plan = (
+            self._ensure_productive_weekly_volume(
+                strategy_plan
             )
         )
 
@@ -927,6 +935,67 @@ class Planner:
         return max(
             MIN_EVENT_BASED_LONG_SESSION_MINUTES,
             rounded_ceiling,
+        )
+
+    # ======================================================
+
+    @staticmethod
+    def _ensure_productive_weekly_volume(
+        strategy_plan,
+    ):
+        """Treat habitual time as a baseline, not a rigid ceiling.
+
+        Normal training phases need enough time for every prescribed
+        session to deliver a useful stimulus. Explicit availability and
+        safety constraints are still applied later by the structure
+        generator and therefore remain hard limits.
+        """
+
+        if (
+            strategy_plan.phase
+            not in {"Base", "Build", "Maintenance", "Peak"}
+            or strategy_plan.target_weekly_minutes is None
+        ):
+            return strategy_plan
+
+        long_sessions = min(
+            strategy_plan.long_sessions,
+            strategy_plan.target_sessions,
+        )
+        intensity_sessions = min(
+            strategy_plan.intensity_sessions,
+            max(
+                0,
+                strategy_plan.target_sessions - long_sessions,
+            ),
+        )
+        easy_sessions = max(
+            0,
+            strategy_plan.target_sessions
+            - long_sessions
+            - intensity_sessions,
+        )
+
+        long_minutes = (
+            strategy_plan.long_session_minutes or 0
+        ) * long_sessions
+        minimum_productive_minutes = (
+            long_minutes
+            + intensity_sessions
+            * MIN_PRODUCTIVE_INTENSITY_SESSION_MINUTES
+            + easy_sessions
+            * MIN_PRODUCTIVE_EASY_SESSION_MINUTES
+        )
+
+        if (
+            strategy_plan.target_weekly_minutes
+            >= minimum_productive_minutes
+        ):
+            return strategy_plan
+
+        return replace(
+            strategy_plan,
+            target_weekly_minutes=minimum_productive_minutes,
         )
 
     # ======================================================

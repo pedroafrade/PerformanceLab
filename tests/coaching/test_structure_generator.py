@@ -1006,6 +1006,36 @@ def test_intensity_session_has_controlled_weekly_duration(
     ) == 210
 
 
+def test_omits_easy_runs_shorter_than_thirty_minutes(
+    full_availability: AthleteAvailability,
+    default_preferences: AthletePreferences,
+    default_constraints: TrainingConstraints,
+) -> None:
+    plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=4,
+        target_weekly_minutes=170,
+        long_session_minutes=120,
+    )
+
+    slots = WeekStructureGenerator().generate(
+        strategy_plan=plan,
+        availability=full_availability,
+        preferences=default_preferences,
+        constraints=default_constraints,
+    )
+
+    assert all(
+        slot.purpose is not SessionPurpose.EASY
+        or (slot.duration_minutes or 0) >= 30
+        for slot in slots
+    )
+
 def test_extra_weekly_minutes_go_to_easy_sessions(
     strategy_plan: StrategyPlan,
     full_availability: AthleteAvailability,

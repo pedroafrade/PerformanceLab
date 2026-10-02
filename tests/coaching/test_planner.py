@@ -1597,6 +1597,66 @@ def test_full_week_keeps_strategy_unchanged():
 
     assert result is strategy_plan
 
+
+def test_habitual_weekly_time_expands_for_productive_sessions():
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=4,
+        target_weekly_minutes=180,
+        long_session_minutes=120,
+    )
+
+    result = Planner._ensure_productive_weekly_volume(
+        strategy_plan
+    )
+
+    assert result.target_weekly_minutes == 195
+    assert result.long_session_minutes == 120
+
+
+def test_productive_volume_does_not_reduce_habitual_time():
+    strategy_plan = StrategyPlan(
+        strategy="BuildStrategy",
+        phase="Build",
+        volume_factor=1.0,
+        target_sessions=3,
+        intensity_sessions=1,
+        long_sessions=1,
+        recovery_days=4,
+        target_weekly_minutes=240,
+        long_session_minutes=120,
+    )
+
+    result = Planner._ensure_productive_weekly_volume(
+        strategy_plan
+    )
+
+    assert result is strategy_plan
+
+
+def test_productive_volume_does_not_expand_recovery_phase():
+    strategy_plan = StrategyPlan(
+        strategy="RegenerationStrategy",
+        phase="Regeneration",
+        volume_factor=0.5,
+        target_sessions=3,
+        intensity_sessions=0,
+        long_sessions=0,
+        recovery_days=4,
+        target_weekly_minutes=60,
+    )
+
+    result = Planner._ensure_productive_weekly_volume(
+        strategy_plan
+    )
+
+    assert result is strategy_plan
+
 def test_weekly_load_limit_preserves_pre_race_workout():
 
     weekly_plan = WeeklyPlan(
