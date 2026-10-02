@@ -2593,6 +2593,31 @@ def test_plan_builder_uses_clickable_cell_component():
     )
 
 
+def test_plan_builder_handles_missing_initial_plan_horizon(monkeypatch):
+    messages = []
+    monkeypatch.setattr(
+        plan_page.st,
+        "info",
+        messages.append,
+    )
+    draft = object()
+
+    result = _show_plan_builder_interactive_board(
+        draft=draft,
+        draft_key="empty-plan",
+        plan_start=None,
+        plan_end=None,
+        reference_day=date(2026, 10, 2),
+        history=(),
+    )
+
+    assert result is draft
+    assert messages == [
+        "Generate the first training plan to populate "
+        "the editable weekly timeline."
+    ]
+
+
 def test_plan_builder_claims_each_component_action_once(monkeypatch):
     session_state = {}
     monkeypatch.setattr(plan_page.st, "session_state", session_state)

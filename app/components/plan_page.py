@@ -5616,6 +5616,17 @@ def _show_plan_builder_interactive_board(
     plan_end: date, reference_day: date, history=None,
 ):
     """Renders the clickable and draggable Plan Builder board."""
+
+    if (
+        not isinstance(plan_start, date)
+        or not isinstance(plan_end, date)
+    ):
+        st.info(
+            "Generate the first training plan to populate "
+            "the editable weekly timeline."
+        )
+        return draft
+
     grid_start = plan_start - timedelta(days=plan_start.weekday())
     grid_end = plan_end + timedelta(days=6 - plan_end.weekday())
     days = tuple(
@@ -7025,14 +7036,27 @@ div[data-testid="stPopoverBody"] {
 
         with regenerate_column:
             with st.popover(
-                "Regenerate plan",
+                (
+                    "Regenerate plan"
+                    if active_plan.start_date is not None
+                    else "Create plan"
+                ),
                 use_container_width=True,
             ):
-                st.markdown("**Replace the current plan?**")
+                st.markdown(
+                    "**Replace the current plan?**"
+                    if active_plan.start_date is not None
+                    else "**Create the first training plan?**"
+                )
                 st.caption(
                     "A new plan will be generated from the latest athlete "
-                    "profile, training history and events. Unsaved manual "
-                    "changes in this editor will be discarded."
+                    "profile, training history and events."
+                    + (
+                        " Unsaved manual changes in this editor "
+                        "will be discarded."
+                        if active_plan.start_date is not None
+                        else ""
+                    )
                 )
                 if st.button(
                     "Confirm regeneration",
