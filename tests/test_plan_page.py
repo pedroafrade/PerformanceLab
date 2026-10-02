@@ -2829,7 +2829,33 @@ def test_edit_plan_offers_confirmed_full_regeneration():
     assert '"Regenerate plan"' in source
     assert '"Confirm regeneration"' in source
     assert "on_generate_plan()" in source
-    assert "Unsaved manual" in source
+    assert '"Save changes"' in source
+    assert "on_generate_plan(builder_draft)" in source
+    assert "has_plan_horizon" in source
+
+
+def test_plan_builder_uses_one_contextual_primary_action():
+    source = inspect.getsource(
+        _show_plan_generation_confirmation
+    )
+
+    assert "primary_column" in source
+    assert "regenerate_column" not in source
+    assert "generate_column" not in source
+    assert '"Create plan"' in source
+    assert '"Regenerate plan"' in source
+    assert '"Save changes"' in source
+
+
+def test_plan_builder_week_columns_remain_readable():
+    component = (
+        Path("app/components/plan_builder_board/index.html")
+        .read_text(encoding="utf-8")
+    )
+
+    assert "body{overflow-x:auto;overflow-y:hidden" in component
+    assert "width:max-content;min-width:100%" in component
+    assert "repeat(${weeks},minmax(10rem,1fr))" in component
 
 
 def test_plan_progression_charts_are_keyed_by_active_revision():

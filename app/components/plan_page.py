@@ -6898,36 +6898,50 @@ div[data-testid="stPopoverBody"] {
                 )
             )
 
-        st.markdown(
-            "#### Complete plan timeline"
+        has_plan_horizon = (
+            isinstance(active_plan.start_date, date)
+            and isinstance(active_plan.end_date, date)
         )
 
-        timeline_slot = st.empty()
+        timeline_slot = None
 
-        st.markdown(
-            "#### Plan structure by week"
-        )
-
-        st.caption(
-            "Each column represents one week. "
-            "Drag a session to an empty day to move it, "
-            "or onto another session to exchange their days."
-        )
-
-        builder_draft = (
-            _show_plan_builder_interactive_board(
-                draft=builder_draft,
-                draft_key=draft_key,
-                plan_start=(
-                    active_plan.start_date
-                ),
-                plan_end=(
-                    active_plan.end_date
-                ),
-                reference_day=date.today(),
-                history=athlete.history,
+        if has_plan_horizon:
+            st.markdown(
+                "#### Complete plan timeline"
             )
-        )
+
+            timeline_slot = st.empty()
+
+            st.markdown(
+                "#### Plan structure by week"
+            )
+
+            st.caption(
+                "Each column represents one week. "
+                "Scroll horizontally to review the full plan. "
+                "Drag a session to an empty day to move it, "
+                "or onto another session to exchange their days."
+            )
+
+            builder_draft = (
+                _show_plan_builder_interactive_board(
+                    draft=builder_draft,
+                    draft_key=draft_key,
+                    plan_start=(
+                        active_plan.start_date
+                    ),
+                    plan_end=(
+                        active_plan.end_date
+                    ),
+                    reference_day=date.today(),
+                    history=athlete.history,
+                )
+            )
+        else:
+            st.info(
+                "Create the first training plan to populate "
+                "the timeline and editable weekly structure."
+            )
 
         _show_plan_builder_feedback(
             draft_key=draft_key,
@@ -6995,25 +7009,24 @@ div[data-testid="stPopoverBody"] {
             )
         )
 
-        timeline_slot.altair_chart(
-            _planned_load_chart(
-                builder_chart_plan
-            ),
-            use_container_width=True,
-            key=(
-                "plan-builder-timeline-"
-                f"{chart_revision}"
-            ),
-        )
-
+        if timeline_slot is not None:
+            timeline_slot.altair_chart(
+                _planned_load_chart(
+                    builder_chart_plan
+                ),
+                use_container_width=True,
+                key=(
+                    "plan-builder-timeline-"
+                    f"{chart_revision}"
+                ),
+            )
 
         (
             reset_column,
-            regenerate_column,
             cancel_column,
-            generate_column,
+            primary_column,
         ) = st.columns(
-            [1, 1, 1, 1],
+            [1, 1, 1],
             gap="small",
         )
 
@@ -7034,38 +7047,6 @@ div[data-testid="stPopoverBody"] {
                     builder_draft.reset()
                 )
 
-        with regenerate_column:
-            with st.popover(
-                (
-                    "Regenerate plan"
-                    if active_plan.start_date is not None
-                    else "Create plan"
-                ),
-                use_container_width=True,
-            ):
-                st.markdown(
-                    "**Replace the current plan?**"
-                    if active_plan.start_date is not None
-                    else "**Create the first training plan?**"
-                )
-                st.caption(
-                    "A new plan will be generated from the latest athlete "
-                    "profile, training history and events."
-                    + (
-                        " Unsaved manual changes in this editor "
-                        "will be discarded."
-                        if active_plan.start_date is not None
-                        else ""
-                    )
-                )
-                if st.button(
-                    "Confirm regeneration",
-                    key="confirm-plan-regeneration",
-                    use_container_width=True,
-                    type="primary",
-                ):
-                    on_generate_plan()
-
         with cancel_column:
 
             if st.button(
@@ -7076,55 +7057,82 @@ div[data-testid="stPopoverBody"] {
 
                 return
 
-        with generate_column:
+        with primary_column:
             with st.container(key="plan-builder-generate-action"):
                 with st.popover(
-                    "Generate plan",
+                    (
+                        "Save changes"
+                        if builder_draft.has_changes
+                        else (
+                            "Regenerate plan"
+                            if has_plan_horizon
+                            else "Create plan"
+                        )
+                    ),
                     use_container_width=True,
                 ):
-                    st.markdown("**Review plan changes**")
-                    st.caption(
-                        f"{draft_assessment.changed_sessions} sessions changed · "
-                        f"{draft_assessment.load_difference:+.0f} AU"
-                    )
-                    for week, old_load, new_load, growth in (
-                        draft_assessment.weekly_load_changes
-                    ):
-                        difference = new_load - old_load
-                        percentage = (
-                            f" · {growth:+.0%}" if growth is not None else ""
+                    if builder_draft.has_changes:
+                        st.markdown("**Review plan changes**")
+                        st.caption(
+                            f"{draft_assessment.changed_sessions} sessions changed · "
+                            f"{draft_assessment.load_difference:+.0f} AU"
+                        )
+                        for week, old_load, new_load, growth in (
+                            draft_assessment.weekly_load_changes
+                        ):
+                            difference = new_load - old_load
+                            percentage = (
+                                f" · {growth:+.0%}" if growth is not None else ""
+                            )
+                            st.caption(
+                                f"Week of {week:%d %b}: {old_load:.0f} → "
+                                f"{new_load:.0f} AU ({difference:+.0f} AU{percentage})"
+                            )
+                        for message in draft_assessment.messages:
+                            issue = next(
+                                (
+                                    item for item in draft_assessment.issues
+                                    if item.message == message
+                                ),
+                                None,
+                            )
+                            label = (
+                                issue.severity.title()
+                                if issue is not None
+                                else "Information"
+                            )
+                            rule = f" · {issue.rule}" if issue is not None else ""
+                            st.caption(f"{label}{rule}: {message}")
+                        for recommendation in draft_assessment.recommendations:
+                            st.caption(f"Recommendation: {recommendation}")
+                        if st.button(
+                            "Confirm changes",
+                            key="confirm-plan-generation",
+                            use_container_width=True,
+                            disabled=draft_assessment.blocked,
+                        ):
+                            on_generate_plan(builder_draft)
+                    else:
+                        st.markdown(
+                            "**Replace the current plan?**"
+                            if has_plan_horizon
+                            else "**Create the first training plan?**"
                         )
                         st.caption(
-                            f"Week of {week:%d %b}: {old_load:.0f} → "
-                            f"{new_load:.0f} AU ({difference:+.0f} AU{percentage})"
+                            "A new plan will be generated from the latest "
+                            "athlete profile, training history and events."
                         )
-                    for message in draft_assessment.messages:
-                        issue = next(
+                        if st.button(
                             (
-                                item for item in draft_assessment.issues
-                                if item.message == message
+                                "Confirm regeneration"
+                                if has_plan_horizon
+                                else "Confirm creation"
                             ),
-                            None,
-                        )
-                        label = (
-                            issue.severity.title()
-                            if issue is not None
-                            else "Information"
-                        )
-                        rule = f" · {issue.rule}" if issue is not None else ""
-                        st.caption(f"{label}{rule}: {message}")
-                    for recommendation in draft_assessment.recommendations:
-                        st.caption(f"Recommendation: {recommendation}")
-                    if st.button(
-                        "Confirm changes",
-                        key="confirm-plan-generation",
-                        use_container_width=True,
-                        disabled=(
-                            not builder_draft.has_changes
-                            or draft_assessment.blocked
-                        ),
-                    ):
-                        on_generate_plan(builder_draft)
+                            key="confirm-plan-regeneration",
+                            use_container_width=True,
+                            type="primary",
+                        ):
+                            on_generate_plan()
 
     with typical_tab:
         st.caption(

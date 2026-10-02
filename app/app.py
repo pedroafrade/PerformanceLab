@@ -492,6 +492,8 @@ def regenerate_weekly_plan(
         "Training plan generated."
     )
 
+    st.rerun()
+
 
 def restore_training_plan_revision(
     revision_id: str,
