@@ -35,6 +35,10 @@ from performancelab.analysis import (
     NutritionProfile,
 )
 from performancelab.recovery_log import RecoveryLogEntry
+from performancelab.storage.compressed_sensor import (
+    sensor_from_storage,
+    sensor_to_storage,
+)
 
 from performancelab.training.planning.planned_workout import (
     PlannedWorkout,
@@ -374,7 +378,10 @@ def _workout_to_dict(workout):
 
         },
 
-        "sensors": workout.sensors.sensors,
+        "sensors": {
+            name: sensor_to_storage(sensor)
+            for name, sensor in workout.sensors.sensors.items()
+        },
 
     }
 
@@ -505,7 +512,7 @@ def _workout_from_dict(data):
 
         workout.sensors.add(
             name,
-            sensor,
+            sensor_from_storage(sensor),
         )
 
     return workout

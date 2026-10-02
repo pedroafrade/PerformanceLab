@@ -36,7 +36,18 @@ class SensorCollection:
 
     def get(self, name: str):
 
-        return self.sensors.get(name)
+        sensor = self.sensors.get(name)
+
+        # Kept as a local import so this domain container remains independent
+        # of any particular repository implementation.
+        from performancelab.storage.compressed_sensor import (
+            CompressedSensor,
+        )
+
+        if isinstance(sensor, CompressedSensor):
+            return sensor.read()
+
+        return sensor
 
     # ======================================================
 
@@ -61,7 +72,13 @@ class SensorCollection:
 
     def __iter__(self):
 
-        return iter(self.sensors.items())
+        return iter(
+            (
+                name,
+                self.get(name),
+            )
+            for name in self.sensors
+        )
 
     # ======================================================
 

@@ -37,6 +37,9 @@ from performancelab.storage import (
 )
 
 import performancelab.storage.json as json_storage
+from performancelab.storage.compressed_sensor import (
+    CompressedSensor,
+)
 
 from performancelab.training.planning import (
     PlannedWorkout,
@@ -434,6 +437,61 @@ def test_athlete_round_trip():
         )
     )
 
+
+def test_sensor_series_is_stored_losslessly_and_loaded_lazily():
+
+    athlete = create_athlete()
+    original_sensor = [
+        {
+            "time": (
+                f"2026-07-01T08:{index // 60:02d}:"
+                f"{index % 60:02d}+00:00"
+            ),
+            "value": 120 + index % 40,
+        }
+        for index in range(3600)
+    ]
+    athlete.history[0].sensors.add(
+        "heart_rate",
+        original_sensor,
+    )
+
+    data = athlete_to_dict(athlete)
+    stored = data["workouts"][0]["sensors"]["heart_rate"]
+
+    assert stored[
+        "__performancelab_sensor_encoding__"
+    ] == "gzip-json-v1"
+    assert len(stored["payload"]) < len(
+        json.dumps(original_sensor)
+    )
+
+    loaded = athlete_from_dict(data)
+    internal_value = loaded.history[0].sensors.sensors[
+        "heart_rate"
+    ]
+
+    assert isinstance(internal_value, CompressedSensor)
+    assert loaded.history[0].sensors.get(
+        "heart_rate"
+    ) == original_sensor
+
+
+def test_legacy_uncompressed_sensor_series_still_loads():
+
+    data = athlete_to_dict(create_athlete())
+    legacy_sensor = [
+        {"time": None, "value": 145},
+    ]
+    data["workouts"][0]["sensors"][
+        "heart_rate"
+    ] = legacy_sensor
+
+    loaded = athlete_from_dict(data)
+
+    assert loaded.history[0].sensors.get(
+        "heart_rate"
+    ) == legacy_sensor
 
 # ======================================================
 

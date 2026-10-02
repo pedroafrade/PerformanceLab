@@ -23,6 +23,10 @@ from performancelab.upload_guard import (
     ActivityUploadTooSoonError,
     DEFAULT_ACTIVITY_UPLOAD_GUARD,
 )
+from performancelab.upload_policy import (
+    DEFAULT_ACTIVITY_UPLOAD_POLICY,
+    UploadCandidate,
+)
 from performancelab.upload_logging import (
     log_activity_upload_completed,
     log_activity_upload_failed,
@@ -97,6 +101,23 @@ def _normalized_file_name(
         .strip()
         .lower()
     )
+
+
+def _uploaded_file_size(uploaded_file) -> int:
+    """Return Streamlit upload size without reading its content again."""
+
+    size = getattr(uploaded_file, "size", None)
+
+    if isinstance(size, int) and not isinstance(size, bool):
+        return size
+
+    getvalue = getattr(uploaded_file, "getvalue", None)
+
+    if callable(getvalue):
+        return len(getvalue())
+
+    # Lightweight test adapters can omit content when parsing is mocked.
+    return 0
 
 
 def _read_strava_titles(
@@ -405,6 +426,16 @@ def _import_uploaded_files(
 
     selected_files = tuple(
         uploaded_files
+    )
+
+    DEFAULT_ACTIVITY_UPLOAD_POLICY.validate(
+        UploadCandidate(
+            name=uploaded_file.name,
+            size_bytes=_uploaded_file_size(
+                uploaded_file
+            ),
+        )
+        for uploaded_file in selected_files
     )
 
     file_results = [
