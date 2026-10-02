@@ -108,6 +108,7 @@ def test_default_maintenance_focus():
     plan = build_plan()
 
     assert plan.focus == "fitness maintenance"
+    assert plan.key_session_focus == "tempo"
 
 
 def test_default_concrete_weekly_targets():

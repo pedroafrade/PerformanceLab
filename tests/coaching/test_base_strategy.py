@@ -82,6 +82,7 @@ def test_default_base_focus():
     plan = build_plan()
 
     assert plan.focus == "aerobic endurance"
+    assert plan.key_session_focus == "tempo"
 
 
 def test_default_concrete_weekly_targets():

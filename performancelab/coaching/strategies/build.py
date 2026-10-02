@@ -58,6 +58,7 @@ class BuildStrategy(CoachStrategy):
             context=context,
             event_sport=event_sport,
         )
+        key_session_focus = focus
 
         training_reference = getattr(
             context,
@@ -144,6 +145,7 @@ class BuildStrategy(CoachStrategy):
             volume_factor = 1.00
             intensity_sessions = 1
             focus = "aerobic endurance"
+            key_session_focus = "tempo"
 
             warnings.append(
                 "Fatigue is elevated; avoid increasing "
@@ -160,6 +162,7 @@ class BuildStrategy(CoachStrategy):
             )
             intensity_sessions = 1
             focus = "aerobic endurance"
+            key_session_focus = "tempo"
 
             warnings.append(
                 "Recent perceived effort is high."
@@ -257,7 +260,7 @@ class BuildStrategy(CoachStrategy):
 
             focus=focus,
 
-            key_session_focus=focus,
+            key_session_focus=key_session_focus,
             secondary_focus="aerobic endurance",
 
             recovery_priority=(
@@ -331,6 +334,7 @@ class BuildStrategy(CoachStrategy):
             rotation = (
                 "hills",
                 "threshold",
+                "hills",
                 "tempo",
             )
 

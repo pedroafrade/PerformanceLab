@@ -217,9 +217,40 @@ def test_trail_build_rotates_key_session_focus():
             42,
             49,
             56,
+            63,
         )
     )
 
+    assert set(focuses) == {
+        "hills",
+        "threshold",
+        "tempo",
+    }
+    assert focuses.count("hills") == 2
+
+
+def test_trail_build_uses_hills_every_second_quality_week():
+
+    event = make_event(
+        sport="Trail Running",
+    )
+
+    focuses = tuple(
+        BuildStrategy().build(
+            make_context(
+                phase_event=event,
+                days_until_phase_event=days,
+            )
+        ).key_session_focus
+        for days in (
+            7,
+            14,
+            21,
+            28,
+        )
+    )
+
+    assert focuses.count("hills") == 2
     assert set(focuses) == {
         "hills",
         "threshold",
@@ -273,8 +304,8 @@ def test_fatigue_overrides_rotating_focus():
 
     assert (
         plan.key_session_focus
-        == "aerobic endurance"
-    )   
+        == "tempo"
+    )
 
 def test_default_build_objectives():
     plan = BuildStrategy().build(
@@ -794,7 +825,7 @@ def test_fatigue_overrides_trail_hill_focus():
 
     assert (
         plan.key_session_focus
-        == "aerobic endurance"
+        == "tempo"
     )
 
 def test_primary_event_elevation_demand_reaches_plan():

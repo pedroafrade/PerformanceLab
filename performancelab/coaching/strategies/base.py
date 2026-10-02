@@ -170,7 +170,10 @@ class BaseStrategy(CoachStrategy):
 
             focus=focus,
 
-            key_session_focus=focus,
+            # Base intensity must still describe a concrete stimulus.
+            # Controlled tempo work is preferable to the ambiguous generic
+            # "Quality" template and remains less aggressive than LT2 work.
+            key_session_focus="tempo",
             secondary_focus="training consistency",
 
             recovery_priority=(

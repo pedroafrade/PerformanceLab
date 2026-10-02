@@ -147,7 +147,9 @@ class MaintenanceStrategy(CoachStrategy):
 
             focus=focus,
 
-            key_session_focus=focus,
+            # Keep the single maintenance quality session explicit and
+            # controlled instead of falling back to a generic Quality Run.
+            key_session_focus="tempo",
             secondary_focus="aerobic endurance",
 
             recovery_priority=(

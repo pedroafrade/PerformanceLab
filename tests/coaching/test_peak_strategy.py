@@ -160,14 +160,11 @@ def test_trail_peak_complements_hills_with_threshold():
         days_until_phase_event=21,
     )
 
-    assert (
-        plan.key_session_focus
-        == "hills"
-    )
+    assert plan.key_session_focus == "tempo"
 
     assert (
         plan.secondary_intensity_focus
-        == "threshold"
+        == "hills"
     )
 
 def test_trail_peak_rotates_key_session_focus():
@@ -188,9 +185,41 @@ def test_trail_peak_rotates_key_session_focus():
             28,
             35,
             42,
+            49,
         )
     )
 
+    assert set(focuses) == {
+        "hills",
+        "threshold",
+        "tempo",
+    }
+    assert focuses.count("hills") == 2
+
+
+def test_trail_peak_uses_hills_every_second_quality_week():
+
+    event = SimpleNamespace(
+        event=SimpleNamespace(
+            name="Trail Race",
+            sport="Trail Running",
+        ),
+    )
+
+    focuses = tuple(
+        build_plan(
+            phase_event=event,
+            days_until_phase_event=days,
+        ).key_session_focus
+        for days in (
+            7,
+            14,
+            21,
+            28,
+        )
+    )
+
+    assert focuses.count("hills") == 2
     assert set(focuses) == {
         "hills",
         "threshold",
