@@ -21,6 +21,11 @@ class TrainingFocus(StrEnum):
     HILLS = "hills"
     SPEED = "speed"
 
+    CONTINUOUS_TEMPO = "continuous tempo"
+    THRESHOLD_CRUISE = "threshold cruise"
+    AEROBIC_HILLS = "aerobic hills"
+    EASY_STRIDES = "easy strides"
+
     @classmethod
     def from_value(
         cls,

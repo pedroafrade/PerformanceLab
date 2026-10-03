@@ -209,6 +209,105 @@ TEMPO_TEMPLATE = WorkoutTemplate(
 )
 
 
+CONTINUOUS_TEMPO_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.INTENSITY,
+    title="Continuous Tempo Session",
+    objective=(
+        "Develop sustainable aerobic speed with a controlled, "
+        "continuous sub-threshold effort."
+    ),
+    intensity="Moderately hard",
+    description=(
+        "Run the main block evenly and finish with reserve. "
+        "Do not turn the session into a time trial."
+    ),
+    structure=(
+        "Warm up 10 min easy",
+        "Run 20 min continuous at controlled tempo (RPE 6–7/10)",
+        "Cool down easy",
+    ),
+    dose=StimulusDose(
+        minimum_work_minutes=20,
+        target_work_minutes=20,
+        maximum_work_minutes=20,
+    ),
+)
+
+
+THRESHOLD_CRUISE_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.INTENSITY,
+    title="Threshold Cruise Intervals Session",
+    objective=(
+        "Accumulate controlled work near LT2 without reaching exhaustion."
+    ),
+    intensity="Hard",
+    description=(
+        "Keep all four repetitions even and controlled. The final "
+        "repetition should remain technically stable."
+    ),
+    structure=(
+        "Warm up 10 min easy",
+        "4×6 min near LT2 at RPE 7/10",
+        "Recover 60–90 sec easy between repetitions",
+        "Cool down easy",
+    ),
+    dose=StimulusDose(
+        minimum_work_minutes=18,
+        target_work_minutes=24,
+        maximum_work_minutes=24,
+        maximum_repetition_minutes=6,
+        recovery_minutes=1,
+    ),
+)
+
+
+AEROBIC_HILLS_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.INTENSITY,
+    title="Aerobic Hill Repeats Session",
+    objective=(
+        "Develop trail-specific climbing strength without maximal effort."
+    ),
+    intensity="Moderately hard",
+    description=(
+        "Run each climb with controlled aerobic power and relaxed form. "
+        "Do not sprint or race the final repetition."
+    ),
+    structure=(
+        "Warm up 10 min easy",
+        "5×4 min uphill at controlled aerobic effort (RPE 6–7/10)",
+        "Recover 90 sec easy downhill between repetitions",
+        "Cool down easy",
+    ),
+    dose=StimulusDose(
+        minimum_work_minutes=16,
+        target_work_minutes=20,
+        maximum_work_minutes=20,
+        maximum_repetition_minutes=4,
+        recovery_minutes=1,
+    ),
+)
+
+
+EASY_STRIDES_TEMPLATE = WorkoutTemplate(
+    purpose=SessionPurpose.INTENSITY,
+    title="Easy + Strides Session",
+    objective=(
+        "Consolidate adaptation while preserving relaxed neuromuscular speed."
+    ),
+    intensity="Easy",
+    description=(
+        "Keep the run genuinely easy. Strides are relaxed accelerations "
+        "with complete recovery, not sprints."
+    ),
+    structure=(
+        "Easy aerobic running",
+        "6×20 sec relaxed strides",
+        "Recover fully with 70–100 sec easy between strides",
+        "Easy cool-down",
+    ),
+)
+
+
 HILLS_TEMPLATE = WorkoutTemplate(
     purpose=SessionPurpose.INTENSITY,
     title="Hill Session",
@@ -372,6 +471,22 @@ _FOCUSED_TEMPLATES = {
         SessionPurpose.INTENSITY,
         TrainingFocus.SPEED,
     ): SPEED_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.CONTINUOUS_TEMPO,
+    ): CONTINUOUS_TEMPO_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.THRESHOLD_CRUISE,
+    ): THRESHOLD_CRUISE_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.AEROBIC_HILLS,
+    ): AEROBIC_HILLS_TEMPLATE,
+    (
+        SessionPurpose.INTENSITY,
+        TrainingFocus.EASY_STRIDES,
+    ): EASY_STRIDES_TEMPLATE,
 }
 
 

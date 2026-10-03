@@ -33,6 +33,10 @@ from performancelab.coaching.workout_templates import (
     TEMPO_TEMPLATE,
     HILLS_TEMPLATE,
     SPEED_TEMPLATE,
+    CONTINUOUS_TEMPO_TEMPLATE,
+    THRESHOLD_CRUISE_TEMPLATE,
+    AEROBIC_HILLS_TEMPLATE,
+    EASY_STRIDES_TEMPLATE,
     SHAKEOUT_TEMPLATE,
     template_for,
 )
@@ -574,6 +578,62 @@ def test_returns_tempo_template_for_tempo_focus() -> None:
     assert template is TEMPO_TEMPLATE
     assert template.title == "Tempo Session"
     assert template.intensity == "Moderately hard"
+
+
+@pytest.mark.parametrize(
+    ("template", "expected_title", "expected_summary", "expected_step"),
+    (
+        (
+            CONTINUOUS_TEMPO_TEMPLATE,
+            "Continuous Tempo Run",
+            "20 min continuous tempo · RPE 6–7/10",
+            "Run 20 min continuous at controlled tempo",
+        ),
+        (
+            THRESHOLD_CRUISE_TEMPLATE,
+            "Threshold Cruise Intervals Run",
+            "4×6 min near LT2 · 60–90 sec easy recovery",
+            "4×6 min near LT2 at RPE 7/10",
+        ),
+        (
+            AEROBIC_HILLS_TEMPLATE,
+            "Aerobic Hill Repeats Run",
+            "5×4 min controlled uphill · 90 sec easy downhill recovery",
+            "5×4 min uphill at controlled aerobic effort",
+        ),
+        (
+            EASY_STRIDES_TEMPLATE,
+            "Easy + Strides Run",
+            "Easy running · 6×20 sec relaxed strides",
+            "6×20 sec relaxed strides",
+        ),
+    ),
+)
+def test_base_microcycle_workouts_expose_exact_structure(
+    template,
+    expected_title,
+    expected_summary,
+    expected_step,
+):
+    workout = WorkoutGenerator()._build_workout(
+        slot=SimpleNamespace(
+            purpose=SessionPurpose.INTENSITY,
+            duration_minutes=45,
+        ),
+        scheduled_day=date(2026, 10, 13),
+        template=template.for_sport("Trail Running"),
+        coach_context=SimpleNamespace(),
+        strategy_plan=make_strategy_plan(
+            key_session_focus="tempo",
+        ),
+    )
+
+    assert workout.title == expected_title
+    assert workout.prescription_summary == expected_summary
+    assert any(
+        expected_step in step
+        for step in workout.structure
+    )
 def test_tempo_workout_uses_athlete_pace() -> None:
 
     workout = WorkoutGenerator()._build_workout(

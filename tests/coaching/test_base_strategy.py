@@ -19,11 +19,24 @@ def make_context(
     *,
     tsb: float = 0.0,
     average_rpe: float | None = None,
+    days_until_phase_event: int | None = None,
+    event_sport: str | None = None,
 ):
-    return SimpleNamespace(
+    context = SimpleNamespace(
         tsb=tsb,
         average_rpe=average_rpe,
+        days_until_phase_event=days_until_phase_event,
     )
+    context.phase_event = (
+        SimpleNamespace(
+            event=SimpleNamespace(
+                sport=event_sport,
+            )
+        )
+        if event_sport is not None
+        else None
+    )
+    return context
 
 
 def build_plan(
@@ -31,6 +44,8 @@ def build_plan(
     tsb: float = 0.0,
     average_rpe: float | None = None,
     event_name: str | None = None,
+    days_until_phase_event: int | None = None,
+    event_sport: str | None = None,
 ):
     strategy = DummyBaseStrategy(
         event_name=event_name,
@@ -40,6 +55,8 @@ def build_plan(
         make_context(
             tsb=tsb,
             average_rpe=average_rpe,
+            days_until_phase_event=days_until_phase_event,
+            event_sport=event_sport,
         ),
     )
 
@@ -83,6 +100,62 @@ def test_default_base_focus():
 
     assert plan.focus == "aerobic endurance"
     assert plan.key_session_focus == "tempo"
+
+
+@pytest.mark.parametrize(
+    ("days_until_event", "expected_focus"),
+    (
+        (110, "continuous tempo"),
+        (103, "threshold cruise"),
+        (96, "aerobic hills"),
+    ),
+)
+def test_trail_base_rotates_controlled_quality_stimuli(
+    days_until_event,
+    expected_focus,
+):
+    plan = build_plan(
+        days_until_phase_event=days_until_event,
+        event_sport="Trail running",
+    )
+
+    assert plan.key_session_focus == expected_focus
+
+
+def test_road_base_rotation_does_not_introduce_vo2max_or_hills():
+    focuses = {
+        build_plan(
+            days_until_phase_event=days,
+            event_sport="Road running",
+        ).key_session_focus
+        for days in (110, 103, 96, 89)
+    }
+
+    assert focuses == {
+        "continuous tempo",
+        "threshold cruise",
+        "easy strides",
+    }
+
+
+def test_every_fourth_event_anchored_base_week_reduces_load():
+    regular = build_plan(
+        days_until_phase_event=96,
+        event_sport="Trail running",
+    )
+    recovery = build_plan(
+        days_until_phase_event=89,
+        event_sport="Trail running",
+    )
+
+    assert regular.volume_factor == pytest.approx(0.90)
+    assert recovery.volume_factor == pytest.approx(0.80)
+    assert recovery.long_session_minutes < regular.long_session_minutes
+    assert recovery.key_session_focus == "easy strides"
+    assert (
+        "Consolidate adaptation with a reduced-load week."
+        in recovery.guidelines
+    )
 
 
 def test_default_concrete_weekly_targets():

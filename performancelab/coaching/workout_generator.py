@@ -717,10 +717,12 @@ class WorkoutGenerator:
         if cls._should_reduce_threshold_dose(
             coach_context
         ):
-            reduced_target = (
-                dose.target_work_minutes
-                - 3
+            reduction = (
+                6
+                if "threshold cruise" in template.title.lower()
+                else 3
             )
+            reduced_target = dose.target_work_minutes - reduction
 
             return max(
                 dose.minimum_work_minutes,
@@ -760,7 +762,16 @@ class WorkoutGenerator:
         if dose is None:
             return None
 
-        repetitions = 3
+        repetitions = (
+            4
+            if (
+                "threshold cruise" in template.title.lower()
+                and not cls._should_reduce_threshold_dose(
+                    coach_context
+                )
+            )
+            else 3
+        )
 
         recovery_minutes = (
             dose.recovery_minutes
@@ -1063,6 +1074,25 @@ class WorkoutGenerator:
         normalized_title = (
             template.title.strip().lower()
         )
+        if "continuous tempo" in normalized_title:
+            return "20 min continuous tempo · RPE 6–7/10"
+        if "threshold cruise" in normalized_title:
+            repetitions = (
+                3
+                if cls._should_reduce_threshold_dose(coach_context)
+                else 4
+            )
+            return (
+                f"{repetitions}×6 min near LT2 · "
+                "60–90 sec easy recovery"
+            )
+        if "aerobic hill repeats" in normalized_title:
+            return (
+                "5×4 min controlled uphill · "
+                "90 sec easy downhill recovery"
+            )
+        if "easy + strides" in normalized_title:
+            return "Easy running · 6×20 sec relaxed strides"
         if (
             purpose is SessionPurpose.INTENSITY
             and "tempo" in normalized_title
@@ -2235,6 +2265,60 @@ class WorkoutGenerator:
         normalized_title = (
             template.title.lower()
         )
+
+        if "continuous tempo" in normalized_title:
+            main_minutes = min(
+                20,
+                max(10, duration_minutes - 20),
+            )
+            cool_down_minutes = max(
+                5,
+                duration_minutes - 10 - main_minutes,
+            )
+            return (
+                "Warm up 10 min easy",
+                (
+                    f"Run {main_minutes} min continuous at controlled "
+                    "tempo (RPE 6–7/10); finish with reserve"
+                ),
+                f"Cool down {cool_down_minutes} min easy",
+            )
+
+        if "threshold cruise" in normalized_title:
+            repetitions = (
+                3
+                if cls._should_reduce_threshold_dose(coach_context)
+                else 4
+            )
+            return (
+                "Warm up 10 min easy",
+                f"{repetitions}×6 min near LT2 at RPE 7/10",
+                "Recover 60–90 sec easy between repetitions",
+                "Cool down easy; finish without accumulating exhaustion",
+            )
+
+        if "aerobic hill repeats" in normalized_title:
+            return (
+                "Warm up 10 min easy",
+                (
+                    "5×4 min uphill at controlled aerobic effort "
+                    "(RPE 6–7/10); do not sprint"
+                ),
+                "Recover 90 sec easy downhill between repetitions",
+                "Cool down easy with relaxed downhill technique",
+            )
+
+        if "easy + strides" in normalized_title:
+            easy_minutes = max(
+                15,
+                duration_minutes - 15,
+            )
+            return (
+                f"Run {easy_minutes} min at conversational easy effort",
+                "Complete 6×20 sec relaxed strides; do not sprint",
+                "Recover fully with 70–100 sec easy between strides",
+                "Cool down 5 min easy",
+            )
 
         is_threshold = (
             "lt2" in normalized_title

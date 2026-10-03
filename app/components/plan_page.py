@@ -5729,11 +5729,13 @@ def _show_plan_builder_interactive_board(
             *[payload(workout) for workout in workouts if workout.day >= reference_day],
         ],
         templates=[payload(workout) for workout in templates.values()],
+        board_revision=board_revision,
         interaction_revision=interaction_revision,
-        key=(
-            "plan-builder-interactive-board-"
-            f"{board_revision}-{interaction_revision}"
-        ),
+        # Keep the iframe identity stable while its arguments change. Creating
+        # a new component URL for every draft revision can race Streamlit's
+        # frontend asset route during a fragment rerun and intermittently show
+        # the component-loading error until the dialog is reopened.
+        key=f"plan-builder-interactive-board-{draft_key}",
         default=None,
     )
     if not action:

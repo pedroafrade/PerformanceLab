@@ -24,6 +24,10 @@ from performancelab.coaching.workout_templates import (
     TEMPO_TEMPLATE,
     HILLS_TEMPLATE,
     SPEED_TEMPLATE,
+    CONTINUOUS_TEMPO_TEMPLATE,
+    THRESHOLD_CRUISE_TEMPLATE,
+    AEROBIC_HILLS_TEMPLATE,
+    EASY_STRIDES_TEMPLATE,
     template_for,
 )
 
@@ -568,6 +572,22 @@ def test_returns_tempo_template_for_tempo_focus() -> None:
     assert template is TEMPO_TEMPLATE
     assert template.title == "Tempo Session"
     assert template.intensity == "Moderately hard"
+
+
+@pytest.mark.parametrize(
+    ("focus", "expected"),
+    (
+        ("continuous tempo", CONTINUOUS_TEMPO_TEMPLATE),
+        ("threshold cruise", THRESHOLD_CRUISE_TEMPLATE),
+        ("aerobic hills", AEROBIC_HILLS_TEMPLATE),
+        ("easy strides", EASY_STRIDES_TEMPLATE),
+    ),
+)
+def test_returns_explicit_base_microcycle_template(focus, expected):
+    assert template_for(
+        SessionPurpose.INTENSITY,
+        focus=focus,
+    ) is expected
 
 def test_returns_hills_template_for_hills_focus() -> None:
 

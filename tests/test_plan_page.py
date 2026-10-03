@@ -2586,6 +2586,9 @@ def test_plan_builder_uses_clickable_cell_component():
     assert 'st.rerun(scope="fragment")' in source
     assert "board_revision" in source
     assert "interaction_revision" in source
+    assert "board_revision=board_revision" in source
+    assert 'key=f"plan-builder-interactive-board-{draft_key}"' in source
+    assert 'f"{board_revision}-{interaction_revision}"' not in source
     assert "assess_plan_builder_change" in source
     assert "_claim_plan_builder_action" in source
     assert "on_generate_plan(builder_draft)" in inspect.getsource(

@@ -78,6 +78,14 @@ class BaseStrategy(CoachStrategy):
             "typical_running_long_session_minutes",
             0.0,
         )
+        event_sport = self._event_sport(
+            context
+        )
+        recovery_microcycle = (
+            self._is_recovery_microcycle(
+                context
+            )
+        )
 
         if weekly_sessions is not None:
             target_sessions = weekly_sessions
@@ -107,6 +115,14 @@ class BaseStrategy(CoachStrategy):
 
             warnings.append(
                 "Fatigue is elevated; prioritise recovery."
+            )
+
+        elif recovery_microcycle:
+
+            volume_factor = 0.80
+
+            guidelines.append(
+                "Consolidate adaptation with a reduced-load week."
             )
 
         if not can_tolerate_intensity:
@@ -157,6 +173,19 @@ class BaseStrategy(CoachStrategy):
             target_weekly_minutes,
         )
 
+        if recovery_microcycle:
+            long_session_minutes = max(
+                30,
+                int(
+                    round(
+                        long_session_minutes
+                        * 0.85
+                        / 5.0
+                    )
+                    * 5
+                ),
+            )
+
         return StrategyPlan(
             strategy=self.name,
             phase=self.phase,
@@ -170,10 +199,18 @@ class BaseStrategy(CoachStrategy):
 
             focus=focus,
 
-            # Base intensity must still describe a concrete stimulus.
-            # Controlled tempo work is preferable to the ambiguous generic
-            # "Quality" template and remains less aggressive than LT2 work.
-            key_session_focus="tempo",
+            # Preserve one controlled quality day while varying its
+            # architecture according to the event and position in the cycle.
+            # Recovery microcycles deliberately return to tempo rather than
+            # introducing a harder stimulus.
+            key_session_focus=(
+                "easy strides"
+                if recovery_microcycle
+                else self._key_session_focus(
+                    context=context,
+                    event_sport=event_sport,
+                )
+            ),
             secondary_focus="training consistency",
 
             recovery_priority=(
@@ -198,3 +235,79 @@ class BaseStrategy(CoachStrategy):
             guidelines=tuple(guidelines),
             warnings=tuple(warnings),
         )
+
+    # ======================================================
+    @staticmethod
+    def _is_recovery_microcycle(
+        context: CoachContext,
+    ) -> bool:
+        """Select every fourth event-anchored Base week for consolidation."""
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        if days_until_event is None:
+            return False
+
+        weeks_until_event = max(
+            0,
+            days_until_event // 7,
+        )
+
+        return weeks_until_event % 4 == 0
+
+    # ======================================================
+    @staticmethod
+    def _key_session_focus(
+        *,
+        context: CoachContext,
+        event_sport: str | None,
+    ) -> str:
+        """
+        Rotate controlled Base stimuli without adding arbitrary intensity.
+
+        Trail preparation periodically introduces aerobic hill work. Road
+        preparation alternates continuous tempo and controlled threshold
+        intervals. VO2max work remains outside the Base rotation.
+        """
+
+        days_until_event = getattr(
+            context,
+            "days_until_phase_event",
+            None,
+        )
+
+        if days_until_event is None:
+            return "tempo"
+
+        weeks_until_event = max(
+            0,
+            days_until_event // 7,
+        )
+        is_trail = (
+            event_sport is not None
+            and "trail" in event_sport.lower()
+        )
+        rotation = (
+            (
+                "easy strides",
+                "aerobic hills",
+                "threshold cruise",
+                "continuous tempo",
+            )
+            if is_trail
+            else (
+                "easy strides",
+                "continuous tempo",
+                "threshold cruise",
+                "continuous tempo",
+            )
+        )
+
+        return rotation[
+            weeks_until_event
+            % len(rotation)
+        ]
