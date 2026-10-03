@@ -1,0 +1,248 @@
+# PerformanceLab — Melhorias das páginas
+
+**Atualizado em:** 3 de outubro de 2026
+
+**Estado:** alpha privada online; histórico de melhorias e validação contínua
+
+**Destino:** `docs/APP_PAGE_IMPROVEMENTS_260903.md`
+
+## 1. Objetivo
+
+Manter uma lista curta e atualizada das melhorias da interface. Este documento
+complementa `ROADMAP_PUBLIC_UI_260825.md` e não altera os requisitos de
+segurança, privacidade ou deployment.
+
+## 2. Regras comuns
+
+- Evitar scroll desnecessário no desktop e não cortar conteúdo para reduzir a
+  altura das páginas.
+- Permitir empilhamento e scroll normal no móvel.
+- Validar os temas claro e escuro e não comunicar estados apenas através da cor.
+- Reutilizar componentes e a mesma fonte de dados entre páginas.
+- Não alterar fórmulas ou dados guardados através de mudanças apenas visuais.
+- Preservar consentimento, isolamento, exportação e eliminação dos dados.
+- Uma alteração ao plano só está concluída quando célula, gráfico, histórico,
+  eventos e armazenamento persistente representam o mesmo estado.
+- Sessões concluídas e dias anteriores à data atual são visíveis, mas não podem
+  ser alterados retroativamente no Plan Builder.
+
+## 3. Estado atual confirmado
+
+Os conjuntos 3.1–3.9 registam as melhorias consolidadas até 18 de setembro.
+A secção 3.10 acrescenta o trabalho posterior observado no código de `main`
+no commit `bfc40a9`. A CI desse commit terminou com sucesso; esta atualização
+não constitui uma nova validação visual nem confirma a versão publicada.
+
+### 3.1 — Dados e componentes partilhados
+
+- A duração das sessões contínuas foi normalizada entre Plan, Calendar, Today e
+  Dashboard, incluindo Warm-up e Cooldown no total.
+- Estimated Recovery, Training Load e Form usam uma apresentação fisiológica
+  consolidada e indicadores específicos por métrica.
+- Upcoming Events tem uma apresentação partilhada, com variante compacta no
+  Dashboard e gestão a partir de Calendar e Plan.
+- O Daily Brief ganhou maior destaque no Dashboard.
+
+### 3.2 — Plan e Plan Progression
+
+- Plan Weeks abre na semana atual e preserva o acesso às semanas anteriores.
+- Plan Adaptation compara a sessão planeada com a ajustada, incluindo datas e
+  explicação.
+- Plan Progression distingue plano original em azul, treino realizado em verde
+  contínuo, projeção adaptada em verde tracejado, totais semanais e provas.
+- A curva realizada liga-se à projeção adaptada na data atual.
+- Plan Adaptation e Upcoming Events são apresentados lado a lado.
+- Manage Events pode ser aberto em Plan através de um botão de edição alinhado
+  com o botão de ajuda de Plan Adaptation.
+- Criar, alterar ou eliminar eventos atualiza o plano e as projeções; eliminar
+  exige confirmação em diálogo.
+
+### 3.3 — Plan Builder
+
+- O diálogo usa o espaço disponível sem scroll residual nem corte dos botões
+  inferiores no desktop e suporta os temas claro e escuro.
+- A timeline completa reutiliza a lógica de Plan Progression.
+- As semanas começam à segunda-feira e abrangem o horizonte original.
+- Sessões realizadas são mostradas nos dias passados com opacidade reduzida e
+  sem possibilidade de edição.
+- Sessões futuras podem ser movidas, adicionadas, editadas, duplicadas no mesmo
+  dia ou eliminadas.
+- A edição ocorre em pop-up e suporta duração, distância, desnível, intensidade,
+  alvo e estrutura do exercício.
+- Trail Run tem estrutura própria, distinta de Hill Reps.
+- A carga pode ser estimada a partir de duração, distância e desnível sem exigir
+  esforço explícito.
+- Alterações do rascunho atualizam células e timeline e são persistidas por
+  Generate Plan.
+- O impacto fisiológico é calculado imediatamente e acompanhado por uma
+  recomendação.
+- A revisão antes de guardar apresenta a carga anterior e nova por semana,
+  diferenças absolutas e percentuais, precauções, bloqueios e recomendações.
+- Reset changes, Cancel e Generate plan mantêm a mesma altura e alinhamento no
+  rodapé do diálogo.
+- Dias concluídos, sessões realizadas e provas não podem ser tratados como
+  sessões futuras editáveis.
+
+### 3.4 — Versões, restore e adaptação
+
+- Plan recovery apresenta revisões recuperáveis do plano.
+- Plan recovery mantém as dimensões de Build Plan, usa scroll interno e mostra
+  inicialmente apenas as seis revisões distintas mais recentes da linhagem
+  ativa; snapshots repetidos e ramos abandonados não poluem a lista.
+- O Restore apresenta previamente sessões adicionadas, removidas, movidas ou
+  editadas, alterações de eventos, horizonte e versões posteriores afetadas.
+- Restore preserva o horizonte original, sessões, plano original e snapshots
+  dos eventos associados e remove versões posteriores ao ponto restaurado.
+- Eventos restaurados recuperam a identidade e os dados originais; sessões de
+  preparação não são promovidas a Upcoming Events.
+- A aplicação deteta diferenças entre o estímulo planeado e o realizado.
+- As sugestões de reequilíbrio ficam limitadas ao bloco competitivo ativo e
+  respeitam recuperação e proximidade das provas.
+- Plan Adaptation e Plan Progression resolvem a sessão a partir da mesma revisão.
+- Adaptações aplicadas são guardadas como revisões recuperáveis.
+- A ligação entre treino realizado e projeção usa diretamente as sessões reais
+  adjacentes, sem criar uma carga ou inflexão artificial na data atual.
+- Bloqueios e recomendações do Plan Builder são apresentados integralmente num
+  pop-up temporário na camada superior do diálogo, sem alterar o layout.
+- Cada gesto do quadro recebe confirmação explícita; se o Streamlit não
+  responder, o estado de espera é libertado automaticamente para não bloquear
+  as ações seguintes.
+- A gravação rejeita rascunhos desatualizados ou sem diferenças, mantém o
+  rascunho quando o repositório falha e apresenta uma revisão resumida antes da
+  confirmação.
+- O Restore apresenta também a lista concreta de sessões e eventos afetados,
+  num pop-up compacto com expansão apenas para alterações longas.
+- Alterações ao plano, histórico, eventos e Restore invalidam centralmente as
+  vistas derivadas e identificam a revisão ativa, evitando dados antigos entre
+  Plan, Calendar, Today e Daily Brief.
+
+### 3.5 — Recomendações fisiológicas acionáveis
+
+- A avaliação considera o plano completo após mover, criar, editar ou eliminar
+  sessões: carga semanal, intensidade consecutiva, recuperação, sessão longa,
+  taper e proximidade de prova.
+- Resultados distinguem informação, precaução e bloqueio e identificam a regra,
+  semana, sessões, AU e percentagem responsáveis.
+- Limites percentuais são combinados com diferenças absolutas para não bloquear
+  artificialmente semanas de carga baixa.
+- Bloqueios de movimentos apresentam uma alternativa determinística segura,
+  aplicável diretamente no aviso com um clique.
+- Recomendações mantêm caráter informativo e não constituem garantia clínica.
+
+### 3.6 — Integridade transacional e restore
+
+- A aplicação do rascunho é um caso de uso transacional testável: valida a
+  revisão de origem, ignora repetições, cria uma única revisão e repõe o plano
+  anterior se a persistência falhar.
+- Um teste integrado cobre mover, editar, adicionar, eliminar e persistir numa
+  única sequência, incluindo identidade das sessões e revisão ativa.
+- Restore recupera em conjunto sessões, horizonte, plano original, eventos e
+  identificadores competitivos, elimina versões posteriores e cria uma revisão
+  de recuperação ligada diretamente à revisão restaurada.
+- As vistas derivadas são invalidadas pela revisão ativa após gravação, Restore,
+  alterações de eventos e alterações ao histórico realizado.
+
+### 3.7 — Today e aconselhamento
+
+- Today reutiliza o Daily Brief persistido no contentor existente e divide a
+  mesma linha com o Recovery Log, sem nova geração.
+- Next Session divide o espaço com Session Equivalent, que compara duração e
+  carga entre running, cycling e swimming, explicita diferenças de estímulo e
+  sugere força complementar apenas quando familiar e sem dor.
+- Recovery Log guarda um histórico privado controlado pelo atleta, incluído na
+  exportação e eliminação do perfil e nunca enviado ao Coach/IA.
+- O separador Typical Week, entre Build Plan e Plan Recovery, analisa localmente
+  seis meses de sessões realizadas e coloca padrões recorrentes — incluindo
+  NRTV e ciclismo — no respetivo dia e hora modais de uma grelha de sete dias.
+
+### 3.8 — Guia de métricas e planos
+
+- O guia identifica entradas, unidades, janela temporal, fórmula, exemplo,
+  interpretação, limitações e origem de implementação.
+- ATL, CTL e TSB documentam as constantes exponenciais efetivamente usadas e
+  os exemplos são testados contra as funções de análise.
+- A carga planeada documenta a correspondência de intensidade para RPE e o
+  fator conservador de desnível, com exemplo calculado pela função real.
+- As regras do Plan Builder explicitam limites percentuais e absolutos,
+  recuperação, long run e taper sem os apresentar como garantia clínica.
+- Typical Week documenta a janela de 183 dias e os critérios mínimos de
+  recorrência, distinguindo preferência observada de prescrição.
+- O guia distingue cálculos determinísticos das explicações do Training Coach;
+  o texto do Coach não altera autonomamente o plano persistido.
+- Today separa explicitamente a primeira e segunda linhas de contentores e usa
+  a mesma grelha para alinhar Recovery Log com os contentores de orientação.
+- Typical Week apresenta os sete dias numa grelha horária completa, conserva
+  blocos vazios e posiciona cada padrão na hora modal observada.
+
+### 3.9 — Uniformização visual final
+
+- O Plan Builder bloqueia o scroll da página subjacente enquanto está aberto.
+- Typical Week compacta a escala horária sem scroll interno e usa as variáveis
+  do tema para manter os dias legíveis nos modos claro e escuro.
+- A grelha usa o intervalo horário efetivamente necessário, com limite mínimo
+  até às 20:00, evitando cortar as últimas linhas do diálogo.
+- Today mantém uma separação vertical consistente entre as duas primeiras
+  linhas de contentores.
+- Today aplica a mesma separação entre linhas e cartões de orientação;
+  Session Equivalent apresenta cada alternativa num cartão interno.
+- Recovery Log mantém um resumo de altura estável em Today e concentra a
+  adição, edição e remoção num diálogo aberto pelo botão de lápis.
+- Recovery Log mostra as entradas mais recentes no próprio cartão, com scroll
+  interno, e Today reutiliza a escala de espaçamento de 0,75 rem do Dashboard.
+- Plan e Settings usam tipografia uniformizada e limitada à respetiva página;
+  o nome do atleta surge na mesma linha de Athlete profile.
+- Em Development, os dois gráficos partilham o mesmo limite visual direito, o
+  eixo redundante da linha zero foi removido e a linha inferior foi aproximada.
+
+### 3.10 — Alpha, onboarding e alterações posteriores
+
+- Identidade visual Journal com adaptação ao tema.
+- Login Google e código por email, convites e perfil no primeiro acesso autorizado.
+- Onboarding com perfil, importação e gravação do progresso antes da navegação.
+- Correções de persistência do perfil, reconciliação e ligações PostgreSQL.
+- Plan Builder com ações e layout simplificados e identidade estável do componente.
+- Geração inicial do plano sem exigir datas de um plano anterior.
+- Proteção de recuperação pós-prova e regeneração explícita.
+- Sensores comprimidos com leitura diferida para reduzir memória.
+- Volume habitual flexível e preservação de sessões produtivas entre fases.
+- Microciclos Base com Continuous Tempo, Threshold Cruise, Aerobic Hills e
+  Easy + Strides, incluindo semanas de consolidação com menor carga.
+
+## 4. Trabalho pendente
+
+A fila funcional anterior não deve ser retomada como trabalho ainda por fazer.
+O próximo ciclo deve validar:
+
+- onboarding, uploads, edição e recuperação do plano no deployment atual;
+- consistência entre prescrição, duração, carga e adaptação dos novos microciclos;
+- estabilidade do Plan Builder após várias alterações consecutivas;
+- estados vazios, dados incompletos e textos longos;
+- desktop e móvel nos temas claro e escuro.
+
+O estado dos controlos externos e a revisão publicada são registados no
+roadmap e no registo operacional, separadamente da implementação da UI.
+
+## 5. Decisões necessárias
+
+- **Recomendações automáticas:** definir aviso, aplicação direta e bloqueio.
+- **Retenção de revisões:** decidir se versões removidas após restore devem ter
+  recuperação técnica temporária.
+
+## 6. Critério de conclusão
+
+Um item só passa para concluído depois de:
+
+1. testes específicos e `pytest -q` sem erros;
+2. `git diff --check` sem problemas;
+3. validação visual no Streamlit em desktop e móvel, nos temas claro e escuro;
+4. confirmação de estados vazios, textos longos e dados incompletos;
+5. confirmação de que células, gráficos, eventos e armazenamento apresentam a
+   mesma revisão;
+6. commit e push confirmados.
+
+## 7. Próximo conjunto recomendado
+
+Validar os novos microciclos em Plan, Calendar e Today, incluindo edição,
+adaptação e recuperação. Repetir os fluxos críticos em desktop e móvel, nos
+temas claro e escuro, e decidir as políticas de produto ainda abertas.
+Consultar `HANDOUT_261003.md` antes de definir o próximo commit.

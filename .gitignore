@@ -92,3 +92,4 @@ override.tf.json
 
 # Local continuity handouts
 docs/HANDOUT_*.md
+!docs/HANDOUT_261003.md
