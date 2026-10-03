@@ -18,36 +18,43 @@ O objetivo não é impor um calendário rígido nem apresentar dezenas de métri
 
 ## Estado do projeto
 
-O PerformanceLab está em **desenvolvimento ativo e em preparação
-para uma alpha privada**.
+O PerformanceLab está em **desenvolvimento ativo, com a alpha privada online**.
+O estado online foi confirmado pelo responsável pelo projeto em 3 de outubro
+de 2026. A interface utiliza a identidade visual Journal.
+
+Fonte de código desta atualização: `main`, commit `bfc40a9` de 3 de outubro
+de 2026. A CI desse commit terminou com sucesso. Este identificador não
+confirma, por si só, a revisão atualmente publicada no Cloud Run.
 
 A aplicação possui atualmente:
 
 - Streamlit para a interface;
 - JSON exclusivamente para desenvolvimento local;
 - PostgreSQL obrigatório nos ambientes de teste e alpha;
-- autenticação externa por OIDC;
-- convites individuais;
+- autenticação externa por OIDC, com Google e código por email;
+- convites individuais, perfil criado no primeiro login autorizado e onboarding;
 - autorização e isolamento por utilizador e atleta;
 - uploads validados e processados temporariamente;
 - consentimentos, exportação e eliminação de dados;
-- limites e consentimento separado para o Training Coach;
-- CI, logging estruturado, alertas seguros e verificação de saúde.
+- Training Coach e Daily Brief opcionais, consentidos e sujeitos a quotas;
+- Plan Builder, revisões recuperáveis e adaptação incremental do futuro;
+- Recovery Log privado e tendências históricas em Development;
+- CI, logging estruturado, captura segura de exceções e verificação de saúde.
 
-Esta versão ainda não deve ser aberta a participantes reais.
+O deployment utiliza a infraestrutura preparada para Google Cloud Run,
+Cloud SQL PostgreSQL e Secret Manager. A configuração versionada não prova
+os valores nem o estado dos recursos do ambiente publicado.
 
-Continuam pendentes, entre outros:
+O registo operacional deve confirmar a revisão e o digest publicados,
+região efetiva, revisão jurídica externa, contactos, backups automáticos,
+restauro real testado, alertas e testes internos no deployment e em dispositivos.
+Não classificar estes pontos como concluídos ou por executar apenas por
+inferência do código. Better Stack é opcional na configuração atual; documentar
+a monitorização e os alertas efetivamente utilizados.
 
-- revisão jurídica externa;
-- alojamento privado da aplicação;
-- ativação e verificação do Better Stack;
-- Google Cloud SQL;
-- backups automáticos;
-- restauro real testado;
-- deployment e testes internos no ambiente alpha.
+Consulta o [roadmap da alpha](docs/ROADMAP_PUBLIC_UI_260825.md) e o
+[handout atual](docs/HANDOUT_261003.md) para retomar o desenvolvimento.
 
-Consulta o [roadmap até à UI pública](docs/ROADMAP_PUBLIC_UI.md)
-para o estado e a sequência de evolução.
 
 ---
 
@@ -147,7 +154,9 @@ O sistema:
 - não move cegamente um treino falhado para o dia seguinte;
 - aplica alterações pequenas e conservadoras.
 
-Consulta [PLANNING.md](docs/PLANNING.md) para as regras completas.
+Consulta [PLANNING.md](docs/PLANNING.md) para a referência de planeamento
+e o [handout atual](docs/HANDOUT_261003.md) para as alterações recentes.
+A descrição das regras deve ser confrontada com a implementação atual.
 
 ### Dashboard
 
@@ -164,7 +173,9 @@ A interface atual apresenta, entre outros elementos:
 - resumos de treino;
 - detalhe e edição de atividades.
 
-O dashboard está a ser revisto para reduzir ruído, melhorar estados vazios e dar prioridade à decisão mais importante do atleta.
+As melhorias consolidadas de interface estão descritas em
+[APP_PAGE_IMPROVEMENTS_260903.md](docs/APP_PAGE_IMPROVEMENTS_260903.md).
+A validação visual deve acompanhar cada alteração no ambiente publicado.
 
 ---
 
@@ -353,6 +364,7 @@ PerformanceLab/
 ├── alembic.ini             # Configuração das migrações
 ├── pyproject.toml          # Pacote e dependências
 └── README.md               # Guia principal do repositório
+```
 
 ## Documentação
 
@@ -363,7 +375,8 @@ PerformanceLab/
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — camadas, dependências e transição técnica;
 - [TRAINING_SCIENCE.md](docs/TRAINING_SCIENCE.md) — métricas, evidência, heurísticas e limites;
 - [PLANNING.md](docs/PLANNING.md) — geração, reconciliação e adaptação do plano;
-- [ROADMAP_PUBLIC_UI.md](docs/ROADMAP_PUBLIC_UI.md) — sequência até à aplicação pública;
+- [ROADMAP_PUBLIC_UI_260825.md](docs/ROADMAP_PUBLIC_UI_260825.md) — estado e prioridades da alpha;
+- [HANDOUT_261003.md](docs/HANDOUT_261003.md) — continuidade do desenvolvimento;
 - [AUDIT_CURRENT_STATE.md](docs/AUDIT_CURRENT_STATE.md) — auditoria que iniciou o ciclo atual.
 
 ### Fundamentos históricos
@@ -377,18 +390,11 @@ Documentos e roadmaps antigos serão arquivados para evitar conflito com a refer
 
 ## Limitações importantes
 
-O PerformanceLab ainda não está pronto para participantes reais
-porque continuam pendentes:
-
-- revisão jurídica externa;
-- contacto definitivo de privacidade e suporte;
-- alojamento privado da aplicação;
-- ativação do PostgreSQL gerido;
-- backups automáticos;
-- restauro real testado;
-- ativação e verificação dos alertas;
-- testes internos no deployment;
-- testes essenciais em desktop, Android e iOS.
+A alpha privada está online, mas não representa disponibilidade pública geral.
+A confirmação operacional de alojamento privado da aplicação, revisão jurídica
+externa, contactos, backups automáticos, restauro real testado, monitorização,
+testes internos no deployment e testes em desktop, Android e iOS deve constar
+do registo da operação. Esta atualização não certifica esses controlos.
 
 O PerformanceLab também ainda não oferece:
 
@@ -409,7 +415,7 @@ do plano.
 
 ## Contribuir
 
-O projeto está numa fase de consolidação antes da primeira UI pública.
+O projeto está numa fase de consolidação e evolução da alpha privada.
 
 Antes de propor uma alteração relevante:
 

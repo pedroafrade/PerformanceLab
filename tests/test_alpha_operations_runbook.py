@@ -117,21 +117,22 @@ def test_runbook_forbids_secrets():
         assert value in text
 
 
-def test_runbook_preserves_pending_blockers():
+def test_runbook_separates_online_state_from_operational_evidence():
 
     text = runbook_text()
 
-    pending_items = (
+    assert "ALPHA PRIVADA ONLINE" in text
+    assert "- [x] deployment executado" in text
+    assert "A confirmar no registo operacional" in text
+    for item in (
         "revisão jurídica externa concluída",
-        "avaliação Google Cloud iniciada",
         "backups automáticos ativos",
         "restauro real testado",
-        "deployment executado",
-    )
-
-    for item in pending_items:
-
-        assert f"- [ ] {item}" in text
+        "commit, digest e revisão Cloud Run publicados",
+    ):
+        assert item in text
+    assert "- [ ] deployment executado" not in text
+    assert "Better Stack é opcional" in text
 
 def test_runbook_records_confirmed_google_cloud_services():
 
@@ -342,4 +343,3 @@ def test_runbook_defines_device_ui_validation():
         "com emails"
         in text
     )
-

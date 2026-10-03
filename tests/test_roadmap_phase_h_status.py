@@ -31,21 +31,12 @@ def test_phase_h_records_current_progress():
 
     text = roadmap_text()
 
-    assert "Dos 15 requisitos anteriores" in text
-    assert (
-        "10 estão tecnicamente concluídos"
-        in text
-    )
-    assert (
-        "3 estão implementados, mas "
-        "aguardam validação externa"
-        in text
-    )
-    assert (
-        "2 permanecem pendentes"
-        in text
-    )
-
+    assert "alpha privada online" in text
+    assert "bfc40a9" in text
+    assert "Implementado" in text
+    assert "Publicado" in text
+    assert "Validado em operação" in text
+    assert "Os convites permanecem bloqueados" not in text
 
 def test_phase_h_records_cloud_run_strategy():
 
@@ -68,7 +59,6 @@ def test_phase_h_preserves_blockers():
         "restauro real",
         "contacto de suporte visível",
         "desktop, Android e iOS",
-        "Os convites permanecem bloqueados",
     )
 
     for blocker in blockers:
@@ -76,17 +66,13 @@ def test_phase_h_preserves_blockers():
         assert blocker in text
 
 
-def test_phase_h_preserves_trial_boundary():
+def test_phase_h_separates_documentation_from_external_execution():
 
     text = roadmap_text()
 
-    assert "não cria recursos Google Cloud" in text
-    assert "não inicia custos" in text
-    assert (
-        "não inicia o período experimental "
-        "de 90 dias"
-        in text
-    )
+    assert "não executa deployment" in text
+    assert "nem certifica controlos externos" in text
+    assert "Better Stack passou a ser opcional" in text
 
 def test_phase_h_records_alpha_startup_preflights():
 
@@ -103,6 +89,6 @@ def test_phase_h_records_alpha_startup_preflights():
         in text
     )
     assert (
-        "c0788c4"
+        "bfc40a9"
         in text
     )

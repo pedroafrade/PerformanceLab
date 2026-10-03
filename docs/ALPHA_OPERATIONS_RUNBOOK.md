@@ -1,20 +1,22 @@
 # Operação da Alpha Privada do PerformanceLab
 
 **Preparado em:** 25 de agosto de 2026  
-**Estado:** PROCEDIMENTO PREPARADO — EXECUÇÃO PENDENTE
+**Atualizado em:** 3 de outubro de 2026
+**Estado:** ALPHA PRIVADA ONLINE — EVIDÊNCIA OPERACIONAL A CONSOLIDAR
 
 ## 1. Objetivo
 
 Este documento descreve como preparar, publicar, verificar,
 interromper e recuperar a alpha privada do PerformanceLab.
 
-Não significa que o deployment, os backups ou o restauro já tenham
-sido realizados.
+O responsável confirmou que a alpha privada está online. Este procedimento
+não certifica o commit publicado, os backups, o restauro ou os restantes
+controlos externos. A sua execução deve constar do registo operacional.
 
-## 2. Bloqueadores antes dos convites
+## 2. Controlos para operação e novos convites
 
-Nenhum participante real pode ser convidado enquanto estiver
-pendente qualquer um destes pontos:
+Antes de novos convites, confirmar a evidência dos controlos seguintes.
+A lista define requisitos; não afirma que estejam todos por executar:
 
 - revisão jurídica externa do passo F.9.2;
 - contacto de privacidade definitivo;
@@ -22,7 +24,7 @@ pendente qualquer um destes pontos:
 - Google Cloud SQL configurado numa região da União Europeia;
 - backups automáticos com retenção de 14 dias;
 - restauro real testado numa base separada;
-- Better Stack ativo e verificado;
+- monitorização e alertas ativos e verificados; Better Stack é opcional;
 - CI sem erros;
 - autenticação, convites e isolamento testados no ambiente alpha;
 - plano de incidente confirmado.
@@ -211,7 +213,7 @@ O processo de deployment deverá:
 7. executar os quatro preflights;
 8. arrancar com `PERFORMANCELAB_ENV=alpha`;
 9. executar a verificação de saúde;
-10. confirmar os alertas do Better Stack;
+10. confirmar os alertas da solução de monitorização utilizada;
 11. testar com duas contas internas e dados descartáveis;
 12. só depois permitir convites graduais.
 
@@ -222,7 +224,8 @@ O deployment não pode:
 - iniciar se algum preflight falhar;
 - apresentar segredos nos comandos, logs ou mensagens de erro.
 
-A criação e execução destes recursos permanece pendente. Esta
+A alpha está online. A configuração versionada não confirma o estado dos
+recursos ativos; consultar o registo operacional. Ler ou alterar esta
 documentação não ativa a Google Cloud, não cria custos e não inicia o
 período experimental.
 
@@ -389,8 +392,9 @@ Perante um incidente:
 10. documentar causa, impacto, correção e prevenção;
 11. avaliar as obrigações de comunicação aplicáveis.
 
-O Better Stack serve para avisar que ocorreu uma falha. Não corrige
-automaticamente a aplicação nem recupera os dados.
+A solução de alertas utilizada serve para avisar que ocorreu uma falha. Não
+corrige automaticamente a aplicação nem recupera os dados. Better Stack é
+uma integração opcional; registar o fornecedor efetivamente ativo.
 
 ## 12. Suspensão segura
 
@@ -427,25 +431,30 @@ Cada deployment, migração, rollback ou incidente deverá registar:
 
 O registo não deve conter segredos nem dados dos atletas.
 
-## 14. Estado atual
+## 14. Estado atual e evidência
 
-Neste momento:
+Fonte de código: `main`, commit `bfc40a9`, de 3 de outubro de 2026.
+A CI desse commit terminou com sucesso. O responsável confirmou a alpha online.
 
-- [x] CI criado;
-- [x] testes de isolamento com dois utilizadores criados;
-- [x] logging estruturado criado;
-- [x] captura segura de exceções criada;
-- [x] Better Stack escolhido;
-- [x] verificação de saúde criada;
-- [x] Google Cloud SQL escolhido;
-- [x] procedimentos de deployment e incidente preparados;
-- [ ] revisão jurídica externa concluída;
+- [x] CI, testes de isolamento, logging e captura segura de exceções implementados;
+- [x] verificação de saúde e preflights implementados;
 - [x] Google Cloud Run escolhido para alojar a aplicação;
-- [ ] avaliação Google Cloud iniciada;
-- [ ] PostgreSQL alpha criado;
-- [ ] backups automáticos ativos;
-- [ ] restauro real testado;
-- [ ] Better Stack ativado e verificado;
-- [ ] deployment executado.
+- [x] infraestrutura Cloud SQL e Secret Manager versionada;
+- [x] OIDC, convites, onboarding e persistência PostgreSQL implementados;
+- [x] deployment executado, conforme confirmação do responsável.
 
-Os itens pendentes continuam a bloquear os convites.
+**A confirmar no registo operacional, sem presumir ausência ou conclusão:**
+
+- commit, digest e revisão Cloud Run publicados;
+- região e configuração efetivas dos serviços;
+- revisão jurídica externa concluída e textos/contactos em vigor;
+- backups automáticos ativos e retenção efetiva;
+- restauro real testado numa base separada;
+- monitorização, alerta real e retenção dos logs;
+- login, recusa de conta não convidada e isolamento com duas contas;
+- exportação, eliminação e rollback com dados descartáveis;
+- testes em desktop, Android e iOS.
+
+Não deduzir estes resultados a partir da existência de scripts, Terraform ou
+testes locais. Better Stack é opcional na configuração atual e a sua presença
+no código não confirma ativação externa.

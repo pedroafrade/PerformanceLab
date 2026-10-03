@@ -20,6 +20,9 @@ Para decisões presentes, consulta:
 - [`../ARCHITECTURE.md`](../ARCHITECTURE.md);
 - [`../TRAINING_SCIENCE.md`](../TRAINING_SCIENCE.md);
 - [`../PLANNING.md`](../PLANNING.md);
-- [`../ROADMAP_PUBLIC_UI.md`](../ROADMAP_PUBLIC_UI.md).
+- [`../ROADMAP_PUBLIC_UI_260825.md`](../ROADMAP_PUBLIC_UI_260825.md).
 
 O `MANIFESTO.md` e o `FOUNDATIONS.md` permanecem fora desta pasta como fundamentos ativos do projeto.
+
+
+Para retomar o desenvolvimento, consultar também [`../HANDOUT_261003.md`](../HANDOUT_261003.md).
