@@ -707,7 +707,17 @@ def test_limits_planned_weekly_load_growth():
 
     assert planned_weekly_load(
         result.workouts
-    ) <= 1100
+    ) == pytest.approx(1110.0)
+
+    assert result_durations[
+        "Monday Quality"
+    ] >= timedelta(minutes=45)
+    assert result_durations[
+        "Wednesday Quality"
+    ] >= timedelta(minutes=45)
+    assert result_durations[
+        "Easy Aerobic Run"
+    ] >= timedelta(minutes=30)
 
 def test_moves_intensity_away_from_previous_long_run():
 
@@ -1165,10 +1175,46 @@ def test_keeps_load_limit_after_normal_training():
 
     assert (
         Planner._should_limit_weekly_load(
-            easy_run
+            easy_run,
+            previous_phase="Base",
+            current_phase="Base",
         )
         is True
     )
+
+
+@pytest.mark.parametrize(
+    "previous_phase",
+    ["Regeneration", "Race", "Taper"],
+)
+def test_reduced_phase_does_not_cap_next_normal_week(
+    previous_phase,
+):
+    easy_run = PlannedWorkout(
+        scheduled_at=datetime(2026, 10, 9),
+        title="Easy Run",
+        intensity="Easy",
+    )
+
+    assert Planner._should_limit_weekly_load(
+        easy_run,
+        previous_phase=previous_phase,
+        current_phase="Base",
+    ) is False
+
+
+def test_normal_phase_transition_keeps_load_guard():
+    easy_run = PlannedWorkout(
+        scheduled_at=datetime(2026, 11, 8),
+        title="Easy Run",
+        intensity="Easy",
+    )
+
+    assert Planner._should_limit_weekly_load(
+        easy_run,
+        previous_phase="Base",
+        current_phase="Build",
+    ) is True
 
 def test_progresses_long_session_during_build():
 
@@ -1736,6 +1782,48 @@ def test_weekly_load_growth_limit_is_ten_percent():
         MAX_PLANNED_WEEKLY_LOAD_GROWTH
         == pytest.approx(0.10)
     )
+
+
+def test_weekly_load_guard_preserves_three_productive_sessions():
+    weekly_plan = WeeklyPlan(
+        start_date=date(2026, 11, 9),
+        end_date=date(2026, 11, 15),
+        workouts=[
+            PlannedWorkout(
+                scheduled_at=datetime(2026, 11, 10),
+                title="Tempo Run",
+                duration=timedelta(minutes=45),
+                intensity="Moderately hard",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(2026, 11, 12),
+                title="Easy Run",
+                duration=timedelta(minutes=30),
+                intensity="Easy",
+            ),
+            PlannedWorkout(
+                scheduled_at=datetime(2026, 11, 15),
+                title="Long Run",
+                duration=timedelta(minutes=120),
+                intensity="Easy to moderate",
+            ),
+        ],
+    )
+
+    result = Planner._limit_weekly_load_growth(
+        weekly_plan=weekly_plan,
+        previous_weekly_load=100.0,
+    )
+
+    assert len(result.workouts) == 3
+    durations = {
+        workout.title: int(
+            workout.duration.total_seconds() // 60
+        )
+        for workout in result.workouts
+    }
+    assert durations["Tempo Run"] >= 45
+    assert durations["Easy Run"] >= 30
 
 
 def test_weekly_load_limit_preserves_long_run_even_above_limit():

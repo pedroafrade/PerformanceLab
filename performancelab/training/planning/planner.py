@@ -485,10 +485,27 @@ class Planner:
                 )
             )
 
+            current_planned_phase = next(
+                (
+                    workout.phase
+                    for workout in reversed(
+                        weekly_plan.workouts
+                    )
+                    if workout.phase is not None
+                ),
+                None,
+            )
+
             if (
                 previous_weekly_load is not None
                 and self._should_limit_weekly_load(
-                    previous_planned_workout
+                    previous_planned_workout,
+                    previous_phase=(
+                        previous_planned_phase
+                    ),
+                    current_phase=(
+                        current_planned_phase
+                    ),
                 )
             ):
 
@@ -1214,14 +1231,39 @@ class Planner:
     @staticmethod
     def _should_limit_weekly_load(
         previous_workout,
+        *,
+        previous_phase: str | None = None,
+        current_phase: str | None = None,
     ) -> bool:
         """
-        Avoids comparing a recovery week with a race
-        week whose competition load may be incomplete.
+        Decide whether consecutive weekly loads are comparable.
+
+        Recovery, taper and race weeks are intentionally reduced or
+        incomplete. They must not become the ten-percent ceiling for the
+        first normal training week that follows, otherwise productive easy
+        volume is repeatedly removed from the remainder of the plan.
         """
 
         if previous_workout is None:
             return True
+
+        reduced_phases = {
+            "Regeneration",
+            "Race",
+            "Taper",
+        }
+        normal_phases = {
+            "Base",
+            "Build",
+            "Maintenance",
+            "Peak",
+        }
+
+        if (
+            previous_phase in reduced_phases
+            and current_phase in normal_phases
+        ):
+            return False
 
         return not Planner._is_race_workout(
             previous_workout
@@ -1271,6 +1313,9 @@ class Planner:
             planned_weekly_load(workouts)
             > maximum_load
         ):
+
+            if len(workouts) <= 4:
+                break
 
             demanding_workouts = [
                 workout
@@ -1436,9 +1481,30 @@ class Planner:
                 * 5
             )
 
+            intensity = str(
+                workout.intensity or ""
+            ).strip().lower()
+            title = str(
+                workout.title or ""
+            ).strip().lower()
+
+            if Planner._is_demanding_workout(workout):
+                productive_minimum = (
+                    MIN_PRODUCTIVE_INTENSITY_SESSION_MINUTES
+                )
+            elif (
+                "easy" in intensity
+                and "recovery" not in title
+            ):
+                productive_minimum = (
+                    MIN_PRODUCTIVE_EASY_SESSION_MINUTES
+                )
+            else:
+                productive_minimum = 20
+
             minimum_minutes = min(
                 original_minutes,
-                20,
+                productive_minimum,
             )
 
             reduced_minutes = max(

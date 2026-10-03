@@ -52,6 +52,31 @@ def test_sao_silvestre_and_smat_share_horizon():
         for workout in plan.workouts
     )
 
+    normal_weeks = {}
+    for workout in plan.workouts:
+        if workout.phase not in {"Base", "Build"}:
+            continue
+        week = workout.day.fromordinal(
+            workout.day.toordinal() - workout.day.weekday()
+        )
+        normal_weeks.setdefault(week, []).append(workout)
+
+    assert normal_weeks
+    assert all(
+        len(workouts) == 3
+        for workouts in normal_weeks.values()
+    )
+    assert all(
+        any(
+            "easy" in str(workout.intensity or "").lower()
+            and "long" not in workout.title.lower()
+            and workout.duration is not None
+            and workout.duration.total_seconds() >= 30 * 60
+            for workout in workouts
+        )
+        for workouts in normal_weeks.values()
+    )
+
 
 @pytest.mark.parametrize("rpe", [5, 8])
 def test_peak_does_not_invent_frequency_from_sparse_history(rpe):
