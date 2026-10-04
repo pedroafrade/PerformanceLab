@@ -627,4 +627,13 @@ def phase_timeline_styles() -> str:
         text-align: left;
     }
 }
+
+@media (max-width: 700px) {
+    .weekly-phase-segments {overflow-x:auto; padding-bottom:0.4rem;}
+    .weekly-phase-segment {flex:0 0 7.5rem !important; min-width:7.5rem;}
+    .weekly-phase-label {font-size:0.82rem; line-height:1.3; white-space:normal;}
+    .weekly-phase-range {display:block; font-size:0.72rem; line-height:1.3;}
+    .weekly-phase-dots {display:none;}
+    .weekly-phase-footer {font-size:0.78rem; line-height:1.35;}
+}
 """

@@ -564,6 +564,9 @@ def show_sidebar(
         _HOME_PAGE,
     )
 
+    from .mobile_layout import apply_mobile_sidebar_navigation
+    apply_mobile_sidebar_navigation()
+
     with st.sidebar:
 
         _sidebar_styles(

@@ -1879,176 +1879,181 @@ def show_development_page(
         unsafe_allow_html=True,
     )
 
-    _show_development_summary_cards(development.summary_cards, athlete, reference_time.date())
-    st.markdown(
-        '<div class="development-section-gap"></div>',
-        unsafe_allow_html=True,
-    )
-    (
-        chart_column,
-        interpretation_column,
-    ) = st.columns(
-        [2.15, 1],
-        gap="medium",
-    )
-
-    with chart_column:
-
+    from .mobile_layout import apply_mobile_layout
+    apply_mobile_layout()
+    with st.container(key="development_page"):
+        _show_development_summary_cards(development.summary_cards, athlete, reference_time.date())
         st.markdown(
-            _development_chart_heading_html(
-                "Load and form",
-                (
-                    "Acute load (ATL), chronic load (CTL) "
-                    "and training stress balance (TSB)."
-                ),
-            ),
+            '<div class="development-section-gap"></div>',
             unsafe_allow_html=True,
         )
-
-        performance_rows = (
-            _development_chart_rows(
-                development
-            )
-        )
-
-        if performance_rows:
-
-            _show_responsive_development_chart(
-                development,
-                _development_load_form_chart,
-                key="development_load_form",
-            )
-
-        else:
-
-            st.info(
-                "Import activity history to calculate "
-                "performance development."
-            )
-
-        st.markdown(
-            '<div class="development-between-charts"></div>',
-            unsafe_allow_html=True,
-        )
-
-        st.markdown(
-            _development_chart_heading_html(
-                "Daily training load",
-                (
-                    "Session-RPE load by day with a "
-                    "7-day rolling average."
-                ),
-            ),
-            unsafe_allow_html=True,
-        )
-
-        load_rows = (
-            _daily_load_chart_rows(
-                development
-            )
-        )
-
-        if load_rows:
-
-            _show_responsive_development_chart(
-                development,
-                _daily_training_load_chart,
-                key="development_daily_load",
-            )
-
-        else:
-
-            st.info(
-                "No daily training load is available."
-            )
-
-    with interpretation_column:
-
-        st.markdown(
+        with st.container(key="development_analysis"):
             (
-                "<style>"
-                + current_state_summary_styles()
-                + "</style>"
-                + current_state_summary_html(
-                    CurrentStateSummaryData(
-                        recovery_score=development.recovery_score,
-                        recovery_balance=development.recovery_balance,
-                        recovery_status=development.recovery_status,
-                        chronic_load=development.chronic_load,
-                        acute_load=development.acute_load,
-                        load_status=development.load_status,
-                        form=development.current_form,
-                        recovery_recommendation=(
-                            development.recovery_recommendation
+                chart_column,
+                interpretation_column,
+            ) = st.columns(
+                [2.15, 1],
+                gap="medium",
+            )
+
+            with chart_column:
+
+                st.markdown(
+                    _development_chart_heading_html(
+                        "Load and form",
+                        (
+                            "Acute load (ATL), chronic load (CTL) "
+                            "and training stress balance (TSB)."
                         ),
-                        load_score=max(
-                            0.0,
-                            min(
-                                100.0,
-                                100.0 - abs(development.ramp_rate),
-                            ),
-                        ),
-                        ramp_rate=development.ramp_rate,
-                        recovery_reference_time=development.recovery_reference_time,
-                        hours_since_last_workout=development.hours_since_last_workout,
-                        recovery_is_time_aware=development.recovery_is_time_aware,
                     ),
-                    compact=True,
+                    unsafe_allow_html=True,
                 )
-            ),
-            unsafe_allow_html=True,
-        )
-    st.markdown(
-        '<div class="development-lower-row"></div>',
-        unsafe_allow_html=True,
-    )
-    (
-        volume_column,
-        intensity_column,
-        references_column,
-    ) = st.columns(
-        [1, 1, 1],
-        gap="medium",
-    )
 
-    with volume_column:
+                performance_rows = (
+                    _development_chart_rows(
+                        development
+                    )
+                )
 
-        st.markdown(
+                if performance_rows:
+
+                    _show_responsive_development_chart(
+                        development,
+                        _development_load_form_chart,
+                        key="development_load_form",
+                    )
+
+                else:
+
+                    st.info(
+                        "Import activity history to calculate "
+                        "performance development."
+                    )
+
+                st.markdown(
+                    '<div class="development-between-charts"></div>',
+                    unsafe_allow_html=True,
+                )
+
+                st.markdown(
+                    _development_chart_heading_html(
+                        "Daily training load",
+                        (
+                            "Session-RPE load by day with a "
+                            "7-day rolling average."
+                        ),
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+                load_rows = (
+                    _daily_load_chart_rows(
+                        development
+                    )
+                )
+
+                if load_rows:
+
+                    _show_responsive_development_chart(
+                        development,
+                        _daily_training_load_chart,
+                        key="development_daily_load",
+                    )
+
+                else:
+
+                    st.info(
+                        "No daily training load is available."
+                    )
+
+            with interpretation_column:
+
+                st.markdown(
+                    (
+                        "<style>"
+                        + current_state_summary_styles()
+                        + "</style>"
+                        + current_state_summary_html(
+                            CurrentStateSummaryData(
+                                recovery_score=development.recovery_score,
+                                recovery_balance=development.recovery_balance,
+                                recovery_status=development.recovery_status,
+                                chronic_load=development.chronic_load,
+                                acute_load=development.acute_load,
+                                load_status=development.load_status,
+                                form=development.current_form,
+                                recovery_recommendation=(
+                                    development.recovery_recommendation
+                                ),
+                                load_score=max(
+                                    0.0,
+                                    min(
+                                        100.0,
+                                        100.0 - abs(development.ramp_rate),
+                                    ),
+                                ),
+                                ramp_rate=development.ramp_rate,
+                                recovery_reference_time=development.recovery_reference_time,
+                                hours_since_last_workout=development.hours_since_last_workout,
+                                recovery_is_time_aware=development.recovery_is_time_aware,
+                            ),
+                            compact=True,
+                        )
+                    ),
+                    unsafe_allow_html=True,
+                )
+        with st.container(key="development_details"):
+            st.markdown(
+                '<div class="development-lower-row"></div>',
+                unsafe_allow_html=True,
+            )
             (
-                "<style>"
-                + _development_lower_styles()
-                + "</style>"
-                + _development_sport_volume_html(
-                    development
+                volume_column,
+                intensity_column,
+                references_column,
+            ) = st.columns(
+                [1, 1, 1],
+                gap="medium",
+            )
+
+            with volume_column:
+
+                st.markdown(
+                    (
+                        "<style>"
+                        + _development_lower_styles()
+                        + "</style>"
+                        + _development_sport_volume_html(
+                            development
+                        )
+                    ),
+                    unsafe_allow_html=True,
                 )
-            ),
-            unsafe_allow_html=True,
-        )
 
-    with intensity_column:
+            with intensity_column:
 
-        st.markdown(
-            (
-                "<style>"
-                + _development_lower_styles()
-                + "</style>"
-                + _development_intensity_html(
-                    development
+                st.markdown(
+                    (
+                        "<style>"
+                        + _development_lower_styles()
+                        + "</style>"
+                        + _development_intensity_html(
+                            development
+                        )
+                    ),
+                    unsafe_allow_html=True,
                 )
-            ),
-            unsafe_allow_html=True,
-        )
 
-    with references_column:
+            with references_column:
 
-        st.markdown(
-            (
-                "<style>"
-                + _development_lower_styles()
-                + "</style>"
-                + _development_performance_references_html(
-                    development
+                st.markdown(
+                    (
+                        "<style>"
+                        + _development_lower_styles()
+                        + "</style>"
+                        + _development_performance_references_html(
+                            development
+                        )
+                    ),
+                    unsafe_allow_html=True,
                 )
-            ),
-            unsafe_allow_html=True,
-        )

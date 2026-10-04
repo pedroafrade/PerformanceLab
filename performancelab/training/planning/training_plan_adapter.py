@@ -9,6 +9,7 @@ Applies incremental revisions to future planned workouts.
 from dataclasses import replace
 from datetime import date, datetime
 from math import ceil
+import re
 
 from performancelab.analysis.training_state import (
     TrainingState,
@@ -1005,6 +1006,9 @@ class TrainingPlanAdapter:
                 and not TrainingPlanAdapter._is_protected(
                     workout
                 )
+                and not TrainingPlanAdapter._has_custom_base_prescription(
+                    workout
+                )
             )
         ]
 
@@ -1190,6 +1194,9 @@ class TrainingPlanAdapter:
                     workout
                 )
                 and not TrainingPlanAdapter._is_protected(
+                    workout
+                )
+                and not TrainingPlanAdapter._has_custom_base_prescription(
                     workout
                 )
             )
@@ -1756,6 +1763,102 @@ class TrainingPlanAdapter:
         )
     
     @staticmethod
+    def _has_custom_base_prescription(workout):
+        prefixes = (
+            "Continuous Tempo ", "Threshold Cruise Intervals ",
+            "Aerobic Hill Repeats ", "Easy + Strides ",
+        )
+        return (
+            str(workout.title or "").startswith(prefixes)
+            and TrainingPlanAdapter._adapted_base_template_structure(
+                workout=workout, duration=workout.duration,
+            ) is None
+        )
+
+    @staticmethod
+    def _adapted_base_template_structure(*, workout, duration):
+        """Retain the stimulus of the four explicit Base prescriptions.
+
+        Match the generated instructions as well as the title. Legacy and
+        custom prescriptions continue through the existing adapter. Recovery
+        ranges are budgeted at their upper bound, rather than rounded to minutes.
+        """
+        title = str(workout.title or "")
+        specifications = (
+            ("Continuous Tempo", r"Run (\d+) min(?: (\d+) sec)? continuous at controlled tempo \(RPE 6–7/10\); finish with reserve", None),
+            ("Threshold Cruise Intervals", r"(\d+)×(\d+) min(?: (\d+) sec)? near LT2 at RPE 7/10", "Recover 60–90 sec easy between repetitions"),
+            ("Aerobic Hill Repeats", r"(\d+)×(\d+) min(?: (\d+) sec)? uphill at controlled aerobic effort \(RPE 6–7/10\); do not sprint", "Recover 90 sec easy downhill between repetitions"),
+            ("Easy + Strides", r"Complete (\d+)×20 sec relaxed strides; do not sprint", "Recover fully with 70–100 sec easy between strides"),
+        )
+        specification = next((item for item in specifications if title.startswith(item[0] + " ")), None)
+        if specification is None:
+            return None
+        name, pattern, recovery = specification
+        steps = tuple(workout.structure)
+        matches = [(index, re.fullmatch(pattern, step)) for index, step in enumerate(steps)]
+        matches = [(index, match) for index, match in matches if match]
+        if len(matches) != 1 or (recovery is not None and recovery not in steps):
+            return None
+        index, match = matches[0]
+        # Only the generated warm-up/main/recovery/cool-down and target hints
+        # are owned here. Added or edited user instructions are not replaced.
+        known = {index}
+        if recovery is not None:
+            known.add(steps.index(recovery))
+        warm_indices = [i for i, step in enumerate(steps) if re.fullmatch(r"(?:Warm up \d+ min(?: \d+ sec)? easy|Run \d+ min(?: \d+ sec)? at conversational easy effort)", step)]
+        cool_indices = [i for i, step in enumerate(steps) if re.fullmatch(r"(?:Cool down \d+ min(?: \d+ sec)? easy(?:; finish without accumulating exhaustion| with relaxed downhill technique)?|Cool down easy; finish without accumulating exhaustion|Cool down easy with relaxed downhill technique)", step)]
+        if len(warm_indices) != 1 or len(cool_indices) != 1:
+            return None
+        known.update(warm_indices + cool_indices)
+        if any(i not in known and not step.lower().startswith(("heart rate target:", "power target:", "pace target:")) for i, step in enumerate(steps)):
+            return None
+        total = max(1, int(duration.total_seconds()))
+        strides = name == "Easy + Strides"
+        continuous = name == "Continuous Tempo"
+        repetitions = 1 if continuous else int(match.group(1))
+        if continuous:
+            work = int(match.group(1)) * 60 + int(match.group(2) or 0)
+        elif strides:
+            work = 20
+        else:
+            work = int(match.group(2)) * 60 + int(match.group(3) or 0)
+        if repetitions < 1 or work < 1:
+            return None
+        recovery_seconds = 0 if continuous else (100 if strides else 90)
+        # Keep the explicit main dose when it fits; a reduction first removes
+        # easy time, then shortens work, never increases work or intensity.
+        minimum_easy = min(300, total // 4)
+        available = total - 2 * minimum_easy
+        if repetitions * work + (repetitions - 1) * recovery_seconds > available:
+            if not strides:
+                work = min(work, max(60, (available - (repetitions - 1) * recovery_seconds) // repetitions // 15 * 15))
+            while repetitions > 1 and repetitions * work + (repetitions - 1) * recovery_seconds > available:
+                repetitions -= 1
+            work = min(work, max(1, available - (repetitions - 1) * recovery_seconds))
+        main_seconds = repetitions * work + (repetitions - 1) * recovery_seconds
+        easy_seconds = total - main_seconds
+        cool = min(300, easy_seconds // 2)
+        warm = easy_seconds - cool
+        if not strides:
+            warm = min(600, warm)
+            cool = easy_seconds - warm
+
+        def time_label(seconds):
+            minutes, remainder = divmod(seconds, 60)
+            return f"{minutes} min" + (f" {remainder} sec" if remainder else "")
+
+        result = list(steps)
+        result[warm_indices[0]] = ("Run " if strides else "Warm up ") + time_label(warm) + (" at conversational easy effort" if strides else " easy")
+        result[cool_indices[0]] = "Cool down " + time_label(cool) + " easy" + ("; finish without accumulating exhaustion" if name == "Threshold Cruise Intervals" else " with relaxed downhill technique" if name == "Aerobic Hill Repeats" else "")
+        if continuous:
+            result[index] = f"Run {time_label(work)} continuous at controlled tempo (RPE 6–7/10); finish with reserve"
+        elif strides:
+            result[index] = f"Complete {repetitions}×{work} sec relaxed strides; do not sprint"
+        else:
+            result[index] = re.sub(r"^\d+×\d+ min(?: \d+ sec)?", f"{repetitions}×{time_label(work)}", steps[index])
+        return tuple(result)
+
+    @staticmethod
     def _adapted_structure(
         *,
         workout: PlannedWorkout,
@@ -1770,6 +1873,12 @@ class TrainingPlanAdapter:
         recoveries instead of being reduced to one generic
         main-work block.
         """
+
+        base_structure = TrainingPlanAdapter._adapted_base_template_structure(
+            workout=workout, duration=duration,
+        )
+        if base_structure is not None:
+            return base_structure
 
         total_minutes = max(
             1,

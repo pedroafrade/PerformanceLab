@@ -725,101 +725,103 @@ div[class*="st-key-weekly_plan_selector_"] {{
         )
     )
 
-    with st.columns([0.45, 7, 0.45], gap=None)[1]:
-        if timeline_html:
+    with st.container(key="dashboard_week_selector"):
+        with st.columns([0.45, 7, 0.45], gap=None)[1]:
+            if timeline_html:
 
-            st.markdown(
-                timeline_html,
-                unsafe_allow_html=True,
+                st.markdown(
+                    timeline_html,
+                    unsafe_allow_html=True,
+                )
+
+            selected_date = st.segmented_control(
+                "Workout details",
+                options=tuple(day_by_date),
+                default=selected_date,
+                required=True,
+                format_func=lambda day: str(day.day),
+                key=selector_key,
+                label_visibility="collapsed",
+                width="stretch",
             )
-
-        selected_date = st.segmented_control(
-            "Workout details",
-            options=tuple(day_by_date),
-            default=selected_date,
-            required=True,
-            format_func=lambda day: str(day.day),
-            key=selector_key,
-            label_visibility="collapsed",
-            width="stretch",
-        )
 
     selected_day = day_by_date.get(
         selected_date
     )
     
-    columns = st.columns(
-        [
-            0.45,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            0.45,
-        ],
-        gap=None,
-    )
-
-    day_columns = columns[1:-1]
-    with columns[0]:
-        _show_previous_button()
-    with columns[-1]:
-        _show_next_button()
-
-    for column, day in zip(
-        day_columns,
-        planning.weekly_plan.days,
-    ):
-        classes = [
-            "weekly-plan-day",
-        ]
-
-        if day.is_today:
-            classes.append(
-                "weekly-plan-day-today"
-            )
-
-        if day.day == selected_date:
-            classes.append(
-                "weekly-plan-day-selected"
-            )
-
-        weekday = WEEKDAY_LABELS[
-            day.day.weekday()
-        ]
-
-        title = _day_title(day)
-        details = _day_details(day)
-
-        marker = _marker_html(
-            planned=_planned(day),
-            completed=_completed(day),
+    with st.container(key="dashboard_week_days"):
+        columns = st.columns(
+            [
+                0.45,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                0.45,
+            ],
+            gap=None,
         )
 
-        with column:
-            st.markdown(
-                (
-                    f'<div class="{" ".join(classes)}">'
-                    '<div class="weekly-plan-weekday">'
-                    f"{weekday}"
-                    '<span class="weekly-plan-date">'
-                    f"{day.day.day}"
-                    "</span>"
-                    "</div>"
-                    f"{marker}"
-                    '<div class="weekly-plan-title">'
-                    f"{escape(title)}"
-                    "</div>"
-                    '<div class="weekly-plan-details">'
-                    f"{escape(details)}"
-                    "</div>"
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
+        day_columns = columns[1:-1]
+        with columns[0]:
+            _show_previous_button()
+        with columns[-1]:
+            _show_next_button()
+
+        for column, day in zip(
+            day_columns,
+            planning.weekly_plan.days,
+        ):
+            classes = [
+                "weekly-plan-day",
+            ]
+
+            if day.is_today:
+                classes.append(
+                    "weekly-plan-day-today"
+                )
+
+            if day.day == selected_date:
+                classes.append(
+                    "weekly-plan-day-selected"
+                )
+
+            weekday = WEEKDAY_LABELS[
+                day.day.weekday()
+            ]
+
+            title = _day_title(day)
+            details = _day_details(day)
+
+            marker = _marker_html(
+                planned=_planned(day),
+                completed=_completed(day),
             )
+
+            with column:
+                st.markdown(
+                    (
+                        f'<div class="{" ".join(classes)}">'
+                        '<div class="weekly-plan-weekday">'
+                        f"{weekday}"
+                        '<span class="weekly-plan-date">'
+                        f"{day.day.day}"
+                        "</span>"
+                        "</div>"
+                        f"{marker}"
+                        '<div class="weekly-plan-title">'
+                        f"{escape(title)}"
+                        "</div>"
+                        '<div class="weekly-plan-details">'
+                        f"{escape(details)}"
+                        "</div>"
+                        "</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
 
 
     selected_description = (

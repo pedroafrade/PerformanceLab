@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 import streamlit as st
 
+from .i18n import translate
+
 
 @dataclass(frozen=True)
 class GuideEntry:
@@ -156,7 +158,7 @@ def filter_guide_entries(query: str, category: str = "All") -> tuple[GuideEntry,
 def show_metrics_guide_page() -> None:
     """Render the guide in the normal desktop and mobile document flow."""
 
-    st.title("Metrics & Plans Guide")
+    st.title(translate("nav.guide"))
     st.caption(
         "Plain-language explanations of the metrics and planning concepts used "
         "throughout PerformanceLab. Technical detail is added only after code verification."

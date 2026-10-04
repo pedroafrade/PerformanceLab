@@ -164,7 +164,8 @@ resource "google_cloud_run_v2_service" "application" {
   template {
     service_account                  = google_service_account.application.email
     timeout                          = "300s"
-    max_instance_request_concurrency = 2
+    # Allow parallel JS/CSS requests alongside Streamlit WebSocket sessions.
+    max_instance_request_concurrency = 20
     session_affinity                 = true
 
     scaling {

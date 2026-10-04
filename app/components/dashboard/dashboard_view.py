@@ -97,6 +97,8 @@ def show_dashboard(
     .st-key-dashboard_page .next-workout-meta,
     .st-key-dashboard_page .next-workout-label {color:inherit;opacity:0.65;}
     </style>""")
+    from ..mobile_layout import apply_mobile_layout
+    apply_mobile_layout()
     with st.container(key="dashboard_page"):
         return _show_dashboard_content(
             athlete,

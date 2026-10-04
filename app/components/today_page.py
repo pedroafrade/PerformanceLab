@@ -1668,84 +1668,90 @@ def show_today_page(
         today_subtitle
     )
 
-    st.markdown(
-        (
-            "<style>"
-            + current_state_summary_styles()
-            + "</style>"
-            + current_state_summary_html(
-                _today_current_state_summary(
-                    today
-                )
-            )
-        ),
-        unsafe_allow_html=True,
-    )
+    from .mobile_layout import apply_mobile_layout
+    apply_mobile_layout()
 
-    with st.container(key="today_brief_recovery_row"):
-        brief_column, recovery_column = st.columns(
-            [1.7, 1], gap="small", vertical_alignment="top"
-        )
-        with brief_column:
-            _show_daily_decision(today, daily_brief_resolution)
-        with recovery_column:
-            _show_recovery_log(
-                athlete,
-                on_save_recovery_entry,
-                on_update_recovery_entry,
-                on_delete_recovery_entry,
-            )
-
-    with st.container(key="today_detail_row"):
-        session_column, guidance_column = (
-            st.columns(
-                [1.7, 1],
-                gap="small",
-                vertical_alignment="top",
-            )
-        )
-
-        with session_column:
-            next_column, equivalent_column = st.columns(2, gap="small")
-            with next_column:
-                _show_today_session(
-                    today.session_card,
-                    today.today_activity_summary,
-                    today_workout,
-                )
-            with equivalent_column:
-                equivalent_day = (
-                    today.today_activity_summary.workout_date
-                    if today.today_activity_summary is not None
-                    else (
-                        today.next_workout.scheduled_at
-                        if today.next_workout is not None
-                        and today.session_card.heading == "Next Session"
-                        else today.reference_day
+    with st.container(key="today_page"):
+        with st.container(key="today_metrics"):
+            st.markdown(
+                (
+                    "<style>"
+                    + current_state_summary_styles()
+                    + "</style>"
+                    + current_state_summary_html(
+                        _today_current_state_summary(
+                            today
+                        )
                     )
-                )
-                _show_session_equivalent(
-                    today.session_card,
-                    completed_activity=today.today_activity_summary,
-                    reference_day=equivalent_day,
+                ),
+                unsafe_allow_html=True,
+            )
+
+        with st.container(key="today_brief_recovery_row"):
+            brief_column, recovery_column = st.columns(
+                [1.7, 1], gap="small", vertical_alignment="top"
+            )
+            with brief_column:
+                _show_daily_decision(today, daily_brief_resolution)
+            with recovery_column:
+                _show_recovery_log(
+                    athlete,
+                    on_save_recovery_entry,
+                    on_update_recovery_entry,
+                    on_delete_recovery_entry,
                 )
 
-        with guidance_column:
-            with st.container(key="today_guidance_column"):
-                _show_combined_guidance_card(
-                    reasons=today.guidance.reasons,
-                    cautions=today.guidance.cautions,
+        with st.container(key="today_detail_row"):
+            session_column, guidance_column = (
+                st.columns(
+                    [1.7, 1],
+                    gap="small",
+                    vertical_alignment="top",
                 )
+            )
 
-                _show_latest_adaptation(
-                    today.latest_adaptation,
-                    reference_day=(today.reference_day),
-                    stimulus_suggestion=(today.latest_stimulus_suggestion),
+            with session_column:
+                next_column, equivalent_column = st.columns(2, gap="small")
+                with next_column:
+                    _show_today_session(
+                        today.session_card,
+                        today.today_activity_summary,
+                        today_workout,
+                    )
+                with equivalent_column:
+                    equivalent_day = (
+                        today.today_activity_summary.workout_date
+                        if today.today_activity_summary is not None
+                        else (
+                            today.next_workout.scheduled_at
+                            if today.next_workout is not None
+                            and today.session_card.heading == "Next Session"
+                            else today.reference_day
+                        )
+                    )
+                    _show_session_equivalent(
+                        today.session_card,
+                        completed_activity=today.today_activity_summary,
+                        reference_day=equivalent_day,
+                    )
+
+            with guidance_column:
+                with st.container(key="today_guidance_column"):
+                    _show_combined_guidance_card(
+                        reasons=today.guidance.reasons,
+                        cautions=today.guidance.cautions,
+                    )
+
+                    _show_latest_adaptation(
+                        today.latest_adaptation,
+                        reference_day=(today.reference_day),
+                        stimulus_suggestion=(today.latest_stimulus_suggestion),
+                    )
+
+        if today_workout is not None:
+            with st.container(key="today_analysis"):
+                show_activity_analysis(
+                    today_workout,
+                    history=athlete.history,
+                    key_prefix="today_activity_analysis",
                 )
-
-    if today_workout is not None:
-        show_activity_analysis(
-            today_workout,
-            history=athlete.history,
-            key_prefix="today_activity_analysis",
-        )

@@ -1576,6 +1576,29 @@ def _distance_elevation_chart(
         )
     )
 
+def _show_responsive_plan_chart(plan, chart_builder, *, key):
+    """Keep the complete horizon readable on phones without changing PC charts."""
+    st.html("""<style>
+    .st-key-plan_load_mobile, .st-key-plan_distance_mobile {display:none;}
+    @media (max-width:700px) {
+        .st-key-plan_load_desktop, .st-key-plan_distance_desktop {display:none;}
+        .st-key-plan_load_mobile, .st-key-plan_distance_mobile {
+            display:block; overflow-x:auto; padding-bottom:0.5rem;
+        }
+    }
+    </style>""")
+    prefix = "plan_load" if chart_builder is _planned_load_chart else "plan_distance"
+    with st.container(key=prefix + "_desktop"):
+        st.altair_chart(chart_builder(plan), use_container_width=True, key=key)
+    with st.container(key=prefix + "_mobile"):
+        # Preserve all dates and values, and scroll rather than compress the
+        # complete training horizon into the width of a phone.
+        chart = chart_builder(plan).properties(
+            width=max(680, min(2400, len(plan.chart_points) * 18)), height=220,
+        ).configure_axis(labelFontSize=11, titleFontSize=12, labelPadding=5)
+        st.altair_chart(chart, use_container_width=False, key=key + "-mobile")
+
+
 def _plan_summary_metrics(
     plan,
 ) -> dict[str, str]:
@@ -7423,10 +7446,8 @@ def show_plan_page(
             unsafe_allow_html=True,
         )
 
-        st.altair_chart(
-            _planned_load_chart(plan),
-            use_container_width=True,
-            key=f"plan-load-{plan_revision}",
+        _show_responsive_plan_chart(
+            plan, _planned_load_chart, key=f"plan-load-{plan_revision}",
         )
 
         st.html(
@@ -7447,9 +7468,8 @@ def show_plan_page(
             unsafe_allow_html=True,
         )
 
-        st.altair_chart(
-            _distance_elevation_chart(plan),
-            use_container_width=True,
+        _show_responsive_plan_chart(
+            plan, _distance_elevation_chart,
             key=f"plan-distance-elevation-{plan_revision}",
         )
 
